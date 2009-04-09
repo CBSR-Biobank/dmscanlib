@@ -1,7 +1,7 @@
 /*
 libdmtx - Data Matrix Encoding/Decoding Library
 
-Copyright (c) 2008 Mike Laughton
+Copyright (C) 2008, 2009 Mike Laughton
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -20,7 +20,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 Contact: mike@dragonflylogic.com
 */
 
-/* $Id: dmtxsymbol.c 391 2008-08-06 02:37:40Z mblaughton $ */
+/* $Id: dmtxsymbol.c 667 2009-02-10 19:48:01Z mblaughton $ */
 
 /**
  * @file dmtxsymbol.c
@@ -28,7 +28,7 @@ Contact: mike@dragonflylogic.com
  */
 
 /**
- * @brief  XXX
+ * @brief  Retrieve property based on symbol size
  * @param  attribute
  * @param  sizeIdx
  * @return Attribute value
@@ -90,62 +90,46 @@ dmtxGetSymbolAttribute(int attribute, int sizeIdx)
                                                                34,  31,  31,
                                                    3,  5,  7,   9,  12,  14 };
 
-   if(sizeIdx < 0 || sizeIdx >= DMTX_SYMBOL_SQUARE_COUNT + DMTX_SYMBOL_RECT_COUNT)
-      return -1;
+   if(sizeIdx < 0 || sizeIdx >= DmtxSymbolSquareCount + DmtxSymbolRectCount)
+      return DmtxUndefined;
 
    switch(attribute) {
       case DmtxSymAttribSymbolRows:
          return symbolRows[sizeIdx];
-         break;
       case DmtxSymAttribSymbolCols:
          return symbolCols[sizeIdx];
-         break;
       case DmtxSymAttribDataRegionRows:
          return dataRegionRows[sizeIdx];
-         break;
       case DmtxSymAttribDataRegionCols:
          return dataRegionCols[sizeIdx];
-         break;
       case DmtxSymAttribHorizDataRegions:
          return horizDataRegions[sizeIdx];
-         break;
       case DmtxSymAttribVertDataRegions:
-         return (sizeIdx < DMTX_SYMBOL_SQUARE_COUNT) ? horizDataRegions[sizeIdx] : 1;
-         break;
+         return (sizeIdx < DmtxSymbolSquareCount) ? horizDataRegions[sizeIdx] : 1;
       case DmtxSymAttribMappingMatrixRows:
-         return dataRegionRows[sizeIdx] * dmtxGetSymbolAttribute(DmtxSymAttribVertDataRegions, sizeIdx);
-         break;
+         return dataRegionRows[sizeIdx] *
+               dmtxGetSymbolAttribute(DmtxSymAttribVertDataRegions, sizeIdx);
       case DmtxSymAttribMappingMatrixCols:
          return dataRegionCols[sizeIdx] * horizDataRegions[sizeIdx];
-         break;
       case DmtxSymAttribInterleavedBlocks:
          return interleavedBlocks[sizeIdx];
-         break;
       case DmtxSymAttribBlockErrorWords:
          return blockErrorWords[sizeIdx];
-         break;
       case DmtxSymAttribBlockMaxCorrectable:
          return blockMaxCorrectable[sizeIdx];
-         break;
       case DmtxSymAttribSymbolDataWords:
          return symbolDataWords[sizeIdx];
-         break;
       case DmtxSymAttribSymbolErrorWords:
          return blockErrorWords[sizeIdx] * interleavedBlocks[sizeIdx];
-         break;
       case DmtxSymAttribSymbolMaxCorrectable:
          return blockMaxCorrectable[sizeIdx] * interleavedBlocks[sizeIdx];
-         break;
-      default:
-         exit(1); /* error condition */
-         break;
    }
 
-   return -1;
+   return DmtxUndefined;
 }
 
 /**
- * @brief  XXX
+ * @brief  Retrieve data size for a specific symbol size and block number
  * @param  sizeIdx
  * @param  blockIdx
  * @return Attribute value
@@ -162,31 +146,36 @@ dmtxGetBlockDataSize(int sizeIdx, int blockIdx)
    count = (int)(symbolDataWords/interleavedBlocks);
 
    if(symbolDataWords < 1 || interleavedBlocks < 1)
-      return -1;
+      return DmtxUndefined;
 
-   return (sizeIdx == DmtxSize144x144 && blockIdx < 8) ? count + 1 : count;
+   return (sizeIdx == DmtxSymbol144x144 && blockIdx < 8) ? count + 1 : count;
 }
 
 /**
- * @brief  XXX
+ * @brief  Determine symbol size based on data size and requested properties
  * @param  dataWords
  * @param  sizeIdxRequest
- * @return Barcode size index (or -1 if none)
+ * @return Symbol size index (or DmtxUndefined if none)
  */
 static int
-FindCorrectBarcodeSize(int dataWords, int sizeIdxRequest)
+FindCorrectSymbolSize(int dataWords, int sizeIdxRequest)
 {
    int sizeIdx;
    int idxBeg, idxEnd;
 
    if(dataWords <= 0)
-      return -1;
+      return DmtxUndefined;
 
-   if(sizeIdxRequest == DMTX_SYMBOL_SQUARE_AUTO || sizeIdxRequest == DMTX_SYMBOL_RECT_AUTO) {
+   if(sizeIdxRequest == DmtxSymbolSquareAuto || sizeIdxRequest == DmtxSymbolRectAuto) {
 
-      idxBeg = (sizeIdxRequest == DMTX_SYMBOL_SQUARE_AUTO) ? 0 : DMTX_SYMBOL_SQUARE_COUNT;
-      idxEnd = (sizeIdxRequest == DMTX_SYMBOL_SQUARE_AUTO) ? DMTX_SYMBOL_SQUARE_COUNT :
-            DMTX_SYMBOL_SQUARE_COUNT + DMTX_SYMBOL_RECT_COUNT;
+      if(sizeIdxRequest == DmtxSymbolSquareAuto) {
+         idxBeg = 0;
+         idxEnd = DmtxSymbolSquareCount;
+      }
+      else {
+         idxBeg = DmtxSymbolSquareCount;
+         idxEnd = DmtxSymbolSquareCount + DmtxSymbolRectCount;
+      }
 
       for(sizeIdx = idxBeg; sizeIdx < idxEnd; sizeIdx++) {
          if(dmtxGetSymbolAttribute(DmtxSymAttribSymbolDataWords, sizeIdx) >= dataWords)
@@ -194,14 +183,14 @@ FindCorrectBarcodeSize(int dataWords, int sizeIdxRequest)
       }
 
       if(sizeIdx == idxEnd)
-         return -1;
+         return DmtxUndefined;
    }
    else {
       sizeIdx = sizeIdxRequest;
    }
 
    if(dataWords > dmtxGetSymbolAttribute(DmtxSymAttribSymbolDataWords, sizeIdx))
-      return -1;
+      return DmtxUndefined;
 
    return sizeIdx;
 }

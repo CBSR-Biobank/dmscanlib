@@ -1,7 +1,7 @@
 /*
 libdmtx - Data Matrix Encoding/Decoding Library
 
-Copyright (c) 2008 Mike Laughton
+Copyright (C) 2008, 2009 Mike Laughton
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -20,7 +20,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 Contact: mike@dragonflylogic.com
 */
 
-/* $Id: dmtxmatrix3.c 414 2008-08-20 20:22:07Z mblaughton $ */
+/* $Id: dmtxmatrix3.c 667 2009-02-10 19:48:01Z mblaughton $ */
 
 /**
  * @file dmtxmatrix3.c
@@ -206,7 +206,7 @@ dmtxMatrix3Shear(DmtxMatrix3 m, double shx, double shy)
 extern void
 dmtxMatrix3LineSkewTop(DmtxMatrix3 m, double b0, double b1, double sz)
 {
-   assert(b0 > DMTX_ALMOST_ZERO);
+   assert(b0 >= DmtxAlmostZero);
 
    dmtxMatrix3Identity(m);
    m[0][0] = b1/b0;
@@ -225,7 +225,7 @@ dmtxMatrix3LineSkewTop(DmtxMatrix3 m, double b0, double b1, double sz)
 extern void
 dmtxMatrix3LineSkewTopInv(DmtxMatrix3 m, double b0, double b1, double sz)
 {
-   assert(b1 > DMTX_ALMOST_ZERO);
+   assert(b1 >= DmtxAlmostZero);
 
    dmtxMatrix3Identity(m);
    m[0][0] = b0/b1;
@@ -244,7 +244,7 @@ dmtxMatrix3LineSkewTopInv(DmtxMatrix3 m, double b0, double b1, double sz)
 extern void
 dmtxMatrix3LineSkewSide(DmtxMatrix3 m, double b0, double b1, double sz)
 {
-   assert(b0 > DMTX_ALMOST_ZERO);
+   assert(b0 >= DmtxAlmostZero);
 
    dmtxMatrix3Identity(m);
    m[0][0] = sz/b0;
@@ -263,7 +263,7 @@ dmtxMatrix3LineSkewSide(DmtxMatrix3 m, double b0, double b1, double sz)
 extern void
 dmtxMatrix3LineSkewSideInv(DmtxMatrix3 m, double b0, double b1, double sz)
 {
-   assert(b1 > DMTX_ALMOST_ZERO);
+   assert(b1 >= DmtxAlmostZero);
 
    dmtxMatrix3Identity(m);
    m[0][0] = b0/sz;
@@ -315,7 +315,7 @@ dmtxMatrix3MultiplyBy(DmtxMatrix3 m0, DmtxMatrix3 m1)
  * @param  vOut Vector (output)
  * @param  vIn Vector (input)
  * @param  m Matrix to be multiplied
- * @return DMTX_SUCCESS | DMTX_FAILURE
+ * @return DmtxPass | DmtxFail
  */
 extern int
 dmtxMatrix3VMultiply(DmtxVector2 *vOut, DmtxVector2 *vIn, DmtxMatrix3 m)
@@ -323,23 +323,23 @@ dmtxMatrix3VMultiply(DmtxVector2 *vOut, DmtxVector2 *vIn, DmtxMatrix3 m)
    double w;
 
    w = vIn->X*m[0][2] + vIn->Y*m[1][2] + m[2][2];
-   if(fabs(w) < DMTX_ALMOST_ZERO) {
+   if(fabs(w) <= DmtxAlmostZero) {
       vOut->X = FLT_MAX;
       vOut->Y = FLT_MAX;
-      return DMTX_FAILURE;
+      return DmtxFail;
    }
 
    vOut->X = (vIn->X*m[0][0] + vIn->Y*m[1][0] + m[2][0])/w;
    vOut->Y = (vIn->X*m[0][1] + vIn->Y*m[1][1] + m[2][1])/w;
 
-   return DMTX_SUCCESS;
+   return DmtxPass;
 }
 
 /**
  * @brief  Multiply vector and matrix in place
  * @param  v Vector (input and output)
  * @param  m Matrix to be multiplied
- * @return DMTX_SUCCESS | DMTX_FAILURE
+ * @return DmtxPass | DmtxFail
  */
 extern int
 dmtxMatrix3VMultiplyBy(DmtxVector2 *v, DmtxMatrix3 m)

@@ -1,7 +1,7 @@
 /*
 libdmtx - Data Matrix Encoding/Decoding Library
 
-Copyright (c) 2008 Mike Laughton
+Copyright (C) 2008, 2009 Mike Laughton
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -20,7 +20,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 Contact: mike@dragonflylogic.com
 */
 
-/* $Id: dmtxvector2.c 414 2008-08-20 20:22:07Z mblaughton $ */
+/* $Id: dmtxvector2.c 726 2009-02-19 22:17:48Z mblaughton $ */
 
 /**
  * @file dmtxvector2.c
@@ -32,7 +32,7 @@ Contact: mike@dragonflylogic.com
  *
  */
 extern DmtxVector2 *
-dmtxVector2AddTo(DmtxVector2 *v1, DmtxVector2 *v2)
+dmtxVector2AddTo(DmtxVector2 *v1, const DmtxVector2 *v2)
 {
    v1->X += v2->X;
    v1->Y += v2->Y;
@@ -45,7 +45,7 @@ dmtxVector2AddTo(DmtxVector2 *v1, DmtxVector2 *v2)
  *
  */
 extern DmtxVector2 *
-dmtxVector2Add(DmtxVector2 *vOut, DmtxVector2 *v1, DmtxVector2 *v2)
+dmtxVector2Add(DmtxVector2 *vOut, const DmtxVector2 *v1, const DmtxVector2 *v2)
 {
    *vOut = *v1;
 
@@ -57,7 +57,7 @@ dmtxVector2Add(DmtxVector2 *vOut, DmtxVector2 *v1, DmtxVector2 *v2)
  *
  */
 extern DmtxVector2 *
-dmtxVector2SubFrom(DmtxVector2 *v1, DmtxVector2 *v2)
+dmtxVector2SubFrom(DmtxVector2 *v1, const DmtxVector2 *v2)
 {
    v1->X -= v2->X;
    v1->Y -= v2->Y;
@@ -70,7 +70,7 @@ dmtxVector2SubFrom(DmtxVector2 *v1, DmtxVector2 *v2)
  *
  */
 extern DmtxVector2 *
-dmtxVector2Sub(DmtxVector2 *vOut, DmtxVector2 *v1, DmtxVector2 *v2)
+dmtxVector2Sub(DmtxVector2 *vOut, const DmtxVector2 *v1, const DmtxVector2 *v2)
 {
    *vOut = *v1;
 
@@ -95,7 +95,7 @@ dmtxVector2ScaleBy(DmtxVector2 *v, double s)
  *
  */
 extern DmtxVector2 *
-dmtxVector2Scale(DmtxVector2 *vOut, DmtxVector2 *v, double s)
+dmtxVector2Scale(DmtxVector2 *vOut, const DmtxVector2 *v, double s)
 {
    *vOut = *v;
 
@@ -107,7 +107,7 @@ dmtxVector2Scale(DmtxVector2 *vOut, DmtxVector2 *v, double s)
  *
  */
 extern double
-dmtxVector2Cross(DmtxVector2 *v1, DmtxVector2 *v2)
+dmtxVector2Cross(const DmtxVector2 *v1, const DmtxVector2 *v2)
 {
    return (v1->X * v2->Y) - (v1->Y * v2->X);
 }
@@ -123,8 +123,8 @@ dmtxVector2Norm(DmtxVector2 *v)
 
    mag = dmtxVector2Mag(v);
 
-   if(mag < DMTX_ALMOST_ZERO)
-      return -1.0;
+   if(mag <= DmtxAlmostZero)
+      return -1.0; /* XXX this doesn't look clean */
 
    dmtxVector2ScaleBy(v, 1/mag);
 
@@ -136,7 +136,7 @@ dmtxVector2Norm(DmtxVector2 *v)
  *
  */
 extern double
-dmtxVector2Dot(DmtxVector2 *v1, DmtxVector2 *v2)
+dmtxVector2Dot(const DmtxVector2 *v1, const DmtxVector2 *v2)
 {
    return (v1->X * v2->X) + (v1->Y * v2->Y);
 }
@@ -146,7 +146,7 @@ dmtxVector2Dot(DmtxVector2 *v1, DmtxVector2 *v2)
  *
  */
 extern double
-dmtxVector2Mag(DmtxVector2 *v)
+dmtxVector2Mag(const DmtxVector2 *v)
 {
    return sqrt(v->X * v->X + v->Y * v->Y);
 }
@@ -156,12 +156,12 @@ dmtxVector2Mag(DmtxVector2 *v)
  *
  */
 extern double
-dmtxDistanceFromRay2(DmtxRay2 *r, DmtxVector2 *q)
+dmtxDistanceFromRay2(const DmtxRay2 *r, const DmtxVector2 *q)
 {
    DmtxVector2 vSubTmp;
 
    /* Assumes that v is a unit vector */
-   assert(fabs(1.0 - dmtxVector2Mag(&(r->v))) < DMTX_ALMOST_ZERO);
+   assert(fabs(1.0 - dmtxVector2Mag(&(r->v))) <= DmtxAlmostZero);
 
    return dmtxVector2Cross(&(r->v), dmtxVector2Sub(&vSubTmp, q, &(r->p)));
 }
@@ -171,13 +171,13 @@ dmtxDistanceFromRay2(DmtxRay2 *r, DmtxVector2 *q)
  *
  */
 extern double
-dmtxDistanceAlongRay2(DmtxRay2 *r, DmtxVector2 *q)
+dmtxDistanceAlongRay2(const DmtxRay2 *r, const DmtxVector2 *q)
 {
    DmtxVector2 vSubTmp;
 
 /* Assumes that v is a unit vector */
 #ifdef DEBUG
-   if(fabs(1.0 - dmtxVector2Mag(v)) > DMTX_ALMOST_ZERO) {
+   if(fabs(1.0 - dmtxVector2Mag(v)) > DmtxAlmostZero) {
       ; /* XXX big error goes here */
    }
 #endif
@@ -190,14 +190,14 @@ dmtxDistanceAlongRay2(DmtxRay2 *r, DmtxVector2 *q)
  *
  */
 extern int
-dmtxRay2Intersect(DmtxVector2 *point, DmtxRay2 *p0, DmtxRay2 *p1)
+dmtxRay2Intersect(DmtxVector2 *point, const DmtxRay2 *p0, const DmtxRay2 *p1)
 {
    double numer, denom;
    DmtxVector2 w;
 
    denom = dmtxVector2Cross(&(p1->v), &(p0->v));
-   if(fabs(denom) < DMTX_ALMOST_ZERO)
-      return DMTX_FAILURE;
+   if(fabs(denom) <= DmtxAlmostZero)
+      return DmtxFail;
 
    dmtxVector2Sub(&w, &(p1->p), &(p0->p));
    numer = dmtxVector2Cross(&(p1->v), &w);
@@ -209,47 +209,16 @@ dmtxRay2Intersect(DmtxVector2 *point, DmtxRay2 *p0, DmtxRay2 *p1)
  *
  *
  */
-extern int
-dmtxPointAlongRay2(DmtxVector2 *point, DmtxRay2 *r, double t)
+extern DmtxPassFail
+dmtxPointAlongRay2(DmtxVector2 *point, const DmtxRay2 *r, double t)
 {
    DmtxVector2 vTmp;
 
    /* Ray should always have unit length of 1 */
-   assert(fabs(1.0 - dmtxVector2Mag(&(r->v))) < DMTX_ALMOST_ZERO);
+   assert(fabs(1.0 - dmtxVector2Mag(&(r->v))) <= DmtxAlmostZero);
 
    dmtxVector2Scale(&vTmp, &(r->v), t);
    dmtxVector2Add(point, &(r->p), &vTmp);
 
-   return DMTX_SUCCESS;
-}
-
-/**
- *
- *
- */
-extern DmtxVector2
-dmtxRemoveLensDistortion(DmtxVector2 point, DmtxImage *img, double k1, double k2)
-{
-   int width, height;
-   double radiusPow2, radiusPow4;
-   double factor;
-   DmtxVector2 pointShifted;
-   DmtxVector2 correctedPoint;
-
-   /* XXX this function can be rewritten using vector math notation */
-   width = dmtxImageGetProp(img, DmtxPropScaledWidth);
-   height = dmtxImageGetProp(img, DmtxPropScaledHeight);
-
-   pointShifted.X = point.X - width/2.0;
-   pointShifted.Y = point.Y - height/2.0;
-
-   radiusPow2 = pointShifted.X * pointShifted.X + pointShifted.Y * pointShifted.Y;
-   radiusPow4 = radiusPow2 * radiusPow2;
-
-   factor = 1 + (k1 * radiusPow2) + (k2 * radiusPow4);
-
-   correctedPoint.X = pointShifted.X * factor + width/2.0;
-   correctedPoint.Y = pointShifted.Y * factor + height/2.0;
-
-   return correctedPoint;
+   return DmtxPass;
 }

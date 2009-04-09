@@ -1,7 +1,7 @@
 /*
 libdmtx - Data Matrix Encoding/Decoding Library
 
-Copyright (c) 2008 Mike Laughton
+Copyright (C) 2008, 2009 Mike Laughton
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -20,7 +20,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 Contact: mike@dragonflylogic.com
 */
 
-/* $Id: dmtxmessage.c 368 2008-07-23 22:16:37Z mblaughton $ */
+/* $Id: dmtxmessage.c 667 2009-02-10 19:48:01Z mblaughton $ */
 
 /**
  * @file dmtxmessage.c
@@ -28,33 +28,32 @@ Contact: mike@dragonflylogic.com
  */
 
 /**
- * @brief  XXX
+ * @brief  Allocate memory for message
  * @param  sizeIdx
- * @param  symbolFormat DMTX_FORMAT_MATRIX | DMTX_FORMAT_MOSAIC
+ * @param  symbolFormat DmtxFormatMatrix | DmtxFormatMosaic
  * @return Address of allocated memory
  */
 extern DmtxMessage *
-dmtxMessageMalloc(int sizeIdx, int symbolFormat)
+dmtxMessageCreate(int sizeIdx, int symbolFormat)
 {
    DmtxMessage *message;
    int mappingRows, mappingCols;
 
-   assert(symbolFormat == DMTX_FORMAT_MATRIX || symbolFormat == DMTX_FORMAT_MOSAIC);
+   assert(symbolFormat == DmtxFormatMatrix || symbolFormat == DmtxFormatMosaic);
 
    mappingRows = dmtxGetSymbolAttribute(DmtxSymAttribMappingMatrixRows, sizeIdx);
    mappingCols = dmtxGetSymbolAttribute(DmtxSymAttribMappingMatrixCols, sizeIdx);
 
-   message = (DmtxMessage *)malloc(sizeof(DmtxMessage));
+   message = (DmtxMessage *)calloc(1, sizeof(DmtxMessage));
    if(message == NULL)
       return NULL;
-   memset(message, 0x00, sizeof(DmtxMessage));
 
    message->arraySize = sizeof(unsigned char) * mappingRows * mappingCols;
 
    message->array = (unsigned char *)calloc(1, message->arraySize);
    if(message->array == NULL) {
       perror("Calloc failed");
-      dmtxMessageFree(&message);
+      dmtxMessageDestroy(&message);
       return NULL;
    }
 
@@ -62,13 +61,13 @@ dmtxMessageMalloc(int sizeIdx, int symbolFormat)
          dmtxGetSymbolAttribute(DmtxSymAttribSymbolDataWords, sizeIdx) +
          dmtxGetSymbolAttribute(DmtxSymAttribSymbolErrorWords, sizeIdx);
 
-   if(symbolFormat == DMTX_FORMAT_MOSAIC)
+   if(symbolFormat == DmtxFormatMosaic)
       message->codeSize *= 3;
 
    message->code = (unsigned char *)calloc(message->codeSize, sizeof(unsigned char));
    if(message->code == NULL) {
       perror("Calloc failed");
-      dmtxMessageFree(&message);
+      dmtxMessageDestroy(&message);
       return NULL;
    }
 
@@ -79,7 +78,7 @@ dmtxMessageMalloc(int sizeIdx, int symbolFormat)
    message->output = (unsigned char *)calloc(message->outputSize, sizeof(unsigned char));
    if(message->output == NULL) {
       perror("Calloc failed");
-      dmtxMessageFree(&message);
+      dmtxMessageDestroy(&message);
       return NULL;
    }
 
@@ -87,26 +86,28 @@ dmtxMessageMalloc(int sizeIdx, int symbolFormat)
 }
 
 /**
- * @brief  XXX
+ * @brief  Free memory previously allocated for message
  * @param  message
  * @return void
  */
-extern void
-dmtxMessageFree(DmtxMessage **message)
+extern DmtxPassFail
+dmtxMessageDestroy(DmtxMessage **msg)
 {
-   if(*message == NULL)
-      return;
+   if(msg == NULL || *msg == NULL)
+      return DmtxFail;
 
-   if((*message)->array != NULL)
-      free((*message)->array);
+   if((*msg)->array != NULL)
+      free((*msg)->array);
 
-   if((*message)->code != NULL)
-      free((*message)->code);
+   if((*msg)->code != NULL)
+      free((*msg)->code);
 
-   if((*message)->output != NULL)
-      free((*message)->output);
+   if((*msg)->output != NULL)
+      free((*msg)->output);
 
-   free(*message);
+   free(*msg);
 
-   *message = NULL;
+   *msg = NULL;
+
+   return DmtxPass;
 }

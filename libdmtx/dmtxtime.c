@@ -1,7 +1,7 @@
 /*
 libdmtx - Data Matrix Encoding/Decoding Library
 
-Copyright (c) 2008 Mike Laughton
+Copyright (C) 2008, 2009 Mike Laughton
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -20,7 +20,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 Contact: mike@dragonflylogic.com
 */
 
-/* $Id: dmtxtime.c 398 2008-08-06 18:05:53Z mblaughton $ */
+/* $Id: dmtxtime.c 759 2009-02-26 16:48:59Z mblaughton $ */
 
 /**
  * @file dmtxtime.c
@@ -33,7 +33,6 @@ Contact: mike@dragonflylogic.com
 
 #include <sys/time.h>
 #include <time.h>
-
 #define DMTX_TIME_PREC_USEC 1
 
 /**
@@ -43,7 +42,7 @@ Contact: mike@dragonflylogic.com
 extern DmtxTime
 dmtxTimeNow(void)
 {
-   int err;
+   DmtxPassFail err;
    struct timeval tv;
    DmtxTime tNow;
 
@@ -57,10 +56,9 @@ dmtxTimeNow(void)
    return tNow;
 }
 
-#elif defined (_MSC_VER)
+#elif defined(_MSC_VER)
 
 #include <Windows.h>
-
 #define DMTX_TIME_PREC_USEC 1
 
 /**
@@ -90,7 +88,6 @@ dmtxTimeNow(void)
 #else
 
 #include <time.h>
-
 #define DMTX_TIME_PREC_USEC 1000000
 
 /**
@@ -116,7 +113,7 @@ dmtxTimeNow(void)
 #endif
 
 /**
- * @brief  XXX
+ * @brief  Add milliseconds to time t
  * @param  t
  * @param  msec
  * @return Adjusted time
@@ -146,7 +143,7 @@ dmtxTimeAdd(DmtxTime t, long msec)
 }
 
 /**
- * @brief  XXX
+ * @brief  Determine whether the received timeout has been exceeded
  * @param  timeout
  * @return 1 (true) | 0 (false)
  */

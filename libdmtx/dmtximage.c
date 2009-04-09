@@ -1,7 +1,7 @@
 /*
 libdmtx - Data Matrix Encoding/Decoding Library
 
-Copyright (c) 2008 Mike Laughton
+Copyright (C) 2008, 2009 Mike Laughton
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -20,7 +20,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 Contact: mike@dragonflylogic.com
 */
 
-/* $Id: dmtximage.c 405 2008-08-15 22:02:41Z mblaughton $ */
+/* $Id: dmtximage.c 757 2009-02-26 16:00:35Z mblaughton $ */
 
 /**
  * @file dmtximage.c
@@ -28,45 +28,128 @@ Contact: mike@dragonflylogic.com
  */
 
 /**
- * @brief  Allocate libdmtx image memory
- * @param  width image width
- * @param  height image height
- * @return Address of newly allocated memory
+ * libdmtx treats image data as a single 1D array of packed pixels. When
+ * reading and writing barcodes, this array provides the sole mechanism for
+ * pixel storage and libdmtx relies on the calling program to transfer
+ * images to/from the outside world (e.g., saving to disk, acquiring camera
+ * input, etc...).
+ *
+ * By default, libdmtx treats the first pixel of an array as the top-left
+ * location of an image, with horizontal rows working downward to the
+ * final pixel at the bottom-right corner. If mapping a pixel buffer this
+ * way produces an inverted image, then specify DmtxFlipY at image
+ * creation time to remove the inversion. Note that DmtxFlipY has no
+ * significant affect on performance since it only modifies the pixel
+ * mapping math and does not alter any pixel data. If the image appears
+ * correctly without any flips then specify DmtxFlipNone.
+ *
+ * Regardless of how an image is stored internally, all libdmtx functions
+ * consider coordinate (x=0,y=0) to represent the bottom-left pixel
+ * location of an image.
+ *
+ *                (0,HEIGHT-1)        (WIDTH-1,HEIGHT-1)
+ *
+ *          array pos = 0,1,2,3,...-----------+
+ *                      |                     |
+ *                      |                     |
+ *                      |       libdmtx       |
+ *                      |        image        |
+ *                      |     coordinates     |
+ *                      |                     |
+ *                      |                     |
+ *                      +---------...,N-2,N-1,N = array pos
+ *
+ *                    (0,0)              (WIDTH-1,0)
+ *
+ * Notes:
+ *   - OpenGL pixel arrays obtained with glReadPixels() are stored
+ *     bottom-to-top; use DmtxFlipY
+ *   - Many popular image formats (e.g., PNG, GIF) store rows
+ *     top-to-bottom; use DmtxFlipNone
+ */
+
+/**
+ * @brief  XXX
+ * @param  XXX
+ * @return XXX
  */
 extern DmtxImage *
-dmtxImageMalloc(int width, int height)
+dmtxImageCreate(unsigned char *pxl, int width, int height, int pack)
 {
+   DmtxPassFail err;
    DmtxImage *img;
 
+   if(pxl == NULL || width < 1 || height < 1)
+      return NULL;
+
    img = (DmtxImage *)calloc(1, sizeof(DmtxImage));
-   if(img == NULL) {
+   if(img == NULL)
       return NULL;
-   }
 
-   /* Consider moving scaling factor to decode as "lens" factors or
-      something ... otherwise image needs to be remalloced whenever
-      decode is reinitialized ...*/
+   img->pxl = pxl;
+   img->width = width;
+   img->height = height;
+   img->pixelPacking = pack;
+   img->bitsPerPixel = GetBitsPerPixel(pack);
+   img->bytesPerPixel = img->bitsPerPixel/8;
+   img->rowPadBytes = 0;
+   img->rowSizeBytes = img->width * img->bytesPerPixel + img->rowPadBytes;
+   img->imageFlip = DmtxFlipNone;
 
-   img->pageCount = 1;
-   img->width = img->widthScaled = width;
-   img->height = img->heightScaled = height;
-   img->scale = 1;
-   img->xMin = img->xMinScaled = 0;
-   img->xMax = img->xMaxScaled = width - 1;
-   img->yMin = img->yMinScaled = 0;
-   img->yMax = img->yMaxScaled = height - 1;
+   /* Leave channelStart[] and bitsPerChannel[] with zeros from calloc */
+   img->channelCount = 0;
 
-   img->pxl = (DmtxRgb *)calloc(width * height, sizeof(DmtxRgb));
-   if(img->pxl == NULL) {
-      free(img);
-      return NULL;
-   }
-
-   img->compass = (DmtxCompassEdge *)calloc(width * height, sizeof(DmtxCompassEdge));
-   if(img->compass == NULL) {
-      free(img->pxl);
-      free(img);
-      return NULL;
+   switch(pack) {
+      case DmtxPackCustom:
+         break;
+      case DmtxPack1bppK:
+         err = dmtxImageSetChannel(img, 0, 1);
+         break;
+      case DmtxPack8bppK:
+         err = dmtxImageSetChannel(img, 0, 8);
+         break;
+      case DmtxPack16bppRGB:
+      case DmtxPack16bppBGR:
+      case DmtxPack16bppYCbCr:
+         err = dmtxImageSetChannel(img,  0, 5);
+         err = dmtxImageSetChannel(img,  5, 5);
+         err = dmtxImageSetChannel(img, 10, 5);
+         break;
+      case DmtxPack24bppRGB:
+      case DmtxPack24bppBGR:
+      case DmtxPack24bppYCbCr:
+      case DmtxPack32bppRGBX:
+      case DmtxPack32bppBGRX:
+         err = dmtxImageSetChannel(img,  0, 8);
+         err = dmtxImageSetChannel(img,  8, 8);
+         err = dmtxImageSetChannel(img, 16, 8);
+         break;
+      case DmtxPack16bppRGBX:
+      case DmtxPack16bppBGRX:
+         err = dmtxImageSetChannel(img,  0, 5);
+         err = dmtxImageSetChannel(img,  5, 5);
+         err = dmtxImageSetChannel(img, 10, 5);
+         break;
+      case DmtxPack16bppXRGB:
+      case DmtxPack16bppXBGR:
+         err = dmtxImageSetChannel(img,  1, 5);
+         err = dmtxImageSetChannel(img,  6, 5);
+         err = dmtxImageSetChannel(img, 11, 5);
+         break;
+      case DmtxPack32bppXRGB:
+      case DmtxPack32bppXBGR:
+         err = dmtxImageSetChannel(img,  8, 8);
+         err = dmtxImageSetChannel(img, 16, 8);
+         err = dmtxImageSetChannel(img, 24, 8);
+         break;
+      case DmtxPack32bppCMYK:
+         err = dmtxImageSetChannel(img,  0, 8);
+         err = dmtxImageSetChannel(img,  8, 8);
+         err = dmtxImageSetChannel(img, 16, 8);
+         err = dmtxImageSetChannel(img, 24, 8);
+         break;
+      default:
+         return NULL;
    }
 
    return img;
@@ -75,25 +158,40 @@ dmtxImageMalloc(int width, int height)
 /**
  * @brief  Free libdmtx image memory
  * @param  img pointer to img location
- * @return DMTX_FAILURE | DMTX_SUCCESS
+ * @return DmtxFail | DmtxPass
  */
-extern int
-dmtxImageFree(DmtxImage **img)
+extern DmtxPassFail
+dmtxImageDestroy(DmtxImage **img)
 {
-   if(*img == NULL)
-      return DMTX_FAILURE;
-
-   if((*img)->pxl != NULL)
-      free((*img)->pxl);
-
-   if((*img)->compass != NULL)
-      free((*img)->compass);
+   if(img == NULL || *img == NULL)
+      return DmtxFail;
 
    free(*img);
 
    *img = NULL;
 
-   return DMTX_SUCCESS;
+   return DmtxPass;
+}
+
+/**
+ *
+ *
+ */
+extern DmtxPassFail
+dmtxImageSetChannel(DmtxImage *img, int channelStart, int bitsPerChannel)
+{
+   if(img->channelCount >= 4) /* IMAGE_MAX_CHANNEL */
+      return DmtxFail;
+
+   /* New channel extends beyond pixel data */
+/* if(channelStart + bitsPerChannel > img->bitsPerPixel)
+      return DmtxFail; */
+
+   img->bitsPerChannel[img->channelCount] = bitsPerChannel;
+   img->channelStart[img->channelCount] = channelStart;
+   (img->channelCount)++;
+
+   return DmtxPass;
 }
 
 /**
@@ -101,61 +199,25 @@ dmtxImageFree(DmtxImage **img)
  * @param  img pointer to image
  * @return image width
  */
-extern int
+extern DmtxPassFail
 dmtxImageSetProp(DmtxImage *img, int prop, int value)
 {
    if(img == NULL)
-      return DMTX_FAILURE;
+      return DmtxFail;
 
    switch(prop) {
-      case DmtxPropWidth:
-         img->width = value;
-         img->widthScaled = img->width/img->scale;
+      case DmtxPropRowPadBytes:
+         img->rowPadBytes = value;
+         img->rowSizeBytes = img->width * (img->bitsPerPixel/8) + img->rowPadBytes;
          break;
-      case DmtxPropHeight:
-         img->height = value;
-         img->heightScaled = img->height/img->scale;
-         break;
-      case DmtxPropScale:
-         img->scale = value;
-         img->widthScaled = img->width/value;
-         img->heightScaled = img->height/value;
-         img->xMinScaled = img->xMin/value;
-         img->xMaxScaled = img->xMax/value;
-         img->yMinScaled = img->yMin/value;
-         img->yMaxScaled = img->yMax/value;
-         break;
-      case DmtxPropXmin:
-         img->xMin = value;
-         img->xMinScaled = img->xMin/img->scale;
-         break;
-      case DmtxPropXmax:
-         img->xMax = value;
-         img->xMaxScaled = img->xMax/img->scale;
-         break;
-      case DmtxPropYmin: /* Deliberate y-flip */
-         img->yMax = img->height - value - 1;
-         img->yMaxScaled = img->yMax/img->scale;
-         break;
-      case DmtxPropYmax: /* Deliberate y-flip */
-         img->yMin = img->height - value - 1;
-         img->yMinScaled = img->yMin/img->scale;
+      case DmtxPropImageFlip:
+         img->imageFlip = value;
          break;
       default:
-         return DMTX_FAILURE;
          break;
    }
 
-   /* Specified range has non-positive area */
-   if(img->xMin >= img->xMax || img->yMin >= img->yMax)
-      return DMTX_FAILURE;
-
-   /* Specified range extends beyond image boundaries */
-   if(img->xMin < 0 || img->xMax >= img->width ||
-         img->yMin < 0 || img->yMax >= img->height)
-      return DMTX_FAILURE;
-
-   return DMTX_SUCCESS;
+   return DmtxPass;
 }
 
 /**
@@ -167,157 +229,217 @@ extern int
 dmtxImageGetProp(DmtxImage *img, int prop)
 {
    if(img == NULL)
-      return -1;
+      return DmtxUndefined;
 
    switch(prop) {
       case DmtxPropWidth:
          return img->width;
-         break;
       case DmtxPropHeight:
          return img->height;
-         break;
-      case DmtxPropArea:
-         return img->width * img->height;
-         break;
-      case DmtxPropXmin:
-         return img->xMin;
-         break;
-      case DmtxPropXmax:
-         return img->xMax;
-         break;
-      case DmtxPropYmin:
-         return img->yMin;
-         break;
-      case DmtxPropYmax:
-         return img->yMax;
-         break;
-      case DmtxPropScale:
-         return img->scale;
-         break;
-      case DmtxPropScaledWidth:
-         return img->width/img->scale;
-         break;
-      case DmtxPropScaledHeight:
-         return img->height/img->scale;
-         break;
-      case DmtxPropScaledArea:
-         return (img->width/img->scale) * (img->height/img->scale);
-         break;
-      case DmtxPropScaledXmin:
-         return img->xMinScaled;
-         break;
-      case DmtxPropScaledXmax:
-         return img->xMaxScaled;
-         break;
-      case DmtxPropScaledYmin:
-         return img->yMinScaled;
-         break;
-      case DmtxPropScaledYmax:
-         return img->yMaxScaled;
+      case DmtxPropPixelPacking:
+         return img->pixelPacking;
+      case DmtxPropBitsPerPixel:
+         return img->bitsPerPixel;
+      case DmtxPropBytesPerPixel:
+         return img->bytesPerPixel;
+      case DmtxPropRowPadBytes:
+         return img->rowPadBytes;
+      case DmtxPropRowSizeBytes:
+         return img->rowSizeBytes;
+      case DmtxPropImageFlip:
+         return img->imageFlip;
+      case DmtxPropChannelCount:
+         return img->channelCount;
+      default:
          break;
    }
 
-   return -1;
+   return DmtxUndefined;
 }
 
 /**
- * @brief  Returns pixel offset for unscaled image
+ * @brief  Returns pixel offset for image
  * @param  img
- * @param  x Scaled x coordinate
- * @param  y Scaled y coordinate
- * @return Unscaled pixel offset
+ * @param  x coordinate
+ * @param  y coordinate
+ * @return pixe byte offset
  */
 extern int
-dmtxImageGetOffset(DmtxImage *img, int x, int y)
+dmtxImageGetByteOffset(DmtxImage *img, int x, int y)
 {
    assert(img != NULL);
+   assert(!(img->imageFlip & DmtxFlipX)); /* DmtxFlipX is not an option */
 
-   return ((img->heightScaled - y - 1) * img->scale * img->width + (x * img->scale));
+   if(dmtxImageContainsInt(img, 0, x, y) == DmtxFalse)
+      return DmtxUndefined;
+
+   if(img->imageFlip & DmtxFlipY)
+      return (y * img->rowSizeBytes + x * img->bytesPerPixel);
+
+   return ((img->height - y - 1) * img->rowSizeBytes + x * img->bytesPerPixel);
 }
 
 /**
- * @brief  XXX
- * @param  img
- * @param  x
- * @param  y
- * @param  rgb
- * @return void
+ *
+ *
  */
-extern int
-dmtxImageSetRgb(DmtxImage *img, int x, int y, DmtxRgb rgb)
-{
-   int offset;
-
-   assert(img != NULL);
-
-   if(dmtxImageContainsInt(img, 0, x, y) == DMTX_FALSE)
-      return DMTX_FAILURE;
-
-   offset = dmtxImageGetOffset(img, x, y);
-   memcpy(img->pxl[offset], rgb, 3);
-
-   return DMTX_SUCCESS;
-}
-
-/**
- * @brief  XXX
- * @param  img
- * @param  x Scaled x coordinate
- * @param  y Scaled y coordinate
- * @param  rgb
- * @return void
- */
-extern int
-dmtxImageGetRgb(DmtxImage *img, int x, int y, DmtxRgb rgb)
+extern DmtxPassFail
+dmtxImageGetPixelValue(DmtxImage *img, int x, int y, int channel, int *value)
 {
    int offset;
+/* unsigned char *pixelPtr;
+   int pixelValue;
+   int mask;
+   int bitShift; */
 
    assert(img != NULL);
+   assert(channel < img->channelCount);
 
-   if(dmtxImageContainsInt(img, 0, x, y) == DMTX_FALSE)
-      return DMTX_FAILURE;
+   offset = dmtxImageGetByteOffset(img, x, y);
+   if(offset == DmtxUndefined)
+      return DmtxFail;
 
-   offset = dmtxImageGetOffset(img, x, y);
-   memcpy(rgb, img->pxl[offset], 3);
+   switch(img->bitsPerChannel[channel]) {
+      case 1:
+/*       assert(img->bitsPerPixel == 1);
+         mask = 0x01 << (7 - offset%8);
+         *value = (img->pxl[offset/8] & mask) ? 255 : 0; */
+         break;
+      case 5:
+         /* XXX might be expensive if we want to scale perfect 0-255 range */
+/*       assert(img->bitsPerPixel == 16);
+         pixelPtr = img->pxl + (offset * (img->bitsPerPixel/8));
+         pixelValue = (*pixelPtr << 8) | (*(pixelPtr+1));
+         bitShift = img->bitsPerPixel - 5 - img->channelStart[channel];
+         mask = 0x1f << bitShift;
+         *value = (((pixelValue & mask) >> bitShift) << 3); */
+         break;
+      case 8:
+         assert(img->channelStart[channel] % 8 == 0);
+         assert(img->bitsPerPixel % 8 == 0);
+         *value = img->pxl[offset + channel];
+         break;
+   }
 
-   return DMTX_SUCCESS;
+   return DmtxPass;
+}
+
+/**
+ *
+ *
+ */
+extern DmtxPassFail
+dmtxImageSetPixelValue(DmtxImage *img, int x, int y, int channel, int value)
+{
+   int offset;
+/* unsigned char *pixelPtr; */
+/* int pixelValue; */
+/* int mask; */
+/* int bitShift; */
+
+   assert(img != NULL);
+   assert(channel < img->channelCount);
+
+   offset = dmtxImageGetByteOffset(img, x, y);
+   if(offset == DmtxUndefined)
+      return DmtxFail;
+
+   switch(img->bitsPerChannel[channel]) {
+      case 1:
+/*       assert(img->bitsPerPixel == 1);
+         mask = 0x01 << (7 - offset%8);
+         *value = (img->pxl[offset/8] & mask) ? 255 : 0; */
+         break;
+      case 5:
+         /* XXX might be expensive if we want to scale perfect 0-255 range */
+/*       assert(img->bitsPerPixel == 16);
+         pixelPtr = img->pxl + (offset * (img->bitsPerPixel/8));
+         pixelValue = (*pixelPtr << 8) | (*(pixelPtr+1));
+         bitShift = img->bitsPerPixel - 5 - img->channelStart[channel];
+         mask = 0x1f << bitShift;
+         *value = (((pixelValue & mask) >> bitShift) << 3); */
+         break;
+      case 8:
+         assert(img->channelStart[channel] % 8 == 0);
+         assert(img->bitsPerPixel % 8 == 0);
+         img->pxl[offset + channel] = value;
+         break;
+   }
+
+   return DmtxPass;
 }
 
 /**
  * @brief  Test whether image contains a coordinate expressed in integers
  * @param  img
- * @param  margin Unscaled margin width
- * @param  x Scaled x coordinate
- * @param  y Scaled y coordinate
- * @return DMTX_TRUE | DMTX_FALSE
+ * @param  margin width
+ * @param  x coordinate
+ * @param  y coordinate
+ * @return DmtxTrue | DmtxFalse
  */
-extern int
+extern DmtxBoolean
 dmtxImageContainsInt(DmtxImage *img, int margin, int x, int y)
 {
    assert(img != NULL);
 
-   if(x - margin >= img->xMinScaled && x + margin <= img->xMaxScaled &&
-         y - margin >= img->yMinScaled && y + margin <= img->yMaxScaled)
-      return DMTX_TRUE;
+   if(x - margin >= 0 && x + margin < img->width &&
+         y - margin >= 0 && y + margin < img->height)
+      return DmtxTrue;
 
-   return DMTX_FALSE;
+   return DmtxFalse;
 }
 
 /**
  * @brief  Test whether image contains a coordinate expressed in floating points
  * @param  img
- * @param  x Scaled x coordinate
- * @param  y Scaled y coordinate
- * @return DMTX_TRUE | DMTX_FALSE
+ * @param  x coordinate
+ * @param  y coordinate
+ * @return DmtxTrue | DmtxFalse
  */
-extern int
+extern DmtxBoolean
 dmtxImageContainsFloat(DmtxImage *img, double x, double y)
 {
    assert(img != NULL);
 
-   if(x >= img->xMinScaled && x <= img->xMaxScaled &&
-         y >= img->yMinScaled && y <= img->yMaxScaled)
-      return DMTX_TRUE;
+   if(x >= 0.0 && x < (double)img->width && y >= 0.0 && y < (double)img->height)
+      return DmtxTrue;
 
-   return DMTX_FALSE;
+   return DmtxFalse;
+}
+
+/**
+ *
+ *
+ */
+static int
+GetBitsPerPixel(int pack)
+{
+   switch(pack) {
+      case DmtxPack1bppK:
+         return 1;
+      case DmtxPack8bppK:
+         return 8;
+      case DmtxPack16bppRGB:
+      case DmtxPack16bppRGBX:
+      case DmtxPack16bppXRGB:
+      case DmtxPack16bppBGR:
+      case DmtxPack16bppBGRX:
+      case DmtxPack16bppXBGR:
+      case DmtxPack16bppYCbCr:
+         return 16;
+      case DmtxPack24bppRGB:
+      case DmtxPack24bppBGR:
+      case DmtxPack24bppYCbCr:
+         return  24;
+      case DmtxPack32bppRGBX:
+      case DmtxPack32bppXRGB:
+      case DmtxPack32bppBGRX:
+      case DmtxPack32bppXBGR:
+      case DmtxPack32bppCMYK:
+         return  32;
+      default:
+         break;
+   }
+
+   return DmtxUndefined;
 }

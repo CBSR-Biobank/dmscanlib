@@ -1,7 +1,8 @@
 /*
 libdmtx - Data Matrix Encoding/Decoding Library
 
-Copyright (c) 2008 Mike Laughton
+Copyright (C) 2008, 2009 Mike Laughton
+Copyright (C) 2008 Olivier Guilyardi
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -20,10 +21,23 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 Contact: mike@dragonflylogic.com
 */
 
-/* $Id: dmtxread.h 383 2008-08-01 20:41:07Z mblaughton $ */
+/* $Id: dmtxread.h 726 2009-02-19 22:17:48Z mblaughton $ */
 
 #ifndef __DMTXREAD_H__
 #define __DMTXREAD_H__
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <getopt.h>
+#include <errno.h>
+#include <ctype.h>
+#include <math.h>
+#include <stdarg.h>
+#include <assert.h>
+#include <wand/magick-wand.h>
+#include "../../dmtx.h"
+#include "../common/dmtxutil.h"
 
 #if ENABLE_NLS
 # include <libintl.h>
@@ -35,12 +49,15 @@ Contact: mike@dragonflylogic.com
 
 typedef struct {
    int codewords;       /* -c, --codewords */
-   int squareDevn;      /* -d, --square-deviation */
+   int edgeMin;         /* -e, --minimum-edge */
+   int edgeMax;         /* -E, --maximum-edge */
    int scanGap;         /* -g, --gap */
    int timeoutMS;       /* -m, --milliseconds */
    int newline;         /* -n, --newline */
-   int shrinkMax;       /* -s, --shrink */
-   int shrinkMin;       /* -s, --shrink (if range specified) */
+   int page;            /* -p, --page */
+   int squareDevn;      /* -q, --square-deviation */
+   int dpi;             /* -r, --resolution */
+   int sizeIdxExpected; /* -s, --symbol-size */
    int edgeThresh;      /* -t, --threshold */
    char *xMin;          /* -x, --x-range-min */
    char *xMax;          /* -X, --x-range-max */
@@ -49,27 +66,26 @@ typedef struct {
    int correctionsMax;  /* -C, --corrections-max */
    int diagnose;        /* -D, --diagnose */
    int mosaic;          /* -M, --mosaic */
-   int pageNumber;      /* -P, --page-number */
+   int stopAfter;       /* -N, --stop-after */
+   int pageNumbers;     /* -P, --page-numbers */
    int corners;         /* -R, --corners */
+   int shrinkMax;       /* -S, --shrink */
+   int shrinkMin;       /* -S, --shrink (if range specified) */
+   int unicode;         /* -U, --unicode */
    int verbose;         /* -v, --verbose */
 } UserOptions;
 
-typedef enum {
-   ImageFormatUnknown,
-   ImageFormatPng,
-   ImageFormatTiff
-} ImageFormat;
-
-static void SetOptionDefaults(UserOptions *options);
-static int HandleArgs(UserOptions *options, int *fileIndex, int *argcp, char **argvp[]);
+/* Functions */
+static UserOptions GetDefaultOptions(void);
+static DmtxPassFail HandleArgs(UserOptions *opt, int *fileIndex, int *argcp, char **argvp[]);
 static void ShowUsage(int status);
+static DmtxPassFail SetDecodeOptions(DmtxDecode *dec, DmtxImage *img, UserOptions *opt);
+static DmtxPassFail PrintStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg,
+      int imgPageIndex, UserOptions *opt);
+static DmtxPassFail PrintMessage(DmtxRegion *reg, DmtxMessage *msg, UserOptions *opt);
+static void CleanupMagick(MagickWand **wand, int magicError);
+static void ListImageFormats(void);
+static void WriteDiagnosticImage(DmtxDecode *dec, char *imagePath);
 static int ScaleNumberString(char *s, int extent);
-static ImageFormat GetImageFormat(char *imagePath);
-static DmtxImage *LoadImage(char *imagePath, int pageIndex);
-static DmtxImage *LoadImagePng(char *imagePath);
-static DmtxImage *LoadImageTiff(char *imagePath, int pageIndex);
-static int PrintDecodedOutput(UserOptions *options, DmtxImage *image,
-      DmtxRegion *region, DmtxMessage *message, int pageIndex);
-static void WriteDiagnosticImage(DmtxDecode *dec, DmtxRegion *reg, char *imagePath);
 
 #endif

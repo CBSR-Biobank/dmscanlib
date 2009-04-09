@@ -1,7 +1,7 @@
 /*
 libdmtx - Data Matrix Encoding/Decoding Library
 
-Copyright (c) 2008 Mike Laughton
+Copyright (C) 2008, 2009 Mike Laughton
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -20,7 +20,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 Contact: mike@dragonflylogic.com
 */
 
-/* $Id: dmtxquery.c 418 2008-09-04 19:22:15Z mblaughton $ */
+/* $Id: dmtxquery.c 667 2009-02-10 19:48:01Z mblaughton $ */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -73,15 +73,13 @@ SetOptionDefaults(UserOptions *options)
  * @param options    runtime options from defaults or command line
  * @param argcp      pointer to argument count
  * @param argvp      pointer to argument list
- * @return           DMTX_SUCCESS | DMTX_FAILURE
+ * @return           DmtxPass | DmtxFail
  */
-static int
+static DmtxPassFail
 HandleArgs(UserOptions *options, int *argcp, char **argvp[])
 {
-   int err;
    int opt;
    int longIndex;
-   char *ptr;
 
    struct option longOptions[] = {
          {"version",          no_argument,       NULL, 'V'},
@@ -92,7 +90,7 @@ HandleArgs(UserOptions *options, int *argcp, char **argvp[])
    programName = Basename((*argvp)[0]);
 
    if(*argcp == 1) /* Program called without arguments */
-      return DMTX_FAILURE;
+      return DmtxFail;
 
    for(;;) {
       opt = getopt_long(*argcp, *argvp, "V", longOptions, &longIndex);
@@ -104,17 +102,17 @@ HandleArgs(UserOptions *options, int *argcp, char **argvp[])
             ShowUsage(0);
             break;
          case 'V':
-            fprintf(stdout, "%s version %s\n", programName, DMTX_VERSION);
+            fprintf(stdout, "%s version %s\n", programName, DmtxVersion);
             fprintf(stdout, "libdmtx version %s\n", dmtxVersion());
             exit(0);
             break;
          default:
-            return DMTX_FAILURE;
+            return DmtxFail;
             break;
       }
    }
 
-   return DMTX_SUCCESS;
+   return DmtxPass;
 }
 
 /**

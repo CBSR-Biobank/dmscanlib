@@ -1,7 +1,7 @@
 /*
 libdmtx - Data Matrix Encoding/Decoding Library
 
-Copyright (c) 2008 Mike Laughton
+Copyright (C) 2008, 2009 Mike Laughton
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -20,7 +20,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 Contact: mike@dragonflylogic.com
 */
 
-/* $Id: dmtx.c 418 2008-09-04 19:22:15Z mblaughton $ */
+/* $Id: dmtx.c 763 2009-02-26 23:47:43Z mblaughton $ */
 
 /**
  * @file dmtx.c
@@ -31,6 +31,7 @@ Contact: mike@dragonflylogic.com
 #include <stdio.h>
 #include <sys/types.h>
 #include <ctype.h>
+#include <limits.h>
 #include <float.h>
 #include <string.h>
 #include <errno.h>
@@ -44,24 +45,30 @@ Contact: mike@dragonflylogic.com
 #endif
 
 #ifndef CALLBACK_POINT_PLOT
-#define CALLBACK_POINT_PLOT(a,b,c,d) ((void) 0)
+#define CALLBACK_POINT_PLOT(a,b,c,d)
 #endif
 
 #ifndef CALLBACK_POINT_XFRM
-#define CALLBACK_POINT_XFRM(a,b,c,d) ((void) 0)
+#define CALLBACK_POINT_XFRM(a,b,c,d)
 #endif
 
 #ifndef CALLBACK_MODULE
-#define CALLBACK_MODULE(a,b,c,d,e) ((void) 0)
+#define CALLBACK_MODULE(a,b,c,d,e)
 #endif
 
 #ifndef CALLBACK_MATRIX
-#define CALLBACK_MATRIX(a,b) ((void) 0)
+#define CALLBACK_MATRIX(a)
 #endif
 
 #ifndef CALLBACK_FINAL
-#define CALLBACK_FINAL(a,b) ((void) 0)
+#define CALLBACK_FINAL(a,b)
 #endif
+
+/**
+ * This use of #include to merge .c files together is deliberate, if unusual.
+ * This allows library functions to be grouped in files of like-functionality
+ * while still enabling static functions to be accessed across files.
+ */
 
 #include "dmtxtime.c"
 #include "dmtxscangrid.c"
@@ -75,11 +82,10 @@ Contact: mike@dragonflylogic.com
 #include "dmtxsymbol.c"
 #include "dmtxvector2.c"
 #include "dmtxmatrix3.c"
-#include "dmtxcolor3.c"
 #include "dmtximage.c"
 
 extern char *
 dmtxVersion(void)
 {
-   return DMTX_VERSION;
+   return DmtxVersion;
 }

@@ -1,7 +1,7 @@
 /*
 libdmtx - Data Matrix Encoding/Decoding Library
 
-Copyright (c) 2008 Mike Laughton
+Copyright (C) 2008, 2009 Mike Laughton
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -29,8 +29,28 @@ Contact: mike@dragonflylogic.com
 #include "../../config.h"
 #endif
 
-extern int StringToInt(int *numberInt, char *numberString, char **terminate);
+#ifdef HAVE_SYSEXITS_H
+#include <sysexits.h>
+#else
+#define EX_OK           0
+#define EX_USAGE       64
+#define EX_DATAERR     65
+#define EX_SOFTWARE    70
+#define EX_OSERR       71
+#define EX_CANTCREAT   73
+#define EX_IOERR       74
+#endif
+
+extern DmtxPassFail StringToInt(int *numberInt, char *numberString, char **terminate);
 extern void FatalError(int errorCode, char *fmt, ...);
 extern char *Basename(char *path);
+
+static char *symbolSizes[] = {
+      "10x10", "12x12",   "14x14",   "16x16",   "18x18",   "20x20",
+      "22x22", "24x24",   "26x26",   "32x32",   "36x36",   "40x40",
+      "44x44", "48x48",   "52x52",   "64x64",   "72x72",   "80x80",
+      "88x88", "96x96", "104x104", "120x120", "132x132", "144x144",
+       "8x18",  "8x32",   "12x26",   "12x36",   "16x36",   "16x48"
+};
 
 #endif

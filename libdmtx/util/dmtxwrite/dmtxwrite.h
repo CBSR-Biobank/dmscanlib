@@ -1,7 +1,7 @@
 /*
 libdmtx - Data Matrix Encoding/Decoding Library
 
-Copyright (c) 2008 Mike Laughton
+Copyright (C) 2008, 2009 Mike Laughton
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -20,10 +20,34 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 Contact: mike@dragonflylogic.com
 */
 
-/* $Id: dmtxwrite.h 314 2008-06-09 19:32:23Z mblaughton $ */
+/* $Id: dmtxwrite.h 752 2009-02-25 23:27:09Z mblaughton $ */
 
 #ifndef __DMTXWRITE_H__
 #define __DMTXWRITE_H__
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <getopt.h>
+#include <errno.h>
+#include <ctype.h>
+#include <stdarg.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <assert.h>
+#include <wand/magick-wand.h>
+#include "../../dmtx.h"
+#include "../common/dmtxutil.h"
+
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
+#ifdef _VISUALC_
+#include <io.h>
+#define snprintf sprintf_s
+#endif
 
 #if ENABLE_NLS
 # include <libintl.h>
@@ -36,26 +60,34 @@ Contact: mike@dragonflylogic.com
 #define DMTXWRITE_BUFFER_SIZE 4096
 
 typedef struct {
-   DmtxRgb color;
-   DmtxRgb bgColor;
-   char format;
    char *inputPath;
    char *outputPath;
-   char preview;
+   char *format;
+   int codewords;
+   int marginSize;
+   int moduleSize;
+   int scheme;
+   int preview;
    int rotate;
    int sizeIdx;
-   int verbose;
+   int color[3];
+   int bgColor[3];
    int mosaic;
    int dpi;
+   int verbose;
 } UserOptions;
 
-static void InitUserOptions(UserOptions *options);
-static int HandleArgs(UserOptions *options, int *argcp, char **argvp[], DmtxEncode *encode);
-static void ReadData(UserOptions *options, int *codeBuffer, unsigned char *codeBufferSize);
+static UserOptions GetDefaultOptions(void);
+static DmtxPassFail HandleArgs(UserOptions *opt, int *argcp, char **argvp[]);
+static void ReadInputData(int *codeBuffer, unsigned char *codeBufferSize, UserOptions *opt);
 static void ShowUsage(int status);
-static void WriteImagePng(UserOptions *options, DmtxEncode *encode);
-static void WriteImagePnm(UserOptions *options, DmtxEncode *encode);
-static void WriteAsciiBarcode(DmtxEncode *encode);
-static void WriteCodewords(DmtxEncode *encode);
+static void CleanupMagick(MagickWand **wand, int magickError);
+static void ListImageFormats(void);
+static char *GetImageFormat(UserOptions *opt);
+static DmtxPassFail WriteImageFile(UserOptions *opt, DmtxEncode *enc, char *format);
+static DmtxPassFail WriteSvgFile(UserOptions *opt, DmtxEncode *enc, char *format);
+static DmtxPassFail WriteAsciiPreview(DmtxEncode *enc);
+static DmtxPassFail WriteCodewordList(DmtxEncode *enc);
+static DmtxBoolean StrNCmpI(const char *s1, const char *s2, size_t n);
 
 #endif

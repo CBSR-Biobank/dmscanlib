@@ -1,7 +1,7 @@
 /*
 libdmtx - Data Matrix Encoding/Decoding Library
 
-Copyright (c) 2008 Mike Laughton
+Copyright (C) 2008, 2009 Mike Laughton
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -20,7 +20,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 Contact: mike@dragonflylogic.com
 */
 
-/* $Id: dmtxquery.h 314 2008-06-09 19:32:23Z mblaughton $ */
+/* $Id: dmtxquery.h 597 2009-01-20 05:16:25Z mblaughton $ */
 
 #ifndef __DMTXQUERY_H__
 #define __DMTXQUERY_H__
@@ -38,7 +38,7 @@ typedef struct {
 } UserOptions;
 
 static void SetOptionDefaults(UserOptions *options);
-static int HandleArgs(UserOptions *options, int *argcp, char **argvp[]);
+static DmtxPassFail HandleArgs(UserOptions *options, int *argcp, char **argvp[]);
 static void ShowUsage(int status);
 
 #endif
