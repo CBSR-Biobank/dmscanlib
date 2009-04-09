@@ -1,0 +1,61 @@
+README for libdmtx-net version 0.7.0 - March 2, 2009
+-----------------------------------------------------------------
+
+libdmtx-net is a .NET wrapper for libdmtx that was originally
+written by Tomas Valenta, currently maintained by Joseph Ferner
+and is distributed as part of the libdmtx package.
+
+
+1. libdmtx-net Installation
+-----------------------------------------------------------------
+
+a) Compile the libdmtx solution.
+
+b) Compile the libdmtx.net solution.
+
+c) Add a reference to Libdmtx.Net.dll in you're project.
+   (Make sure you copy libdmtx.dll into the same directory
+   as you're binaries).
+
+
+2. Dependencies
+-----------------------------------------------------------------
+
+Requires .NET Framework 2.0 (or higher) and C runtime library,
+for example Microsoft Visual C++ Runtime.
+
+
+3. Using
+-----------------------------------------------------------------
+
+Using is very similar to the command line utilities dmtxread
+and dmtxwrite. This disallows to use the library as smart as
+with C API, but saves unmanaged calls from .NET which cost
+some overhead.
+
+3.1. Decoding
+-----------------------------------------------------------------
+LibDmtx.DecodeOptions o = new LibDmtx.DecodeOptions();
+Bitmap b = new Bitmap(@"bitmap.png");
+LibDmtx.DmtxDecoded[] res = LibDmtx.Decode(b, o);
+for (uint i = 0; i < res.Length; i++) {
+	string str = Encoding.ASCII.GetString(res[i].Data).TrimEnd('\0');
+	Console.WriteLine("Code " + i + ": " + str);
+}
+
+3.2. Encoding
+-----------------------------------------------------------------
+LibDmtx.EncodeOptions o = new LibDmtx.EncodeOptions();
+byte[] dataToEncode = Encoding.ASCII.GetBytes("Hello World!");
+LibDmtx.DmtxEncoded en = LibDmtx.Encode(dataToEncode, o);
+pictureBox1.Image = en.bitmap;
+
+3.3. More Information
+-----------------------------------------------------------------
+See the source or the unit tests.
+
+
+4. Known issues
+-----------------------------------------------------------------
+
+a) Probably some minor bugs.
