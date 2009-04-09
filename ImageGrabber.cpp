@@ -2,6 +2,8 @@
 #include <windows.h>
 #include "stdafx.h"
 #include "TwainImage.h"
+#include "libdmtx/dmtx.h"
+//#include "libdmtx/util/dmtxread/dmtxread.h"
 #include "twain.h"     // Standard TWAIN header.
 
 // The following macros serve a useful purpose: in the event of failure, they
@@ -56,8 +58,8 @@ static TW_IDENTITY g_AppID;
 //static void throwJTE (JNIEnv *env, const char *msg);
 
 // Function prototypes for image transfer helper functions.
-
-static TwainImage xferDIB8toImage  (LPBITMAPINFOHEADER lpbmih);
+int GetPaletteSize(BITMAPINFOHEADER& bmInfo);
+static TwainImage createdmtxImage  (HANDLE hMem);
 //static jobject xferDIB24toImage (LPBITMAPINFOHEADER lpbmih, JNIEnv *env);
 
 // ===========================================================================
@@ -304,7 +306,7 @@ void acquire(){
    // source's own user interface (dialog box).
 
    TW_USERINTERFACE ui;
-   ui.ShowUI = TRUE;
+   ui.ShowUI = FALSE;
    ui.ModalUI = FALSE;
    ui.hParent = hwnd;
 
@@ -458,11 +460,12 @@ void acquire(){
           // Transfer Windows-based DIB to a Java-based Image (via a
           // MemoryImageSource).
 
-          LPBITMAPINFOHEADER lpbmih;
-          lpbmih = (LPBITMAPINFOHEADER) GlobalLock ((HANDLE) handle);
+//          LPBITMAPINFOHEADER lpbmih;
+//          lpbmih = (LPBITMAPINFOHEADER) GlobalLock ((HANDLE) handle);
+//		  TwainImage image;
 /*  TODO
           if (ii.BitsPerPixel == 8)
-              image = xferDIB8toImage (lpbmih, env);
+              image = create8bitImage (handle);
           else
               image = xferDIB24toImage (lpbmih, env);
 */
@@ -631,71 +634,64 @@ void selectSourceAsDefault()
 }
 
 // ===========================================================================
-// xferDIB8toImage
+// Create a dmtx image from the handle to the twain image
 // ===========================================================================
-
-static TwainImage xferDIB8toImage (LPBITMAPINFOHEADER lpbmih)
+/*
+static TwainImage createdmtxImage(HANDLE hMem)
 {
-   // Obtain the image's width and height -- both in pixels -- to pass to the
-   // MemoryImageSource constructor.
+	UCHAR *lpVoid,*pBits;
+	LPBITMAPINFOHEADER pHead;
+	RGBQUAD *pRgb;
+	lpVoid = (UCHAR *)GlobalLock(hMem);
+	pHead = (LPBITMAPINFOHEADER )lpVoid;
+	int width = pHead->biWidth;
+	int height = pHead->biHeight;
+	int m_nBits = pHead->biBitCount;
+	int bytes=0;
 
-   int width = lpbmih->biWidth;
+	DmtxImage *img = dmtxImageMalloc(width, height);
+	
+	if(pHead->biCompression != BI_RGB) 
+	{
+		GlobalUnlock(lpVoid);
+		throw TwainException("invalid image compression in createImageFromHandle");
+	}
+	if(pHead->biBitCount >= 15)
+	{
+		if(pHead->biBitCount != 24) 
+		{
+			GlobalUnlock(lpVoid);
+			throw TwainException("invalid bit count in createImageFromHandle");
+		}
+	}
 
-   int height = lpbmih->biHeight; // height < 0 if bitmap is top-down
-   if (height < 0)
-       height = -height;
+	pBits = lpVoid + sizeof(BITMAPINFOHEADER) + sizeof(RGBQUAD)*GetPaletteSize(*pHead);
+	memcpy(img->pxl,pBits,height*bytes);
+	GlobalUnlock(lpVoid);
+}
+*/
+static TwainImage createdmtxImage(HANDLE hMem)
+{
+	UCHAR *lpVoid,*pBits;
+	LPBITMAPINFOHEADER pHead;
+	RGBQUAD *pRgb;
+	lpVoid = (UCHAR *)GlobalLock(hMem);
+	pHead = (LPBITMAPINFOHEADER )lpVoid;
+	int width = pHead->biWidth;
+	int height = pHead->biHeight;
+	int m_nBits = pHead->biBitCount;
+	int bytes=0;
 
-   // Create Java-based integer pixels array to pass to the MemoryImageSource
-   // constructor.
-
-   //jintArray pixels = env->NewIntArray (width * height);
-   int *pixels = new int[width * height];
-   if (pixels == 0)
-   {
-       throw TwainException("Insufficient memory for pixels array "
-                 "(xferDIB8toImage)");
-   }
-
-   // Populate the pixels array.
-
-   int *palette = (int *) lpbmih + sizeof(BITMAPINFOHEADER);
-
-   int numColors;
-
-   if (lpbmih->biClrUsed > 0)
-       numColors = lpbmih->biClrUsed;
-   else
-       numColors = 1 << lpbmih->biBitCount;
-	//m_pBits = (unsigned char *)(m_pVoid) + sizeof(BITMAPINFOHEADER) + sizeof(RGBQUAD)*GetPaletteSize();
-   unsigned char *bitmap = (unsigned char *) lpbmih +
-                           sizeof(BITMAPINFOHEADER) +
-                           numColors * sizeof(RGBQUAD);
-   //int padBytes = (4 - width & 0x3) & 0x3 // this way is more efficient
-   int padBytes = (4-width%4)%4; // Each pixel occupies 1 byte (palette index)
-                                 // and the number of row bytes is a multiple of
-                                 // 4.
-
-   int rowBytes = width+padBytes;
-   int* pixelsArray = new int[width*height];
-   memcpy(pixelsArray, pixels, sizeof(int)*width * height);
-   for (int row = 0; row < height; row++)
-   {
-        for (int col = 0; col < width; col++)
-        {
-             // Extract color information for pixel and build an integer array
-             int pixel = 0xff000000 | palette [bitmap [rowBytes*row+col]];
-
-             // Store the pixel in the array at the appropriate index.
-
-             pixelsArray [width*(height-row-1)+col] = pixel;
-        }
-   }
-
-   TwainImage *theImage = new TwainImage(width, height);
-   theImage->setPixels(pixelsArray);
-
-	// should return a dmtxImage
-   return *theImage;
+	
+	pBits = lpVoid + sizeof(BITMAPINFOHEADER) + sizeof(RGBQUAD)*GetPaletteSize(*pHead);
+	dmtxImageCreate( pBits, width, height, 8);
+	/*for(int i=0; i<width*height; i++){
+		//img->pxl[i] =  (DmtxRgb) ((unsigned int)pBits[i]) & 0x00FFFFFF);
+		unsigned int pixel = pBits[i];
+		img->pxl[i][0] = pixel & 0x00FF0000; //red mask
+		img->pxl[i][1] = pixel & 0x0000FF00; //green mask
+		img->pxl[i][2] = pixel & 0x000000FF; //blue mask
+	}*/
 }
 
 // ===========================================================================
@@ -833,3 +829,26 @@ static jobject xferDIB24toImage (LPBITMAPINFOHEADER lpbmih, JNIEnv *env)
    return env->CallObjectMethod (obj2, mid, obj1);
 }
 */
+
+/*
+* @param: BITMAPINFOHEADER bmInfo corresponding to the image acquired from twain
+* @return: int Palette Size - the maximum value for any pixel in the image
+*
+*	This method returns the max value for the intensity of any color of any 
+*	pixel in the image
+*/
+int GetPaletteSize(BITMAPINFOHEADER& bmInfo)
+{
+	switch(bmInfo.biBitCount)
+	{
+		case 1:		
+			return 2;
+		case 4:		
+			return 16;
+		case 8:		
+			return 256;
+		default:	
+			return 0;
+	}
+}
+				
