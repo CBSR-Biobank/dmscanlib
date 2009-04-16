@@ -59,7 +59,7 @@ static TW_IDENTITY g_AppID;
 
 // Function prototypes for image transfer helper functions.
 int GetPaletteSize(BITMAPINFOHEADER& bmInfo);
-static TwainImage createdmtxImage  (HANDLE hMem);
+static DmtxImage* createDmtxImage  (HANDLE hMem);
 //static jobject xferDIB24toImage (LPBITMAPINFOHEADER lpbmih, JNIEnv *env);
 
 // ===========================================================================
@@ -196,11 +196,10 @@ BOOL initialize(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 }
 
 // ===========================================================================
-// Java_net_javajeff_jtwain_JTwain_acquire
+// acquire
 // ===========================================================================
 void acquire(){
-   // Create a static window whose handle is passed to DSM_Entry() when we
-   // open the data source manager.
+	DmtxImage *image;
 
    HWND hwnd = CreateWindow ("STATIC",
                              "",
@@ -214,42 +213,24 @@ void acquire(){
                              g_hinstDLL,
                              0);
 
-   // If window could not be created, throw exception. Because the exception
-   // is not actually thrown until execution returns to Java, we must return
-   // a value -- (jobject) 0 was chosen to represent Image null. This value
-   // will not be seen in the Java code because of the exception.
-
    if (hwnd == 0)
    {
        throw TwainException("Unable to create private window (acquire)");
        //return (jobject) 0;
    }
 
-   // Ensure that the default data source's dialog box does not disappear
-   // behind other windows, which can be very disconcerting to the user. We do
-   // that by making the hwnd -- created above and passed to DSM_Entry() below
-   // -- the handle of the topmost window.
-
    SetWindowPos (hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE);
 
    TW_UINT16 rc;
-   //jobject image = 0;
 
    BLOCK_BEGIN(1)
-
    // Open the data source manager.
-
    rc = (*g_pDSM_Entry) (&g_AppID,
                          0,
                          DG_CONTROL,
                          DAT_PARENT,
                          MSG_OPENDSM,
                          (TW_MEMREF) &hwnd);
-
-   // If data source manager could not be opened, throw exception. Because the
-   // exception is not actually thrown until execution returns to Java, we
-   // first exit current block to destroy previously-created window and return
-   // a value (which isn't seen in the Java code).
 
    if (rc != TWRC_SUCCESS)
    {
@@ -260,9 +241,7 @@ void acquire(){
    BLOCK_BEGIN(2)
 
    // Get the default data source's name.
-
    TW_IDENTITY srcID;
-
    ZeroMemory (&srcID, sizeof(srcID));
    rc = (*g_pDSM_Entry) (&g_AppID,
                          0,
@@ -271,16 +250,11 @@ void acquire(){
                          MSG_GETDEFAULT,
                          &srcID);
 
-   // If failure occurred, prepare to throw an exception, which is only thrown
-   // after this function ends.
-
    if (rc == TWRC_FAILURE)
    {
        throw TwainException("Unable to obtain default data source name (acquire)");
        EXIT_CURRENT_BLOCK
    }
-
-   // Open the default data source.
 
    rc = (*g_pDSM_Entry) (&g_AppID,
                          0,
@@ -288,11 +262,6 @@ void acquire(){
                          DAT_IDENTITY,
                          MSG_OPENDS,
                          &srcID);
-
-   // If default data source could not be opened, throw exception. Because the
-   // exception is not actually thrown until execution returns to Java, we
-   // first exit current block to close data source manager and destroy the
-   // previously-created window.
 
    if (rc != TWRC_SUCCESS)
    {
@@ -302,35 +271,11 @@ void acquire(){
 
    BLOCK_BEGIN(3)
 
-   // Prepare to enable the default data source. Make sure to show the data
-   // source's own user interface (dialog box).
-
-   TW_USERINTERFACE ui;
-   ui.ShowUI = FALSE;
-   ui.ModalUI = FALSE;
-   ui.hParent = hwnd;
-
-   // Enable the default data source.
-
-   rc = (*g_pDSM_Entry) (&g_AppID,
-                         &srcID,
-                         DG_CONTROL,
-                         DAT_USERINTERFACE,
-                         MSG_ENABLEDS,
-                         &ui);
-
-   // If default data source could not be enabled, throw exception. Because
-   // the exception is not actually thrown until execution returns to Java, we
-   // first exit current block to close data source, close data source
-   // manager and destroy the previously-created window.
-
    if (rc != TWRC_SUCCESS)
    {
        throw TwainException("Unable to enable default data source (acquire)");
        EXIT_CURRENT_BLOCK
    }
-
-   // Begin the event-handling loop. Data transfer takes place in this loop.
 
    MSG msg;
    TW_EVENT event;
@@ -338,8 +283,6 @@ void acquire(){
 
    while (GetMessage ((LPMSG) &msg, 0, 0, 0))
    {
-      // Each window message must be forwarded to the default data source.
-
       event.pEvent = (TW_MEMREF) &msg;
       event.TWMessage = MSG_NULL;
 
@@ -350,9 +293,6 @@ void acquire(){
                             MSG_PROCESSEVENT,
                             (TW_MEMREF) &event);
 
-      // If the message does not correspond to a data source event, we must
-      // dispatch it to the appropriate Windows window.
-
       if (rc == TWRC_NOTDSEVENT)
       {             
           TranslateMessage ((LPMSG) &msg);
@@ -360,20 +300,11 @@ void acquire(){
           continue;
       }
 
-      // If the default data source is requesting that the data source's
-      // dialog box be closed (user pressed Cancel), we must break out of the
-      // message loop.
-
       if (event.TWMessage == MSG_CLOSEDSREQ)
           break;
 
-      // If the default data source is requesting that it is ready to begin
-      // the data transfer, we must perform that transfer.
-
       if (event.TWMessage == MSG_XFERREADY)
       {
-          // Obtain information about the first image to be transferred.
-
           TW_IMAGEINFO ii;
           rc = (*g_pDSM_Entry) (&g_AppID,
                                 &srcID,
@@ -382,54 +313,37 @@ void acquire(){
                                 MSG_GET,
                                 (TW_MEMREF) &ii);
 
-          // If unable to obtain image information ...
-
           if (rc == TWRC_FAILURE)
           {
-              // Cancel all transfers.
-
               (*g_pDSM_Entry) (&g_AppID,
                                &srcID,
                                DG_CONTROL,
                                DAT_PENDINGXFERS,
                                MSG_RESET,
                                (TW_MEMREF) &pxfers);
-
-              // Throw exception upon return to Java and break out of event
-              // loop.
-
               throw TwainException("Unable to obtain image information (acquire)");
               break;
           }
 
           // If image is compressed or is not 8-bit color and not 24-bit
           // color ...
-
           if (ii.Compression != TWCP_NONE ||
               ii.BitsPerPixel != 8 &&
               ii.BitsPerPixel != 24)
           {
-              // Cancel all transfers.
-
-              (*g_pDSM_Entry) (&g_AppID,
+          (*g_pDSM_Entry) (&g_AppID,
                                &srcID,
                                DG_CONTROL,
                                DAT_PENDINGXFERS,
                                MSG_RESET,
                                (TW_MEMREF) &pxfers);
-
-              // Throw exception upon return to Java and break out of event
-              // loop.
-
               throw TwainException("Image compressed or not 8-bit/24-bit "
                         "(acquire)");
               break;
           }
 
           // Perform the transfer.
-
           TW_UINT32 handle;
-
           rc = (*g_pDSM_Entry) (&g_AppID,
                                 &srcID,
                                 DG_IMAGE,
@@ -438,37 +352,19 @@ void acquire(){
                                 (TW_MEMREF) &handle);
 
           // If image not successfully transferred ...
-
           if (rc != TWRC_XFERDONE)
           {
-              // Cancel all remaining transfers.
-
               (*g_pDSM_Entry) (&g_AppID,
                                &srcID,
                                DG_CONTROL,
                                DAT_PENDINGXFERS,
                                MSG_RESET,
                                (TW_MEMREF) &pxfers);
-
-              // Throw exception upon return to Java and break out of event
-              // loop.
-
               throw TwainException("User aborted transfer or failure (acquire)");
               break;
           }
+          image = createDmtxImage ((HANDLE)handle);
 
-          // Transfer Windows-based DIB to a Java-based Image (via a
-          // MemoryImageSource).
-
-//          LPBITMAPINFOHEADER lpbmih;
-//          lpbmih = (LPBITMAPINFOHEADER) GlobalLock ((HANDLE) handle);
-//		  TwainImage image;
-/*  TODO
-          if (ii.BitsPerPixel == 8)
-              image = create8bitImage (handle);
-          else
-              image = xferDIB24toImage (lpbmih, env);
-*/
           // If unable to transfer image, throw an exception upon return to
           // Java.
 
@@ -476,77 +372,52 @@ void acquire(){
               throw TwainException("Could not transfer DIB to Image (acquire)");
 */
           GlobalUnlock ((HANDLE) handle);
-
           GlobalFree ((HANDLE) handle);
 
           // Cancel all remaining transfers.
-
           (*g_pDSM_Entry) (&g_AppID,
                            &srcID,
                            DG_CONTROL,
                            DAT_PENDINGXFERS,
                            MSG_RESET,
                            (TW_MEMREF) &pxfers);
-
-          // Convert TWRC_XFERDONE to TWRC_SUCCESS so that appropriate value
-          // is returned.
-
           rc = TWRC_SUCCESS;
 
           break;
       }
    }
-
-   // Disable the data source.
-
-   (*g_pDSM_Entry) (&g_AppID,
-                    &srcID,
-                    DG_CONTROL,
-                    DAT_USERINTERFACE,
-                    MSG_DISABLEDS,
-                    &ui);
-
    BLOCK_END(3)
 
    // Close the data source.
-
    (*g_pDSM_Entry) (&g_AppID,
                     0,
                     DG_CONTROL,
                     DAT_IDENTITY,
                     MSG_CLOSEDS,
                     &srcID);
-
    BLOCK_END(2)
 
    // Close the data source manager.
-
    (*g_pDSM_Entry) (&g_AppID,
                     0,
                     DG_CONTROL,
                     DAT_PARENT,
                     MSG_CLOSEDSM,
                     (TW_MEMREF) &hwnd);
-
    BLOCK_END(1)
 
    // Destroy window.
-
    DestroyWindow (hwnd);
-
    //return (rc == TWRC_SUCCESS) ? image : (jobject) 0;
 }
 
 // ===========================================================================
-// Java_net_javajeff_jtwain_JTwain_selectSourceAsDefault
+// selectSourceAsDefault
 // ===========================================================================
-
-
 void selectSourceAsDefault()
 {
    // Create a static window whose handle is passed to DSM_Entry() when we
    // open the data source manager.
-
    HWND hwnd = CreateWindow ("STATIC",
                              "",
                              WS_POPUPWINDOW,
@@ -558,9 +429,6 @@ void selectSourceAsDefault()
                              0,
                              g_hinstDLL,
                              0);
-
-   // If window could not be created, throw exception.
-
    if (hwnd == 0)
    {
        throw TwainException("Unable to create private window "
@@ -568,40 +436,25 @@ void selectSourceAsDefault()
        return;
    }
 
-   // Ensure that the default data source's dialog box does not disappear
-   // behind other windows, which can be very disconcerting to the user. We do
-   // that by making the hwnd -- created above and passed to DSM_Entry() below
-   // -- the handle of the topmost window.
-
-   SetWindowPos (hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE);
-
    TW_UINT16 rc;
    TW_IDENTITY srcID;
 
    BLOCK_BEGIN(1)
-
    // Open the data source manager.
-
    rc = (*g_pDSM_Entry) (&g_AppID,
                          0,
                          DG_CONTROL,
                          DAT_PARENT,
                          MSG_OPENDSM,
                          (TW_MEMREF) &hwnd);
-
-   // If data source manager could not be opened, throw exception. Because the
-   // exception is not actually thrown until execution returns to Java, we
-   // first exit current block to destroy previously-created window.
-
    if (rc != TWRC_SUCCESS)
    {
        throw TwainException("Unable to open data source manager "
                  "(selectSourceAsDefault)");
        EXIT_CURRENT_BLOCK
    }
-
+   
    // Display the "Select Source" dialog box for selecting a data source.
-
    ZeroMemory (&srcID, sizeof(srcID));
    rc = (*g_pDSM_Entry) (&g_AppID,
                          0,
@@ -609,234 +462,52 @@ void selectSourceAsDefault()
                          DAT_IDENTITY,
                          MSG_USERSELECT,
                          (TW_MEMREF) &srcID);
-
-   // If failure occurred, prepare to throw an exception, which is only thrown
-   // after this function ends.
-
    if (rc == TWRC_FAILURE)
        throw TwainException("Unable to display user interface "
                  "(selectSourceAsDefault)");
 
    // Close the data source manager.
-
    (*g_pDSM_Entry) (&g_AppID,
                     0,
                     DG_CONTROL,
                     DAT_PARENT,
                     MSG_CLOSEDSM,
                     (TW_MEMREF) &hwnd);
-
    BLOCK_END(1)
-
-   // Destroy the window.
 
    DestroyWindow (hwnd);
 }
 
-// ===========================================================================
-// Create a dmtx image from the handle to the twain image
-// ===========================================================================
-/*
-static TwainImage createdmtxImage(HANDLE hMem)
-{
-	UCHAR *lpVoid,*pBits;
-	LPBITMAPINFOHEADER pHead;
-	RGBQUAD *pRgb;
-	lpVoid = (UCHAR *)GlobalLock(hMem);
-	pHead = (LPBITMAPINFOHEADER )lpVoid;
-	int width = pHead->biWidth;
-	int height = pHead->biHeight;
-	int m_nBits = pHead->biBitCount;
-	int bytes=0;
-
-	DmtxImage *img = dmtxImageMalloc(width, height);
-	
-	if(pHead->biCompression != BI_RGB) 
-	{
-		GlobalUnlock(lpVoid);
-		throw TwainException("invalid image compression in createImageFromHandle");
-	}
-	if(pHead->biBitCount >= 15)
-	{
-		if(pHead->biBitCount != 24) 
-		{
-			GlobalUnlock(lpVoid);
-			throw TwainException("invalid bit count in createImageFromHandle");
-		}
-	}
-
-	pBits = lpVoid + sizeof(BITMAPINFOHEADER) + sizeof(RGBQUAD)*GetPaletteSize(*pHead);
-	memcpy(img->pxl,pBits,height*bytes);
-	GlobalUnlock(lpVoid);
-}
-*/
-static TwainImage createdmtxImage(HANDLE hMem)
-{
-	UCHAR *lpVoid,*pBits;
-	LPBITMAPINFOHEADER pHead;
-	RGBQUAD *pRgb;
-	lpVoid = (UCHAR *)GlobalLock(hMem);
-	pHead = (LPBITMAPINFOHEADER )lpVoid;
-	int width = pHead->biWidth;
-	int height = pHead->biHeight;
-	int m_nBits = pHead->biBitCount;
-	int bytes=0;
-
-	
-	pBits = lpVoid + sizeof(BITMAPINFOHEADER) + sizeof(RGBQUAD)*GetPaletteSize(*pHead);
-	dmtxImageCreate( pBits, width, height, 8);
-	/*for(int i=0; i<width*height; i++){
-		//img->pxl[i] =  (DmtxRgb) ((unsigned int)pBits[i]) & 0x00FFFFFF);
-		unsigned int pixel = pBits[i];
-		img->pxl[i][0] = pixel & 0x00FF0000; //red mask
-		img->pxl[i][1] = pixel & 0x0000FF00; //green mask
-		img->pxl[i][2] = pixel & 0x000000FF; //blue mask
-	}*/
-}
-
-// ===========================================================================
-// xferDIB24toImage
-// ===========================================================================
-/*
-static jobject xferDIB24toImage (LPBITMAPINFOHEADER lpbmih, JNIEnv *env)
-{
-   // Obtain the image's width and height -- both in pixels -- to pass to the
-   // MemoryImageSource constructor.
-
-   int width = lpbmih->biWidth;
-
-   int height = lpbmih->biHeight; // height < 0 if bitmap is top-down
-   if (height < 0)
-       height = -height;
-
-   // Create Java-based integer pixels array to pass to the MemoryImageSource
-   // constructor.
-
-   jintArray pixels = env->NewIntArray (width * height);
-   if (pixels == 0)
-   {
-       throwJTE (env, "Insufficient memory for pixels array "
-                 "(xferDIB24toImage)");
-       return (jobject) 0;
-   }
-
-   // Populate the pixels array.
-
-   unsigned char *bitmap = (unsigned char *) lpbmih +
-                           sizeof(BITMAPINFOHEADER);
-
-   int padBytes = 3*width%4; // Each pixel occupies 3 bytes (RGB) and the
-                             // number of row bytes is a multiple of 4.
-
-   jboolean isCopy;
-   jint *pixelsArray = env->GetIntArrayElements (pixels, &isCopy);
-   
-   if (pixelsArray == 0)
-   {
-       throwJTE (env, "Insufficient memory (xferDIB24toImage)");
-       return (jobject) 0;
-   }
-
-   int rowBytes = width*3+padBytes;
-
-   for (int row = 0; row < height; row++)
-        for (int col = 0; col < width; col++)
-        {
-             // Obtain pixel index.
-
-             int index = rowBytes*row+col*3;
-
-             // Extract color information for pixel and build an equivalent
-             // Java pixel for storage in the Java-based integer array.
-
-             int pixel = 0xff000000 | (bitmap [index+2] << 16) |
-                         (bitmap [index+1] << 8) | bitmap [index];
-
-             // Store the pixel in the array at the appropriate index.
-
-             pixelsArray [width*(height-row-1)+col] = (jint) pixel;
-        }
-
-   if (isCopy == JNI_TRUE)
-       env->ReleaseIntArrayElements (pixels, pixelsArray, 0);
-
-   // Build the equivalent of the following Java code fragement:
-   //
-   // MemoryImageSource mis;
-   // mis = new MemoryImageSource (width, height, pixels, 0, width);
-   // Image im = Toolkit.getDefaultToolkit ().createImage (mis);
-
-   jclass clazz = env->FindClass ("java/awt/image/MemoryImageSource");
-   if (clazz == 0)
-   {
-       throwJTE (env, "Can't find java.awt.image.MemoryImageSource class "
-                 "(xferDIB24toImage)");
-       return (jobject) 0;
-   }
-
-   jmethodID mid = env->GetMethodID (clazz, "<init>", "(II[III)V");
-   if (mid == 0)
-   {
-       throwJTE (env, "Can't find java.awt.image.MemoryImageSource "
-                 "constructor (xferDIB24toImage)");
-       return (jobject) 0;
-   }
-
-   jobject obj1 = env->NewObject (clazz, mid, width, height, pixels, 0,
-                                  width);
-   if (obj1 == 0)
-   {
-       throwJTE (env, "Can't create java.awt.image.MemoryImageSource "
-                 "object (xferDIB24toImage)");
-       return (jobject) 0;
-   }
-
-   clazz = env->FindClass ("java/awt/Toolkit");
-   if (clazz == 0)
-   {
-       throwJTE (env, "Can't find java.awt.Toolkit class (xferDIB24toImage)");
-       return (jobject) 0;
-   }
-
-   mid = env->GetStaticMethodID (clazz, "getDefaultToolkit",
-                                 "()Ljava/awt/Toolkit;");
-   if (mid == 0)
-   {
-       throwJTE (env, "Can't find java.awt.Toolkit.getDefaultToolkit() "
-                 "(xferDIB24toImage)");
-       return (jobject) 0;
-   }
-
-   jobject obj2 = env->CallStaticObjectMethod (clazz, mid);
-   if (obj2 == 0)
-   {
-       throwJTE (env, "Can't call java.awt.Toolkit.getDefaultToolkit() "
-                 "(xferDIB24toImage)");
-       return (jobject) 0;
-   }
-
-   mid = env->GetMethodID (clazz, "createImage",
-                           "(Ljava/awt/image/ImageProducer;)Ljava/awt/Image;");
-   if (mid == 0)
-   {
-       throwJTE (env, "Can't find java.awt.Toolkit.createImage() "
-                 "(xferDIB24toImage)");
-       return (jobject) 0;
-   }
-
-   // Return the Image subclass object reference.
-
-   return env->CallObjectMethod (obj2, mid, obj1);
-}
-*/
 
 /*
-* @param: BITMAPINFOHEADER bmInfo corresponding to the image acquired from twain
-* @return: int Palette Size - the maximum value for any pixel in the image
+*	 ===========================================================================
+*	 Create a dmtx image from the handle to the twain image
+*	 ===========================================================================
 *
-*	This method returns the max value for the intensity of any color of any 
-*	pixel in the image
+*	@param - handle to the twain image
+*	@return - original scanned image stored as a dmtximage
+*
+*	As of the 0.70 release of libdmtx, images are stored as a 1D array of unsigned
+*	char, so conversion from the windows bitmap format to dmtx image should be
+*	straight forward.
 */
+DmtxImage* createDmtxImage(HANDLE hMem)
+{
+	UCHAR *lpVoid,*pBits;
+	LPBITMAPINFOHEADER pHead;
+	lpVoid = (UCHAR *)GlobalLock(hMem);
+	pHead = (LPBITMAPINFOHEADER )lpVoid;
+	int width = pHead->biWidth;
+	int height = pHead->biHeight;
+	int m_nBits = pHead->biBitCount;
+	DmtxImage *theImage;
+
+	
+	pBits = lpVoid + sizeof(BITMAPINFOHEADER) + sizeof(RGBQUAD)*GetPaletteSize(*pHead);
+	theImage = dmtxImageCreate((unsigned char*)pBits, width, height, DmtxPack32bppRGBX);
+	return theImage;
+}
+
 int GetPaletteSize(BITMAPINFOHEADER& bmInfo)
 {
 	switch(bmInfo.biBitCount)
