@@ -14,13 +14,13 @@ DEBUG=1
 BUILD_DIR := obj
 BUILD_DIR_FULL_PATH := $(CURDIR)/$(BUILD_DIR)
 
-CC := g++
+CC := gcc
 CXX := g++
 CFLAGS := -fmessage-length=0 -fPIC -D_UNIX_
 CXXFLAGS := $(CFLAGS)
 CPPFLAGS := $(CFLAGS)
 SED := /bin/sed
-LIBS += -lc -lm
+LIBS += -lc -lm -lstdc++
 
 INCLUDE_PATH := src libdmtx
 VPATH := $(CURDIR) $(INCLUDE_PATH) $(BUILD_DIR)

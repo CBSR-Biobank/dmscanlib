@@ -24,7 +24,7 @@ struct sDib {
 };
 
 Dib dibAllocate() {
-   return malloc(sizeof(Dib));
+   return (Dib) malloc(sizeof(Dib));
 }
 
 void dibCopyHeaders(Dib src, Dib dest) {
@@ -33,7 +33,7 @@ void dibCopyHeaders(Dib src, Dib dest) {
 }
 
 void dibAllocatePixelBuffer(Dib dib) {
-   dib->pixels = malloc(dib->infoHeader.imageSize);
+   dib->pixels = (unsigned char *) malloc(dib->infoHeader.imageSize);
 }
 
 void dibDestroy(Dib dib) {
@@ -125,7 +125,7 @@ unsigned char * dibGetPixelBuffer(Dib dib) {
 void readDibPixels(FILE * fh, Dib dib) {
    assert(dib->fileHeader.type == 0x4d42);
    assert(dib->infoHeader.imageSize != 0);
-   dib->pixels = malloc(dib->infoHeader.imageSize);
+   dib->pixels = (unsigned char *) malloc(dib->infoHeader.imageSize);
    fread(dib->pixels, 1, dib->infoHeader.imageSize, fh);
 }
 
@@ -212,17 +212,62 @@ void dibConvertGrayscale(Dib src, Dib dest) {
    }
 }
 
+void sobelEdgeDetectionWithMask(Dib src, Dib dest, int mask1[3][3], int mask2[3][3]) {
+   int I, J;
+   unsigned Y, X, SUM;
+   long sum1, sum2;
+   unsigned width = src->infoHeader.width;
+   unsigned height = src->infoHeader.height;
+
+   assert(mask1 != NULL);
+
+   for (Y = 0; Y <= height - 1; ++Y)  {
+      for (X = 0; X <= width - 1 ; ++X)  {
+         sum1 = 0;
+         sum2 = 0;
+
+         /* image boundaries */
+         if ((Y == 0) || (Y == height - 1)
+             || (X == 0) || (X == width - 1)) {
+            SUM = 0;
+         }
+         else {
+            /* Convolution starts here */
+
+            for (I = -1; I <= 1; ++I)  {
+               for (J = -1; J <= 1; ++J)  {
+                  sum1 += getDibPixelGrayscale(src, Y + J, X + I)
+                     * mask1[I+1][J+1];
+               }
+            }
+
+            if (mask2 != NULL) {
+               for (I = -1; I <= 1; ++I)  {
+                  for (J = -1; J <= 1; ++J)  {
+                     sum2 += getDibPixelGrayscale(src, Y + J, X + I)
+                        * mask2[I+1][J+1];
+                  }
+               }
+            }
+
+            /*---GRADIENT MAGNITUDE APPROXIMATION (Myler p.218)----*/
+            SUM = abs(sum1) + abs(sum2);
+         }
+
+         if (SUM > 255) SUM = 255;
+         if (SUM < 0) SUM = 0;
+
+         setDibPixelGrayscale(dest, Y, X, 255 - SUM);
+      }
+   }
+}
+
 /**
  * Taken from: http://www.pages.drexel.edu/~weg22/edge.html
  */
 void sobelEdgeDetection(Dib src, Dib dest) {
-   unsigned width = src->infoHeader.width;
-   unsigned height = src->infoHeader.height;
    int GX[3][3];
    int GY[3][3];
-   int I, J;
-   unsigned Y, X, SUM;
-   long sumX, sumY;
 
    dest->fileHeader = src->fileHeader;
    dest->infoHeader = src->infoHeader;
@@ -238,47 +283,7 @@ void sobelEdgeDetection(Dib src, Dib dest) {
    GY[1][0] =  0; GY[1][1] =  0; GY[1][2] =  0;
    GY[2][0] = -1; GY[2][1] = -2; GY[2][2] = -1;
 
-   for (Y = 0; Y <= height - 1; ++Y)  {
-      for (X = 0; X <= width - 1 ; ++X)  {
-         sumX = 0;
-         sumY = 0;
-
-         /* image boundaries */
-         if ((Y == 0) || (Y == height - 1)
-             || (X == 0) || (X == width - 1)) {
-            SUM = 0;
-         }
-         else {
-            /* Convolution starts here */
-
-            /*-------X GRADIENT APPROXIMATION------*/
-            for(I=-1; I<=1; I++)  {
-               for(J=-1; J<=1; J++)  {
-                  sumX = sumX
-                     + getDibPixelGrayscale(src, Y + J, X + I)
-                     * GX[I+1][J+1];
-               }
-            }
-
-            /*-------Y GRADIENT APPROXIMATION-------*/
-            for(I=-1; I<=1; I++)  {
-               for(J=-1; J<=1; J++)  {
-                  sumY = sumY
-                     + getDibPixelGrayscale(src, Y + J, X + I)
-                     * GY[I+1][J+1];
-               }
-            }
-
-            /*---GRADIENT MAGNITUDE APPROXIMATION (Myler p.218)----*/
-            SUM = abs(sumX) + abs(sumY);
-         }
-
-         if (SUM > 255) SUM = 255;
-         if (SUM < 0) SUM = 0;
-
-         setDibPixelGrayscale(dest, Y, X, 255 - SUM);
-      }
-   }
+   sobelEdgeDetectionWithMask(src, dest, GX, GY);
 }
 
 /**

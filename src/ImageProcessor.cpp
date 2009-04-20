@@ -13,9 +13,26 @@
 #include <stdlib.h>
 #include <assert.h>
 
-int main(int argc, char ** argv) {
+#include <getopt.h>
+
+/* Allowed command line arguments.  */
+static struct option long_options[] = {
+   { "decode",    no_argument, NULL, 'd' },
+   { 0, 0, 0, 0 }
+};
+
+const char * USAGE_FMT =
+   "Usage: %s [OPTIONS]\n";
+
+char * progname;
+
+void printUsage() {
+   printf(USAGE_FMT, progname);
+}
+
+void decodeDib(char * filename) {
    FILE * fh;
-   Dib dib, dib2;
+   Dib dib;
    DmtxImage * image;
    DmtxDecode     *dec;
    DmtxRegion     *reg;
@@ -23,26 +40,25 @@ int main(int argc, char ** argv) {
    int totalBytes, headerBytes;
    unsigned char *pnm;
 
-   if (argc != 2) {
-      printf("ERROR: no input image specified\n");
-      exit(0);
-   }
-   // create dib from file argument
-   fh = fopen(argv[1], "r");
+   fh = fopen(filename, "r");
    dib = dibAllocate();
    readDibHeader(fh, dib);
    readDibPixels(fh, dib);
    fclose(fh);
+
 //	initGrabber();
 //	selectSourceAsDefault();
 //	image = acquire();
+
    // create dmtxImage from the dib
    image = dmtxImageCreate(dibGetPixelBuffer(dib), dibGetWidth(dib), dibGetHeight(dib),
                            DmtxPack24bppRGB);
    assert(image != NULL);
+
    //set the properties (pad bytes, flip)
    dmtxImageSetProp(image, DmtxPropRowPadBytes, dibGetRowPadBytes(dib));
    dmtxImageSetProp(image, DmtxPropImageFlip, DmtxFlipY); // DIBs are flipped in Y
+
    //debugging info
    printf("image width: %d\n", dmtxImageGetProp(image, DmtxPropWidth));
    printf("image height: %d\n", dmtxImageGetProp(image, DmtxPropHeight));
@@ -81,4 +97,41 @@ int main(int argc, char ** argv) {
    dmtxImageDestroy(&image);
 
    dibDestroy(dib);
+}
+
+
+
+int main(int argc, char ** argv) {
+   int ch;
+
+   progname = argv[0];
+
+   while (1) {
+      int option_index = 0;
+
+      ch = getopt_long (argc, argv, "d:h", long_options, &option_index);
+
+      if (ch == -1) break;
+      switch (ch) {
+
+         case 'd':
+            decodeDib(optarg);
+            break;
+
+         case '?':
+         case 'h':
+            printUsage();
+            exit(0);
+            break;
+
+         default:
+            printf("?? getopt returned character code %c ??\n", ch);
+      }
+   }
+
+   if (optind >= argc) {
+      // not enough command line arguments, print usage message
+      printUsage();
+      exit(-1);
+   }
 }
