@@ -7,63 +7,36 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <string.h>
 
 #ifdef _VISUALC_
-#include <string.h>
-#else
 #include <strings.h>
 #endif
 
 //#define _UNIT_TEST_
 
-//File information header
-//provides general information about the file
-typedef struct sBitmapFileHeader {
-   unsigned short type;
-   unsigned       size;
-   unsigned short reserved1;
-   unsigned short reserved2;
-   unsigned       offset;
-} BitmapFileHeader;
-
-//Bitmap information header
-//provides information specific to the image data
-typedef struct sBitmapInfoHeader{
-   unsigned       size;
-   unsigned       width;
-   unsigned       height;
-   unsigned short planes;
-   unsigned short bitCount;
-   unsigned       compression;
-   unsigned       imageSize;
-   unsigned       hPixelsPerMeter;
-   unsigned       vPixelsPerMeter;
-   unsigned       numColors;
-   unsigned       numColorsImp;
-} BitmapInfoHeader;
-
-typedef struct sDib {
+struct sDib {
    BitmapFileHeader fileHeader;
    BitmapInfoHeader infoHeader;
    unsigned bytesPerPixel;
    unsigned rowPaddingBytes;
    unsigned char * pixels;
-} Dib;
+};
 
-Dib * dibAllocate() {
+Dib dibAllocate() {
    return malloc(sizeof(Dib));
 }
 
-void dibCopyHeaders(Dib * src, Dib * dest) {
+void dibCopyHeaders(Dib src, Dib dest) {
    dest->fileHeader = src->fileHeader;
    dest->infoHeader = src->infoHeader;
 }
 
-void dibAllocatePixelBuffer(Dib * dib) {
+void dibAllocatePixelBuffer(Dib dib) {
    dib->pixels = malloc(dib->infoHeader.imageSize);
 }
 
-void dibDestroy(Dib * dib) {
+void dibDestroy(Dib dib) {
    free(dib->pixels);
    free(dib);
 }
@@ -71,7 +44,7 @@ void dibDestroy(Dib * dib) {
 /**
  * All values in little-endian except for BitmapFileHeader.type.
  */
-void readDibHeader(FILE * fh, Dib * dib) {
+void readDibHeader(FILE * fh, Dib dib) {
    unsigned char fileHeaderRaw[0xE];
    unsigned char infoHeaderRaw[0x28];
 
@@ -103,7 +76,7 @@ void readDibHeader(FILE * fh, Dib * dib) {
    dib->rowPaddingBytes = (dib->infoHeader.width * dib->bytesPerPixel) & 0x3;
 }
 
-void writeDibHeader(Dib * dib, FILE * fh) {
+void writeDibHeader(Dib dib, FILE * fh) {
    unsigned char fileHeaderRaw[0xE];
    unsigned char infoHeaderRaw[0x28];
 
@@ -129,40 +102,40 @@ void writeDibHeader(Dib * dib, FILE * fh) {
    fwrite(infoHeaderRaw, 1, sizeof(infoHeaderRaw), fh);
 }
 
-unsigned dibGetHeight(Dib * dib) {
+unsigned dibGetHeight(Dib dib) {
    return dib->infoHeader.height;
 }
 
-unsigned dibGetWidth(Dib * dib) {
+unsigned dibGetWidth(Dib dib) {
    return dib->infoHeader.width;
 }
 
-unsigned dibGetRowPadBytes(Dib * dib) {
+unsigned dibGetRowPadBytes(Dib dib) {
    return dib->rowPaddingBytes;
 }
 
-unsigned dibGetBitsPerPixel(Dib * dib) {
+unsigned dibGetBitsPerPixel(Dib dib) {
    return dib->infoHeader.bitCount;
 }
 
-unsigned char * dibGetPixelBuffer(Dib * dib) {
+unsigned char * dibGetPixelBuffer(Dib dib) {
    return dib->pixels;
 }
 
-void readDibPixels(FILE * fh, Dib * dib) {
+void readDibPixels(FILE * fh, Dib dib) {
    assert(dib->fileHeader.type == 0x4d42);
    assert(dib->infoHeader.imageSize != 0);
    dib->pixels = malloc(dib->infoHeader.imageSize);
    fread(dib->pixels, 1, dib->infoHeader.imageSize, fh);
 }
 
-void writeDibPixels(Dib * dib, FILE * fh) {
+void writeDibPixels(Dib dib, FILE * fh) {
    assert(dib->fileHeader.type == 0x4d42);
    assert(dib->infoHeader.imageSize != 0);
    fwrite(dib->pixels, 1, dib->infoHeader.imageSize, fh);
 }
 
-void getDibPixel(Dib * dib, unsigned row, unsigned col, RgbQuad * quad) {
+void getDibPixel(Dib dib, unsigned row, unsigned col, RgbQuad * quad) {
    unsigned rowBytes = dib->infoHeader.width * dib->bytesPerPixel + dib->rowPaddingBytes;
    unsigned char * ptr = (dib->pixels + row * rowBytes + col * dib->bytesPerPixel);
 
@@ -173,7 +146,7 @@ void getDibPixel(Dib * dib, unsigned row, unsigned col, RgbQuad * quad) {
    quad->rgbReserved = 0;
 }
 
-unsigned getDibPixelGrayscale(Dib * dib, unsigned row, unsigned col) {
+unsigned getDibPixelGrayscale(Dib dib, unsigned row, unsigned col) {
    unsigned rowBytes = dib->infoHeader.width * dib->bytesPerPixel + dib->rowPaddingBytes;
    unsigned char * ptr = (dib->pixels + row * rowBytes + col * dib->bytesPerPixel);
 
@@ -188,7 +161,7 @@ unsigned getDibPixelGrayscale(Dib * dib, unsigned row, unsigned col) {
    return  0;
 }
 
-void setDibPixel(Dib * dib, unsigned row, unsigned col, RgbQuad * quad) {
+void setDibPixel(Dib dib, unsigned row, unsigned col, RgbQuad * quad) {
    unsigned padding = (dib->infoHeader.width * dib->bytesPerPixel) & 0x3;
    unsigned rowBytes = dib->infoHeader.width * dib->bytesPerPixel + padding;
    unsigned char * ptr = (dib->pixels + row * rowBytes + col * dib->bytesPerPixel);
@@ -203,7 +176,7 @@ void setDibPixel(Dib * dib, unsigned row, unsigned col, RgbQuad * quad) {
    }
 }
 
-void setDibPixelGrayscale(Dib * dib, unsigned row, unsigned col,
+void setDibPixelGrayscale(Dib dib, unsigned row, unsigned col,
                           unsigned value) {
    unsigned padding = (dib->infoHeader.width * dib->bytesPerPixel) & 0x3;
    unsigned rowBytes = dib->infoHeader.width * dib->bytesPerPixel + padding;
@@ -222,7 +195,7 @@ void setDibPixelGrayscale(Dib * dib, unsigned row, unsigned col,
    }
 }
 
-void dibConvertGrayscale(Dib * src, Dib * dest) {
+void dibConvertGrayscale(Dib src, Dib dest) {
    unsigned width = src->infoHeader.width;
    unsigned height = src->infoHeader.height;
    unsigned row, col;
@@ -242,7 +215,7 @@ void dibConvertGrayscale(Dib * src, Dib * dest) {
 /**
  * Taken from: http://www.pages.drexel.edu/~weg22/edge.html
  */
-void sobelEdgeDetection(Dib * src, Dib * dest) {
+void sobelEdgeDetection(Dib src, Dib dest) {
    unsigned width = src->infoHeader.width;
    unsigned height = src->infoHeader.height;
    int GX[3][3];
@@ -311,7 +284,7 @@ void sobelEdgeDetection(Dib * src, Dib * dest) {
 /**
  * Taken from: http://www.pages.drexel.edu/~weg22/edge.html
  */
-void laplaceEdgeDetection(Dib * src, Dib * dest) {
+void laplaceEdgeDetection(Dib src, Dib dest) {
    unsigned width = src->infoHeader.width;
    unsigned height = src->infoHeader.height;
    unsigned Y, X, SUM;
@@ -354,7 +327,7 @@ void laplaceEdgeDetection(Dib * src, Dib * dest) {
    }
 }
 
-void histEqualization(Dib * src, Dib * dest) {
+void histEqualization(Dib src, Dib dest) {
    unsigned width = src->infoHeader.width;
    unsigned height = src->infoHeader.height;
    unsigned imgSize = width * height;

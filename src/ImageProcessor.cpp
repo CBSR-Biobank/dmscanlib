@@ -4,7 +4,10 @@
 
 #include "dib.h"
 #include "dmtx.h"
+
+#ifdef _VISUALC_
 #include "ImageGrabber.h"
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,7 +15,7 @@
 
 int main(int argc, char ** argv) {
    FILE * fh;
-   Dib * dib, *dib2;
+   Dib dib, dib2;
    DmtxImage * image;
    DmtxDecode     *dec;
    DmtxRegion     *reg;
@@ -20,12 +23,12 @@ int main(int argc, char ** argv) {
    int totalBytes, headerBytes;
    unsigned char *pnm;
 
-	if (argc != 2) {
-		printf("ERROR: no input image specified\n");
-		exit(0);
-	}
-	// create dib from file argument
-	fh = fopen(argv[1], "r");
+   if (argc != 2) {
+      printf("ERROR: no input image specified\n");
+      exit(0);
+   }
+   // create dib from file argument
+   fh = fopen(argv[1], "r");
    dib = dibAllocate();
    readDibHeader(fh, dib);
    readDibPixels(fh, dib);
@@ -35,12 +38,12 @@ int main(int argc, char ** argv) {
 //	image = acquire();
    // create dmtxImage from the dib
    image = dmtxImageCreate(dibGetPixelBuffer(dib), dibGetWidth(dib), dibGetHeight(dib),
-      DmtxPack24bppRGB);
+                           DmtxPack24bppRGB);
    assert(image != NULL);
    //set the properties (pad bytes, flip)
    dmtxImageSetProp(image, DmtxPropRowPadBytes, dibGetRowPadBytes(dib));
    dmtxImageSetProp(image, DmtxPropImageFlip, DmtxFlipY); // DIBs are flipped in Y
-	//debugging info
+   //debugging info
    printf("image width: %d\n", dmtxImageGetProp(image, DmtxPropWidth));
    printf("image height: %d\n", dmtxImageGetProp(image, DmtxPropHeight));
    printf("image bits per pixel: %d\n", dmtxImageGetProp(image, DmtxPropBitsPerPixel));
@@ -48,8 +51,8 @@ int main(int argc, char ** argv) {
 
    dec = dmtxDecodeCreate(image, 1);
    assert(dec != NULL);
-   
-#if 0
+
+#if 0                                           \
    // save image to a PNM file
    pnm = dmtxDecodeCreateDiagnostic(dec, &totalBytes, &headerBytes, 0);
    fh = fopen("out.pnm", "w");
