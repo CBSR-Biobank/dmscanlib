@@ -30,12 +30,12 @@ int main(int argc, char ** argv) {
    readDibHeader(fh, dib);
    readDibPixels(fh, dib);
    fclose(fh);
-	initGrabber();
-	selectSourceAsDefault();
-	image = acquire();
+//	initGrabber();
+//	selectSourceAsDefault();
+//	image = acquire();
    // create dmtxImage from the dib
-   //image = dmtxImageCreate(dibGetPixelBuffer(dib), dibGetWidth(dib), dibGetHeight(dib),
-   //   DmtxPack24bppRGB);
+   image = dmtxImageCreate(dibGetPixelBuffer(dib), dibGetWidth(dib), dibGetHeight(dib),
+      DmtxPack24bppRGB);
    assert(image != NULL);
    //set the properties (pad bytes, flip)
    dmtxImageSetProp(image, DmtxPropRowPadBytes, dibGetRowPadBytes(dib));
