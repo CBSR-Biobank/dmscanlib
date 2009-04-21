@@ -5,7 +5,9 @@
 #include "twain.h"     // Standard TWAIN header.
 //#include "TwainException.h"
 
-BOOL initGrabber();
+TW_BOOL initGrabber();
 DmtxImage* acquire();
 void selectSourceAsDefault();
 static DmtxImage* createDmtxImage(HANDLE hMem);
+void unloadTwain();
+int GetPaletteSize(BITMAPINFOHEADER& bmInfo);

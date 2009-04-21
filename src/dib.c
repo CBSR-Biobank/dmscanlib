@@ -9,7 +9,7 @@
 #include <assert.h>
 #include <string.h>
 
-#ifdef _VISUALC_
+#ifndef _VISUALC_
 #include <strings.h>
 #endif
 

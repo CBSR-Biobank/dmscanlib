@@ -188,6 +188,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\ScanLib.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\src\TwainException.cpp"
 				>
 			</File>
@@ -211,6 +215,10 @@
 			>
 			<File
 				RelativePath=".\src\ImageGrabber.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\ImageProcessor.h"
 				>
 			</File>
 			<File
