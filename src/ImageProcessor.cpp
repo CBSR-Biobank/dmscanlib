@@ -3,6 +3,7 @@
  ******************************************************************************/
 
 #include "ImageProcessor.h"
+#include <iostream>
 
 void decodeDib(char * filename) {
    FILE * fh;
@@ -13,7 +14,7 @@ void decodeDib(char * filename) {
    DmtxMessage    *msg;
    int totalBytes, headerBytes;
    unsigned char *pnm;
-
+   std::cout << filename;
    fh = fopen(filename, "r");
    dib = dibAllocate();
    readDibHeader(fh, dib);
