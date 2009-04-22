@@ -11,7 +11,7 @@
 			<DebugSettings
 				Command="$(TargetPath)"
 				WorkingDirectory=""
-				CommandArguments="barcode1.bmp"
+				CommandArguments="-d barcode1.bmp"
 				Attach="false"
 				DebuggerType="3"
 				Remote="1"

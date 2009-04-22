@@ -176,15 +176,19 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\dib.h"
-				>
-			</File>
-			<File
 				RelativePath=".\src\ImageGrabber.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\src\ImageProcessor.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\utils\my_getopt.c"
+				>
+			</File>
+			<File
+				RelativePath=".\src\utils\my_getopt.h"
 				>
 			</File>
 			<File
@@ -213,6 +217,14 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
+			<File
+				RelativePath=".\src\dib.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\utils\getopt.h"
+				>
+			</File>
 			<File
 				RelativePath=".\src\ImageGrabber.h"
 				>

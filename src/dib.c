@@ -24,7 +24,7 @@ struct sDib {
 };
 
 Dib dibAllocate() {
-   return (Dib) malloc(sizeof(Dib));
+   return (Dib) malloc(sizeof(struct sDib));
 }
 
 void dibCopyHeaders(Dib src, Dib dest) {
