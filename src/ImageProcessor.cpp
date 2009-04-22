@@ -3,6 +3,13 @@
  ******************************************************************************/
 
 #include "ImageProcessor.h"
+#include "dib.h"
+#include "dmtx.h"
+
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <assert.h>
 
 void decodeDib(char * filename) {
    FILE * fh;
@@ -27,7 +34,10 @@ void decodeDib(char * filename) {
    // create dmtxImage from the dib
    image = dmtxImageCreate(dibGetPixelBuffer(dib), dibGetWidth(dib), dibGetHeight(dib),
                            DmtxPack24bppRGB);
-   assert(image != NULL);
+   if (image == NULL) {
+      printf("ERROR: could not create DMTX image\n");
+      exit(0);
+   }
 
    //set the properties (pad bytes, flip)
    dmtxImageSetProp(image, DmtxPropRowPadBytes, dibGetRowPadBytes(dib));
