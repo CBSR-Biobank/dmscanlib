@@ -21,20 +21,28 @@
  *
  *****************************************************************************/
 
-#include <assert.h>
+#include "UaDebug.h"
+
+#ifdef _VISUALC_
+#include <time.h>
+#include <sys/timeb.h>
+#else
 #include <sys/time.h>
+#endif
+
+#include <assert.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <iostream>
 #include <fstream>
+#include <fstream>
 #include <string>
 #include <sstream>
 
-#include "UaDebug.h"
-
 #ifdef UA_HAVE_DEBUG
 
+using namespace std;
 using namespace ua;
 
 DebugStringBuf<char> ua::debugstream;
@@ -126,8 +134,24 @@ bool DebugImpl::isDebug (unsigned subsys, unsigned level) {
 }
 
 void DebugSink::standardHeader(std::string & str_r) {
-    // Fetch the current time
     char buf_a[100];
+
+#ifdef _VISUALC_
+   time_t ltime;
+   struct _timeb tstruct;
+   char timebuf[26];
+   errno_t err;
+
+   time( &ltime );
+   err = ctime_s(timebuf, 26, &ltime);
+   if (err) {
+      cerr << "ctime_s failed due to an invalid argument.";
+      exit(1);
+   }
+   _ftime_s( &tstruct ); 
+   sprintf(buf_a, "%.8s:%u ", timebuf + 11, tstruct.millitm);
+#else
+    // Fetch the current time
 
 #ifdef __MINGW32__
     time_t now = time(NULL);
@@ -143,6 +167,7 @@ void DebugSink::standardHeader(std::string & str_r) {
     snprintf(buf_a, sizeof (buf_a), "%s:%03ld ", time_a,
              thistime.tv_usec / 1000);
 #endif /* __MINGW32__ */
+#endif
 
     str_r = buf_a;
 }

@@ -1,3 +1,6 @@
+#ifndef LOKI_SINGLETON_INC_
+#define LOKI_SINGLETON_INC_
+
 ////////////////////////////////////////////////////////////////////////////////
 // The Loki Library
 // Copyright (c) 2001 by Andrei Alexandrescu
@@ -12,11 +15,6 @@
 //     suitability of this software for any purpose. It is provided "as is"
 //     without express or implied warranty.
 ////////////////////////////////////////////////////////////////////////////////
-
-#ifndef LOKI_SINGLETON_INC_
-#define LOKI_SINGLETON_INC_
-
-// $Header: /usr/abee10/misc/octopus/Repository/octopus/loki/Singleton.h,v 1.1 2006/10/17 22:11:03 octopus Exp $
 
 #include "LokiExport.h"
 #include "Threads.h"
