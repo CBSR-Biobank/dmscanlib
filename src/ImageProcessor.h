@@ -1,7 +1,6 @@
 #ifndef __INC_ImageProcessor_h
 #define __INC_ImageProcessor_h
 
-#include "global.h"
 #include "dib.h"
 #include "dmtx.h"
 
