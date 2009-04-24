@@ -9,8 +9,9 @@ extern "C" {
 
    typedef struct sDib * Dib;
 
-   // File information header
-   // provides general information about the file
+   /* File information header
+    * provides general information about the file
+    */
    typedef struct  {
       unsigned short type;
       unsigned       size;
@@ -19,8 +20,9 @@ extern "C" {
       unsigned       offset;
    } BitmapFileHeader;
 
-   // Bitmap information header
-   // provides information specific to the image data
+   /* Bitmap information header
+    * provides information specific to the image data
+    */
    typedef struct {
       unsigned       size;
       unsigned       width;
@@ -35,7 +37,8 @@ extern "C" {
       unsigned       numColorsImp;
    } BitmapInfoHeader;
 
-   // Colour palette
+   /* Colour palette
+    */
    typedef struct sRgbQuad {
       unsigned char rgbBlue;
       unsigned char rgbGreen;
@@ -57,12 +60,12 @@ extern "C" {
    void readDibPixels(FILE * fh, Dib dib);
    void writeDibPixels(Dib dib, FILE * fh);
    void getDibPixel(Dib dib, unsigned row, unsigned col, RgbQuad * quad);
-   unsigned getDibPixelGrayscale(Dib dib, unsigned row, unsigned col);
+   unsigned char getDibPixelGrayscale(Dib dib, unsigned row, unsigned col);
    void setDibPixel(Dib dib, unsigned row, unsigned col, RgbQuad * quad);
+   void setDibPixelGrayscale(Dib dib, unsigned row, unsigned col,
+                             unsigned char value);
    unsigned char * dibGetPixelsNoPadding(Dib dib);
    void dibSetPixelsNoPadding(Dib dib, unsigned char * pixels);
-   void setDibPixelGrayscale(Dib dib, unsigned row, unsigned col,
-                             unsigned value);
    void dibConvertGrayscale(Dib src, Dib dest);
    void sobelEdgeDetectionWithMask(Dib src, Dib dest, int mask1[3][3], int mask2[3][3]);
    void sobelEdgeDetection(Dib src, Dib dest);

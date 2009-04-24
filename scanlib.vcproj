@@ -41,8 +41,8 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="libdmtx"
-				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;_VISUALC_"
+				AdditionalIncludeDirectories="src\utils;src\loki;libdmtx"
+				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;_VISUALC_;UA_HAVE_DEBUG"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -199,6 +199,10 @@
 				RelativePath=".\src\TwainException.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\src\UaDebug.cpp"
+				>
+			</File>
 			<Filter
 				Name="libdmtx"
 				>
@@ -234,11 +238,27 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\loki\LokiExport.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\loki\Singleton.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\loki\Threads.h"
+				>
+			</File>
+			<File
 				RelativePath=".\includes\twain.h"
 				>
 			</File>
 			<File
 				RelativePath=".\src\TwainException.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\UaDebug.h"
 				>
 			</File>
 		</Filter>

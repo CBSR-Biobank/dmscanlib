@@ -2,30 +2,37 @@
  * Device Independent Bitmap
  ******************************************************************************/
 
+#include "UaDebug.h"
+#include "ImageProcessor.h"
+
+#ifdef _VISUALC_
+#include "getopt.h"
+#include "ImageGrabber.h"
+#else
+#include <getopt.h>
+#endif
+
+#include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "ImageProcessor.h"
-
-#ifdef _VISUALC_
-#include "utils\getopt.h"
-#include "ImageGrabber.h"
-#else
-#include "ImageGrabber.h" //TODO: needed?
-#include <getopt.h>
-#endif
+const char * USAGE_FMT =
+   "Usage: %s [OPTIONS]\n"
+   "\n"
+   "  -a, --acquire       Scans an image from the scanner and decodes the 2D barcodes\n"
+   "                      on the trays.\n"
+   "  -d, --decode FILE   Decodes the 2D barcode in the specified DIB image file.\n"
+   "  -v, --verbose       Debugging messages are output to stdout. Only when built\n"
+   "                      UA_HAVE_DEBUG on.\n";
 
 /* Allowed command line arguments.  */
 static struct option long_options[] = {
-
-   { "decode",    no_argument, NULL, 'd' },
-   { "acquire",no_argument, NULL, 'a' },
+   { "decode",  no_argument, NULL, 'd' },
+   { "acquire", no_argument, NULL, 'a' },
+   { "verbose", required_argument, NULL, 'v' },
    { 0, 0, 0, 0 }
 };
-
-const char * USAGE_FMT =
-   "Usage: %s [OPTIONS]\n";
 
 #ifdef _VISUALC_
 #define DIR_SEP_CHR '\\'
@@ -41,48 +48,47 @@ void printUsage() {
 
 int main(int argc, char ** argv) {
    int ch;
-	DmtxImage *theImage;
+
    progname = strrchr(argv[0], DIR_SEP_CHR) + 1;
+
+   UA_DEBUG(ua::DebugSinkStdout::Instance().showHeader(true);
+             ua::debugstream.sink(ua::DebugSinkStdout::Instance()));
 
    while (1) {
       int option_index = 0;
 
-	  ch = getopt_long (argc, argv, "a:d:h", long_options, &option_index);
+      ch = getopt_long (argc, argv, "ad:hv", long_options, &option_index);
 
       if (ch == -1) break;
       switch (ch) {
-		 case 'a':
-			initGrabber();
-			selectSourceAsDefault();
-			theImage = acquire();
-			decodeDmtxImage(theImage);
-			dmtxImageDestroy(&theImage);
-			 break;
+         case 'a': {
+#ifdef _VISUALC_
+            initGrabber();
+            selectSourceAsDefault();
+            DmtxImage * theImage = acquire();
+            decodeDmtxImage(theImage);
+            dmtxImageDestroy(&theImage);
+#endif             
+            break;
+                   }
+
          case 'd':
-			 initGrabber();
-			selectSourceAsDefault();
-			theImage = acquire();
-			decodeDmtxImage(theImage);
-			dmtxImageDestroy(&theImage);
-			freeHandle();
-            //decodeDib(optarg);
+            decodeDib(optarg);
+            break;
+
+         case 'v':
+            UA_DEBUG(ua::Debug::Instance().levelInc(ua::DebugImpl::allSubSys_m));
             break;
 
          case '?':
          case 'h':
             printUsage();
-            exit(0);
-            break;
+         exit(0);
+         break;
 
          default:
             printf("?? getopt returned character code %c ??\n", ch);
       }
-   }
-
-   if (optind >= argc) {
-      // not enough command line arguments, print usage message
-      printUsage();
-      exit(-1);
    }
 
    if (optind > argc) {

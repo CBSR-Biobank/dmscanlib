@@ -1,3 +1,6 @@
+#ifndef MY_WRAPPER_GETOPT_H_INCLUDED
+#define MY_WRAPPER_GETOPT_H_INCLUDED
+
 /*
  *  getopt.h - cpp wrapper for my_getopt to make it look like getopt.
  *  Copyright 1997, 2000, 2001, 2002, Benjamin Sittler
@@ -9,10 +12,10 @@
  *  modify, merge, publish, distribute, sublicense, and/or sell copies
  *  of the Software, and to permit persons to whom the Software is
  *  furnished to do so, subject to the following conditions:
- *  
+ *
  *  The above copyright notice and this permission notice shall be
  *  included in all copies or substantial portions of the Software.
- *  
+ *
  *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  *  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  *  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -22,9 +25,6 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  *  DEALINGS IN THE SOFTWARE.
  */
-
-#ifndef MY_WRAPPER_GETOPT_H_INCLUDED
-#define MY_WRAPPER_GETOPT_H_INCLUDED
 
 #ifdef __cplusplus
 extern "C" {

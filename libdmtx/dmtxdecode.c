@@ -22,6 +22,8 @@ Contact: mike@dragonflylogic.com
 
 /* $Id: dmtxdecode.c 764 2009-02-27 00:27:05Z mblaughton $ */
 
+#include <stdio.h>
+
 /**
  * @file dmtxdecode.c
  * @brief Decode regions
