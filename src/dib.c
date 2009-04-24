@@ -146,16 +146,16 @@ void getDibPixel(Dib dib, unsigned row, unsigned col, RgbQuad * quad) {
    quad->rgbReserved = 0;
 }
 
-unsigned getDibPixelGrayscale(Dib dib, unsigned row, unsigned col) {
+unsigned char getDibPixelGrayscale(Dib dib, unsigned row, unsigned col) {
    unsigned rowBytes = dib->infoHeader.width * dib->bytesPerPixel + dib->rowPaddingBytes;
    unsigned char * ptr = (dib->pixels + row * rowBytes + col * dib->bytesPerPixel);
 
    if (dib->infoHeader.bitCount == 24) {
       ptr = (dib->pixels + row * rowBytes + col * dib->bytesPerPixel);
-      return (unsigned) (0.3 * ptr[0] + 0.59 * ptr[1] + 0.11 * ptr[2]);
+      return (unsigned char) (0.3 * ptr[0] + 0.59 * ptr[1] + 0.11 * ptr[2]);
    }
    else if (dib->infoHeader.bitCount == 8) {
-      return (unsigned) *ptr;
+      return *ptr;
    }
    assert(0); /* bitCount not implemented yet */
    return  0;
@@ -177,7 +177,7 @@ void setDibPixel(Dib dib, unsigned row, unsigned col, RgbQuad * quad) {
 }
 
 void setDibPixelGrayscale(Dib dib, unsigned row, unsigned col,
-                          unsigned value) {
+                          unsigned char value) {
    unsigned padding = (dib->infoHeader.width * dib->bytesPerPixel) & 0x3;
    unsigned rowBytes = dib->infoHeader.width * dib->bytesPerPixel + padding;
    unsigned char * ptr = (dib->pixels + row * rowBytes + col * dib->bytesPerPixel);
@@ -257,7 +257,7 @@ void sobelEdgeDetectionWithMask(Dib src, Dib dest, int mask1[3][3], int mask2[3]
          if (SUM > 255) SUM = 255;
          if (SUM < 0) SUM = 0;
 
-         setDibPixelGrayscale(dest, Y, X, 255 - SUM);
+         setDibPixelGrayscale(dest, Y, X, (unsigned char)(255 - SUM));
       }
    }
 }
@@ -327,7 +327,7 @@ void laplaceEdgeDetection(Dib src, Dib dest) {
          if (SUM > 255)  SUM = 255;
          if (SUM < 0)    SUM = 0;
 
-         setDibPixelGrayscale(dest, Y, X, 255 - SUM);
+         setDibPixelGrayscale(dest, Y, X, (unsigned char)(255 - SUM));
       }
    }
 }
@@ -362,7 +362,7 @@ void histEqualization(Dib src, Dib dest) {
       for (col = 0; col < width; ++col) {
          setDibPixelGrayscale(
             dest, row, col,
-            256 * (int) sum[getDibPixelGrayscale(src, row, col)]);
+            (unsigned char) (256 * sum[getDibPixelGrayscale(src, row, col)]));
       }
    }
 }

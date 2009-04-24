@@ -61,15 +61,17 @@ int main(int argc, char ** argv) {
 
       if (ch == -1) break;
       switch (ch) {
-         case 'a':
+         case 'a': {
 #ifdef _VISUALC_
             initGrabber();
             selectSourceAsDefault();
-            theImage = acquire();
+            DmtxImage * theImage = acquire();
             decodeDmtxImage(theImage);
             dmtxImageDestroy(&theImage);
-#endif
+#endif             
             break;
+                   }
+
          case 'd':
             decodeDib(optarg);
             break;
