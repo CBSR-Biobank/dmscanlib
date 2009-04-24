@@ -28,23 +28,22 @@ void decodeDmtxImage(DmtxImage* image){
 		exit(0);
 	}
 
+	dec = dmtxDecodeCreate(image, 1);
+	assert(dec != NULL);
 	//debugging info
+#ifdef _DEBUG                                           \
+	// save image to a PNM file
+	FILE * fh;
+	printf("======================= decodeDmtxImage ===================================\n");
 	printf("image width: %d\n", dmtxImageGetProp(image, DmtxPropWidth));
 	printf("image height: %d\n", dmtxImageGetProp(image, DmtxPropHeight));
 	printf("image bits per pixel: %d\n", dmtxImageGetProp(image, DmtxPropBitsPerPixel));
 	printf("image row size bytes: %d\n", dmtxImageGetProp(image, DmtxPropRowSizeBytes));
-
-	dec = dmtxDecodeCreate(image, 1);
-	assert(dec != NULL);
-
-#if 1                                           \
-	// save image to a PNM file
-	FILE * fh;
 	pnm = dmtxDecodeCreateDiagnostic(dec, &totalBytes, &headerBytes, 0);
 	fh = fopen("out.pnm", "w");
 	fwrite(pnm, sizeof(unsigned char), totalBytes, fh);
 	fclose(fh);
-	exit(0);
+	//exit(0);
 #endif
 
 	dmtxDecodeSetProp(dec, DmtxPropScanGap, DmtxPropScanGap);
@@ -52,17 +51,28 @@ void decodeDmtxImage(DmtxImage* image){
 	dmtxDecodeSetProp(dec, DmtxPropEdgeThresh, DmtxPropEdgeThresh);
 
 	reg = dmtxRegionFindNext(dec, NULL);
-	if (reg != NULL) {
-		printf("found a region...\n");
+	int read = 0;
+	int total = 0;
+	if( reg != NULL) printf("found a region...\n");
+
+	while (reg != NULL) {	
 		msg = dmtxDecodeMatrixRegion(dec, reg, DmtxUndefined);
 		if(msg != NULL) {
 			fputs("output: \"", stdout);
 			fwrite(msg->output, sizeof(unsigned char), msg->outputIdx, stdout);
 			fputs("\"\n", stdout);
 			dmtxMessageDestroy(&msg);
+			read++;
+		}
+		else {
+			//TODO: rotation calls here?
+			printf("couldnt read message!\n");
 		}
 		dmtxRegionDestroy(&reg);
+		reg = dmtxRegionFindNext(dec, NULL);
+		total++;
 	}
+	printf("Found a total of %d regions, and successfully decoded %d of them", total, read);
 	dmtxDecodeDestroy(&dec);
 }
 

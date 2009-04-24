@@ -5,7 +5,7 @@
 // g_hinstDLL holds this DLL's instance handle. It is initialized in response
 // to the DLL_PROCESS_ATTACH message. This handle is passed to CreateWindow()
 // when a window is created, just before opening the data source manager.
-static HINSTANCE g_hinstDLL;
+//static HINSTANCE g_hinstDLL;
 
 // g_hLib holds the handle of the TWAIN_32.DLL library. It is initialized in
 // response to the DLL_PROCESS_ATTACH message. This handle is used to obtain
@@ -21,6 +21,9 @@ static DSMENTRYPROC g_pDSM_Entry;
 // g_AppID serves as a TWAIN identity structure that uniquely identifies the
 // application process responsible for making calls to function DSM_Entry().
 static TW_IDENTITY g_AppID;
+
+//handle to the image to be unlocked and freed later.
+TW_UINT32 handle;
 
 /*
 *	initGrabber()
@@ -171,6 +174,19 @@ DmtxImage* acquire(){
 	{
 		throw TwainException("Unable to open default data source (acquire)");
 	}
+	
+	//Prepare to enable the default data source
+	TW_USERINTERFACE ui;
+	ui.ShowUI = false;
+	ui.ModalUI = false;
+	ui.hParent = hwnd;
+	// Enable the default data source.
+	rc = (*g_pDSM_Entry) (&g_AppID,
+			&srcID,
+			DG_CONTROL,
+			DAT_USERINTERFACE,
+			MSG_ENABLEDS,
+			&ui);
 
 	if (rc != TWRC_SUCCESS)
 	{
@@ -206,7 +222,24 @@ DmtxImage* acquire(){
 		if (event.TWMessage == MSG_XFERREADY)
 		{
 			TW_IMAGEINFO ii;
-			rc = (*g_pDSM_Entry) (&g_AppID,
+/*		TODO: these are the properties Adam set, should do something
+				with them.
+*/
+//		SetCapability(ICAP_UNITS, TWUN_INCHES, FALSE);
+//		SetCapability(ICAP_XRESOLUTION, dpi, FALSE);
+//		SetCapability(ICAP_YRESOLUTION, dpi, FALSE);
+/*		SetCapability(ICAP_PIXELTYPE, TWPT_RGB, FALSE);
+		rc = (g_pDSM_Entry) (&g_AppID,
+					&srcID,
+					DG_CONTROL,
+					DAT_CAPABILITY,
+					MSG_SET,
+					(TW_MEMREF)&cap);
+		SetCapability(ICAP_PIXELTYPE, TWPT_BW, FALSE);
+		SetCapability(ICAP_BITDEPTH, 8, FALSE);*/
+//		SetCapability(ICAP_CONTRAST, scan_CONTRAST, FALSE);
+//		SetCapability(ICAP_BRIGHTNESS, scan_BRIGHTNESS, FALSE);
+		rc = (*g_pDSM_Entry) (&g_AppID,
 					&srcID,
 					DG_IMAGE,
 					DAT_IMAGEINFO,
@@ -242,8 +275,17 @@ DmtxImage* acquire(){
 				break;
 			}
 
+	//debug info
+#ifdef _DEBUG
+	std::cout << "================================ acquire =========================\n";
+	std::cout << "Bits per pixel: " << ii.BitsPerPixel << "\n";
+	std::cout << "Compression: " << ii.Compression << "\n";
+	std::cout << "ImageLength: " << ii.ImageLength << "\n";
+	std::cout << "ImageWidth: " << ii.ImageWidth << "\n";
+	std::cout << "PixelType: " << ii.PixelType << "\n";
+#endif		
+
 			// Perform the transfer.
-			TW_UINT32 handle;
 			rc = (*g_pDSM_Entry) (&g_AppID,
 					&srcID,
 					DG_IMAGE,
@@ -266,8 +308,8 @@ DmtxImage* acquire(){
 			//TODO: check if 8 or 24 bit and handle accordingly
 			image = createDmtxImage ((HANDLE)handle);
 
-			GlobalUnlock ((HANDLE) handle);
-			GlobalFree ((HANDLE) handle);
+			//GlobalUnlock ((HANDLE) handle);
+			//GlobalFree ((HANDLE) handle);
 
 			// Cancel all remaining transfers.
 			(*g_pDSM_Entry) (&g_AppID,
@@ -311,6 +353,7 @@ DmtxImage* acquire(){
 *
 *	Select the source to use as default for Twain, so the source does not
 *	have to be specified every time.
+*	TODO: change return type to void?
 */
 void selectSourceAsDefault()
 {
@@ -397,36 +440,26 @@ DmtxImage* createDmtxImage(HANDLE hMem)
 	DmtxImage *theImage;
 
 
-	pBits = lpVoid + sizeof(BITMAPINFOHEADER) + sizeof(RGBQUAD)*GetPaletteSize(*pHead);
-	theImage = dmtxImageCreate((unsigned char*)pBits, width, height, DmtxPack32bppRGBX);
+	pBits = lpVoid + sizeof(BITMAPINFOHEADER);
+	theImage = dmtxImageCreate((unsigned char*)pBits, width, height, DmtxPack24bppRGB);
 
 	int bytesPerpixel = m_nBits >> 3;
 	int rowPadBytes = (width * m_nBits) & 0x3;
+
+#ifdef _DEBUG
+	std::cout << "====================== createDmtxImage ==============================\n";
+	std::cout << "lpVoid: " << *((unsigned*) lpVoid) << "\n";
+	std::cout << "sizeof(BITMAPINFOHEADER): " << sizeof(BITMAPINFOHEADER) << "\n";
+	std::cout << "Width: " << width << "\n";
+	std::cout << "height: " << height << "\n";
+	std::cout << "towPadBytes: " << rowPadBytes << "\n";
+#endif
 
 	dmtxImageSetProp(theImage, DmtxPropRowPadBytes, rowPadBytes);
 	dmtxImageSetProp(theImage, DmtxPropImageFlip, DmtxFlipY); // DIBs are flipped in Y
 	return theImage;
 }
 
-/*
-*	GetPaletteSize(BITMAPINFOHEADER& bmInfo)
-*	@params - bmInfo: Info header to a bitmap image
-*	@return - int: Palette Size of the image
-*/
-int GetPaletteSize(BITMAPINFOHEADER& bmInfo)
-{
-	switch(bmInfo.biBitCount)
-	{
-	case 1:		
-		return 2;
-	case 4:		
-		return 16;
-	case 8:		
-		return 256;
-	default:	
-		return 0;
-	}
-}
 /*
 *	unloadTwain()
 *	@params - none
@@ -437,4 +470,16 @@ int GetPaletteSize(BITMAPINFOHEADER& bmInfo)
 void unloadTwain(){
 	if (g_hLib != 0)
 		FreeLibrary (g_hLib);
+}
+
+/*
+*	freeHandle()
+*	@params - none
+*	@return - none
+*
+*	Unlock the handle to the image from twain, and free the memory.
+*/
+void freeHandle(){
+	GlobalUnlock ((HANDLE) handle);
+	GlobalFree ((HANDLE) handle);
 }

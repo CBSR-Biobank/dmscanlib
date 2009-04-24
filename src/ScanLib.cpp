@@ -1,6 +1,3 @@
-#include "ImageProcessor.h"
-#include <iostream>
-
 /*******************************************************************************
  * Device Independent Bitmap
  ******************************************************************************/
@@ -15,7 +12,7 @@
 #include "utils\getopt.h"
 #include "ImageGrabber.h"
 #else
-#include "ImageGrabber.h"
+#include "ImageGrabber.h" //TODO: needed?
 #include <getopt.h>
 #endif
 
@@ -23,7 +20,7 @@
 static struct option long_options[] = {
 
    { "decode",    no_argument, NULL, 'd' },
-   { "acquire", no_argument, NULL, 'a' },
+   { "acquire",no_argument, NULL, 'a' },
    { 0, 0, 0, 0 }
 };
 
@@ -62,7 +59,13 @@ int main(int argc, char ** argv) {
 			dmtxImageDestroy(&theImage);
 			 break;
          case 'd':
-            decodeDib(optarg);
+			 initGrabber();
+			selectSourceAsDefault();
+			theImage = acquire();
+			decodeDmtxImage(theImage);
+			dmtxImageDestroy(&theImage);
+			freeHandle();
+            //decodeDib(optarg);
             break;
 
          case '?':

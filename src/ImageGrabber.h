@@ -10,4 +10,5 @@ DmtxImage* acquire();
 void selectSourceAsDefault();
 static DmtxImage* createDmtxImage(HANDLE hMem);
 void unloadTwain();
+void freeHandle();
 int GetPaletteSize(BITMAPINFOHEADER& bmInfo);
