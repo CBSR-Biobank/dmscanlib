@@ -1,123 +1,136 @@
 /*******************************************************************************
-* ImageProcessor.cpp
-*
-*	Contains methods for handling the decoding of 2d barcodes from images. Mostly
-*	a functionality wrapper around libdmtx which 
-******************************************************************************/
+ * ImageProcessor.cpp
+ *
+ *	Contains methods for handling the decoding of 2d barcodes from images. Mostly
+ *	a functionality wrapper around libdmtx which
+ ******************************************************************************/
+
+#include "UaDebug.h"
 #include "ImageProcessor.h"
 
+#include <string.h>
+#include <iostream>
+using namespace std;
+
+
 /*
-*	decodeDmtxImage
-*	@params - image: pointer to the DmtxImage to decode
-*	@return - none
-*
-*	As of right now, this function takes a DmtxImage as the parameter,
-*	and decodes a single 2d barcode in the Image. 
-*
-*	TODO: return the message instead of printing it out.
-*	TODO: Improve decoding (decode more than one barcode)
-*/
+ *	decodeDmtxImage
+ *	@params - image: pointer to the DmtxImage to decode
+ *	@return - none
+ *
+ *	As of right now, this function takes a DmtxImage as the parameter,
+ *	and decodes a single 2d barcode in the Image.
+ *
+ *	TODO: return the message instead of printing it out.
+ *	TODO: Improve decoding (decode more than one barcode)
+ */
 void decodeDmtxImage(DmtxImage* image){
-	DmtxDecode     *dec;
-	DmtxRegion     *reg;
-	DmtxMessage    *msg;
-	int totalBytes, headerBytes;
-	unsigned char *pnm;
-	if (image == NULL) {
-		printf("ERROR: could not read DMTX image\n");
-		exit(0);
-	}
+   DmtxDecode     *dec;
+   DmtxRegion     *reg;
+   DmtxMessage    *msg;
+   int totalBytes, headerBytes;
+   unsigned char *pnm;
 
-	//debugging info
-	printf("image width: %d\n", dmtxImageGetProp(image, DmtxPropWidth));
-	printf("image height: %d\n", dmtxImageGetProp(image, DmtxPropHeight));
-	printf("image bits per pixel: %d\n", dmtxImageGetProp(image, DmtxPropBitsPerPixel));
-	printf("image row size bytes: %d\n", dmtxImageGetProp(image, DmtxPropRowSizeBytes));
+   if (image == NULL) {
+      UA_ERROR(" could not create DMTX image");
+   }
 
-	dec = dmtxDecodeCreate(image, 1);
-	assert(dec != NULL);
+   UA_DOUT(1, 1, "image width: " << dmtxImageGetProp(image, DmtxPropWidth));
+   UA_DOUT(1, 1, "image height: " << dmtxImageGetProp(image, DmtxPropHeight));
+   UA_DOUT(1, 1, "image bits per pixel: "
+           << dmtxImageGetProp(image, DmtxPropBitsPerPixel));
+   UA_DOUT(1, 1, "image row size bytes: "
+           << dmtxImageGetProp(image, DmtxPropRowSizeBytes));
 
-#if 1                                           \
-	// save image to a PNM file
-	FILE * fh;
-	pnm = dmtxDecodeCreateDiagnostic(dec, &totalBytes, &headerBytes, 0);
-	fh = fopen("out.pnm", "w");
-	fwrite(pnm, sizeof(unsigned char), totalBytes, fh);
-	fclose(fh);
-	exit(0);
-#endif
+   dec = dmtxDecodeCreate(image, 1);
+   assert(dec != NULL);
 
-	dmtxDecodeSetProp(dec, DmtxPropScanGap, DmtxPropScanGap);
-	dmtxDecodeSetProp(dec, DmtxPropSquareDevn, DmtxPropSquareDevn);
-	dmtxDecodeSetProp(dec, DmtxPropEdgeThresh, DmtxPropEdgeThresh);
+   UA_DEBUG(
+      // save image to a PNM file
+      FILE * fh;
+      pnm = dmtxDecodeCreateDiagnostic(dec, &totalBytes, &headerBytes, 0);
+      fh = fopen("out.pnm", "w");
+      fwrite(pnm, sizeof(unsigned char), totalBytes, fh);
+      fclose(fh);
+      );
 
-	reg = dmtxRegionFindNext(dec, NULL);
-	if (reg != NULL) {
-		printf("found a region...\n");
-		msg = dmtxDecodeMatrixRegion(dec, reg, DmtxUndefined);
-		if(msg != NULL) {
-			fputs("output: \"", stdout);
-			fwrite(msg->output, sizeof(unsigned char), msg->outputIdx, stdout);
-			fputs("\"\n", stdout);
-			dmtxMessageDestroy(&msg);
-		}
-		dmtxRegionDestroy(&reg);
-	}
-	dmtxDecodeDestroy(&dec);
+   dmtxDecodeSetProp(dec, DmtxPropScanGap, DmtxPropScanGap);
+   dmtxDecodeSetProp(dec, DmtxPropSquareDevn, DmtxPropSquareDevn);
+   dmtxDecodeSetProp(dec, DmtxPropEdgeThresh, DmtxPropEdgeThresh);
+
+   reg = dmtxRegionFindNext(dec, NULL);
+   if (reg != NULL) {
+      UA_DOUT(1, 1, "found a region...");
+      msg = dmtxDecodeMatrixRegion(dec, reg, DmtxUndefined);
+      if(msg != NULL) {
+         char buf[1024];
+         memcpy(buf, msg->output, msg->outputIdx);
+         buf[msg->outputIdx] = 0;
+         cout << "barcode: \"" << buf << "\"" << endl;
+         dmtxMessageDestroy(&msg);
+      }
+      dmtxRegionDestroy(&reg);
+   }
+   dmtxDecodeDestroy(&dec);
 }
 
 /*
-*	decodeDib
-*	@params - filename: char* corresponding to the filename of an image
-*	@return - none
-*
-*	Create a file from the filename given, then create a DmtxImage from this
-*	file. If a DmxtImage can be created, decode it.
-*
-*	TODO: return the decoded string.
-*/
+ *	decodeDib
+ *	@params - filename: char* corresponding to the filename of an image
+ *	@return - none
+ *
+ *	Create a file from the filename given, then create a DmtxImage from this
+ *	file. If a DmxtImage can be created, decode it.
+ *
+ *	TODO: return the decoded string.
+ */
 void decodeDib(char * filename) {
-	Dib dib;
-	DmtxImage *image;
+   Dib dib;
+   DmtxImage *image;
 
+   UA_ASSERT(filename != NULL);
 
-	dib = dibAllocate();
-	image = createDmtxImageFromFile(filename, dib);
-	
-	if (image == NULL) {
-		printf("ERROR: could not create DMTX image\n");
-		exit(0);
-	}
+   dib = dibAllocate();
+   UA_ASSERT(dib != NULL);
+   image = createDmtxImageFromFile(filename, dib);
 
-	decodeDmtxImage(image);
-	dmtxImageDestroy(&image);
-	dibDestroy(dib);
+   if (image == NULL) {
+      UA_ERROR(" could not create DMTX image");
+   }
+
+   decodeDmtxImage(image);
+   dmtxImageDestroy(&image);
+   dibDestroy(dib);
 }
 
 /*
-*	createDmtxImageFromFile
-*	@params - filename: char* corresponding to the filename of an image
-*			  dib - a blank Divice Independant Bitmap to read the image into
-*	@return - DmtxImage: the newly created image from the file.
-*
-*	Open the file and create a DmtxImage out of it.
-*/
+ *	createDmtxImageFromFile
+ *	@params - filename: char* corresponding to the filename of an image
+ *			  dib - a blank Divice Independant Bitmap to read the image into
+ *	@return - DmtxImage: the newly created image from the file.
+ *
+ *	Open the file and create a DmtxImage out of it.
+ */
 DmtxImage * createDmtxImageFromFile(char* filename, Dib dib){
-	FILE * fh;
-	DmtxImage * image;
+   FILE * fh;
+   DmtxImage * image;
 
-	fh = fopen(filename, "r");
-	readDibHeader(fh, dib);
-	readDibPixels(fh, dib);
-	fclose(fh);
+   UA_ASSERT(filename != NULL);
+   UA_ASSERT(dib != NULL);
 
-	// create dmtxImage from the dib
-	image = dmtxImageCreate(dibGetPixelBuffer(dib), dibGetWidth(dib), dibGetHeight(dib),
-		DmtxPack24bppRGB);
+   fh = fopen(filename, "r");
+   UA_ASSERT(fh != NULL);
+   readDibHeader(fh, dib);
+   readDibPixels(fh, dib);
+   fclose(fh);
 
-	//set the properties (pad bytes, flip)
-	dmtxImageSetProp(image, DmtxPropRowPadBytes, dibGetRowPadBytes(dib));
-	dmtxImageSetProp(image, DmtxPropImageFlip, DmtxFlipY); // DIBs are flipped in Y
+   // create dmtxImage from the dib
+   image = dmtxImageCreate(dibGetPixelBuffer(dib), dibGetWidth(dib), dibGetHeight(dib),
+                           DmtxPack24bppRGB);
 
-	return image;
+   //set the properties (pad bytes, flip)
+   dmtxImageSetProp(image, DmtxPropRowPadBytes, dibGetRowPadBytes(dib));
+   dmtxImageSetProp(image, DmtxPropImageFlip, DmtxFlipY); // DIBs are flipped in Y
+
+   return image;
 }

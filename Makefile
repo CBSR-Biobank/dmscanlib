@@ -3,6 +3,8 @@ PROJECT := scanlib
 SRC := \
 	src/dib.c \
 	src/ImageProcessor.cpp \
+	src/ScanLib.cpp \
+	src/utils/UaDebug.cpp \
 	libdmtx/dmtx.c
 
 # the following files only compile on windows
@@ -16,13 +18,13 @@ BUILD_DIR_FULL_PATH := $(CURDIR)/$(BUILD_DIR)
 
 CC := gcc
 CXX := g++
-CFLAGS := -fmessage-length=0 -fPIC -D_UNIX_
+CFLAGS := -fmessage-length=0 -fPIC -D_UNIX_ -DUA_HAVE_DEBUG
 CXXFLAGS := $(CFLAGS)
 CPPFLAGS := $(CFLAGS)
 SED := /bin/sed
 LIBS += -lc -lm -lstdc++
 
-INCLUDE_PATH := src libdmtx
+INCLUDE_PATH := src libdmtx src/loki
 VPATH := $(CURDIR) $(INCLUDE_PATH) $(BUILD_DIR)
 
 OBJS := $(addsuffix .o, $(basename $(notdir $(SRC))))
