@@ -12,6 +12,7 @@
 #include <iostream>
 using namespace std;
 
+#pragma warning(disable : 4996)
 
 /*
  *	decodeDmtxImage
@@ -118,7 +119,7 @@ DmtxImage * createDmtxImageFromFile(char* filename, Dib dib){
    UA_ASSERT(filename != NULL);
    UA_ASSERT(dib != NULL);
 
-   fh = fopen(filename, "r");
+   fh = fopen(filename, "r"); // C4996
    UA_ASSERT(fh != NULL);
    readDibHeader(fh, dib);
    readDibPixels(fh, dib);

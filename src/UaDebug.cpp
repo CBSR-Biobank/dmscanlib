@@ -149,7 +149,7 @@ void DebugSink::standardHeader(std::string & str_r) {
       exit(1);
    }
    _ftime_s( &tstruct ); 
-   sprintf(buf_a, "%.8s:%u ", timebuf + 11, tstruct.millitm);
+   sprintf_s(buf_a, "%.8s:%03u ", timebuf + 11, tstruct.millitm);
 #else
     // Fetch the current time
 

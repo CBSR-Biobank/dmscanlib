@@ -1,8 +1,6 @@
 #ifndef MY_WRAPPER_GETOPT_H_INCLUDED
 #define MY_WRAPPER_GETOPT_H_INCLUDED
 
-#ifdef _VISUALC_
-
 /*
  *  getopt.h - cpp wrapper for my_getopt to make it look like getopt.
  *  Copyright 1997, 2000, 2001, 2002, Benjamin Sittler
@@ -54,7 +52,5 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* _VISUAL_C */
 
 #endif /* MY_WRAPPER_GETOPT_H_INCLUDED */
