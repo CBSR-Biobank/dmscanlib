@@ -2,8 +2,6 @@
  * Device Independent Bitmap
  ******************************************************************************/
 
-#include "ImageProcessor.h"
-
 #include "UaDebug.h"
 #include "ImageProcessor.h"
 
@@ -19,18 +17,22 @@
 #include <stdlib.h>
 #include <string.h>
 
+const char * USAGE_FMT =
+   "Usage: %s [OPTIONS]\n"
+   "\n"
+   "  -a, --acquire       Scans an image from the scanner and decodes the 2D barcodes\n"
+   "                      on the trays.\n"
+   "  -d, --decode FILE   Decodes the 2D barcode in the specified DIB image file.\n"
+   "  -v, --verbose       Debugging messages are output to stdout. Only when built\n"
+   "                      UA_HAVE_DEBUG on.\n";
 
 /* Allowed command line arguments.  */
 static struct option long_options[] = {
-
    { "decode",  no_argument, NULL, 'd' },
    { "acquire", no_argument, NULL, 'a' },
    { "verbose", required_argument, NULL, 'v' },
    { 0, 0, 0, 0 }
 };
-
-const char * USAGE_FMT =
-   "Usage: %s [OPTIONS]\n";
 
 #ifdef _VISUALC_
 #define DIR_SEP_CHR '\\'
