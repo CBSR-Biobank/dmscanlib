@@ -18,7 +18,7 @@ BUILD_DIR_FULL_PATH := $(CURDIR)/$(BUILD_DIR)
 
 CC := gcc
 CXX := g++
-CFLAGS := -fmessage-length=0 -fPIC -D_UNIX_ -DUA_HAVE_DEBUG
+CFLAGS := -Wall -pedantic -fmessage-length=0 -fPIC -D_UNIX_ -DUA_HAVE_DEBUG
 CXXFLAGS := $(CFLAGS)
 CPPFLAGS := $(CFLAGS)
 SED := /bin/sed

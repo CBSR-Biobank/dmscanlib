@@ -13,7 +13,7 @@
 #include <strings.h>
 #endif
 
-//#define _UNIT_TEST_
+/* #define _UNIT_TEST_ */
 
 struct sDib {
    BitmapFileHeader fileHeader;
@@ -157,7 +157,7 @@ unsigned getDibPixelGrayscale(Dib dib, unsigned row, unsigned col) {
    else if (dib->infoHeader.bitCount == 8) {
       return (unsigned) *ptr;
    }
-   assert(0); // bitCount not implemented yet
+   assert(0); /* bitCount not implemented yet */
    return  0;
 }
 
@@ -172,7 +172,7 @@ void setDibPixel(Dib dib, unsigned row, unsigned col, RgbQuad * quad) {
       ptr[2] = quad->rgbBlue;
    }
    else {
-      assert(0); // can't assign RgbQuad to dib
+      assert(0); /* can't assign RgbQuad to dib */
    }
 }
 
@@ -191,7 +191,7 @@ void setDibPixelGrayscale(Dib dib, unsigned row, unsigned col,
       *ptr = value;
    }
    else {
-      assert(0); // can't assign RgbQuad to dib
+      assert(0); /* can't assign RgbQuad to dib */
    }
 }
 
@@ -408,7 +408,7 @@ int main(int argc, char ** argv) {
    }
 
    if (optind >= argc) {
-      // not enough command line arguments, print usage message
+      /* not enough command line arguments, print usage message */
       printUsage();
       exit(-1);
    }
@@ -421,12 +421,14 @@ int main(int argc, char ** argv) {
    readDibPixels(fh, &dib);
    fclose(fh);
 
-   // convert to a grayscale iamge
+   /* convert to a grayscale iamge */
    Dib gsDib;
 
-   //dibConvertGrayscale(&dib, &gsDib);
-   //sobelEdgeDetection(&dib, &gsDib);
-   //laplaceEdgeDetection(&dib, &gsDib);
+   /*
+   dibConvertGrayscale(&dib, &gsDib);
+   sobelEdgeDetection(&dib, &gsDib);
+   laplaceEdgeDetection(&dib, &gsDib);
+   */
    histEqualization(&dib, &gsDib);
 
    fh = fopen("out.bmp", "w");
@@ -437,5 +439,5 @@ int main(int argc, char ** argv) {
    dibDestroy(&gsDib);
 }
 
-#endif /* _UNIT_TEST_ */                        \
+#endif /* _UNIT_TEST_ */
 

@@ -12,7 +12,10 @@
 #include <iostream>
 using namespace std;
 
+#ifdef _VISUALC_
+// disable fopen warnings
 #pragma warning(disable : 4996)
+#endif
 
 /*
  *	decodeDmtxImage

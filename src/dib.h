@@ -9,8 +9,9 @@ extern "C" {
 
    typedef struct sDib * Dib;
 
-   // File information header
-   // provides general information about the file
+   /* File information header
+    * provides general information about the file
+    */
    typedef struct  {
       unsigned short type;
       unsigned       size;
@@ -19,8 +20,9 @@ extern "C" {
       unsigned       offset;
    } BitmapFileHeader;
 
-   // Bitmap information header
-   // provides information specific to the image data
+   /* Bitmap information header
+    * provides information specific to the image data
+    */
    typedef struct {
       unsigned       size;
       unsigned       width;
@@ -35,7 +37,8 @@ extern "C" {
       unsigned       numColorsImp;
    } BitmapInfoHeader;
 
-   // Colour palette
+   /* Colour palette
+    */
    typedef struct sRgbQuad {
       unsigned char rgbBlue;
       unsigned char rgbGreen;

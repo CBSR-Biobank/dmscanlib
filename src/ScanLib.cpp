@@ -48,7 +48,7 @@ void printUsage() {
 
 int main(int argc, char ** argv) {
    int ch;
-   DmtxImage *theImage;
+
    progname = strrchr(argv[0], DIR_SEP_CHR) + 1;
 
    UA_DEBUG(ua::DebugSinkStdout::Instance().showHeader(true);
