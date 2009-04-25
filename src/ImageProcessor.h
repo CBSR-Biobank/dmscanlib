@@ -11,4 +11,5 @@
 void decodeDib(char * filename);
 DmtxImage* createDmtxImageFromFile(char* filename, Dib dib);
 void decodeDmtxImage(DmtxImage* image);
+DmtxImage* rotateImage(DmtxImage* src);
 #endif /* __INC_ImageProcessor_h */
