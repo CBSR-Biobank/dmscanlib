@@ -20,25 +20,29 @@ using namespace std;
 /*
 *	decodeDmtxImage
 *	@params - image: pointer to the DmtxImage to decode
-*	@return - none
+*			- barcodes: character array to store the barcodes in
+*			- bufferSize - max number of characters barcodes can store
+*	@return - The number of bytes that got truncated to fit the barcodes
+*			  in the supplied buffer.
 *
 *	As of right now, this function takes a DmtxImage as the parameter,
-*	and decodes a single 2d barcode in the Image.
+*	a character array to store the barcodes in, and the max size of this
+*	buffer. 
 *
-*	TODO: return the message instead of printing it out.
 *	TODO: Improve decoding (decode more than one barcode)
 */
-void decodeDmtxImage(DmtxImage* image, char* barcodes, int bufferSize){
+int decodeDmtxImage(DmtxImage* image, char* barcodes, int bufferSize){
 	DmtxDecode     *dec;
 	DmtxRegion     *reg;
 	DmtxMessage    *msg;
 	int totalBytes, headerBytes;
 	unsigned char *pnm;
+	char buf[1024];
+	int bufSize = 0;
 
 	if (image == NULL) {
 		UA_ERROR(" could not create DMTX image");
 	}
-
 	UA_DOUT(1, 1, "image width: " << dmtxImageGetProp(image, DmtxPropWidth));
 	UA_DOUT(1, 1, "image height: " << dmtxImageGetProp(image, DmtxPropHeight));
 	UA_DOUT(1, 1, "image bits per pixel: "
@@ -64,33 +68,32 @@ void decodeDmtxImage(DmtxImage* image, char* barcodes, int bufferSize){
 
 	reg = dmtxRegionFindNext(dec, NULL);
 
-	int read = 0;
-	int total = 0;
-	char buf[1024];
-	int written = 0;
-	int bufSize = 0;
 	if (reg != NULL) UA_DOUT(1, 1, "found a region...");
-	while (reg != NULL) {
 
+	while (reg != NULL) {
 		msg = dmtxDecodeMatrixRegion(dec, reg, DmtxUndefined);
 		if(msg != NULL) {
-			
 			memcpy(buf, msg->output, msg->outputIdx);
 			buf[msg->outputIdx] = 0;
-			cout << "barcode: \"" << buf << "\"" << endl;
-			cout << "buff length: " << strlen(buf) << endl;
 			dmtxMessageDestroy(&msg);
-			read++;
 			bufSize = strlen(buf);
+			//if there is enough room, copy it in
 			if(bufSize < (bufferSize-written)){
 				memcpy(barcodes+written, buf, bufSize);
 				written += bufSize;	
 			}
+			//out of memory
 			else {
-				//out of memory
-				return;
+				dmtxRegionDestroy(&reg);
+				dmtxDecodeDestroy(&dec);
+				//this allows bufferSize=0 to be used to see how much
+				//space to allocate
+				if(bufferSize > 0) barcodes[bufferSize-1] = '\0';
+				return bufferSize-written-bufSize;
 			}
 		}
+		//no message decoded, write 10 0's
+		//TODO: put rotation code here?
 		else{
 			UA_DOUT(1, 1, "Unable to read region");
 			if(10 < (bufferSize-written)){
@@ -99,34 +102,43 @@ void decodeDmtxImage(DmtxImage* image, char* barcodes, int bufferSize){
 			}
 			else {
 				//out of memory
-				return;
+				dmtxRegionDestroy(&reg);
+				dmtxDecodeDestroy(&dec);
+				//this allows bufferSize=0 to be used to see how much
+				//space to allocate
+				if(bufferSize > 0) barcodes[bufferSize-1] = '\0';
+				return bufferSize-written-10;
 			}
 		}
-		//barcodes[written] = '\0';
-		//written++;
-		total++;
+
 		dmtxRegionDestroy(&reg);
 		reg = dmtxRegionFindNext(dec, NULL);
+	}
+	if(written >=bufferSize){
+		barcodes[bufferSize-1]='\0';
+		dmtxDecodeDestroy(&dec);
+		return 1; //1 char truncated since \0 overrode it
 	}
 	barcodes[written] = '\0';
 	UA_DOUT(1, 1, "Read " << total << " regions, decoded " << read << " of them\n");
 	dmtxDecodeDestroy(&dec);
+	return 0;
 }
 
 /*
 *	decodeDib
 *	@params - filename: char* corresponding to the filename of an image
-*	@return - none
+*	@return - The number of bytes that got truncated to fit the barcodes
+*			  in the supplied buffer.
 *
 *	Create a file from the filename given, then create a DmtxImage from this
-*	file. If a DmxtImage can be created, decode it.
-*
-*	TODO: return the decoded string.
+*	file. If a DmxtImage can be created, decode it. All barcodes decoded are
+*	stored in the supplied buffer, up to a max length of bufferSize.
 */
-void decodeDib(char * filename, char* barcodes, int bufferSize){
+int decodeDib(char * filename, char* barcodes, int bufferSize){
 	Dib dib;
 	DmtxImage *image;
-
+	int decodeReturn = 0;
 	UA_ASSERT(filename != NULL);
 
 	dib = dibAllocate();
@@ -137,7 +149,7 @@ void decodeDib(char * filename, char* barcodes, int bufferSize){
 		UA_ERROR(" could not create DMTX image");
 	}
 
-	decodeDmtxImage(image, barcodes, bufferSize);
+	decodeReturn = decodeDmtxImage(image, barcodes, bufferSize);
 	//testing the rotation code
 /*	UA_DEBUG(
 		std::cout << "=================== trying rotations ===================\n";
@@ -162,6 +174,7 @@ void decodeDib(char * filename, char* barcodes, int bufferSize){
 
 	dmtxImageDestroy(&image);
 	dibDestroy(dib);
+	return decodeReturn;
 }
 
 /*
