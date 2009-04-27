@@ -9,9 +9,9 @@
 #include <assert.h>
 #include <string.h>
 
-int decodeDib(char * filename, char* barcodes, int bufferSize);
+int decodeDib(char * filename, char* barcodes, int bufferSize, int* barcodeLength);
 DmtxImage* createDmtxImageFromFile(char* filename, Dib dib);
-int decodeDmtxImage(DmtxImage* image, char* barcodes, int bufferSize);
+int decodeSingleBarcode(DmtxImage* image, char* barcodes, int bufferSize, int* barcodeLength);
 DmtxImage* rotateImage(DmtxImage* src);
 
 #endif /* __INC_ImageProcessor_h */

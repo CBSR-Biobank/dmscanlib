@@ -31,14 +31,12 @@ using namespace std;
 *
 *	TODO: Improve decoding (decode more than one barcode)
 */
-int decodeDmtxImage(DmtxImage* image, char* barcodes, int bufferSize){
+int decodeSingleBarcode(DmtxImage* image, char* barcode, int bufferSize, int* barcodeLength){
 	DmtxDecode     *dec;
 	DmtxRegion     *reg;
 	DmtxMessage    *msg;
 	int totalBytes, headerBytes;
 	unsigned char *pnm;
-	char buf[1024];
-	int bufSize = 0;
 
 	if (image == NULL) {
 		UA_ERROR(" could not create DMTX image");
@@ -67,60 +65,37 @@ int decodeDmtxImage(DmtxImage* image, char* barcodes, int bufferSize){
 	dmtxDecodeSetProp(dec, DmtxPropEdgeThresh, DmtxPropEdgeThresh);
 
 	reg = dmtxRegionFindNext(dec, NULL);
+	*barcodeLength = 0;
 
-	if (reg != NULL) UA_DOUT(1, 1, "found a region...");
-
-	while (reg != NULL) {
+	if (reg != NULL) {
+		UA_DOUT(1, 1, "found a region...");
 		msg = dmtxDecodeMatrixRegion(dec, reg, DmtxUndefined);
 		if(msg != NULL) {
-			memcpy(buf, msg->output, msg->outputIdx);
-			buf[msg->outputIdx] = 0;
+			*barcodeLength = msg->outputIdx;
+			if(*barcodeLength < bufferSize){
+				memcpy(barcode, msg->output, msg->outputIdx);
+				barcode[msg->outputIdx] = 0;
+			}
+			else{
+				if(bufferSize > 0)
+					barcode[0]=0;
+				//not enough memory
+				return bufferSize-(*barcodeLength);
+			}
 			dmtxMessageDestroy(&msg);
-			bufSize = strlen(buf);
-			//if there is enough room, copy it in
-			if(bufSize < (bufferSize-written)){
-				memcpy(barcodes+written, buf, bufSize);
-				written += bufSize;	
-			}
-			//out of memory
-			else {
-				dmtxRegionDestroy(&reg);
-				dmtxDecodeDestroy(&dec);
-				//this allows bufferSize=0 to be used to see how much
-				//space to allocate
-				if(bufferSize > 0) barcodes[bufferSize-1] = '\0';
-				return bufferSize-written-bufSize;
-			}
 		}
 		//no message decoded, write 10 0's
 		//TODO: put rotation code here?
 		else{
 			UA_DOUT(1, 1, "Unable to read region");
-			if(10 < (bufferSize-written)){
-				memcpy(barcodes+written, "0000000000", 10);
-				written += 10;	
-			}
-			else {
-				//out of memory
-				dmtxRegionDestroy(&reg);
-				dmtxDecodeDestroy(&dec);
-				//this allows bufferSize=0 to be used to see how much
-				//space to allocate
-				if(bufferSize > 0) barcodes[bufferSize-1] = '\0';
-				return bufferSize-written-10;
-			}
+			//memset(barcode, 0, bufferSize);
 		}
 
 		dmtxRegionDestroy(&reg);
-		reg = dmtxRegionFindNext(dec, NULL);
 	}
-	if(written >=bufferSize){
-		barcodes[bufferSize-1]='\0';
-		dmtxDecodeDestroy(&dec);
-		return 1; //1 char truncated since \0 overrode it
-	}
-	barcodes[written] = '\0';
-	UA_DOUT(1, 1, "Read " << total << " regions, decoded " << read << " of them\n");
+	//we want to zero unused memory, especially the last spot in array
+	memset(barcode+(*barcodeLength), 0 , bufferSize-(*barcodeLength));
+	//UA_DOUT(1, 1, "Read " << total << " regions, decoded " << read << " of them\n");
 	dmtxDecodeDestroy(&dec);
 	return 0;
 }
@@ -135,7 +110,7 @@ int decodeDmtxImage(DmtxImage* image, char* barcodes, int bufferSize){
 *	file. If a DmxtImage can be created, decode it. All barcodes decoded are
 *	stored in the supplied buffer, up to a max length of bufferSize.
 */
-int decodeDib(char * filename, char* barcodes, int bufferSize){
+int decodeDib(char * filename, char* barcodes, int bufferSize, int* barcodeLength){
 	Dib dib;
 	DmtxImage *image;
 	int decodeReturn = 0;
@@ -149,29 +124,9 @@ int decodeDib(char * filename, char* barcodes, int bufferSize){
 		UA_ERROR(" could not create DMTX image");
 	}
 
-	decodeReturn = decodeDmtxImage(image, barcodes, bufferSize);
-	//testing the rotation code
-/*	UA_DEBUG(
-		std::cout << "=================== trying rotations ===================\n";
-		DmtxImage *one;
-		DmtxImage *two;
-		DmtxImage *three;
-		DmtxImage *four;
-		one = rotateImage(image);
-		decodeDmtxImage(one);
-		two = rotateImage(one);
-		decodeDmtxImage(two);
-		three = rotateImage(two);
-		decodeDmtxImage(three);
-		four = rotateImage(three);
-		decodeDmtxImage(four);
-		
-		dmtxImageDestroy(&one);
-		dmtxImageDestroy(&two);
-		dmtxImageDestroy(&three);
-		dmtxImageDestroy(&four);
-	);*/
-
+	decodeReturn = decodeSingleBarcode(image, barcodes, bufferSize, barcodeLength);
+	
+	//clean up allocated memory
 	dmtxImageDestroy(&image);
 	dibDestroy(dib);
 	return decodeReturn;
