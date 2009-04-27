@@ -48,7 +48,8 @@ void printUsage() {
 
 int main(int argc, char ** argv) {
    int ch;
-
+   const int buffsize = 2880;//12*8 * 3
+   char *barcodes = new char[buffsize];
    progname = strrchr(argv[0], DIR_SEP_CHR) + 1;
 
    UA_DEBUG(ua::DebugSinkStdout::Instance().showHeader(true);
@@ -66,14 +67,15 @@ int main(int argc, char ** argv) {
             initGrabber();
             selectSourceAsDefault();
             DmtxImage * theImage = acquire();
-            decodeDmtxImage(theImage);
+            decodeDmtxImage(theImage, barcodes, buffsize);
             dmtxImageDestroy(&theImage);
+			std::cout << "==== BARCODE: " << barcodes << " ====\n";
 #endif             
             break;
                    }
 
          case 'd':
-            decodeDib(optarg);
+            decodeDib(optarg, barcodes, buffsize);
             break;
 
          case 'v':

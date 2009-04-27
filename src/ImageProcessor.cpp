@@ -28,7 +28,7 @@ using namespace std;
 *	TODO: return the message instead of printing it out.
 *	TODO: Improve decoding (decode more than one barcode)
 */
-void decodeDmtxImage(DmtxImage* image){
+void decodeDmtxImage(DmtxImage* image, char* barcodes, int bufferSize){
 	DmtxDecode     *dec;
 	DmtxRegion     *reg;
 	DmtxMessage    *msg;
@@ -66,25 +66,49 @@ void decodeDmtxImage(DmtxImage* image){
 
 	int read = 0;
 	int total = 0;
+	char buf[1024];
+	int written = 0;
+	int bufSize = 0;
 	if (reg != NULL) UA_DOUT(1, 1, "found a region...");
 	while (reg != NULL) {
 
 		msg = dmtxDecodeMatrixRegion(dec, reg, DmtxUndefined);
 		if(msg != NULL) {
-			char buf[1024];
+			
 			memcpy(buf, msg->output, msg->outputIdx);
 			buf[msg->outputIdx] = 0;
 			cout << "barcode: \"" << buf << "\"" << endl;
+			cout << "buff length: " << strlen(buf) << endl;
 			dmtxMessageDestroy(&msg);
 			read++;
+			bufSize = strlen(buf);
+			if(bufSize < (bufferSize-written)){
+				memcpy(barcodes+written, buf, bufSize);
+				written += bufSize;	
+			}
+			else {
+				//out of memory
+				return;
+			}
 		}
 		else{
 			UA_DOUT(1, 1, "Unable to read region");
+			if(10 < (bufferSize-written)){
+				memcpy(barcodes+written, "0000000000", 10);
+				written += 10;	
+			}
+			else {
+				//out of memory
+				return;
+			}
 		}
+		//barcodes[written] = '\0';
+		//written++;
 		total++;
 		dmtxRegionDestroy(&reg);
 		reg = dmtxRegionFindNext(dec, NULL);
 	}
+	barcodes[written] = '\0';
 	UA_DOUT(1, 1, "Read " << total << " regions, decoded " << read << " of them\n");
 	dmtxDecodeDestroy(&dec);
 }
@@ -99,7 +123,7 @@ void decodeDmtxImage(DmtxImage* image){
 *
 *	TODO: return the decoded string.
 */
-void decodeDib(char * filename) {
+void decodeDib(char * filename, char* barcodes, int bufferSize){
 	Dib dib;
 	DmtxImage *image;
 
@@ -113,9 +137,30 @@ void decodeDib(char * filename) {
 		UA_ERROR(" could not create DMTX image");
 	}
 
-	decodeDmtxImage(image);
-	dmtxImageDestroy(&image);
+	decodeDmtxImage(image, barcodes, bufferSize);
+	//testing the rotation code
+/*	UA_DEBUG(
+		std::cout << "=================== trying rotations ===================\n";
+		DmtxImage *one;
+		DmtxImage *two;
+		DmtxImage *three;
+		DmtxImage *four;
+		one = rotateImage(image);
+		decodeDmtxImage(one);
+		two = rotateImage(one);
+		decodeDmtxImage(two);
+		three = rotateImage(two);
+		decodeDmtxImage(three);
+		four = rotateImage(three);
+		decodeDmtxImage(four);
+		
+		dmtxImageDestroy(&one);
+		dmtxImageDestroy(&two);
+		dmtxImageDestroy(&three);
+		dmtxImageDestroy(&four);
+	);*/
 
+	dmtxImageDestroy(&image);
 	dibDestroy(dib);
 }
 
@@ -184,18 +229,36 @@ DmtxImage* rotateImage(DmtxImage* src)
 	int value = 0;
 	
 	//loop through the pixels and copy pixel by pixel. slow but i dont know a faster
-	//method right now.
+	//method right now. Looping through the pixels of dest in order.
+	
 	for(int col=0; col<width; col++){ 
 		for(int row=0; row<height; row++){
 			for(int channel=0; channel < channelCount; channel++){
 				srcOffset = (height - 1 - col)*width + row;
 				srcCol = srcOffset % width;
 				srcRow = srcOffset / width;
+				//get pixel value from source
 				dmtxImageGetPixelValue(src, srcCol, srcRow, channel, &value);
+				//set pixel value in dest
 				dmtxImageSetPixelValue(dest, row, col, channel, value);
 			}
 		}
 	}
+	/*
+	//loop through pixels of src by order
+	for(int col=0; col<width; col++){ 
+		for(int row=0; row<height; row++){
+			for(int channel=0; channel < channelCount; channel++){
+				srcRow = row;
+				srcCol = height-1-row;
+				//get pixel value from source
+				dmtxImageGetPixelValue(src, srcCol, srcRow, channel, &value);
+				//set pixel value in dest
+				dmtxImageSetPixelValue(dest, row, col, channel, value);
+			}
+		}
+	}
+	*/
 	//want to set the properties the same as src
 	dmtxImageSetProp(dest, DmtxPropRowPadBytes, rowPadBytes);
 	dmtxImageSetProp(dest, DmtxPropImageFlip, DmtxFlipY); // DIBs are flipped in Y
