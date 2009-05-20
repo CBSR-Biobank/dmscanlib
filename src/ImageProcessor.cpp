@@ -22,12 +22,17 @@ using namespace std;
 *	@params - image: pointer to the DmtxImage to decode
 *			- barcodes: character array to store the barcodes in
 *			- bufferSize - max number of characters barcodes can store
-*	@return - The number of bytes that got truncated to fit the barcodes
-*			  in the supplied buffer.
+*			- barcodeLength - the length of the barcode decoded
+*	@return - 0 if there were no memory issues when decoding,
+*			  -1 otherwise.
 *
 *	As of right now, this function takes a DmtxImage as the parameter,
 *	a character array to store the barcodes in, and the max size of this
-*	buffer. 
+*	buffer, and an int which will correspond to the length of the barcode 
+*	decoded.
+*
+*	As of right now, the remaining memory in barcode is 0'd after the barcode.
+*	this might change, but seemed to be the right call for now.
 *
 *	TODO: Improve decoding (decode more than one barcode)
 */
@@ -35,8 +40,6 @@ int decodeSingleBarcode(DmtxImage* image, char* barcode, int bufferSize, int* ba
 	DmtxDecode     *dec;
 	DmtxRegion     *reg;
 	DmtxMessage    *msg;
-	int totalBytes, headerBytes;
-	unsigned char *pnm;
 
 	if (image == NULL) {
 		UA_ERROR(" could not create DMTX image");
@@ -54,6 +57,8 @@ int decodeSingleBarcode(DmtxImage* image, char* barcode, int bufferSize, int* ba
 	UA_DEBUG(
 		// save image to a PNM file
 		FILE * fh;
+	    unsigned char *pnm;
+	    int totalBytes, headerBytes;
 		pnm = dmtxDecodeCreateDiagnostic(dec, &totalBytes, &headerBytes, 0);
 		fh = fopen("out.pnm", "w");
 		fwrite(pnm, sizeof(unsigned char), totalBytes, fh);
@@ -76,11 +81,16 @@ int decodeSingleBarcode(DmtxImage* image, char* barcode, int bufferSize, int* ba
 				memcpy(barcode, msg->output, msg->outputIdx);
 				barcode[msg->outputIdx] = 0;
 			}
+			//not enough memory
 			else{
+				*barcodeLength = 0;
 				if(bufferSize > 0)
 					barcode[0]=0;
-				//not enough memory
-				return bufferSize-(*barcodeLength);
+				//cleanup
+				dmtxMessageDestroy(&msg);
+				dmtxRegionDestroy(&reg);
+				dmtxDecodeDestroy(&dec);
+				return -1;
 			}
 			dmtxMessageDestroy(&msg);
 		}
@@ -88,14 +98,13 @@ int decodeSingleBarcode(DmtxImage* image, char* barcode, int bufferSize, int* ba
 		//TODO: put rotation code here?
 		else{
 			UA_DOUT(1, 1, "Unable to read region");
-			//memset(barcode, 0, bufferSize);
 		}
 
 		dmtxRegionDestroy(&reg);
 	}
 	//we want to zero unused memory, especially the last spot in array
 	memset(barcode+(*barcodeLength), 0 , bufferSize-(*barcodeLength));
-	//UA_DOUT(1, 1, "Read " << total << " regions, decoded " << read << " of them\n");
+
 	dmtxDecodeDestroy(&dec);
 	return 0;
 }

@@ -12,3 +12,4 @@ static DmtxImage* createDmtxImage(HANDLE hMem);
 void unloadTwain();
 void freeHandle();
 int GetPaletteSize(BITMAPINFOHEADER& bmInfo);
+BOOL SetCapability(TW_UINT16 cap,TW_UINT16 value,BOOL sign);

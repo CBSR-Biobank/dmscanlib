@@ -1,4 +1,3 @@
-// jtwain.cpp
 #include "ImageGrabber.h"
 #include "TwainException.h"
 
@@ -22,8 +21,17 @@ static DSMENTRYPROC g_pDSM_Entry;
 // application process responsible for making calls to function DSM_Entry().
 static TW_IDENTITY g_AppID;
 
+// srcID serves as a TWAIN identity structure that uniquely identifies the
+// source being used
+TW_IDENTITY srcID;
+
 //handle to the image to be unlocked and freed later.
 TW_UINT32 handle;
+
+// properties used by the scanner
+const int dpi = 300;
+const int scan_CONTRAST = 500;
+const int scan_BRIGHTNESS = 500;
 
 /*
 *	initGrabber()
@@ -149,7 +157,6 @@ DmtxImage* acquire(){
 	}
 
 	// Get the default data source's name.
-	TW_IDENTITY srcID;
 	ZeroMemory (&srcID, sizeof(srcID));
 	rc = (*g_pDSM_Entry) (&g_AppID,
 			0,
@@ -225,20 +232,14 @@ DmtxImage* acquire(){
 /*		TODO: these are the properties Adam set, should do something
 				with them.
 */
-//		SetCapability(ICAP_UNITS, TWUN_INCHES, FALSE);
-//		SetCapability(ICAP_XRESOLUTION, dpi, FALSE);
-//		SetCapability(ICAP_YRESOLUTION, dpi, FALSE);
-/*		SetCapability(ICAP_PIXELTYPE, TWPT_RGB, FALSE);
-		rc = (g_pDSM_Entry) (&g_AppID,
-					&srcID,
-					DG_CONTROL,
-					DAT_CAPABILITY,
-					MSG_SET,
-					(TW_MEMREF)&cap);
-		SetCapability(ICAP_PIXELTYPE, TWPT_BW, FALSE);
-		SetCapability(ICAP_BITDEPTH, 8, FALSE);*/
-//		SetCapability(ICAP_CONTRAST, scan_CONTRAST, FALSE);
-//		SetCapability(ICAP_BRIGHTNESS, scan_BRIGHTNESS, FALSE);
+		SetCapability(ICAP_UNITS, TWUN_INCHES, FALSE);
+		SetCapability(ICAP_XRESOLUTION, dpi, FALSE);
+		SetCapability(ICAP_YRESOLUTION, dpi, FALSE);
+		SetCapability(ICAP_PIXELTYPE, TWPT_RGB, FALSE);
+		SetCapability(ICAP_BITDEPTH, 8, FALSE);
+		SetCapability(ICAP_CONTRAST, scan_CONTRAST, FALSE);
+		SetCapability(ICAP_BRIGHTNESS, scan_BRIGHTNESS, FALSE);
+		
 		rc = (*g_pDSM_Entry) (&g_AppID,
 					&srcID,
 					DG_IMAGE,
@@ -307,9 +308,6 @@ DmtxImage* acquire(){
 			}
 			//TODO: check if 8 or 24 bit and handle accordingly
 			image = createDmtxImage ((HANDLE)handle);
-
-			//GlobalUnlock ((HANDLE) handle);
-			//GlobalFree ((HANDLE) handle);
 
 			// Cancel all remaining transfers.
 			(*g_pDSM_Entry) (&g_AppID,
@@ -458,6 +456,33 @@ DmtxImage* createDmtxImage(HANDLE hMem)
 	dmtxImageSetProp(theImage, DmtxPropRowPadBytes, rowPadBytes);
 	dmtxImageSetProp(theImage, DmtxPropImageFlip, DmtxFlipY); // DIBs are flipped in Y
 	return theImage;
+}
+/*
+Sets the capability of the Twain Data Source
+*/
+BOOL SetCapability(TW_UINT16 cap,TW_UINT16 value,BOOL sign)
+{
+
+	TW_CAPABILITY twCap;
+	pTW_ONEVALUE pVal;
+	BOOL ret_value = FALSE;
+
+	twCap.Cap = cap;
+	twCap.ConType = TWON_ONEVALUE;
+
+	twCap.hContainer = GlobalAlloc(GHND,sizeof(TW_ONEVALUE));
+	if(twCap.hContainer)
+	{
+		pVal = (pTW_ONEVALUE)GlobalLock(twCap.hContainer);
+		pVal->ItemType = sign ? TWTY_INT16 : TWTY_UINT16;
+		pVal->Item = (TW_UINT32)value;
+		GlobalUnlock(twCap.hContainer);
+		// change this?
+		ret_value = (*g_pDSM_Entry)(&g_AppID,&srcID,DG_CONTROL,DAT_CAPABILITY,MSG_SET,(TW_MEMREF)&twCap);
+		GlobalFree(twCap.hContainer);
+	}
+	return ret_value;
+
 }
 
 /*
