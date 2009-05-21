@@ -54,7 +54,7 @@ int decodeSingleBarcode(DmtxImage* image, char* barcode, int bufferSize, int* ba
 	dec = dmtxDecodeCreate(image, 1);
 	assert(dec != NULL);
 
-	UA_DEBUG(
+#ifdef _DEBUG
 		// save image to a PNM file
 		FILE * fh;
 	    unsigned char *pnm;
@@ -63,7 +63,7 @@ int decodeSingleBarcode(DmtxImage* image, char* barcode, int bufferSize, int* ba
 		fh = fopen("out.pnm", "w");
 		fwrite(pnm, sizeof(unsigned char), totalBytes, fh);
 		fclose(fh);
-	);
+#endif
 
 	dmtxDecodeSetProp(dec, DmtxPropScanGap, DmtxPropScanGap);
 	dmtxDecodeSetProp(dec, DmtxPropSquareDevn, DmtxPropSquareDevn);

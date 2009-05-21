@@ -1,5 +1,8 @@
 #include "ImageGrabber.h"
 #include "TwainException.h"
+#include "UaDebug.h"
+
+using namespace std;
 
 // g_hinstDLL holds this DLL's instance handle. It is initialized in response
 // to the DLL_PROCESS_ATTACH message. This handle is passed to CreateWindow()
@@ -276,15 +279,13 @@ DmtxImage* acquire(){
 				break;
 			}
 
-	//debug info
-#ifdef _DEBUG
-	std::cout << "================================ acquire =========================\n";
-	std::cout << "Bits per pixel: " << ii.BitsPerPixel << "\n";
-	std::cout << "Compression: " << ii.Compression << "\n";
-	std::cout << "ImageLength: " << ii.ImageLength << "\n";
-	std::cout << "ImageWidth: " << ii.ImageWidth << "\n";
-	std::cout << "PixelType: " << ii.PixelType << "\n";
-#endif		
+			//debug info
+			UA_DOUT(2, 1, "================================ acquire =========================\n"
+				<< "Bits per pixel: " << ii.BitsPerPixel << endl
+				<< "Compression: " << ii.Compression << endl
+				<< "ImageLength: " << ii.ImageLength << endl
+				<< "ImageWidth: " << ii.ImageWidth << endl
+				<< "PixelType: " << ii.PixelType);
 
 			// Perform the transfer.
 			rc = (*g_pDSM_Entry) (&g_AppID,
@@ -307,7 +308,11 @@ DmtxImage* acquire(){
 				break;
 			}
 			//TODO: check if 8 or 24 bit and handle accordingly
-			image = createDmtxImage ((HANDLE)handle);
+			image = createDmtxImage((HANDLE)handle);
+
+			dmtxImageSetProp(image, DmtxPropRowPadBytes, 			
+				(ii.ImageWidth * (ii.BitsPerPixel >> 3)) & 0x3);
+			dmtxImageSetProp(image, DmtxPropImageFlip, DmtxFlipY); // DIBs are flipped in Y
 
 			// Cancel all remaining transfers.
 			(*g_pDSM_Entry) (&g_AppID,
@@ -444,14 +449,12 @@ DmtxImage* createDmtxImage(HANDLE hMem)
 	int bytesPerpixel = m_nBits >> 3;
 	int rowPadBytes = (width * m_nBits) & 0x3;
 
-#ifdef _DEBUG
-	std::cout << "====================== createDmtxImage ==============================\n";
-	std::cout << "lpVoid: " << *((unsigned*) lpVoid) << "\n";
-	std::cout << "sizeof(BITMAPINFOHEADER): " << sizeof(BITMAPINFOHEADER) << "\n";
-	std::cout << "Width: " << width << "\n";
-	std::cout << "height: " << height << "\n";
-	std::cout << "towPadBytes: " << rowPadBytes << "\n";
-#endif
+	UA_DOUT(2, 1,"====================== createDmtxImage ==============================" << endl
+		<< "lpVoid: " << *((unsigned*) lpVoid) << endl
+		<< "sizeof(BITMAPINFOHEADER): " << sizeof(BITMAPINFOHEADER) << endl
+		<< "Width: " << width << endl
+		<< "height: " << height << endl
+		<< "towPadBytes: " << rowPadBytes);
 
 	dmtxImageSetProp(theImage, DmtxPropRowPadBytes, rowPadBytes);
 	dmtxImageSetProp(theImage, DmtxPropImageFlip, DmtxFlipY); // DIBs are flipped in Y
