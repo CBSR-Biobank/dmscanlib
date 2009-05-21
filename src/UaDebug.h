@@ -186,6 +186,11 @@ namespace ua {
 /**
  * When an cond is false, an error message is generated and the program exits.
  */
+#define UA_ASSERT_NOT_NULL(ptr) assert ( (ptr) != NULL )
+
+/**
+ * When an cond is false, an error message is generated and the program exits.
+ */
 #define UA_ASSERTS(cond, msg)                    \
     do {                                         \
         if (! (cond) ) {                         \
