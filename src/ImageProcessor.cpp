@@ -28,7 +28,7 @@ using namespace std;
 *
 *	As of right now, this function takes a DmtxImage as the parameter,
 *	a character array to store the barcodes in, and the max size of this
-*	buffer, and an int which will correspond to the length of the barcode 
+*	buffer, and an int which will correspond to the length of the barcode
 *	decoded.
 *
 *	As of right now, the remaining memory in barcode is 0'd after the barcode.
@@ -40,6 +40,9 @@ int decodeSingleBarcode(DmtxImage* image, char* barcode, int bufferSize, int* ba
 	DmtxDecode     *dec;
 	DmtxRegion     *reg;
 	DmtxMessage    *msg;
+	FILE * fh;
+    unsigned char *pnm;
+    int totalBytes, headerBytes;
 
 	if (image == NULL) {
 		UA_ERROR(" could not create DMTX image");
@@ -54,16 +57,13 @@ int decodeSingleBarcode(DmtxImage* image, char* barcode, int bufferSize, int* ba
 	dec = dmtxDecodeCreate(image, 1);
 	assert(dec != NULL);
 
-#ifdef _DEBUG
-		// save image to a PNM file
-		FILE * fh;
-	    unsigned char *pnm;
-	    int totalBytes, headerBytes;
+	// save image to a PNM file
+	UA_DEBUG(
 		pnm = dmtxDecodeCreateDiagnostic(dec, &totalBytes, &headerBytes, 0);
 		fh = fopen("out.pnm", "w");
 		fwrite(pnm, sizeof(unsigned char), totalBytes, fh);
 		fclose(fh);
-#endif
+	);
 
 	dmtxDecodeSetProp(dec, DmtxPropScanGap, DmtxPropScanGap);
 	dmtxDecodeSetProp(dec, DmtxPropSquareDevn, DmtxPropSquareDevn);
@@ -80,9 +80,10 @@ int decodeSingleBarcode(DmtxImage* image, char* barcode, int bufferSize, int* ba
 			if(*barcodeLength < bufferSize){
 				memcpy(barcode, msg->output, msg->outputIdx);
 				barcode[msg->outputIdx] = 0;
+				UA_DOUT(1,1, "barcode is: " << barcode);
 			}
-			//not enough memory
 			else{
+				//not enough memory
 				*barcodeLength = 0;
 				if(bufferSize > 0)
 					barcode[0]=0;
@@ -90,6 +91,7 @@ int decodeSingleBarcode(DmtxImage* image, char* barcode, int bufferSize, int* ba
 				dmtxMessageDestroy(&msg);
 				dmtxRegionDestroy(&reg);
 				dmtxDecodeDestroy(&dec);
+				UA_WARN("not enough memory");
 				return -1;
 			}
 			dmtxMessageDestroy(&msg);
@@ -134,7 +136,7 @@ int decodeDib(char * filename, char* barcodes, int bufferSize, int* barcodeLengt
 	}
 
 	decodeReturn = decodeSingleBarcode(image, barcodes, bufferSize, barcodeLength);
-	
+
 	//clean up allocated memory
 	dmtxImageDestroy(&image);
 	dibDestroy(dib);
@@ -204,13 +206,13 @@ DmtxImage* rotateImage(DmtxImage* src)
 	int srcCol = 0;
 	int srcRow = 0;
 	int value = 0;
-	
+
 	//loop through the pixels and copy pixel by pixel. slow but i dont know a faster
 	//method right now. Looping through the pixels of dest in order.
-	
-	for(int col=0; col<width; col++){ 
-		for(int row=0; row<height; row++){
-			for(int channel=0; channel < channelCount; channel++){
+
+	for (int col = 0; col < width; col++){
+		for (int row = 0; row < height; row++){
+			for (int channel = 0; channel < channelCount; channel++){
 				srcOffset = (height - 1 - col)*width + row;
 				srcCol = srcOffset % width;
 				srcRow = srcOffset / width;
@@ -223,7 +225,7 @@ DmtxImage* rotateImage(DmtxImage* src)
 	}
 	/*
 	//loop through pixels of src by order
-	for(int col=0; col<width; col++){ 
+	for(int col=0; col<width; col++){
 		for(int row=0; row<height; row++){
 			for(int channel=0; channel < channelCount; channel++){
 				srcRow = row;

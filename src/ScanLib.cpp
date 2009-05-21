@@ -18,20 +18,20 @@
 #include <string.h>
 
 const char * USAGE_FMT =
-   "Usage: %s [OPTIONS]\n"
-   "\n"
-   "  -a, --acquire       Scans an image from the scanner and decodes the 2D barcodes\n"
-   "                      on the trays.\n"
-   "  -d, --decode FILE   Decodes the 2D barcode in the specified DIB image file.\n"
-   "  -v, --verbose       Debugging messages are output to stdout. Only when built\n"
-   "                      UA_HAVE_DEBUG on.\n";
+	"Usage: %s [OPTIONS]\n"
+	"\n"
+	"  -a, --acquire       Scans an image from the scanner and decodes the 2D barcodes\n"
+	"                      on the trays.\n"
+	"  -d, --decode FILE   Decodes the 2D barcode in the specified DIB image file.\n"
+	"  -v, --verbose       Debugging messages are output to stdout. Only when built\n"
+	"                      UA_HAVE_DEBUG on.\n";
 
 /* Allowed command line arguments.  */
 static struct option long_options[] = {
-   { "decode",  no_argument, NULL, 'd' },
-   { "acquire", no_argument, NULL, 'a' },
-   { "verbose", required_argument, NULL, 'v' },
-   { 0, 0, 0, 0 }
+		{ "decode",  no_argument, NULL, 'd' },
+		{ "acquire", no_argument, NULL, 'a' },
+		{ "verbose", required_argument, NULL, 'v' },
+		{ 0, 0, 0, 0 }
 };
 
 #ifdef _VISUALC_
@@ -43,60 +43,66 @@ static struct option long_options[] = {
 char * progname;
 
 void printUsage() {
-   printf(USAGE_FMT, progname);
+	printf(USAGE_FMT, progname);
 }
 
 int main(int argc, char ** argv) {
-   int ch;
-   const int buffsize = 2880;//12*8 * 3
-   int barcodeLength = 0;
-   char *barcodes = new char[buffsize];
-   progname = strrchr(argv[0], DIR_SEP_CHR) + 1;
+	int ch;
+	progname = strrchr(argv[0], DIR_SEP_CHR) + 1;
 
-   UA_DEBUG(ua::DebugSinkStdout::Instance().showHeader(true);
-             ua::debugstream.sink(ua::DebugSinkStdout::Instance()));
+	UA_DEBUG(ua::DebugSinkStdout::Instance().showHeader(true);
+	ua::debugstream.sink(ua::DebugSinkStdout::Instance()));
 
-   while (1) {
-      int option_index = 0;
+	while (1) {
+		int option_index = 0;
 
-      ch = getopt_long (argc, argv, "ad:hv", long_options, &option_index);
+		ch = getopt_long (argc, argv, "ad:hv", long_options, &option_index);
 
-      if (ch == -1) break;
-      switch (ch) {
-         case 'a': {
+		if (ch == -1) break;
+		switch (ch) {
+		case 'a': {
 #ifdef _VISUALC_
-            initGrabber();
-            selectSourceAsDefault();
-            DmtxImage * theImage = acquire();
-            decodeSingleBarcode(theImage, barcodes, buffsize, &barcodeLength);
-            dmtxImageDestroy(&theImage);
+			const int buffsize = 2880;//12*8 * 3
+			int barcodeLength = 0;
+			char *barcodes = new char[buffsize];
+
+			initGrabber();
+			selectSourceAsDefault();
+			DmtxImage * theImage = acquire();
+			decodeSingleBarcode(theImage, barcodes, buffsize, &barcodeLength);
+			dmtxImageDestroy(&theImage);
 			std::cout << "==== BARCODE: " << barcodes << " : " << barcodeLength << "\n";
-#endif             
-            break;
-                   }
+#endif
+			break;
+		}
 
-         case 'd':
-            decodeDib(optarg, barcodes, buffsize, &barcodeLength);
-            break;
+		case 'd': {
+			const int buffsize = 128;
+			int barcodeLength = 0;
+			char *barcodes = new char[buffsize];
 
-         case 'v':
-            UA_DEBUG(ua::Debug::Instance().levelInc(ua::DebugImpl::allSubSys_m));
-            break;
+			decodeDib(optarg, barcodes, buffsize, &barcodeLength);
+			break;
+		}
 
-         case '?':
-         case 'h':
-            printUsage();
-         exit(0);
-         break;
+		case 'v':
+			UA_DEBUG(ua::Debug::Instance().levelInc(ua::DebugImpl::allSubSys_m));
+			break;
 
-         default:
-            printf("?? getopt returned character code %c ??\n", ch);
-      }
-   }
+		case '?':
+		case 'h':
+			printUsage();
+			exit(0);
+			break;
 
-   if (optind > argc) {
-      // too many command line arguments, print usage message
-      printUsage();
-      exit(-1);
-   }
+		default:
+			printf("?? getopt returned character code %c ??\n", ch);
+		}
+	}
+
+	if (optind > argc) {
+		// too many command line arguments, print usage message
+		printUsage();
+		exit(-1);
+	}
 }
