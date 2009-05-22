@@ -10,7 +10,10 @@
 #include <assert.h>
 #include <string.h>
 
-#ifndef _VISUALC_
+#ifdef _VISUALC_
+// disable fopen warnings
+#pragma warning(disable : 4996)
+#else
 #include <strings.h>
 #endif
 
