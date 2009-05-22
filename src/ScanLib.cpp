@@ -77,11 +77,9 @@ int main(int argc, char ** argv) {
 		}
 
 		case 'd': {
-			const int buffsize = 128;
-			int barcodeLength = 0;
-			char *barcodes = new char[buffsize];
-
-			decodeDib(optarg, barcodes, buffsize, &barcodeLength);
+			ImageProcessor * processor = new ImageProcessor();
+			UA_ASSERT_NOT_NULL(processor);
+			processor->decodeDib(optarg);
 			break;
 		}
 

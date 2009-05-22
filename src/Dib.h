@@ -45,7 +45,6 @@ public:
 	Dib();
 	Dib(char * filename);
 	~Dib();
-	void copyHeaders(Dib & src);
 	void readFromFile(char * filename) ;
 	void writeToFile(char * filename);
 	unsigned getHeight();
@@ -65,6 +64,7 @@ public:
 	void sobelEdgeDetection(Dib & src);
 	void laplaceEdgeDetection(Dib & src);
 	void histEqualization(Dib & src);
+	void rotateImage(Dib & src);
 
 private:
 	BitmapFileHeader * fileHeader;
@@ -72,6 +72,8 @@ private:
 	unsigned bytesPerPixel;
 	unsigned rowPaddingBytes;
 	unsigned char * pixels;
+
+	void copyInternals(Dib & src);
 
 };
 

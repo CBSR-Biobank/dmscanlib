@@ -14,10 +14,10 @@
 #include <strings.h>
 #endif
 
-Dib::Dib() : pixels(NULL) {
+Dib::Dib() : fileHeader(NULL), infoHeader(NULL), pixels(NULL) {
 }
 
-Dib::Dib(char * filename) : pixels(NULL) {
+Dib::Dib(char * filename) : fileHeader(NULL), infoHeader(NULL), pixels(NULL) {
 	readFromFile(filename);
 }
 
@@ -28,11 +28,14 @@ Dib::~Dib() {
 	}
 }
 
-void Dib::copyHeaders(Dib & src) {
+void Dib::copyInternals(Dib & src) {
 	if (src.fileHeader != NULL) {
 		*fileHeader = *src.fileHeader;
 	}
 	*infoHeader = *src.infoHeader;
+	if (pixels == NULL) {
+		pixels = new unsigned char[infoHeader->imageSize];
+	}
 }
 
 /**
@@ -213,12 +216,7 @@ void Dib::convertGrayscale(Dib & src) {
 	unsigned height = src.infoHeader->height;
 	unsigned row, col;
 
-	if (src.fileHeader != NULL) {
-		*fileHeader = *src.fileHeader;
-	}
-	*infoHeader = *src.infoHeader;
-	pixels = new unsigned char[infoHeader->imageSize];
-
+	copyInternals(src);
 	for (row = 0; row < height; ++row) {
 		for (col = 0; col < width; ++col) {
 			setPixelGrayscale(row, col,	src.getPixelGrayscale(row, col));
@@ -288,11 +286,7 @@ void Dib::sobelEdgeDetection(Dib & src) {
 	int GX[3][3];
 	int GY[3][3];
 
-	if (src.fileHeader != NULL) {
-		*fileHeader = *src.fileHeader;
-	}
-	*infoHeader = *src.infoHeader;
-	pixels = new unsigned char[infoHeader->imageSize];
+	copyInternals(src);
 
 	/* 3x3 GX Sobel mask.  Ref: www.cee.hw.ac.uk/hipr/html/sobel.html */
 	GX[0][0] = -1; GX[0][1] = 0; GX[0][2] = 1;
@@ -319,11 +313,7 @@ void Dib::laplaceEdgeDetection(Dib & src) {
 	unsigned Y, X, SUM;
 	int I, J, MASK[5][5];
 
-	if (src.fileHeader != NULL) {
-		*fileHeader = *src.fileHeader;
-	}
-	*infoHeader = *src.infoHeader;
-	pixels = new unsigned char[infoHeader->imageSize];
+	copyInternals(src);
 
 	/* 5x5 Laplace mask.  Ref: Myler Handbook p. 135 */
 	MASK[0][0] = -1; MASK[0][1] = -1; MASK[0][2] = -1; MASK[0][3] = -1; MASK[0][4] = -1;
@@ -369,11 +359,7 @@ void Dib::histEqualization(Dib & src) {
 	double sum[256], runningSum;
 	unsigned row, col, i;
 
-	if (src.fileHeader != NULL) {
-		*fileHeader = *src.fileHeader;
-	}
-	*infoHeader = *src.infoHeader;
-	pixels = new unsigned char[infoHeader->imageSize];
+	copyInternals(src);
 
 	memset(&histogram, 0, sizeof(histogram));
 	memset(&sum, 0, sizeof(sum));
@@ -398,4 +384,5 @@ void Dib::histEqualization(Dib & src) {
 	}
 }
 
-
+void Dib::rotateImage(Dib & src) {
+}

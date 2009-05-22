@@ -28,6 +28,7 @@
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/libdmtx}&quot;"/>
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/src}&quot;"/>
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/src/loki}&quot;"/>
+<listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/src/utils}&quot;"/>
 </option>
 <option id="gnu.cpp.compiler.option.preprocessor.def.39048618" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
 <listOptionValue builtIn="false" value="UA_HAVE_DEBUG"/>
@@ -38,7 +39,7 @@
 <tool id="cdt.managedbuild.tool.gnu.c.compiler.exe.debug.1345901968" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.exe.debug">
 <option defaultValue="gnu.c.optimization.level.none" id="gnu.c.compiler.exe.debug.option.optimization.level.988528087" name="Optimization Level" superClass="gnu.c.compiler.exe.debug.option.optimization.level" valueType="enumerated"/>
 <option id="gnu.c.compiler.exe.debug.option.debugging.level.1151726944" name="Debug Level" superClass="gnu.c.compiler.exe.debug.option.debugging.level" value="gnu.c.debugging.level.max" valueType="enumerated"/>
-<option id="gnu.c.compiler.option.include.paths.1160527227" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath"/>
+<option id="gnu.c.compiler.option.include.paths.1160527227" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths"/>
 <option id="gnu.c.compiler.option.preprocessor.def.symbols.2052290184" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" valueType="definedSymbols">
 <listOptionValue builtIn="false" value="_UNIX_"/>
 </option>
@@ -52,13 +53,13 @@
 </inputType>
 </tool>
 <tool id="cdt.managedbuild.tool.gnu.assembler.exe.debug.335644225" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.exe.debug">
-<option id="gnu.both.asm.option.include.paths.1578081893" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths" valueType="includePath"/>
+<option id="gnu.both.asm.option.include.paths.1578081893" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths"/>
 <inputType id="cdt.managedbuild.tool.gnu.assembler.input.153439988" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
 </tool>
 </toolChain>
 </folderInfo>
 <sourceEntries>
-<entry excluding="libdmtx/dmtxvector2.c|libdmtx/dmtxtime.c|libdmtx/dmtxsymbol.c|libdmtx/dmtxstatic.h|libdmtx/dmtxscangrid.c|libdmtx/dmtxregion.c|libdmtx/dmtxreedsol.c|libdmtx/dmtxplacemod.c|libdmtx/dmtxmessage.c|libdmtx/dmtxmatrix3.c|libdmtx/dmtximage.c|libdmtx/dmtxfec.c|libdmtx/dmtxencode.c|libdmtx/dmtxdecode.c|src/ImageGrabber.cpp|src/utils/my_getopt.h|src/utils/my_getopt.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+<entry excluding="src/windows/my_getopt.h|src/windows/my_getopt.c|src/windows/getopt.h|libdmtx/dmtxvector2.c|libdmtx/dmtxtime.c|libdmtx/dmtxsymbol.c|libdmtx/dmtxstatic.h|libdmtx/dmtxscangrid.c|libdmtx/dmtxregion.c|libdmtx/dmtxreedsol.c|libdmtx/dmtxplacemod.c|libdmtx/dmtxmessage.c|libdmtx/dmtxmatrix3.c|libdmtx/dmtximage.c|libdmtx/dmtxfec.c|libdmtx/dmtxencode.c|libdmtx/dmtxdecode.c|src/ImageGrabber.cpp|src/utils/my_getopt.h|src/utils/my_getopt.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 </sourceEntries>
 </configuration>
 </storageModule>
@@ -607,6 +608,7 @@
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/libdmtx}&quot;"/>
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/src}&quot;"/>
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/src/loki}&quot;"/>
+<listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/src/utils}&quot;"/>
 </option>
 <inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1869799999" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 </tool>
@@ -636,7 +638,7 @@
 </toolChain>
 </folderInfo>
 <sourceEntries>
-<entry excluding="libdmtx/dmtxvector2.c|libdmtx/dmtxtime.c|libdmtx/dmtxsymbol.c|libdmtx/dmtxstatic.h|libdmtx/dmtxscangrid.c|libdmtx/dmtxregion.c|libdmtx/dmtxreedsol.c|libdmtx/dmtxplacemod.c|libdmtx/dmtxmessage.c|libdmtx/dmtxmatrix3.c|libdmtx/dmtximage.c|libdmtx/dmtxfec.c|libdmtx/dmtxencode.c|libdmtx/dmtxdecode.c|src/ImageGrabber.cpp|src/utils/my_getopt.h|src/utils/my_getopt.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+<entry excluding="src/windows/my_getopt.h|src/windows/my_getopt.c|src/windows/getopt.h|libdmtx/dmtxvector2.c|libdmtx/dmtxtime.c|libdmtx/dmtxsymbol.c|libdmtx/dmtxstatic.h|libdmtx/dmtxscangrid.c|libdmtx/dmtxregion.c|libdmtx/dmtxreedsol.c|libdmtx/dmtxplacemod.c|libdmtx/dmtxmessage.c|libdmtx/dmtxmatrix3.c|libdmtx/dmtximage.c|libdmtx/dmtxfec.c|libdmtx/dmtxencode.c|libdmtx/dmtxdecode.c|src/ImageGrabber.cpp|src/utils/my_getopt.h|src/utils/my_getopt.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 </sourceEntries>
 </configuration>
 </storageModule>
