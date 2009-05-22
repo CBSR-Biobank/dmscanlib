@@ -41,7 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="src\utils;src\loki;libdmtx"
+				AdditionalIncludeDirectories="src\utils;src\windows;src\loki;libdmtx"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;_VISUALC_;UA_HAVE_DEBUG"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -172,7 +172,11 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\src\dib.c"
+				RelativePath=".\src\Decoder.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\Dib.cpp"
 				>
 			</File>
 			<File
@@ -184,11 +188,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\utils\my_getopt.c"
+				RelativePath=".\src\utils\LinkList.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\src\utils\my_getopt.h"
+				RelativePath=".\src\windows\my_getopt.c"
 				>
 			</File>
 			<File
@@ -200,7 +204,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\UaDebug.cpp"
+				RelativePath=".\src\utils\UaDebug.cpp"
 				>
 			</File>
 			<Filter
@@ -222,11 +226,15 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\src\dib.h"
+				RelativePath=".\src\Decoder.h"
 				>
 			</File>
 			<File
-				RelativePath=".\src\utils\getopt.h"
+				RelativePath=".\src\Dib.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\windows\getopt.h"
 				>
 			</File>
 			<File
@@ -238,7 +246,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\utils\LinkList.h"
+				>
+			</File>
+			<File
 				RelativePath=".\src\loki\LokiExport.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\windows\my_getopt.h"
 				>
 			</File>
 			<File
@@ -258,7 +274,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\UaDebug.h"
+				RelativePath=".\src\utils\UaDebug.h"
 				>
 			</File>
 		</Filter>

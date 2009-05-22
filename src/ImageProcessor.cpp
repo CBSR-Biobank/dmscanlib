@@ -40,7 +40,11 @@ void ImageProcessor::decodeDib(char * filename) {
 
 	Dib * dib = new Dib(filename);
 	UA_ASSERT_NOT_NULL(dib);
-	Decoder * decoder = new Decoder(dib);
+	delete dib;
+}
+
+void ImageProcessor::decodeImage(DmtxImage * image) {
+	Decoder * decoder = new Decoder(image);
 
 	unsigned numTags = decoder->getNumTags();
 	UA_DOUT(3, 1, "tags found: " << numTags);
@@ -48,6 +52,5 @@ void ImageProcessor::decodeDib(char * filename) {
 		UA_DOUT(3, 1, "tag " << i << ": " << decoder->getTag(i));
 	}
 
-	delete dib;
 	delete decoder;
 }

@@ -12,6 +12,11 @@
 
 #include <string.h>
 
+#ifdef _VISUALC_
+// disable fopen warnings
+#pragma warning(disable : 4996)
+#endif
+
 Decoder::Decoder(Dib * dib) :
 	results(new LinkList()) {
 	decodeImage(dib);

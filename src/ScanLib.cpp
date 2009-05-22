@@ -62,16 +62,14 @@ int main(int argc, char ** argv) {
 		switch (ch) {
 		case 'a': {
 #ifdef _VISUALC_
-			const int buffsize = 2880;//12*8 * 3
-			int barcodeLength = 0;
-			char *barcodes = new char[buffsize];
-
 			initGrabber();
 			selectSourceAsDefault();
-			DmtxImage * theImage = acquire();
-			decodeSingleBarcode(theImage, barcodes, buffsize, &barcodeLength);
-			dmtxImageDestroy(&theImage);
-			std::cout << "==== BARCODE: " << barcodes << " : " << barcodeLength << "\n";
+			ImageProcessor * processor = new ImageProcessor();
+			UA_ASSERT_NOT_NULL(processor);
+
+			DmtxImage * image = acquire();
+			processor->decodeImage(image);
+			dmtxImageDestroy(&image);
 #endif
 			break;
 		}

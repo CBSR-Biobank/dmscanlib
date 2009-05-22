@@ -9,6 +9,7 @@ public:
 	~ImageProcessor();
 
 	void decodeDib(char * filename);
+	void decodeImage(DmtxImage * image);
 
 private:
 	DmtxImage* image;
