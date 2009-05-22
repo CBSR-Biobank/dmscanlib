@@ -16,18 +16,19 @@ class LinkList;
 class Decoder {
 public:
 	Decoder(Dib * dib);
+	Decoder(DmtxImage * image);
 	virtual ~Decoder();
 
-	void decodeDib(Dib * dib);
+	void decodeImage(Dib * dib);
+	void decodeImage(DmtxImage * image);
 
 	unsigned getNumTags();
 	char * getTag(int tagNum);
 
 private:
-	DmtxImage* image;
 	LinkList * results;
 
-	void createDmtxImageFromDib(Dib * dib);
+	DmtxImage * createDmtxImageFromDib(Dib * dib);
 
 };
 

@@ -12,15 +12,17 @@
 
 #include <string.h>
 
-Decoder::Decoder(Dib * dib) : image(NULL) {
-	results = new LinkList();
-	decodeDib(dib);
+Decoder::Decoder(Dib * dib) :
+	results(new LinkList()) {
+	decodeImage(dib);
+}
+
+Decoder::Decoder(DmtxImage * image) :
+	results(new LinkList()) {
+	decodeImage(image);
 }
 
 Decoder::~Decoder() {
-	if (image != NULL) {
-		dmtxImageDestroy(&image);
-	}
 	delete results;
 }
 
@@ -34,19 +36,23 @@ Decoder::~Decoder() {
  *	file. If a DmxtImage can be created, decode it. All barcodes decoded are
  *	stored in the supplied buffer, up to a max length of bufferSize.
  */
-void Decoder::decodeDib(Dib * dib){
+void Decoder::decodeImage(Dib * dib){
 	UA_ASSERT_NOT_NULL(dib);
 	UA_ASSERT_NOT_NULL(results);
 
-	if (image != NULL) {
+	DmtxImage * image = createDmtxImageFromDib(dib);
+	decodeImage(image);
+	dmtxImageDestroy(&image);
+}
+
+void Decoder::decodeImage(DmtxImage * image) {
+	UA_ASSERT_NOT_NULL(image);
+
+	if (results != NULL) {
 		// an image was already created, destroy this one as a new one
 		// is created below
-		dmtxImageDestroy(&image);
 		delete results;
 	}
-
-	createDmtxImageFromDib(dib);
-	UA_ASSERT_NOT_NULL(image);
 	results = new LinkList();
 
 	DmtxDecode * dec;
@@ -56,12 +62,12 @@ void Decoder::decodeDib(Dib * dib){
 	unsigned char *pnm;
 	int totalBytes, headerBytes;
 
-	UA_DOUT(1, 1, "image width: " << dmtxImageGetProp(image, DmtxPropWidth));
-	UA_DOUT(1, 1, "image height: " << dmtxImageGetProp(image, DmtxPropHeight));
-	UA_DOUT(1, 1, "row padding: " << dmtxImageGetProp(image, DmtxPropRowPadBytes));
-	UA_DOUT(1, 1, "image bits per pixel: "
+	UA_DOUT(1, 3, "image width: " << dmtxImageGetProp(image, DmtxPropWidth));
+	UA_DOUT(1, 3, "image height: " << dmtxImageGetProp(image, DmtxPropHeight));
+	UA_DOUT(1, 3, "row padding: " << dmtxImageGetProp(image, DmtxPropRowPadBytes));
+	UA_DOUT(1, 3, "image bits per pixel: "
 			<< dmtxImageGetProp(image, DmtxPropBitsPerPixel));
-	UA_DOUT(1, 1, "image row size bytes: "
+	UA_DOUT(1, 3, "image row size bytes: "
 			<< dmtxImageGetProp(image, DmtxPropRowSizeBytes));
 
 	dec = dmtxDecodeCreate(image, 1);
@@ -89,7 +95,7 @@ void Decoder::decodeDib(Dib * dib){
 			UA_ASSERT_NOT_NULL(buffer);
 			memcpy(buffer, msg->output, msg->outputIdx);
 			buffer[msg->outputIdx] = 0;
-			UA_DOUT(1,1, "barcode is: " << buffer);
+			UA_DOUT(1, 5, "barcode is: " << buffer);
 			results->append(buffer);
 			dmtxMessageDestroy(&msg);
 		}
@@ -115,7 +121,7 @@ void Decoder::decodeDib(Dib * dib){
  *	@return - DmtxImage: the newly created image from the file.
  *
  */
-void Decoder::createDmtxImageFromDib(Dib * dib) {
+DmtxImage * Decoder::createDmtxImageFromDib(Dib * dib) {
 	UA_ASSERT_NOT_NULL(dib);
 
 	int pack = DmtxPack24bppRGB;
@@ -125,12 +131,13 @@ void Decoder::createDmtxImageFromDib(Dib * dib) {
 	}
 
 	// create dmtxImage from the dib
-	image = dmtxImageCreate(dib->getPixelBuffer(), dib->getWidth(),
+	DmtxImage * image = dmtxImageCreate(dib->getPixelBuffer(), dib->getWidth(),
 			dib->getHeight(), pack);
 
 	//set the properties (pad bytes, flip)
 	dmtxImageSetProp(image, DmtxPropRowPadBytes, dib->getRowPadBytes());
 	dmtxImageSetProp(image, DmtxPropImageFlip, DmtxFlipY); // DIBs are flipped in Y
+	return image;
 }
 
 unsigned Decoder::getNumTags() {
