@@ -136,7 +136,12 @@ bool DebugImpl::isDebug (unsigned subsys, unsigned level) {
 void DebugSink::standardHeader(std::string & str_r) {
     char buf_a[100];
 
-#ifdef WIN32
+#if defined(WIN32) && defined(__MINGW32__)
+    time_t now = time(NULL);
+    struct tm *tm_ptr = localtime(&now);
+    snprintf(buf_a, sizeof (buf_a), "%02d:%02d:%02d:000 ",
+             tm_ptr->tm_hour, tm_ptr->tm_min, tm_ptr->tm_sec);
+#elif defined(WIN32)
    time_t ltime;
    struct _timeb tstruct;
    char timebuf[26];
@@ -148,17 +153,10 @@ void DebugSink::standardHeader(std::string & str_r) {
       cerr << "ctime_s failed due to an invalid argument.";
       exit(1);
    }
-   _ftime_s( &tstruct ); 
+   _ftime_s( &tstruct );
    sprintf_s(buf_a, "%.8s:%03u ", timebuf + 11, tstruct.millitm);
 #else
     // Fetch the current time
-
-#ifdef __MINGW32__
-    time_t now = time(NULL);
-    struct tm *tm_ptr = localtime(&now);
-    snprintf(buf_a, sizeof (buf_a), "%02d:%02d:%02d:000 ",
-             tm_ptr->tm_hour, tm_ptr->tm_min, tm_ptr->tm_sec);
-#else
     char time_a[100];
     struct timeval thistime;
 
@@ -166,7 +164,6 @@ void DebugSink::standardHeader(std::string & str_r) {
     strftime(time_a, sizeof(time_a), "%X", localtime(&thistime.tv_sec));
     snprintf(buf_a, sizeof (buf_a), "%s:%03ld ", time_a,
              thistime.tv_usec / 1000);
-#endif /* __MINGW32__ */
 #endif
 
     str_r = buf_a;

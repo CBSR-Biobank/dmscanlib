@@ -80,9 +80,9 @@ int main(int argc, char ** argv) {
 			dib->readFromHandle(h);
 			processor->decodeDib(dib);
 
-			delete dib;
-			delete ImageGrap
 			grabber->freeImage(h);
+			delete dib;
+			delete grabber;
 #endif
 			break;
 		}

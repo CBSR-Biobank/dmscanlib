@@ -9,7 +9,7 @@ using namespace std;
 TW_IDENTITY ImageGrabber::g_AppID = {
 	0,
 	{ 1, 0, TWLG_ENGLISH_USA, TWCY_USA, "ImageGrabber 1.0" },
-	TWON_PROTOCOLMAJOR, 
+	TWON_PROTOCOLMAJOR,
 	TWON_PROTOCOLMINOR,
 	DG_CONTROL | DG_IMAGE,
 	"Canadian Biosample Repository",

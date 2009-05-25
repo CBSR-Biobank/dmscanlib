@@ -9,10 +9,10 @@
  *  modify, merge, publish, distribute, sublicense, and/or sell copies
  *  of the Software, and to permit persons to whom the Software is
  *  furnished to do so, subject to the following conditions:
- *  
+ *
  *  The above copyright notice and this permission notice shall be
  *  included in all copies or substantial portions of the Software.
- *  
+ *
  *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  *  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  *  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -52,10 +52,18 @@ int my_getopt(int argc, char * argv[], const char *opts)
   const char *s;
   char mode, colon_mode;
   int off = 0, opt = -1;
+
+#if defined(WIN32) && defined(__MINGW32__)
+  int err = 0;
+  char * var = getenv("POSIXLY_CORRECT");
+  if (var != NULL) err = 1;
+#else
   char *var;
   size_t len;
 
   errno_t err = _dupenv_s(&var, &len, "POSIXLY_CORRECT");
+#endif
+
   if(err != 0) colon_mode = mode = '+';
   else {
     if((colon_mode = *opts) == ':') off ++;
@@ -151,10 +159,18 @@ int _my_getopt_internal(int argc, char * argv[], const char *shortopts,
 {
   char mode, colon_mode = *shortopts;
   int shortoff = 0, opt = -1;
+
+#if defined(WIN32) && defined(__MINGW32__)
+  int err = 0;
+  char * var = getenv("POSIXLY_CORRECT");
+  if (var != NULL) err = 1;
+#else
   char *var;
   size_t len;
 
   errno_t err = _dupenv_s(&var, &len, "POSIXLY_CORRECT");
+#endif
+
   if(err != 0) colon_mode = mode = '+';
   else {
     if((colon_mode = *shortopts) == ':') shortoff ++;
@@ -204,7 +220,7 @@ int _my_getopt_internal(int argc, char * argv[], const char *shortopts,
 
     if(((my_optopt = argv[my_optind][1]) != '-') && ! argv[my_optind][2]) {
       int c;
-      
+
       ind = shortoff;
       while((c = shortopts[ind++])) {
         if(((shortopts[ind] == ':') ||
