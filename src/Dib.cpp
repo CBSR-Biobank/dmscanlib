@@ -24,6 +24,19 @@ Dib::Dib(char * filename) : fileHeader(NULL), infoHeader(NULL), pixels(NULL) {
 	readFromFile(filename);
 }
 
+#ifdef _VISUALC_
+Dib::Dib(HANDLE handle) : fileHeader(NULL), infoHeader(NULL), pixels(NULL) {
+	readFromHandle(handle);
+}
+
+void Dib::readFromHandle(HANDLE handle) {
+	dibHeaderPtr = (UCHAR *) GlobalLock(handle);
+
+	memcpy(infoheader, dibHeaderPtr, sizeof(BitmapInfoHeader));
+	pixels = dibHeaderPtr + sizeof(BITMAPINFOHEADER);
+}
+
+#endif
 
 Dib::~Dib() {
 	if (pixels != NULL) {

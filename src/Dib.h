@@ -3,6 +3,10 @@
 
 #include <stdio.h>
 
+#ifdef _VISUALC_
+#include <windows.h>
+#endif
+
 /* File information header
  * provides general information about the file
  */
@@ -44,6 +48,9 @@ class Dib {
 public:
 	Dib();
 	Dib(char * filename);
+#ifdef _VISUAL_C
+	Dib(HANDLE handle);
+#endif
 	~Dib();
 	void readFromFile(char * filename) ;
 	void writeToFile(char * filename);
