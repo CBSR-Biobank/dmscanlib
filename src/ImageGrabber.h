@@ -13,7 +13,8 @@
 //#include "TwainException.h"
 
 TW_BOOL initGrabber();
-DmtxImage* acquire();
+TW_UINT32 acquire();
+DmtxImage* acquireDmtxImage();
 void selectSourceAsDefault();
 static DmtxImage* createDmtxImage(HANDLE hMem);
 void unloadTwain();

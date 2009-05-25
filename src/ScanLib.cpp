@@ -23,6 +23,7 @@ const char * USAGE_FMT =
 	"  -a, --acquire       Scans an image from the scanner and decodes the 2D barcodes\n"
 	"                      on the trays.\n"
 	"  -d, --decode FILE   Decodes the 2D barcode in the specified DIB image file.\n"
+	"  -s, --scan FILE     Scans an image and saves it as a DIB.\n"
 	"  -v, --verbose       Debugging messages are output to stdout. Only when built\n"
 	"                      UA_HAVE_DEBUG on.\n";
 
@@ -56,7 +57,7 @@ int main(int argc, char ** argv) {
 	while (1) {
 		int option_index = 0;
 
-		ch = getopt_long (argc, argv, "ad:hv", long_options, &option_index);
+		ch = getopt_long (argc, argv, "ad:hs:v", long_options, &option_index);
 
 		if (ch == -1) break;
 		switch (ch) {
@@ -78,6 +79,18 @@ int main(int argc, char ** argv) {
 			ImageProcessor * processor = new ImageProcessor();
 			UA_ASSERT_NOT_NULL(processor);
 			processor->decodeDib(optarg);
+			break;
+		}
+
+		case 'd': {
+#ifdef _VISUALC_
+			initGrabber();
+			selectSourceAsDefault();
+
+			ImageProcessor * processor = new ImageProcessor();
+			UA_ASSERT_NOT_NULL(processor);
+			processor->decodeDib(optarg);
+#endif
 			break;
 		}
 

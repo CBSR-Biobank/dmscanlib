@@ -28,9 +28,6 @@ static TW_IDENTITY g_AppID;
 // source being used
 TW_IDENTITY srcID;
 
-//handle to the image to be unlocked and freed later.
-TW_UINT32 handle;
-
 // properties used by the scanner
 const int dpi = 300;
 const int scan_CONTRAST = 500;
@@ -121,8 +118,8 @@ TW_BOOL initGrabber()
 *
 *	Grab an image from the twain source and convert it to the dmtxImage format
 */
-DmtxImage* acquire(){
-	DmtxImage *image;
+TW_UINT32 acquire(){
+	TW_UINT32 handle = NULL;
 
 	HWND hwnd = CreateWindow ("STATIC",
 			"",
@@ -307,12 +304,6 @@ DmtxImage* acquire(){
 				throw TwainException("User aborted transfer or failure (acquire)");
 				break;
 			}
-			//TODO: check if 8 or 24 bit and handle accordingly
-			image = createDmtxImage((HANDLE)handle);
-
-			dmtxImageSetProp(image, DmtxPropRowPadBytes, 			
-				(ii.ImageWidth * (ii.BitsPerPixel >> 3)) & 0x3);
-			dmtxImageSetProp(image, DmtxPropImageFlip, DmtxFlipY); // DIBs are flipped in Y
 
 			// Cancel all remaining transfers.
 			(*g_pDSM_Entry) (&g_AppID,
@@ -346,7 +337,7 @@ DmtxImage* acquire(){
 	// Destroy window.
 	DestroyWindow (hwnd);
 	//return (rc == TWRC_SUCCESS) ? image : (jobject) 0;
-	return image;
+	return handle;
 }
 
 /*
@@ -419,6 +410,17 @@ void selectSourceAsDefault()
 	DestroyWindow (hwnd);
 }
 
+DmtxImage* acquireDmtxImage(){
+	TW_UINT32 h = acquire();
+	if (h == NULL) {
+		UA_WARN("aquire returned NULL");
+		return NULL;
+	}
+
+	//TODO: check if 8 or 24 bit and handle accordingly
+	return createDmtxImage((HANDLE)h);
+}
+
 /*
 *	 ===========================================================================
 *	 Create a dmtx image from the handle to the twain image
@@ -442,14 +444,13 @@ DmtxImage* createDmtxImage(HANDLE hMem)
 	int m_nBits = pHead->biBitCount;
 	DmtxImage *theImage;
 
-
 	pBits = lpVoid + sizeof(BITMAPINFOHEADER);
 	theImage = dmtxImageCreate((unsigned char*)pBits, width, height, DmtxPack24bppRGB);
 
 	int bytesPerpixel = m_nBits >> 3;
 	int rowPadBytes = (width * m_nBits) & 0x3;
 
-	UA_DOUT(2, 1,"====================== createDmtxImage ==============================" << endl
+	UA_DOUT(2, 1,"createDmtxImage: " << endl
 		<< "lpVoid: " << *((unsigned*) lpVoid) << endl
 		<< "sizeof(BITMAPINFOHEADER): " << sizeof(BITMAPINFOHEADER) << endl
 		<< "Width: " << width << endl

@@ -54,6 +54,7 @@ public:
 	~Dib();
 	void readFromFile(char * filename) ;
 	void writeToFile(char * filename);
+	void readFromHandle(HANDLE handle);
 	unsigned getHeight();
 	unsigned getWidth();
 	unsigned getRowPadBytes();
