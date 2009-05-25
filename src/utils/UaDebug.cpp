@@ -23,7 +23,7 @@
 
 #include "UaDebug.h"
 
-#ifdef _VISUALC_
+#ifdef WIN32
 #include <time.h>
 #include <sys/timeb.h>
 #else
@@ -136,7 +136,7 @@ bool DebugImpl::isDebug (unsigned subsys, unsigned level) {
 void DebugSink::standardHeader(std::string & str_r) {
     char buf_a[100];
 
-#ifdef _VISUALC_
+#ifdef WIN32
    time_t ltime;
    struct _timeb tstruct;
    char timebuf[26];

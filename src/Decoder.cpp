@@ -12,7 +12,7 @@
 
 #include <string.h>
 
-#ifdef _VISUALC_
+#ifdef WIN32
 // disable fopen warnings
 #pragma warning(disable : 4996)
 #endif

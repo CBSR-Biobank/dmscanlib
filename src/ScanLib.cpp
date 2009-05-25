@@ -5,7 +5,7 @@
 #include "UaDebug.h"
 #include "ImageProcessor.h"
 
-#ifdef _VISUALC_
+#ifdef WIN32
 #include "getopt.h"
 #include "ImageGrabber.h"
 #else
@@ -35,7 +35,7 @@ static struct option long_options[] = {
 		{ 0, 0, 0, 0 }
 };
 
-#ifdef _VISUALC_
+#ifdef WIN32
 #define DIR_SEP_CHR '\\'
 #else
 #define DIR_SEP_CHR '/'
@@ -62,15 +62,17 @@ int main(int argc, char ** argv) {
 		if (ch == -1) break;
 		switch (ch) {
 		case 'a': {
-#ifdef _VISUALC_
-			initGrabber();
-			selectSourceAsDefault();
+#ifdef WIN32
+			ImageGrabber grabber = new ImageGrabber();
+			UA_ASSERT_NOT_NULL(grabber);
+			grabber->selectSourceAsDefault();
 			ImageProcessor * processor = new ImageProcessor();
 			UA_ASSERT_NOT_NULL(processor);
-
-			DmtxImage * image = acquire();
-			processor->decodeImage(image);
-			dmtxImageDestroy(&image);
+			HANDLE h = grabber->acquireImage();
+			Dib dib = new Dib();
+			dib->readFromHandle(h)
+			processor->decodeImage(dib);
+			grabber->freeImage(h);
 #endif
 			break;
 		}
@@ -82,14 +84,19 @@ int main(int argc, char ** argv) {
 			break;
 		}
 
-		case 'd': {
-#ifdef _VISUALC_
-			initGrabber();
-			selectSourceAsDefault();
+		case 's': {
+#ifdef WIN32
+			Dib dib = new Dib();
+			UA_ASSERT_NOT_NULL(dib);
 
-			ImageProcessor * processor = new ImageProcessor();
-			UA_ASSERT_NOT_NULL(processor);
-			processor->decodeDib(optarg);
+			ImageGrabber grabber = new ImageGrabber();
+			UA_ASSERT_NOT_NULL(grabber);
+
+			grabber->selectSourceAsDefault();
+			HANDLE h = grabber->acquireImage();
+			dib->readFromHandle(h);
+			dib->writeToFile(optarg);
+			grabber->freeImage(h);
 #endif
 			break;
 		}

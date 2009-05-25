@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 
-#ifdef _VISUALC_
+#ifdef WIN32
 #include <windows.h>
 #endif
 
@@ -48,13 +48,14 @@ class Dib {
 public:
 	Dib();
 	Dib(char * filename);
-#ifdef _VISUAL_C
-	Dib(HANDLE handle);
-#endif
 	~Dib();
 	void readFromFile(char * filename) ;
 	void writeToFile(char * filename);
+
+#ifdef WIN32
 	void readFromHandle(HANDLE handle);
+#endif
+
 	unsigned getHeight();
 	unsigned getWidth();
 	unsigned getRowPadBytes();
@@ -80,6 +81,7 @@ private:
 	unsigned bytesPerPixel;
 	unsigned rowPaddingBytes;
 	unsigned char * pixels;
+	bool pixelsAllocated;
 
 	void copyInternals(Dib & src);
 

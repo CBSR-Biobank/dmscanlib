@@ -10,21 +10,25 @@
 #include <assert.h>
 #include <string.h>
 
-#ifdef _VISUALC_
+#ifdef WIN32
 // disable fopen warnings
 #pragma warning(disable : 4996)
 #else
 #include <strings.h>
 #endif
 
-Dib::Dib() : fileHeader(NULL), infoHeader(NULL), pixels(NULL) {
+Dib::Dib() :
+	fileHeader(NULL), infoHeader(NULL), pixels(NULL),
+	pixelsAllocated(false) {
 }
 
-Dib::Dib(char * filename) : fileHeader(NULL), infoHeader(NULL), pixels(NULL) {
+Dib::Dib(char * filename) :
+	fileHeader(NULL), infoHeader(NULL), pixels(NULL),
+	pixelsAllocated(false) {
 	readFromFile(filename);
 }
 
-#ifdef _VISUALC_
+#ifdef WIN32
 void Dib::readFromHandle(HANDLE handle) {
 	unsigned char * dibHeaderPtr = (UCHAR *) GlobalLock(handle);
 
@@ -45,6 +49,7 @@ void Dib::copyInternals(Dib & src) {
 	}
 	*infoHeader = *src.infoHeader;
 	if (pixels == NULL) {
+		pixelsAllocated = true;
 		pixels = new unsigned char[infoHeader->imageSize];
 	}
 }
@@ -92,6 +97,7 @@ void Dib::readFromFile(char * filename) {
 	bytesPerPixel = infoHeader->bitCount >> 3;
 	rowPaddingBytes = (infoHeader->width * bytesPerPixel) & 0x3;
 
+	pixelsAllocated = true;
 	pixels = new unsigned char[infoHeader->imageSize];
 	fread(pixels, 1, infoHeader->imageSize, fh);
 	fclose(fh);
