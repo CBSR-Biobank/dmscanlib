@@ -126,8 +126,9 @@ void Dib::writeToFile(char * filename) {
 		*(unsigned *)&fileHeaderRaw[0xA]     = fileHeader->offset;
 	}
 	else {
-		*(unsigned short *)&fileHeaderRaw[0] = 0x424D;
-		*(unsigned *)&fileHeaderRaw[2]       = infoHeader->imageSize;
+		*(unsigned short *)&fileHeaderRaw[0] = 0x4D42;
+		*(unsigned *)&fileHeaderRaw[2]       = 
+			infoHeader->imageSize + sizeof(fileHeaderRaw) + sizeof(infoHeaderRaw);
 		*(unsigned short *)&fileHeaderRaw[6] = 0;
 		*(unsigned short *)&fileHeaderRaw[8] = 0;
 		*(unsigned *)&fileHeaderRaw[0xA]     = 54;
