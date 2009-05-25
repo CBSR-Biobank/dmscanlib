@@ -49,8 +49,8 @@ public:
 	Dib();
 	Dib(char * filename);
 	~Dib();
-	void readFromFile(char * filename) ;
-	void writeToFile(char * filename);
+	void readFromFile(const char * filename) ;
+	void writeToFile(const char * filename);
 
 #ifdef WIN32
 	void readFromHandle(HANDLE handle);

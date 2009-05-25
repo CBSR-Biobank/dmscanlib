@@ -65,7 +65,7 @@ void Dib::copyInternals(Dib & src) {
 /**
  * All values in little-endian except for BitmapFileHeader.type.
  */
-void Dib::readFromFile(char * filename) {
+void Dib::readFromFile(const char * filename) {
 	UA_ASSERT_NOT_NULL(filename);
 
 	FILE * fh = fopen(filename, "r"); // C4996
@@ -111,7 +111,7 @@ void Dib::readFromFile(char * filename) {
 	fclose(fh);
 }
 
-void Dib::writeToFile(char * filename) {
+void Dib::writeToFile(const char * filename) {
 	UA_ASSERT_NOT_NULL(filename);
 	UA_ASSERT_NOT_NULL(pixels);
 
@@ -127,7 +127,7 @@ void Dib::writeToFile(char * filename) {
 	}
 	else {
 		*(unsigned short *)&fileHeaderRaw[0] = 0x4D42;
-		*(unsigned *)&fileHeaderRaw[2]       = 
+		*(unsigned *)&fileHeaderRaw[2]       =
 			infoHeader->imageSize + sizeof(fileHeaderRaw) + sizeof(infoHeaderRaw);
 		*(unsigned short *)&fileHeaderRaw[6] = 0;
 		*(unsigned short *)&fileHeaderRaw[8] = 0;

@@ -4,6 +4,7 @@
 
 #include "UaDebug.h"
 #include "ImageProcessor.h"
+#include "Dib.h"
 
 #ifdef WIN32
 #include "getopt.h"
@@ -22,6 +23,7 @@ const char * USAGE_FMT =
 	"\n"
 	"  -a, --acquire       Scans an image from the scanner and decodes the 2D barcodes\n"
 	"                      on the trays.\n"
+	"  -c, --copy FILE     Copies the DIB in file to \"out.bmp\".\n"
 	"  -d, --decode FILE   Decodes the 2D barcode in the specified DIB image file.\n"
 	"  -s, --scan FILE     Scans an image and saves it as a DIB.\n"
 	"  -v, --verbose       Debugging messages are output to stdout. Only when built\n"
@@ -29,8 +31,10 @@ const char * USAGE_FMT =
 
 /* Allowed command line arguments.  */
 static struct option long_options[] = {
-		{ "decode",  no_argument, NULL, 'd' },
 		{ "acquire", no_argument, NULL, 'a' },
+		{ "copy",    required_argument, NULL, 'c' },
+		{ "decode",  required_argument, NULL, 'd' },
+		{ "scan",    required_argument, NULL, 's' },
 		{ "verbose", required_argument, NULL, 'v' },
 		{ 0, 0, 0, 0 }
 };
@@ -57,7 +61,7 @@ int main(int argc, char ** argv) {
 	while (1) {
 		int option_index = 0;
 
-		ch = getopt_long (argc, argv, "ad:hs:v", long_options, &option_index);
+		ch = getopt_long (argc, argv, "ac:d:hs:v", long_options, &option_index);
 
 		if (ch == -1) break;
 		switch (ch) {
@@ -75,8 +79,21 @@ int main(int argc, char ** argv) {
 			HANDLE h = grabber->acquireImage();
 			dib->readFromHandle(h);
 			processor->decodeDib(dib);
+
+			delete dib;
+			delete ImageGrap
 			grabber->freeImage(h);
 #endif
+			break;
+		}
+
+		case 'c': {
+			Dib * dib = new Dib();
+			UA_ASSERT_NOT_NULL(dib);
+
+			dib->readFromFile(optarg);
+			dib->writeToFile("out.bmp");
+			delete dib;
 			break;
 		}
 
@@ -100,6 +117,9 @@ int main(int argc, char ** argv) {
 			dib->readFromHandle(h);
 			dib->writeToFile(optarg);
 			grabber->freeImage(h);
+
+			delete dib;
+			delete grabber;
 #endif
 			break;
 		}
