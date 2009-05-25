@@ -19,12 +19,12 @@
 
 Dib::Dib() :
 	fileHeader(NULL), infoHeader(NULL), pixels(NULL),
-	pixelsAllocated(false) {
+	isAllocated(false) {
 }
 
 Dib::Dib(char * filename) :
 	fileHeader(NULL), infoHeader(NULL), pixels(NULL),
-	pixelsAllocated(false) {
+	isAllocated(false) {
 	readFromFile(filename);
 }
 
@@ -32,14 +32,22 @@ Dib::Dib(char * filename) :
 void Dib::readFromHandle(HANDLE handle) {
 	unsigned char * dibHeaderPtr = (UCHAR *) GlobalLock(handle);
 
-	memcpy(infoHeader, dibHeaderPtr, sizeof(BitmapInfoHeader));
+	infoHeader = (BitmapInfoHeader *) dibHeaderPtr;
 	pixels = dibHeaderPtr + sizeof(BITMAPINFOHEADER);
+
+	bytesPerPixel = infoHeader->bitCount >> 3;
+	rowPaddingBytes = (infoHeader->width * bytesPerPixel) & 0x3;
 }
 #endif
 
 Dib::~Dib() {
-	if (pixels != NULL) {
-		delete pixels;
+	if (isAllocated) {
+		if (fileHeader != NULL) {
+		}
+		delete infoHeader;
+		if (pixels != NULL) {
+			delete pixels;
+		}
 	}
 }
 
@@ -49,7 +57,7 @@ void Dib::copyInternals(Dib & src) {
 	}
 	*infoHeader = *src.infoHeader;
 	if (pixels == NULL) {
-		pixelsAllocated = true;
+		isAllocated = true;
 		pixels = new unsigned char[infoHeader->imageSize];
 	}
 }
@@ -97,7 +105,7 @@ void Dib::readFromFile(char * filename) {
 	bytesPerPixel = infoHeader->bitCount >> 3;
 	rowPaddingBytes = (infoHeader->width * bytesPerPixel) & 0x3;
 
-	pixelsAllocated = true;
+	isAllocated = true;
 	pixels = new unsigned char[infoHeader->imageSize];
 	fread(pixels, 1, infoHeader->imageSize, fh);
 	fclose(fh);
@@ -138,9 +146,8 @@ void Dib::writeToFile(char * filename) {
 	*(unsigned *)&infoHeaderRaw[0x32 - 0xE]       = infoHeader->numColorsImp;
 
 	FILE * fh = fopen(filename, "w"); // C4996
-	if (fh == NULL) {
-		UA_ERROR("could not open file for writing" << filename);
-	}
+	UA_ASSERTS(fh != NULL,
+		"could not open file for writing" << filename);
 
 	fwrite(fileHeaderRaw, 1, sizeof(fileHeaderRaw), fh);
 	fwrite(infoHeaderRaw, 1, sizeof(infoHeaderRaw), fh);

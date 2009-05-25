@@ -36,16 +36,27 @@ ImageProcessor::~ImageProcessor() {
 }
 
 void ImageProcessor::decodeDib(char * filename) {
-	UA_ASSERT(filename != NULL);
+	UA_ASSERT_NOT_NULL(filename);
 
 	Dib * dib = new Dib(filename);
 	UA_ASSERT_NOT_NULL(dib);
+	Decoder * decoder = new Decoder(dib);
+	debugTags(decoder);
 	delete dib;
+}
+
+void ImageProcessor::decodeDib(Dib * dib) {
+	UA_ASSERT_NOT_NULL(dib);
+	Decoder * decoder = new Decoder(dib);
+	debugTags(decoder);
 }
 
 void ImageProcessor::decodeImage(DmtxImage * image) {
 	Decoder * decoder = new Decoder(image);
+	debugTags(decoder);
+}
 
+void ImageProcessor::debugTags(Decoder * decoder) {
 	unsigned numTags = decoder->getNumTags();
 	UA_DOUT(3, 1, "tags found: " << numTags);
 	for (unsigned i = 0; i < numTags; ++i) {

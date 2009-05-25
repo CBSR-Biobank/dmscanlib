@@ -81,7 +81,7 @@ private:
 	unsigned bytesPerPixel;
 	unsigned rowPaddingBytes;
 	unsigned char * pixels;
-	bool pixelsAllocated;
+	bool isAllocated;
 
 	void copyInternals(Dib & src);
 

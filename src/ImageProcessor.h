@@ -3,15 +3,21 @@
 
 #include "dmtx.h"
 
+class Dib;
+class Decoder;
+
 class ImageProcessor {
 public:
 	ImageProcessor();
 	~ImageProcessor();
 
 	void decodeDib(char * filename);
+	void decodeDib(Dib * image);
 	void decodeImage(DmtxImage * image);
 
 private:
+	void debugTags(Decoder * decoder);
+
 	DmtxImage* image;
 };
 

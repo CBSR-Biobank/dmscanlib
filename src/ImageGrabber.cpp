@@ -4,6 +4,28 @@
 
 using namespace std;
 
+// Initialise g_AppID. This structure is passed to DSM_Entry() in each
+// function call.
+TW_IDENTITY ImageGrabber::g_AppID = {
+	0,
+	{ 1, 0, TWLG_ENGLISH_USA, TWCY_USA, "ImageGrabber 1.0" },
+	TWON_PROTOCOLMAJOR, 
+	TWON_PROTOCOLMINOR,
+	DG_CONTROL | DG_IMAGE,
+	"Canadian Biosample Repository",
+	"Image acquisition library",
+	"ImageGrabber",
+};
+
+HMODULE ImageGrabber::g_hLib = {
+	LoadLibrary("TWAIN_32.DLL")
+};
+
+// Attempt to retrieve DSM_Entry() function address.
+DSMENTRYPROC ImageGrabber::g_pDSM_Entry = {
+	(DSMENTRYPROC) GetProcAddress(g_hLib, "DSM_Entry")
+};
+
 /*	initGrabber() should be called prior to calling any other associated functionality,
  *	as libraries such as Twain_32.dll need to be loaded before acquire or
  *	selectDefaultAsSource work.
@@ -31,42 +53,19 @@ ImageGrabber::ImageGrabber() {
 	// If the TWAIN_32.DLL file exists in the path (which is determined by
 	// opening and closing that file), attempt to load TWAIN_32.DLL into
 	// the calling process's address space.
-	OFSTRUCT ofs;
-	if (OpenFile(szPath, &ofs, OF_EXIST) != -1)
-		g_hLib = LoadLibrary(szPath);
+	//OFSTRUCT ofs;
+	//if (OpenFile(szPath, &ofs, OF_EXIST) != -1)
+	//	ImageGrabber::g_hLib = LoadLibrary(szPath);
 
 	// Report failure if TWAIN_32.DLL cannot be loaded and terminate the
 	// JTWAIN DLL.
-	if (g_hLib == 0) {
-		UA_ERROR("ImageGrabber: Unable to open TWAIN_32.DLL");
-	}
-
-	// Attempt to retrieve DSM_Entry() function address.
-	g_pDSM_Entry = (DSMENTRYPROC) GetProcAddress (g_hLib, "DSM_Entry");
+	UA_ASSERTS(ImageGrabber::g_hLib != 0,
+		"ImageGrabber: Unable to open TWAIN_32.DLL");
 
 	// Report failure if DSM_Entry() function not found in TWAIN_32.DLL
 	// and terminate the JTWAIN DLL.
-	if (g_pDSM_Entry == 0) {
-		UA_ERROR("ImageGrabber: Unable to fetch DSM_Entry address");
-	}
-
-	// Initialise g_AppID. This structure is passed to DSM_Entry() in each
-	// function call.
-	g_AppID.Id = 0;
-	g_AppID.Version.MajorNum = 1;
-	g_AppID.Version.MinorNum = 0;
-	g_AppID.Version.Language = TWLG_ENGLISH_USA;
-	g_AppID.Version.Country = TWCY_USA;
-
-	lstrcpy (g_AppID.Version.Info, "ImageGrabber 1.0");
-
-	g_AppID.ProtocolMajor = TWON_PROTOCOLMAJOR;
-	g_AppID.ProtocolMinor = TWON_PROTOCOLMINOR;
-	g_AppID.SupportedGroups = DG_CONTROL | DG_IMAGE;
-
-	lstrcpy (g_AppID.Manufacturer, "Canadian Biosample Repository");
-	lstrcpy (g_AppID.ProductFamily, "Image acquisition library");
-	lstrcpy (g_AppID.ProductName, "ImageGrabber");
+	UA_ASSERTS(g_pDSM_Entry != 0,
+		"ImageGrabber: Unable to fetch DSM_Entry address");
 }
 
 ImageGrabber::~ImageGrabber() {
@@ -192,13 +191,13 @@ HANDLE ImageGrabber::acquireImage(){
 			/*		TODO: these are the properties Adam set, should do something
 				with them.
 			 */
-			SetCapability(ICAP_UNITS, TWUN_INCHES, FALSE);
-			SetCapability(ICAP_XRESOLUTION, dpi, FALSE);
-			SetCapability(ICAP_YRESOLUTION, dpi, FALSE);
-			SetCapability(ICAP_PIXELTYPE, TWPT_RGB, FALSE);
-			SetCapability(ICAP_BITDEPTH, 8, FALSE);
-			SetCapability(ICAP_CONTRAST, scan_CONTRAST, FALSE);
-			SetCapability(ICAP_BRIGHTNESS, scan_BRIGHTNESS, FALSE);
+			setCapability(ICAP_UNITS, TWUN_INCHES, FALSE);
+			setCapability(ICAP_XRESOLUTION, dpi, FALSE);
+			setCapability(ICAP_YRESOLUTION, dpi, FALSE);
+			setCapability(ICAP_PIXELTYPE, TWPT_RGB, FALSE);
+			setCapability(ICAP_BITDEPTH, 8, FALSE);
+			setCapability(ICAP_CONTRAST, scan_CONTRAST, FALSE);
+			setCapability(ICAP_BRIGHTNESS, scan_BRIGHTNESS, FALSE);
 
 			rc = (*g_pDSM_Entry) (&g_AppID,
 					&srcID,
@@ -370,15 +369,36 @@ void ImageGrabber::selectSourceAsDefault()
 	DestroyWindow (hwnd);
 }
 
-DmtxImage* acquireDmtxImage(){
-	TW_UINT32 h = acquire();
+DmtxImage* ImageGrabber::acquireDmtxImage(){
+	HANDLE h = acquireImage();
 	if (h == NULL) {
 		UA_WARN("aquire returned NULL");
 		return NULL;
 	}
+	UCHAR *lpVoid,*pBits;
+	LPBITMAPINFOHEADER pHead;
+	lpVoid = (UCHAR *)GlobalLock(h);
+	pHead = (LPBITMAPINFOHEADER )lpVoid;
+	int width = pHead->biWidth;
+	int height = pHead->biHeight;
+	int m_nBits = pHead->biBitCount;
+	DmtxImage *theImage;
 
-	//TODO: check if 8 or 24 bit and handle accordingly
-	return createDmtxImage((HANDLE)h);
+	pBits = lpVoid + sizeof(BITMAPINFOHEADER);
+	theImage = dmtxImageCreate((unsigned char*)pBits, width, height, DmtxPack24bppRGB);
+
+	int bytesPerpixel = m_nBits >> 3;
+	int rowPadBytes = (width * m_nBits) & 0x3;
+
+	UA_DOUT(2, 1,"createDmtxImage: " << endl
+		<< "lpVoid: " << *((unsigned*) lpVoid) << endl
+		<< "sizeof(BITMAPINFOHEADER): " << sizeof(BITMAPINFOHEADER) << endl
+		<< "Width: " << width << endl
+		<< "height: " << height << endl
+		<< "towPadBytes: " << rowPadBytes);
+	dmtxImageSetProp(theImage, DmtxPropRowPadBytes, rowPadBytes);
+	dmtxImageSetProp(theImage, DmtxPropImageFlip, DmtxFlipY); // DIBs are flipped in Y
+	return theImage;
 }
 
 /*
@@ -428,7 +448,7 @@ void ImageGrabber::unloadTwain(){
  *
  *	Unlock the handle to the image from twain, and free the memory.
  */
-void ImageGrabber::freeHandle(HANDLE handle){
+void ImageGrabber::freeImage(HANDLE handle){
 	GlobalUnlock(handle);
 	GlobalFree(handle);
 }

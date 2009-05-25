@@ -63,15 +63,18 @@ int main(int argc, char ** argv) {
 		switch (ch) {
 		case 'a': {
 #ifdef WIN32
-			ImageGrabber grabber = new ImageGrabber();
+			Dib * dib = new Dib();
+			UA_ASSERT_NOT_NULL(dib);
+
+			ImageGrabber * grabber = new ImageGrabber();
 			UA_ASSERT_NOT_NULL(grabber);
+
 			grabber->selectSourceAsDefault();
 			ImageProcessor * processor = new ImageProcessor();
 			UA_ASSERT_NOT_NULL(processor);
 			HANDLE h = grabber->acquireImage();
-			Dib dib = new Dib();
-			dib->readFromHandle(h)
-			processor->decodeImage(dib);
+			dib->readFromHandle(h);
+			processor->decodeDib(dib);
 			grabber->freeImage(h);
 #endif
 			break;
@@ -86,10 +89,10 @@ int main(int argc, char ** argv) {
 
 		case 's': {
 #ifdef WIN32
-			Dib dib = new Dib();
+			Dib * dib = new Dib();
 			UA_ASSERT_NOT_NULL(dib);
 
-			ImageGrabber grabber = new ImageGrabber();
+			ImageGrabber * grabber = new ImageGrabber();
 			UA_ASSERT_NOT_NULL(grabber);
 
 			grabber->selectSourceAsDefault();

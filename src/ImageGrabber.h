@@ -19,7 +19,7 @@ public:
 	HANDLE acquireImage();
 	DmtxImage* acquireDmtxImage();
 	void selectSourceAsDefault();
-	void freeImage(HANDLE hanlde);
+	void freeImage(HANDLE handle);
 	void unloadTwain();
 
 private:
@@ -27,9 +27,9 @@ private:
 	BOOL setCapability(TW_UINT16 cap,TW_UINT16 value,BOOL sign);
 
 	// properties used by the scanner
-	const int dpi = 300;
-	const int scan_CONTRAST = 500;
-	const int scan_BRIGHTNESS = 500;
+	static const int dpi = 300;
+	static const int scan_CONTRAST = 500;
+	static const int scan_BRIGHTNESS = 500;
 
 	// g_hinstDLL holds this DLL's instance handle. It is initialized in response
 	// to the DLL_PROCESS_ATTACH message. This handle is passed to CreateWindow()
