@@ -81,7 +81,8 @@ Application::Application(int argc, char ** argv) {
             ImageGrabber * grabber = new ImageGrabber();
             UA_ASSERT_NOT_NULL(grabber);
 
-            grabber->selectSourceAsDefault();
+            if (!ImageGrabber::selectSourceAsDefault()) return;
+
             ImageProcessor * processor = new ImageProcessor();
             UA_ASSERT_NOT_NULL(processor);
             HANDLE h = grabber->acquireImage();
@@ -110,7 +111,8 @@ Application::Application(int argc, char ** argv) {
             ImageGrabber * grabber = new ImageGrabber();
             UA_ASSERT_NOT_NULL(grabber);
 
-            grabber->selectSourceAsDefault();
+            if (!ImageGrabber::selectSourceAsDefault()) return;
+
             HANDLE h = grabber->acquireImage();
             dib->readFromHandle(h);
             dib->writeToFile(optarg);

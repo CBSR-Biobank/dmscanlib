@@ -43,7 +43,71 @@ ImageGrabber::~ImageGrabber() {
 }
 
 /*
- * acuire()
+ *	selectSourceAsDefault()
+ *	@params - none
+ *	@return - none
+ *
+ *	Select the source to use as default for Twain, so the source does not
+ *	have to be specified every time.
+ *	TODO: change return type to void?
+ */
+bool ImageGrabber::selectSourceAsDefault() {
+	// Create a static window whose handle is passed to DSM_Entry() when we
+	// open the data source manager.
+	HWND hwnd = CreateWindow ("STATIC",
+			"",
+			WS_POPUPWINDOW,
+			CW_USEDEFAULT,
+			CW_USEDEFAULT,
+			CW_USEDEFAULT,
+			CW_USEDEFAULT,
+			HWND_DESKTOP,
+			0,
+			0,//g_hinstDLL,
+			0);
+
+	UA_ASSERTS(hwnd != 0, "Unable to create private window ");
+
+	TW_UINT16 rc;
+	TW_IDENTITY srcID;
+
+	// Open the data source manager.
+	rc = (*g_pDSM_Entry) (&g_AppID,
+			0,
+			DG_CONTROL,
+			DAT_PARENT,
+			MSG_OPENDSM,
+			(TW_MEMREF) &hwnd);
+
+	UA_ASSERTS(rc == TWRC_SUCCESS, "Unable to open data source manager ");
+
+	// Display the "Select Source" dialog box for selecting a data source.
+	ZeroMemory (&ImageGrabber::srcID, sizeof(ImageGrabber::srcID));
+	rc = (*g_pDSM_Entry) (&g_AppID,
+			0,
+			DG_CONTROL,
+			DAT_IDENTITY,
+			MSG_USERSELECT,
+			(TW_MEMREF) &srcID);
+
+	UA_ASSERTS(rc != TWRC_FAILURE, "Unable to display user interface ");
+	if (rc == TWRC_CANCEL) {
+		// User pressed cancel for scanner selection
+		return false;
+	}
+
+	// Close the data source manager.
+	(*g_pDSM_Entry) (&g_AppID,
+			0,
+			DG_CONTROL,
+			DAT_PARENT,
+			MSG_CLOSEDSM,
+			(TW_MEMREF) &hwnd);
+	DestroyWindow (hwnd);
+	return true;
+}
+
+/*
  *	@params - none
  *	@return - Image acquired from twain source, in dmtxImage format
  *
@@ -66,7 +130,7 @@ HANDLE ImageGrabber::acquireImage(){
 
 	UA_ASSERTS(hwnd != 0, "Unable to create private window");
 
-	SetWindowPos (hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE);
+	SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE);
 
 	TW_UINT16 rc;
 
@@ -80,6 +144,7 @@ HANDLE ImageGrabber::acquireImage(){
 
 	UA_ASSERTS(rc == TWRC_SUCCESS, "Unable to open data source manager");
 
+#if 0
 	// Get the default data source's name.
 	ZeroMemory (&srcID, sizeof(srcID));
 	rc = (*g_pDSM_Entry) (&g_AppID,
@@ -90,6 +155,7 @@ HANDLE ImageGrabber::acquireImage(){
 			&srcID);
 
 	UA_ASSERTS(rc != TWRC_FAILURE, "Unable to obtain default data source name");
+#endif
 
 	rc = (*g_pDSM_Entry) (&g_AppID,
 			0,
@@ -246,76 +312,6 @@ HANDLE ImageGrabber::acquireImage(){
 	return (HANDLE) handle;
 }
 
-/*
- *	selectSourceAsDefault()
- *	@params - none
- *	@return - none
- *
- *	Select the source to use as default for Twain, so the source does not
- *	have to be specified every time.
- *	TODO: change return type to void?
- */
-void ImageGrabber::selectSourceAsDefault()
-{
-	// Create a static window whose handle is passed to DSM_Entry() when we
-	// open the data source manager.
-	HWND hwnd = CreateWindow ("STATIC",
-			"",
-			WS_POPUPWINDOW,
-			CW_USEDEFAULT,
-			CW_USEDEFAULT,
-			CW_USEDEFAULT,
-			CW_USEDEFAULT,
-			HWND_DESKTOP,
-			0,
-			0,//g_hinstDLL,
-			0);
-	if (hwnd == 0)
-	{
-		throw TwainException("Unable to create private window "
-				"(selectSourceAsDefault)");
-		return;
-	}
-
-	TW_UINT16 rc;
-	TW_IDENTITY srcID;
-
-	// Open the data source manager.
-	rc = (*g_pDSM_Entry) (&g_AppID,
-			0,
-			DG_CONTROL,
-			DAT_PARENT,
-			MSG_OPENDSM,
-			(TW_MEMREF) &hwnd);
-
-	if (rc != TWRC_SUCCESS)
-	{
-		throw TwainException("Unable to open data source manager "
-				"(selectSourceAsDefault)");
-	}
-
-	// Display the "Select Source" dialog box for selecting a data source.
-	ZeroMemory (&srcID, sizeof(srcID));
-	rc = (*g_pDSM_Entry) (&g_AppID,
-			0,
-			DG_CONTROL,
-			DAT_IDENTITY,
-			MSG_USERSELECT,
-			(TW_MEMREF) &srcID);
-	if (rc == TWRC_FAILURE)
-		throw TwainException("Unable to display user interface "
-				"(selectSourceAsDefault)");
-
-	// Close the data source manager.
-	(*g_pDSM_Entry) (&g_AppID,
-			0,
-			DG_CONTROL,
-			DAT_PARENT,
-			MSG_CLOSEDSM,
-			(TW_MEMREF) &hwnd);
-	DestroyWindow (hwnd);
-}
-
 DmtxImage* ImageGrabber::acquireDmtxImage(){
 	HANDLE h = acquireImage();
 	if (h == NULL) {
@@ -372,7 +368,6 @@ BOOL ImageGrabber::setCapability(TW_UINT16 cap,TW_UINT16 value,BOOL sign)
 		GlobalFree(twCap.hContainer);
 	}
 	return ret_value;
-
 }
 
 /*

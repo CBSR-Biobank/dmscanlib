@@ -18,7 +18,13 @@ public:
 
 	HANDLE acquireImage();
 	DmtxImage* acquireDmtxImage();
-	void selectSourceAsDefault();
+
+	/**
+	 * returns false if user pressed cancel when presented with dialog box to
+	 * select a scanner.
+	 */
+	static bool selectSourceAsDefault();
+
 	void freeImage(HANDLE handle);
 	void unloadTwain();
 
@@ -53,7 +59,7 @@ private:
 
 	// srcID serves as a TWAIN identity structure that uniquely identifies the
 	// source being used
-	TW_IDENTITY srcID;
+	static TW_IDENTITY srcID;
 };
 
 #endif /* __INCLUDE_IMAGE_GRABBER_H */
