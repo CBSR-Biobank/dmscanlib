@@ -21,6 +21,8 @@ HMODULE ImageGrabber::g_hLib = {
 	LoadLibrary("TWAIN_32.DLL")
 };
 
+TW_IDENTITY ImageGrabber::srcID;
+
 // Attempt to retrieve DSM_Entry() function address.
 DSMENTRYPROC ImageGrabber::g_pDSM_Entry = {
 	(DSMENTRYPROC) GetProcAddress(g_hLib, "DSM_Entry")
@@ -54,17 +56,9 @@ ImageGrabber::~ImageGrabber() {
 bool ImageGrabber::selectSourceAsDefault() {
 	// Create a static window whose handle is passed to DSM_Entry() when we
 	// open the data source manager.
-	HWND hwnd = CreateWindow ("STATIC",
-			"",
-			WS_POPUPWINDOW,
-			CW_USEDEFAULT,
-			CW_USEDEFAULT,
-			CW_USEDEFAULT,
-			CW_USEDEFAULT,
-			HWND_DESKTOP,
-			0,
-			0,//g_hinstDLL,
-			0);
+	HWND hwnd = CreateWindow ("STATIC",	"",	WS_POPUPWINDOW,	CW_USEDEFAULT,
+			CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, HWND_DESKTOP, 0,
+			0 /* g_hinstDLL */, 0);
 
 	UA_ASSERTS(hwnd != 0, "Unable to create private window ");
 
@@ -72,22 +66,14 @@ bool ImageGrabber::selectSourceAsDefault() {
 	TW_IDENTITY srcID;
 
 	// Open the data source manager.
-	rc = (*g_pDSM_Entry) (&g_AppID,
-			0,
-			DG_CONTROL,
-			DAT_PARENT,
-			MSG_OPENDSM,
+	rc = (*g_pDSM_Entry) (&g_AppID,	0, DG_CONTROL, DAT_PARENT, MSG_OPENDSM,
 			(TW_MEMREF) &hwnd);
 
 	UA_ASSERTS(rc == TWRC_SUCCESS, "Unable to open data source manager ");
 
 	// Display the "Select Source" dialog box for selecting a data source.
-	ZeroMemory (&ImageGrabber::srcID, sizeof(ImageGrabber::srcID));
-	rc = (*g_pDSM_Entry) (&g_AppID,
-			0,
-			DG_CONTROL,
-			DAT_IDENTITY,
-			MSG_USERSELECT,
+	ZeroMemory (&srcID, sizeof(srcID));
+	rc = (*g_pDSM_Entry) (&g_AppID, 0, DG_CONTROL, DAT_IDENTITY, MSG_USERSELECT,
 			(TW_MEMREF) &srcID);
 
 	UA_ASSERTS(rc != TWRC_FAILURE, "Unable to display user interface ");
@@ -97,11 +83,7 @@ bool ImageGrabber::selectSourceAsDefault() {
 	}
 
 	// Close the data source manager.
-	(*g_pDSM_Entry) (&g_AppID,
-			0,
-			DG_CONTROL,
-			DAT_PARENT,
-			MSG_CLOSEDSM,
+	(*g_pDSM_Entry) (&g_AppID, 0, DG_CONTROL, DAT_PARENT, MSG_CLOSEDSM,
 			(TW_MEMREF) &hwnd);
 	DestroyWindow (hwnd);
 	return true;
@@ -116,17 +98,9 @@ bool ImageGrabber::selectSourceAsDefault() {
 HANDLE ImageGrabber::acquireImage(){
 	TW_UINT32 handle = 0;
 
-	HWND hwnd = CreateWindow ("STATIC",
-			"",
-			WS_POPUPWINDOW,
-			CW_USEDEFAULT,
-			CW_USEDEFAULT,
-			CW_USEDEFAULT,
-			CW_USEDEFAULT,
-			HWND_DESKTOP,
-			0,
-			0,//g_hinstDLL,
-			0);
+	HWND hwnd = CreateWindow ("STATIC", "",	WS_POPUPWINDOW, CW_USEDEFAULT,
+			CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, HWND_DESKTOP,
+			0, 0 /* g_hinstDLL */, 0);
 
 	UA_ASSERTS(hwnd != 0, "Unable to create private window");
 
@@ -135,33 +109,12 @@ HANDLE ImageGrabber::acquireImage(){
 	TW_UINT16 rc;
 
 	// Open the data source manager.
-	rc = (*g_pDSM_Entry) (&g_AppID,
-			0,
-			DG_CONTROL,
-			DAT_PARENT,
-			MSG_OPENDSM,
+	rc = (*g_pDSM_Entry) (&g_AppID, 0, DG_CONTROL, DAT_PARENT, MSG_OPENDSM,
 			(TW_MEMREF) &hwnd);
 
 	UA_ASSERTS(rc == TWRC_SUCCESS, "Unable to open data source manager");
 
-#if 0
-	// Get the default data source's name.
-	ZeroMemory (&srcID, sizeof(srcID));
-	rc = (*g_pDSM_Entry) (&g_AppID,
-			0,
-			DG_CONTROL,
-			DAT_IDENTITY,
-			MSG_GETDEFAULT,
-			&srcID);
-
-	UA_ASSERTS(rc != TWRC_FAILURE, "Unable to obtain default data source name");
-#endif
-
-	rc = (*g_pDSM_Entry) (&g_AppID,
-			0,
-			DG_CONTROL,
-			DAT_IDENTITY,
-			MSG_OPENDS,
+	rc = (*g_pDSM_Entry) (&g_AppID, 0, DG_CONTROL, DAT_IDENTITY, MSG_OPENDS,
 			&srcID);
 
 	UA_ASSERTS(rc == TWRC_SUCCESS, "Unable to open default data source");
@@ -172,12 +125,8 @@ HANDLE ImageGrabber::acquireImage(){
 	ui.ModalUI = false;
 	ui.hParent = hwnd;
 	// Enable the default data source.
-	rc = (*g_pDSM_Entry) (&g_AppID,
-			&srcID,
-			DG_CONTROL,
-			DAT_USERINTERFACE,
-			MSG_ENABLEDS,
-			&ui);
+	rc = (*g_pDSM_Entry) (&g_AppID,	&srcID,	DG_CONTROL,	DAT_USERINTERFACE,
+			MSG_ENABLEDS, &ui);
 
 	UA_ASSERTS(rc == TWRC_SUCCESS, "Unable to enable default data source");
 
@@ -189,12 +138,8 @@ HANDLE ImageGrabber::acquireImage(){
 		event.pEvent = (TW_MEMREF) &msg;
 		event.TWMessage = MSG_NULL;
 
-		rc = (*g_pDSM_Entry) (&g_AppID,
-				&srcID,
-				DG_CONTROL,
-				DAT_EVENT,
-				MSG_PROCESSEVENT,
-				(TW_MEMREF) &event);
+		rc = (*g_pDSM_Entry) (&g_AppID, &srcID, DG_CONTROL,	DAT_EVENT,
+				MSG_PROCESSEVENT, (TW_MEMREF) &event);
 
 		if (rc == TWRC_NOTDSEVENT) {
 			TranslateMessage ((LPMSG) &msg);
@@ -218,20 +163,12 @@ HANDLE ImageGrabber::acquireImage(){
 			setCapability(ICAP_CONTRAST, scan_CONTRAST, FALSE);
 			setCapability(ICAP_BRIGHTNESS, scan_BRIGHTNESS, FALSE);
 
-			rc = (*g_pDSM_Entry) (&g_AppID,
-					&srcID,
-					DG_IMAGE,
-					DAT_IMAGEINFO,
-					MSG_GET,
-					(TW_MEMREF) &ii);
+			rc = (*g_pDSM_Entry) (&g_AppID, &srcID, DG_IMAGE, DAT_IMAGEINFO,
+					MSG_GET, (TW_MEMREF) &ii);
 
 			if (rc == TWRC_FAILURE) {
-				(*g_pDSM_Entry) (&g_AppID,
-						&srcID,
-						DG_CONTROL,
-						DAT_PENDINGXFERS,
-						MSG_RESET,
-						(TW_MEMREF) &pxfers);
+				(*g_pDSM_Entry) (&g_AppID, &srcID, DG_CONTROL, DAT_PENDINGXFERS,
+						MSG_RESET, (TW_MEMREF) &pxfers);
 				throw TwainException("Unable to obtain image information");
 				break;
 			}
@@ -240,12 +177,8 @@ HANDLE ImageGrabber::acquireImage(){
 			// color ...
 			if ((ii.Compression != TWCP_NONE) ||
 					((ii.BitsPerPixel != 8) && (ii.BitsPerPixel != 24))) {
-				(*g_pDSM_Entry) (&g_AppID,
-						&srcID,
-						DG_CONTROL,
-						DAT_PENDINGXFERS,
-						MSG_RESET,
-						(TW_MEMREF) &pxfers);
+				(*g_pDSM_Entry) (&g_AppID, &srcID, DG_CONTROL, DAT_PENDINGXFERS,
+						MSG_RESET, (TW_MEMREF) &pxfers);
 				UA_ERROR("Image compressed or not 8-bit/24-bit ");
 				break;
 			}
@@ -259,32 +192,20 @@ HANDLE ImageGrabber::acquireImage(){
 					<< "PixelType: " << ii.PixelType);
 
 			// Perform the transfer.
-			rc = (*g_pDSM_Entry) (&g_AppID,
-					&srcID,
-					DG_IMAGE,
-					DAT_IMAGENATIVEXFER,
-					MSG_GET,
-					(TW_MEMREF) &handle);
+			rc = (*g_pDSM_Entry) (&g_AppID, &srcID, DG_IMAGE, DAT_IMAGENATIVEXFER,
+					MSG_GET, (TW_MEMREF) &handle);
 
 			// If image not successfully transferred ...
 			if (rc != TWRC_XFERDONE) {
-				(*g_pDSM_Entry) (&g_AppID,
-						&srcID,
-						DG_CONTROL,
-						DAT_PENDINGXFERS,
-						MSG_RESET,
-						(TW_MEMREF) &pxfers);
+				(*g_pDSM_Entry) (&g_AppID, &srcID, DG_CONTROL, DAT_PENDINGXFERS,
+						MSG_RESET, (TW_MEMREF) &pxfers);
 				UA_ERROR("User aborted transfer or failure");
 				break;
 			}
 
 			// Cancel all remaining transfers.
-			(*g_pDSM_Entry) (&g_AppID,
-					&srcID,
-					DG_CONTROL,
-					DAT_PENDINGXFERS,
-					MSG_RESET,
-					(TW_MEMREF) &pxfers);
+			(*g_pDSM_Entry) (&g_AppID, &srcID, DG_CONTROL, DAT_PENDINGXFERS,
+					MSG_RESET, (TW_MEMREF) &pxfers);
 			rc = TWRC_SUCCESS;
 
 			break;
@@ -292,19 +213,11 @@ HANDLE ImageGrabber::acquireImage(){
 	}
 
 	// Close the data source.
-	(*g_pDSM_Entry) (&g_AppID,
-			0,
-			DG_CONTROL,
-			DAT_IDENTITY,
-			MSG_CLOSEDS,
+	(*g_pDSM_Entry) (&g_AppID, 0, DG_CONTROL, DAT_IDENTITY,	MSG_CLOSEDS,
 			&srcID);
 
 	// Close the data source manager.
-	(*g_pDSM_Entry) (&g_AppID,
-			0,
-			DG_CONTROL,
-			DAT_PARENT,
-			MSG_CLOSEDSM,
+	(*g_pDSM_Entry) (&g_AppID, 0, DG_CONTROL, DAT_PARENT, MSG_CLOSEDSM,
 			(TW_MEMREF) &hwnd);
 
 	// Destroy window.
