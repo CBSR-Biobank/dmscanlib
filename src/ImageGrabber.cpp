@@ -80,7 +80,7 @@ ImageGrabber::~ImageGrabber() {
  *	Grab an image from the twain source and convert it to the dmtxImage format
  */
 HANDLE ImageGrabber::acquireImage(){
-	TW_UINT32 handle = NULL;
+	TW_UINT32 handle = 0;
 
 	HWND hwnd = CreateWindow ("STATIC",
 			"",
@@ -387,7 +387,6 @@ DmtxImage* ImageGrabber::acquireDmtxImage(){
 	pBits = lpVoid + sizeof(BITMAPINFOHEADER);
 	theImage = dmtxImageCreate((unsigned char*)pBits, width, height, DmtxPack24bppRGB);
 
-	int bytesPerpixel = m_nBits >> 3;
 	int rowPadBytes = (width * m_nBits) & 0x3;
 
 	UA_DOUT(2, 1,"createDmtxImage: " << endl

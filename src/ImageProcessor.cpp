@@ -17,7 +17,7 @@
 #include <assert.h>
 #include <string.h>
 
-#ifdef WIN32
+#ifdef _VISUALC_
 // disable fopen warnings
 #pragma warning(disable : 4996)
 #endif

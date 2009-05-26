@@ -10,7 +10,7 @@
 #include <assert.h>
 #include <string.h>
 
-#ifdef WIN32
+#ifdef _VISUALC_
 // disable fopen warnings
 #pragma warning(disable : 4996)
 #else
@@ -30,10 +30,23 @@ Dib::Dib(char * filename) :
 
 #ifdef WIN32
 void Dib::readFromHandle(HANDLE handle) {
-	unsigned char * dibHeaderPtr = (UCHAR *) GlobalLock(handle);
+	BITMAPINFOHEADER * dibHeaderPtr = (BITMAPINFOHEADER *) GlobalLock(handle);
 
-	infoHeader = (BitmapInfoHeader *) dibHeaderPtr;
-	pixels = dibHeaderPtr + sizeof(BITMAPINFOHEADER);
+	infoHeader = new BitmapInfoHeader;
+
+	infoHeader->size            = dibHeaderPtr->biSize;
+	infoHeader->width           = dibHeaderPtr->biWidth;
+	infoHeader->height          = dibHeaderPtr->biHeight;
+	infoHeader->planes          = dibHeaderPtr->biPlanes;
+	infoHeader->bitCount        = dibHeaderPtr->biBitCount;
+	infoHeader->compression     = dibHeaderPtr->biCompression;
+	infoHeader->imageSize       = dibHeaderPtr->biSizeImage;
+	infoHeader->hPixelsPerMeter = dibHeaderPtr->biXPelsPerMeter;
+	infoHeader->vPixelsPerMeter = dibHeaderPtr->biYPelsPerMeter;
+	infoHeader->numColors       = dibHeaderPtr->biClrUsed;
+	infoHeader->numColorsImp    = dibHeaderPtr->biClrImportant;
+
+	pixels = (unsigned char *) dibHeaderPtr + sizeof(BITMAPINFOHEADER);
 
 	bytesPerPixel = infoHeader->bitCount >> 3;
 	rowPaddingBytes = (infoHeader->width * bytesPerPixel) & 0x3;
@@ -41,13 +54,13 @@ void Dib::readFromHandle(HANDLE handle) {
 #endif
 
 Dib::~Dib() {
-	if (isAllocated) {
-		if (fileHeader != NULL) {
-		}
-		delete infoHeader;
-		if (pixels != NULL) {
-			delete pixels;
-		}
+	if (fileHeader != NULL) {
+		delete fileHeader;
+	}
+	delete infoHeader;
+
+	if ((isAllocated) && (pixels != NULL)) {
+		delete pixels;
 	}
 }
 
@@ -146,7 +159,7 @@ void Dib::writeToFile(const char * filename) {
 	*(unsigned *)&infoHeaderRaw[0x2E - 0xE]       = infoHeader->numColors;
 	*(unsigned *)&infoHeaderRaw[0x32 - 0xE]       = infoHeader->numColorsImp;
 
-	FILE * fh = fopen(filename, "w"); // C4996
+	FILE * fh = fopen(filename, "wb"); // C4996
 	UA_ASSERTS(fh != NULL,
 		"could not open file for writing" << filename);
 
