@@ -108,7 +108,7 @@ Application::Application(int argc, char ** argv) {
 			Dib * dib = new Dib();
 			UA_ASSERT_NOT_NULL(dib);
 
-			if (!ImageGrabber::selectSourceAsDefault()) return;
+			//if (!ImageGrabber::selectSourceAsDefault()) return;
 
 			ImageGrabber * grabber = new ImageGrabber();
 			UA_ASSERT_NOT_NULL(grabber);

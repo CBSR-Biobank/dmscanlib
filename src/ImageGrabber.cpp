@@ -21,8 +21,6 @@ HMODULE ImageGrabber::g_hLib = {
 	LoadLibrary("TWAIN_32.DLL")
 };
 
-TW_IDENTITY ImageGrabber::srcID;
-
 // Attempt to retrieve DSM_Entry() function address.
 DSMENTRYPROC ImageGrabber::g_pDSM_Entry = {
 	(DSMENTRYPROC) GetProcAddress(g_hLib, "DSM_Entry")
@@ -97,6 +95,7 @@ bool ImageGrabber::selectSourceAsDefault() {
  */
 HANDLE ImageGrabber::acquireImage(){
 	TW_UINT32 handle = 0;
+	TW_IDENTITY srcID;
 
 	HWND hwnd = CreateWindow ("STATIC", "",	WS_POPUPWINDOW, CW_USEDEFAULT,
 			CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, HWND_DESKTOP,
@@ -113,6 +112,10 @@ HANDLE ImageGrabber::acquireImage(){
 			(TW_MEMREF) &hwnd);
 
 	UA_ASSERTS(rc == TWRC_SUCCESS, "Unable to open data source manager");
+
+	// get the default source
+	rc = (*g_pDSM_Entry) (&g_AppID, 0, DG_CONTROL, DAT_IDENTITY, MSG_GETDEFAULT,
+				&srcID);
 
 	rc = (*g_pDSM_Entry) (&g_AppID, 0, DG_CONTROL, DAT_IDENTITY, MSG_OPENDS,
 			&srcID);
@@ -257,7 +260,7 @@ DmtxImage* ImageGrabber::acquireDmtxImage(){
 }
 
 /*
-Sets the capability of the Twain Data Source
+ * Sets the capability of the Twain Data Source
  */
 BOOL ImageGrabber::setCapability(TW_UINT16 cap,TW_UINT16 value,BOOL sign)
 {
@@ -277,7 +280,8 @@ BOOL ImageGrabber::setCapability(TW_UINT16 cap,TW_UINT16 value,BOOL sign)
 		pVal->Item = (TW_UINT32)value;
 		GlobalUnlock(twCap.hContainer);
 		// change this?
-		ret_value = (*g_pDSM_Entry)(&g_AppID,&srcID,DG_CONTROL,DAT_CAPABILITY,MSG_SET,(TW_MEMREF)&twCap);
+		ret_value = (*g_pDSM_Entry)(&g_AppID, &srcID, DG_CONTROL, DAT_CAPABILITY,
+				MSG_SET, (TW_MEMREF) &twCap);
 		GlobalFree(twCap.hContainer);
 	}
 	return ret_value;
