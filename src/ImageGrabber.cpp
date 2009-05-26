@@ -31,39 +31,9 @@ DSMENTRYPROC ImageGrabber::g_pDSM_Entry = {
  *	selectDefaultAsSource work.
  */
 ImageGrabber::ImageGrabber() {
-	// Create a buffer for holding the Windows directory path.
-	char szPath [150]; // Probably only 140 is needed, but why not be safe?
-
-	// Retrieve the path of the Windows directory.
-	GetWindowsDirectory(szPath, 128);
-
-	// Obtain number of characters copied into the buffer.
-	int iLen = lstrlen(szPath);
-
-	// Path ends in a backslash character if the directory is the root.
-	// Otherwise, path does not end in backslash. In that case, we must
-	// append a backslash character to the path.
-	if (iLen != 0 && szPath [iLen-1] != '\\')
-		lstrcat (szPath, "\\");
-
-	// Append TWAIN_32.DLL to the path. This is the 32-bit TWAIN DLL that
-	// we need to communicate with.
-	lstrcat (szPath, "TWAIN_32.DLL");
-
-	// If the TWAIN_32.DLL file exists in the path (which is determined by
-	// opening and closing that file), attempt to load TWAIN_32.DLL into
-	// the calling process's address space.
-	//OFSTRUCT ofs;
-	//if (OpenFile(szPath, &ofs, OF_EXIST) != -1)
-	//	ImageGrabber::g_hLib = LoadLibrary(szPath);
-
-	// Report failure if TWAIN_32.DLL cannot be loaded and terminate the
-	// JTWAIN DLL.
 	UA_ASSERTS(ImageGrabber::g_hLib != 0,
 		"ImageGrabber: Unable to open TWAIN_32.DLL");
 
-	// Report failure if DSM_Entry() function not found in TWAIN_32.DLL
-	// and terminate the JTWAIN DLL.
 	UA_ASSERTS(g_pDSM_Entry != 0,
 		"ImageGrabber: Unable to fetch DSM_Entry address");
 }
@@ -94,9 +64,7 @@ HANDLE ImageGrabber::acquireImage(){
 			0,//g_hinstDLL,
 			0);
 
-	if (hwnd == 0) {
-		throw TwainException("Unable to create private window (acquire)");
-	}
+	UA_ASSERTS(hwnd != 0, "Unable to create private window");
 
 	SetWindowPos (hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE);
 
@@ -110,10 +78,7 @@ HANDLE ImageGrabber::acquireImage(){
 			MSG_OPENDSM,
 			(TW_MEMREF) &hwnd);
 
-	if (rc != TWRC_SUCCESS)
-	{
-		throw TwainException("Unable to open data source manager (acquire)");
-	}
+	UA_ASSERTS(rc == TWRC_SUCCESS, "Unable to open data source manager");
 
 	// Get the default data source's name.
 	ZeroMemory (&srcID, sizeof(srcID));
@@ -124,10 +89,7 @@ HANDLE ImageGrabber::acquireImage(){
 			MSG_GETDEFAULT,
 			&srcID);
 
-	if (rc == TWRC_FAILURE)
-	{
-		throw TwainException("Unable to obtain default data source name (acquire)");
-	}
+	UA_ASSERTS(rc != TWRC_FAILURE, "Unable to obtain default data source name");
 
 	rc = (*g_pDSM_Entry) (&g_AppID,
 			0,
@@ -136,10 +98,7 @@ HANDLE ImageGrabber::acquireImage(){
 			MSG_OPENDS,
 			&srcID);
 
-	if (rc != TWRC_SUCCESS)
-	{
-		throw TwainException("Unable to open default data source (acquire)");
-	}
+	UA_ASSERTS(rc == TWRC_SUCCESS, "Unable to open default data source");
 
 	//Prepare to enable the default data source
 	TW_USERINTERFACE ui;
@@ -154,17 +113,13 @@ HANDLE ImageGrabber::acquireImage(){
 			MSG_ENABLEDS,
 			&ui);
 
-	if (rc != TWRC_SUCCESS)
-	{
-		throw TwainException("Unable to enable default data source (acquire)");
-	}
+	UA_ASSERTS(rc == TWRC_SUCCESS, "Unable to enable default data source");
 
 	MSG msg;
 	TW_EVENT event;
 	TW_PENDINGXFERS pxfers;
 
-	while (GetMessage ((LPMSG) &msg, 0, 0, 0))
-	{
+	while (GetMessage ((LPMSG) &msg, 0, 0, 0)) {
 		event.pEvent = (TW_MEMREF) &msg;
 		event.TWMessage = MSG_NULL;
 
@@ -175,8 +130,7 @@ HANDLE ImageGrabber::acquireImage(){
 				MSG_PROCESSEVENT,
 				(TW_MEMREF) &event);
 
-		if (rc == TWRC_NOTDSEVENT)
-		{
+		if (rc == TWRC_NOTDSEVENT) {
 			TranslateMessage ((LPMSG) &msg);
 			DispatchMessage ((LPMSG) &msg);
 			continue;
@@ -185,8 +139,7 @@ HANDLE ImageGrabber::acquireImage(){
 		if (event.TWMessage == MSG_CLOSEDSREQ)
 			break;
 
-		if (event.TWMessage == MSG_XFERREADY)
-		{
+		if (event.TWMessage == MSG_XFERREADY) {
 			TW_IMAGEINFO ii;
 			/*		TODO: these are the properties Adam set, should do something
 				with them.
@@ -206,32 +159,28 @@ HANDLE ImageGrabber::acquireImage(){
 					MSG_GET,
 					(TW_MEMREF) &ii);
 
-			if (rc == TWRC_FAILURE)
-			{
+			if (rc == TWRC_FAILURE) {
 				(*g_pDSM_Entry) (&g_AppID,
 						&srcID,
 						DG_CONTROL,
 						DAT_PENDINGXFERS,
 						MSG_RESET,
 						(TW_MEMREF) &pxfers);
-				throw TwainException("Unable to obtain image information (acquire)");
+				throw TwainException("Unable to obtain image information");
 				break;
 			}
 
 			// If image is compressed or is not 8-bit color and not 24-bit
 			// color ...
-			if (ii.Compression != TWCP_NONE ||
-					ii.BitsPerPixel != 8 &&
-					ii.BitsPerPixel != 24)
-			{
+			if ((ii.Compression != TWCP_NONE) ||
+					((ii.BitsPerPixel != 8) && (ii.BitsPerPixel != 24))) {
 				(*g_pDSM_Entry) (&g_AppID,
 						&srcID,
 						DG_CONTROL,
 						DAT_PENDINGXFERS,
 						MSG_RESET,
 						(TW_MEMREF) &pxfers);
-				throw TwainException("Image compressed or not 8-bit/24-bit "
-						"(acquire)");
+				UA_ERROR("Image compressed or not 8-bit/24-bit ");
 				break;
 			}
 
@@ -252,15 +201,14 @@ HANDLE ImageGrabber::acquireImage(){
 					(TW_MEMREF) &handle);
 
 			// If image not successfully transferred ...
-			if (rc != TWRC_XFERDONE)
-			{
+			if (rc != TWRC_XFERDONE) {
 				(*g_pDSM_Entry) (&g_AppID,
 						&srcID,
 						DG_CONTROL,
 						DAT_PENDINGXFERS,
 						MSG_RESET,
 						(TW_MEMREF) &pxfers);
-				throw TwainException("User aborted transfer or failure (acquire)");
+				UA_ERROR("User aborted transfer or failure");
 				break;
 			}
 
@@ -295,7 +243,6 @@ HANDLE ImageGrabber::acquireImage(){
 
 	// Destroy window.
 	DestroyWindow (hwnd);
-	//return (rc == TWRC_SUCCESS) ? image : (jobject) 0;
 	return (HANDLE) handle;
 }
 

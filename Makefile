@@ -1,11 +1,15 @@
 PROJECT := scanlib
 
 SRC := \
-	src/dib.c \
+	src/Decoder.cpp \
+	src/Dib.c \
 	src/ImageProcessor.cpp \
 	src/ScanLib.cpp \
 	src/utils/UaDebug.cpp \
-	libdmtx/dmtx.c
+	src/utils/LinkList.cpp \
+	libdmtx/dmtx.c \
+	iniParser/dictionary.c \
+	iniParser/iniparser.c
 
 # the following files only compile on windows
 #	src/ImageGrabber.cpp \
@@ -24,7 +28,7 @@ CPPFLAGS := $(CFLAGS)
 SED := /bin/sed
 LIBS += -lc -lm -lstdc++
 
-INCLUDE_PATH := src libdmtx src/loki
+INCLUDE_PATH := src libdmtx src/loki src/utils iniParser
 VPATH := $(CURDIR) $(INCLUDE_PATH) $(BUILD_DIR)
 
 OBJS := $(addsuffix .o, $(basename $(notdir $(SRC))))
