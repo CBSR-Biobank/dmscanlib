@@ -67,7 +67,9 @@ Application::Application(int argc, char ** argv) {
 	bool processAquiredImage = false;
 	bool scanImage = false;
 	bool decodeImage = false;
+	char * filename = NULL;
 	int ch;
+
 	progname = strrchr(argv[0], DIR_SEP_CHR) + 1;
 
 	UA_DEBUG(ua::DebugSinkStdout::Instance().showHeader(true);
@@ -87,16 +89,23 @@ Application::Application(int argc, char ** argv) {
 
 		case 'd':
 			decodeImage = true;
+			filename = optarg;
+			break;
 
 		case 's':
 			scanImage = true;
+			filename = optarg;
 			break;
 
 		case 200:
+#ifdef WIN32
 			if (!ImageGrabber::Instance().selectSourceAsDefault()) {
 				cerr <<  "no scanner selected." << endl;
 				exit(0);
 			}
+#else
+			cerr << "this option not allowed on your operating system." << endl;
+#endif
 			break;
 
 		case 'v':
@@ -126,54 +135,55 @@ Application::Application(int argc, char ** argv) {
 	}
 
 	if (decodeImage) {
+		UA_ASSERT_NOT_NULL(filename);
 		ImageProcessor * processor = new ImageProcessor();
 		UA_ASSERT_NOT_NULL(processor);
-		processor->decodeDib(optarg);
+		processor->decodeDib(filename);
 	}
 
 	if (processAquiredImage) {
 #ifdef WIN32
-			//if (!ImageGrabber::Instance().selectSourceAsDefault()) return;
+		HANDLE h = ImageGrabber::Instance().acquireImage();
+		if (h == NULL) {
+			cerr <<  "ERROR: could not acquire an image from scanner." << endl;
+			exit(0);
+		}
 
-			Dib * dib = new Dib();
-			UA_ASSERT_NOT_NULL(dib);
+		Dib * dib = new Dib();
+		UA_ASSERT_NOT_NULL(dib);
 
-			ImageProcessor * processor = new ImageProcessor();
-			UA_ASSERT_NOT_NULL(processor);
-			HANDLE h = ImageGrabber::Instance().acquireImage();
-			if (h == NULL) {
-				cerr <<  "ERROR: could not acquire an image from scanner." << endl;
-				exit(0);
-			}
-			dib->readFromHandle(h);
-			processor->decodeDib(dib);
+		dib->readFromHandle(h);
 
-			ImageGrabber::Instance().freeImage(h);
-			delete dib;
+		ImageProcessor * processor = new ImageProcessor();
+		UA_ASSERT_NOT_NULL(processor);
+		processor->decodeDib(dib);
+
+		ImageGrabber::Instance().freeImage(h);
+		delete dib;
+		delete processor;
 #else
-			cerr << "this option not allowed on your operating system." << endl;
+		cerr << "this option not allowed on your operating system." << endl;
 #endif
 	}
 
 	if (scanImage) {
 #ifdef WIN32
-			Dib * dib = new Dib();
-			UA_ASSERT_NOT_NULL(dib);
+		UA_ASSERT_NOT_NULL(filename);
+		HANDLE h = ImageGrabber::Instance().acquireImage();
+		if (h == NULL) {
+			cerr <<  "ERROR: could not acquire an image from scanner." << endl;
+			exit(0);
+		}
+		Dib * dib = new Dib();
+		UA_ASSERT_NOT_NULL(dib);
 
-			//if (!ImageGrabber::Instance().selectSourceAsDefault()) return;
+		dib->readFromHandle(h);
+		dib->writeToFile(filename);
 
-			HANDLE h = ImageGrabber::Instance().acquireImage();
-			if (h == NULL) {
-				cerr <<  "ERROR: could not acquire an image from scanner." << endl;
-				exit(0);
-			}
-			dib->readFromHandle(h);
-			dib->writeToFile(optarg);
-			ImageGrabber::Instance().freeImage(h);
-
-			delete dib;
+		ImageGrabber::Instance().freeImage(h);
+		delete dib;
 #else
-			cerr << "this option not allowed on your operating system." << endl;
+		cerr << "this option not allowed on your operating system." << endl;
 #endif
 	}
 }

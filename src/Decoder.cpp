@@ -67,12 +67,13 @@ void Decoder::decodeImage(DmtxImage * image) {
 	unsigned char *pnm;
 	int totalBytes, headerBytes;
 
-	UA_DOUT(1, 3, "image width: " << dmtxImageGetProp(image, DmtxPropWidth));
-	UA_DOUT(1, 3, "image height: " << dmtxImageGetProp(image, DmtxPropHeight));
-	UA_DOUT(1, 3, "row padding: " << dmtxImageGetProp(image, DmtxPropRowPadBytes));
-	UA_DOUT(1, 3, "image bits per pixel: "
-			<< dmtxImageGetProp(image, DmtxPropBitsPerPixel));
-	UA_DOUT(1, 3, "image row size bytes: "
+	UA_DOUT(1, 3, "Decoder::decodeImage: image width/"
+			<< dmtxImageGetProp(image, DmtxPropWidth)
+			<< " image height/" << dmtxImageGetProp(image, DmtxPropHeight)
+			<< " row padding/" << dmtxImageGetProp(image, DmtxPropRowPadBytes)
+			<< " image bits per pixel/"
+			<< dmtxImageGetProp(image, DmtxPropBitsPerPixel)
+			<< " image row size bytes/"
 			<< dmtxImageGetProp(image, DmtxPropRowSizeBytes));
 
 	dec = dmtxDecodeCreate(image, 1);
