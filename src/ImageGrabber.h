@@ -8,13 +8,16 @@
 #include "dib.h"
 #include "dmtx.h"
 #include "twain.h"     // Standard TWAIN header.
+#include "Singleton.h"
 
 #include <windows.h>
 
-class ImageGrabber {
+class ImageGrabberImpl {
 public:
-	ImageGrabber();
-	~ImageGrabber();
+	ImageGrabberImpl();
+	~ImageGrabberImpl();
+
+	bool twainAvailable();
 
 	HANDLE acquireImage();
 	DmtxImage* acquireDmtxImage();
@@ -23,10 +26,9 @@ public:
 	 * returns false if user pressed cancel when presented with dialog box to
 	 * select a scanner.
 	 */
-	static bool selectSourceAsDefault();
+	bool selectSourceAsDefault();
 
 	void freeImage(HANDLE handle);
-	void unloadTwain();
 
 private:
 	int GetPaletteSize(BITMAPINFOHEADER& bmInfo);
@@ -46,16 +48,23 @@ private:
 	// response to the DLL_PROCESS_ATTACH message. This handle is used to obtain
 	// the DSM_Entry() function address in the DLL and (if not 0) to free the DLL
 	// library in response to a DLL_PROCESS_DETACH message.
-	static HMODULE g_hLib;
+	HMODULE g_hLib;
 
 	// g_pDSM_Entry holds the address of function DSM_Entry() in TWAIN_32.DLL. If
 	// this address is 0, either TWAIN_32.DLL could not be loaded or there is no
 	// DSM_Entry() function in TWAIN_32.DLL.
-	static DSMENTRYPROC g_pDSM_Entry;
+	DSMENTRYPROC g_pDSM_Entry;
 
 	// g_AppID serves as a TWAIN identity structure that uniquely identifies the
 	// application process responsible for making calls to function DSM_Entry().
 	static TW_IDENTITY g_AppID;
+
+	unsigned invokeTwain(TW_IDENTITY * srcId, unsigned long dg, unsigned dat,
+			unsigned msg, void * data);
+
+	void unloadTwain();
 };
+
+typedef Loki::SingletonHolder<ImageGrabberImpl> ImageGrabber;
 
 #endif /* __INCLUDE_IMAGE_GRABBER_H */
