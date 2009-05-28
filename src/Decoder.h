@@ -27,8 +27,11 @@ public:
 
 private:
 	LinkList * results;
+	static const unsigned NUM_SCANS = 3;
 
+	void messageFound(unsigned char * msg, int msgSize);
 	DmtxImage * createDmtxImageFromDib(Dib * dib);
+	void showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
 
 };
 

@@ -26,6 +26,7 @@ using namespace std;
 
 ImageProcessor::ImageProcessor()
 : image(NULL) {
+	UA_DEBUG(ua::Debug::Instance().subSysHeaderSet(3, "ImageProcessor"));
 
 }
 
@@ -58,9 +59,9 @@ void ImageProcessor::decodeImage(DmtxImage * image) {
 
 void ImageProcessor::debugTags(Decoder * decoder) {
 	unsigned numTags = decoder->getNumTags();
-	UA_DOUT(3, 1, "tags found: " << numTags);
+	UA_DOUT(3, 1, "debugTags: tags found: " << numTags);
 	for (unsigned i = 0; i < numTags; ++i) {
-		UA_DOUT(3, 1, "tag " << i << ": " << decoder->getTag(i));
+		UA_DOUT(3, 1, "debugTags: tag " << i << ": " << decoder->getTag(i));
 	}
 
 	delete decoder;
