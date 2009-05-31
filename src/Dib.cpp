@@ -190,9 +190,14 @@ unsigned char * Dib::getPixelBuffer() {
 	return pixels;
 }
 
+unsigned char * Dib::getRowPtr(unsigned row) {
+	unsigned rowBytes = infoHeader->width * bytesPerPixel + rowPaddingBytes;
+	return pixels + row * rowBytes;
+}
+
 void Dib::getPixel(unsigned row, unsigned col, RgbQuad * quad) {
 	unsigned rowBytes = infoHeader->width * bytesPerPixel + rowPaddingBytes;
-	unsigned char * ptr = (pixels + row * rowBytes + col * bytesPerPixel);
+	unsigned char * ptr = pixels + row * rowBytes + col * bytesPerPixel;
 
 	assert(infoHeader->bitCount == 24);
 	quad->rgbRed      = ptr[0];
@@ -203,7 +208,7 @@ void Dib::getPixel(unsigned row, unsigned col, RgbQuad * quad) {
 
 unsigned char Dib::getPixelGrayscale(unsigned row, unsigned col) {
 	unsigned rowBytes = infoHeader->width * bytesPerPixel + rowPaddingBytes;
-	unsigned char * ptr = (pixels + row * rowBytes + col * bytesPerPixel);
+	unsigned char * ptr = pixels + row * rowBytes + col * bytesPerPixel;
 
 	if ((infoHeader->bitCount == 24) || (infoHeader->bitCount == 32)) {
 		ptr = (pixels + row * rowBytes + col * bytesPerPixel);
@@ -232,7 +237,7 @@ void Dib::setPixel(unsigned row, unsigned col, RgbQuad * quad) {
 void Dib::setPixelGrayscale(unsigned row, unsigned col,	unsigned char value) {
 	unsigned padding = (infoHeader->width * bytesPerPixel) & 0x3;
 	unsigned rowBytes = infoHeader->width * bytesPerPixel + padding;
-	unsigned char * ptr = (pixels + row * rowBytes + col * bytesPerPixel);
+	unsigned char * ptr = pixels + row * rowBytes + col * bytesPerPixel;
 
 	if ((infoHeader->bitCount == 24) || (infoHeader->bitCount == 32)) {
 		ptr[0] = value;
@@ -420,7 +425,4 @@ void Dib::histEqualization(Dib & src) {
 					(unsigned char) (256 * sum[src.getPixelGrayscale(row, col)]));
 		}
 	}
-}
-
-void Dib::rotateImage(Dib & src) {
 }

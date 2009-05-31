@@ -96,38 +96,20 @@ void Decoder::decodeImage(DmtxImage * image) {
 	dmtxDecodeSetProp(dec, DmtxPropSquareDevn, 10);
 	dmtxDecodeSetProp(dec, DmtxPropEdgeThresh, 37);
 
-	reg = dmtxRegionFindNext(dec, NULL);
-	if (reg == NULL) {
-		UA_DOUT(1, 3, "first attemt to find region failed");
-		// change decode parameters and try to find region again
-		dmtxDecodeDestroy(&dec);
-		dec = dmtxDecodeCreate(image, 1);
-		dmtxDecodeSetProp(dec, DmtxPropScanGap, 0);
-		dmtxDecodeSetProp(dec, DmtxPropSquareDevn, 10);
-		dmtxDecodeSetProp(dec, DmtxPropEdgeThresh, 10);
+	while (1) {
 		reg = dmtxRegionFindNext(dec, NULL);
-		if (reg == NULL) {
-			UA_DOUT(1, 3, "no regions found");
-			return;
-		}
-	}
+		if (reg == NULL) break;
 
-	for (unsigned i = 0; i < NUM_SCANS; ++i) {
 		UA_DOUT(1, 3, "retrieving message from region");
 		msg = dmtxDecodeMatrixRegion(dec, reg, DmtxUndefined);
-		messageFound(msg->output, msg->outputIdx);
-		showStats(dec, reg, msg);
-		dmtxMessageDestroy(&msg);
-
-		reg = dmtxRegionFindNext(dec, NULL);
-		if (reg == NULL) {
-			UA_DOUT(1, 3, "no regions found ...");
-			return;
+		if (msg != NULL) {
+			messageFound(msg->output, msg->outputIdx);
+			showStats(dec, reg, msg);
+			dmtxMessageDestroy(&msg);
 		}
-		UA_DOUT(1, 3, "found another region");
+		dmtxRegionDestroy(&reg);
 	}
 
-	dmtxRegionDestroy(&reg);
 	dmtxDecodeDestroy(&dec);
 }
 
