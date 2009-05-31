@@ -202,7 +202,7 @@ void Dib::getPixel(unsigned row, unsigned col, RgbQuad * quad) {
 	unsigned rowBytes = infoHeader->width * bytesPerPixel + rowPaddingBytes;
 	unsigned char * ptr = pixels + row * rowBytes + col * bytesPerPixel;
 
-	assert(infoHeader->bitCount == 24);
+	assert(infoHeader->bitCount != 8);
 	quad->rgbRed      = ptr[0];
 	quad->rgbGreen    = ptr[1];
 	quad->rgbBlue     = ptr[2];
@@ -214,7 +214,6 @@ unsigned char Dib::getPixelGrayscale(unsigned row, unsigned col) {
 	unsigned char * ptr = pixels + row * rowBytes + col * bytesPerPixel;
 
 	if ((infoHeader->bitCount == 24) || (infoHeader->bitCount == 32)) {
-		ptr = (pixels + row * rowBytes + col * bytesPerPixel);
 		return (unsigned char) (0.3 * ptr[0] + 0.59 * ptr[1] + 0.11 * ptr[2]);
 	}
 	else if (infoHeader->bitCount == 8) {
