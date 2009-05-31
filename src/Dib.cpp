@@ -65,8 +65,11 @@ Dib::~Dib() {
 }
 
 void Dib::copyInternals(Dib & src) {
-	if (src.fileHeader != NULL) {
+	if ((fileHeader != NULL) && (src.fileHeader != NULL)) {
 		*fileHeader = *src.fileHeader;
+	}
+	if (infoHeader == NULL) {
+		infoHeader = new BitmapInfoHeader;
 	}
 	*infoHeader = *src.infoHeader;
 	if (pixels == NULL) {

@@ -31,6 +31,7 @@ const char * USAGE_FMT =
 	"  -a, --acquire       Scans an image from the scanner and decodes the 2D barcodes\n"
 	"                      on the trays.\n"
 	"  -d, --decode FILE   Decodes the 2D barcode in the specified DIB image file.\n"
+	"  -p, --process FILE  Attempts to find all trays in image.\n"
 	"  -s, --scan FILE     Scans an image and saves it as a DIB.\n"
 	"  --select            User will be asked to select the scanner.\n"
 	"  -v, --verbose       Debugging messages are output to stdout. Only when built\n"
@@ -40,6 +41,7 @@ const char * USAGE_FMT =
 static struct option long_options[] = {
 		{ "acquire", no_argument,       NULL, 'a' },
 		{ "decode",  required_argument, NULL, 'd' },
+		{ "process", required_argument, NULL, 'p' },
 		{ "scan",    required_argument, NULL, 's' },
 		{ "select",  no_argument,       NULL, 200 },
 		{ "verbose", required_argument, NULL, 'v' },
@@ -64,7 +66,8 @@ private:
 };
 
 Application::Application(int argc, char ** argv) {
-	bool processAquiredImage = false;
+	bool AquirAndProcessImage = false;
+	bool processImage = false;
 	bool scanImage = false;
 	bool decodeImage = false;
 	char * filename = NULL;
@@ -79,16 +82,21 @@ Application::Application(int argc, char ** argv) {
 		int option_index = 0;
 
 
-		ch = getopt_long (argc, argv, "ad:hs:v", long_options, &option_index);
+		ch = getopt_long (argc, argv, "ad:hp:s:v", long_options, &option_index);
 
 		if (ch == -1) break;
 		switch (ch) {
 		case 'a':
-			processAquiredImage = true;
+			AquirAndProcessImage = true;
 			break;
 
 		case 'd':
 			decodeImage = true;
+			filename = optarg;
+			break;
+
+		case 'p':
+			processImage = true;
 			filename = optarg;
 			break;
 
@@ -129,7 +137,19 @@ Application::Application(int argc, char ** argv) {
 		exit(-1);
 	}
 
-	if (processAquiredImage && scanImage) {
+	if (processImage) {
+		Dib * dib = new Dib();
+		UA_ASSERT_NOT_NULL(dib);
+		dib->readFromFile(filename);
+
+		Dib * edgeDib = new Dib();
+		UA_ASSERT_NOT_NULL(edgeDib);
+		edgeDib->sobelEdgeDetection(*dib);
+		edgeDib->writeToFile("out.bmp");
+		return;
+	}
+
+	if (AquirAndProcessImage && scanImage) {
 		cerr << "Error: invalid options selected." << endl;
 		exit(0);
 	}
@@ -141,7 +161,7 @@ Application::Application(int argc, char ** argv) {
 		processor->decodeDib(filename);
 	}
 
-	if (processAquiredImage) {
+	if (AquirAndProcessImage) {
 #ifdef WIN32
 		HANDLE h = ImageGrabber::Instance().acquireImage();
 		if (h == NULL) {
