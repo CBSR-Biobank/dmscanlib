@@ -1,5 +1,5 @@
 #include "ImageGrabber.h"
-#include "TwainException.h"
+//#include "TwainException.h"
 #include "UaDebug.h"
 
 using namespace std;
@@ -188,7 +188,7 @@ HANDLE ImageGrabberImpl::acquireImage(){
 
 			if (rc == TWRC_FAILURE) {
 				invokeTwain(&srcID, DG_CONTROL, DAT_PENDINGXFERS, MSG_RESET, &pxfers);
-				throw TwainException("Unable to obtain image information");
+				UA_ERROR("Unable to obtain image information");
 				break;
 			}
 
