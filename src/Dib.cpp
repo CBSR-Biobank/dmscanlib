@@ -258,6 +258,11 @@ void Dib::setPixelGrayscale(unsigned row, unsigned col,	unsigned char value) {
 	}
 }
 
+void Dib::crop(Dib &src, unsigned r1, unsigned c1, unsigned r2, unsigned c2) {
+	UA_ASSERT_NOT_NULL(src.infoHeader);
+
+}
+
 void Dib::convertGrayscale(Dib & src) {
 	UA_ASSERT_NOT_NULL(src.infoHeader);
 
@@ -273,15 +278,21 @@ void Dib::sobelEdgeDetectionWithMask(Dib & src, int mask1[3][3],
 		int mask2[3][3]) {
 	UA_ASSERT_NOT_NULL(src.infoHeader);
 
+	unsigned padding = (infoHeader->width * bytesPerPixel) & 0x3;
+	unsigned rowBytes = infoHeader->width * bytesPerPixel + padding;
+
 	int I, J;
 	unsigned Y, X, SUM;
 	long sum1, sum2;
 	unsigned width = src.infoHeader->width;
 	unsigned height = src.infoHeader->height;
 
+	unsigned char * srcRowPtr = src.pixels, * destRowPtr = pixels;
+	unsigned char * pixel, * pixelStart, pixelValue;
+
 	assert(mask1 != NULL);
 
-	for (Y = 0; Y <= height - 1; ++Y)  {
+	for (Y = 0; Y <= height - 1; ++Y, srcRowPtr += rowBytes, destRowPtr += rowBytes)  {
 		for (X = 0; X <= width - 1 ; ++X)  {
 			sum1 = 0;
 			sum2 = 0;
@@ -294,18 +305,24 @@ void Dib::sobelEdgeDetectionWithMask(Dib & src, int mask1[3][3],
 			else {
 				/* Convolution starts here */
 
-				for (I = -1; I <= 1; ++I)  {
-					for (J = -1; J <= 1; ++J)  {
-						sum1 += src.getPixelGrayscale(Y + J, X + I)
-						* mask1[I+1][J+1];
-					}
-				}
+				pixelStart = srcRowPtr + (X - 1) * bytesPerPixel;
 
-				if (mask2 != NULL) {
-					for (I = -1; I <= 1; ++I)  {
-						for (J = -1; J <= 1; ++J)  {
-							sum2 += src.getPixelGrayscale(Y + J, X + I)
-							* mask2[I+1][J+1];
+				for (J = -1; J <= 1; ++J, pixel += rowBytes)  {
+					pixel = pixelStart;
+					for (I = -1; I <= 1; ++I, pixel += bytesPerPixel)  {
+						if ((infoHeader->bitCount == 24) || (infoHeader->bitCount == 32)) {
+							// convert to grayscale
+							pixelValue = (unsigned char)(
+									0.3 * pixel[0] + 0.59 * pixel[1] + + 0.11 * pixel[2]);
+						}
+						else {
+							pixelValue = pixel[0];
+						}
+
+						sum1 += pixelValue * mask1[I+1][J+1];
+						if (mask2 != NULL) {
+							sum2 += pixelValue * mask2[I+1][J+1];
+
 						}
 					}
 				}
@@ -317,7 +334,11 @@ void Dib::sobelEdgeDetectionWithMask(Dib & src, int mask1[3][3],
 			if (SUM > 255) SUM = 255;
 			if (SUM < 0) SUM = 0;
 
-			setPixelGrayscale(Y, X, (unsigned char)(255 - SUM));
+			pixel = destRowPtr + X * bytesPerPixel;
+			pixel[0] = (unsigned char)(255 - SUM);
+			if ((infoHeader->bitCount == 24) || (infoHeader->bitCount == 32)) {
+				pixel[1] = pixel[2] = pixel[0];
+			}
 		}
 	}
 }
