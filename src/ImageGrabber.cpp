@@ -22,7 +22,7 @@ TW_IDENTITY ImageGrabberImpl::g_AppID = {
  *	selectDefaultAsSource work.
  */
 ImageGrabberImpl::ImageGrabberImpl() : g_hLib(NULL), g_pDSM_Entry(NULL) {
-	UA_DEBUG(ua::Debug::Instance().subSysHeaderSet(2, "Twain"));
+	UA_DEBUG(ua::Debug::Instance().subSysHeaderSet(2, "ImageGrabberImpl"));
 	g_hLib = LoadLibrary("TWAIN_32.DLL");
 
 	if (g_hLib != NULL) {
@@ -98,7 +98,7 @@ bool ImageGrabberImpl::selectSourceAsDefault() {
 	invokeTwain(NULL, DG_CONTROL, DAT_PARENT, MSG_CLOSEDSM, &hwnd);
 	DestroyWindow (hwnd);
 
-	UA_DOUT(2, 3, "ImageGrabberImpl::selectSourceAsDefault: " << srcID.ProductName);
+	UA_DOUT(2, 3, "selectSourceAsDefault: " << srcID.ProductName);
 	return true;
 }
 
@@ -132,14 +132,14 @@ HANDLE ImageGrabberImpl::acquireImage(){
 	// get the default source
 	rc = invokeTwain(NULL, DG_CONTROL, DAT_IDENTITY, MSG_GETDEFAULT, &srcID);
 	if (rc != TWRC_SUCCESS) {
-		UA_DOUT(2, 3, "ImageGrabberImpl::acquireImage: Unable to open default data source");
+		UA_DOUT(2, 3, "acquireImage: Unable to open default data source");
 		return NULL;
 	}
 
 	rc = invokeTwain(NULL, DG_CONTROL, DAT_IDENTITY, MSG_OPENDS, &srcID);
 	UA_ASSERTS(rc == TWRC_SUCCESS, "Unable to open default data source");
 
-	UA_DOUT(2, 3, "ImageGrabberImpl::acquireImage: source/\""
+	UA_DOUT(2, 3, "acquireImage: source/\""
 			<< srcID.ProductName << "\"");
 
 	//Prepare to enable the default data source
@@ -202,7 +202,7 @@ HANDLE ImageGrabberImpl::acquireImage(){
 			}
 
 			//debug info
-			UA_DOUT(2, 1, "ImageGrabberImpl::acquire:"
+			UA_DOUT(2, 1, "acquire:"
 					<< " Bits per pixel/" << ii.BitsPerPixel
 					<< " Compression/" << ii.Compression
 					<< " ImageLength/" << ii.ImageLength
@@ -260,7 +260,7 @@ DmtxImage* ImageGrabberImpl::acquireDmtxImage(){
 
 	int rowPadBytes = (width * m_nBits) & 0x3;
 
-	UA_DOUT(2, 1,"createDmtxImage: " << endl
+	UA_DOUT(2, 1,"acquireDmtxImage: " << endl
 		<< "lpVoid: " << *((unsigned*) lpVoid) << endl
 		<< "sizeof(BITMAPINFOHEADER): " << sizeof(BITMAPINFOHEADER) << endl
 		<< "Width: " << width << endl

@@ -61,6 +61,7 @@ public:
 	unsigned getRowPadBytes();
 	unsigned getBitsPerPixel();
 	unsigned char * getPixelBuffer();
+	unsigned char * getRowPtr(unsigned row);
 	void getPixel(unsigned row, unsigned col, RgbQuad * quad);
 	unsigned char getPixelGrayscale(unsigned row, unsigned col);
 	void setPixel(unsigned row, unsigned col, RgbQuad * quad);
@@ -73,7 +74,6 @@ public:
 	void sobelEdgeDetection(Dib & src);
 	void laplaceEdgeDetection(Dib & src);
 	void histEqualization(Dib & src);
-	void rotateImage(Dib & src);
 
 private:
 	BitmapFileHeader * fileHeader;

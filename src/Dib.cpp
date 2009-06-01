@@ -65,14 +65,21 @@ Dib::~Dib() {
 }
 
 void Dib::copyInternals(Dib & src) {
-	if (src.fileHeader != NULL) {
+	if ((fileHeader != NULL) && (src.fileHeader != NULL)) {
 		*fileHeader = *src.fileHeader;
+	}
+	if (infoHeader == NULL) {
+		infoHeader = new BitmapInfoHeader;
 	}
 	*infoHeader = *src.infoHeader;
 	if (pixels == NULL) {
 		isAllocated = true;
 		pixels = new unsigned char[infoHeader->imageSize];
 	}
+
+	bytesPerPixel = src.bytesPerPixel;
+	rowPaddingBytes = src.rowPaddingBytes;
+
 }
 
 /**
@@ -83,7 +90,7 @@ void Dib::readFromFile(const char * filename) {
 
 	FILE * fh = fopen(filename, "r"); // C4996
 	if (fh == NULL) {
-		UA_ERROR("could not open file" << filename);
+		UA_ERROR("could not open file " << filename);
 	}
 
 	fileHeader = new BitmapFileHeader;
@@ -190,11 +197,16 @@ unsigned char * Dib::getPixelBuffer() {
 	return pixels;
 }
 
+unsigned char * Dib::getRowPtr(unsigned row) {
+	unsigned rowBytes = infoHeader->width * bytesPerPixel + rowPaddingBytes;
+	return pixels + row * rowBytes;
+}
+
 void Dib::getPixel(unsigned row, unsigned col, RgbQuad * quad) {
 	unsigned rowBytes = infoHeader->width * bytesPerPixel + rowPaddingBytes;
-	unsigned char * ptr = (pixels + row * rowBytes + col * bytesPerPixel);
+	unsigned char * ptr = pixels + row * rowBytes + col * bytesPerPixel;
 
-	assert(infoHeader->bitCount == 24);
+	assert(infoHeader->bitCount != 8);
 	quad->rgbRed      = ptr[0];
 	quad->rgbGreen    = ptr[1];
 	quad->rgbBlue     = ptr[2];
@@ -203,16 +215,15 @@ void Dib::getPixel(unsigned row, unsigned col, RgbQuad * quad) {
 
 unsigned char Dib::getPixelGrayscale(unsigned row, unsigned col) {
 	unsigned rowBytes = infoHeader->width * bytesPerPixel + rowPaddingBytes;
-	unsigned char * ptr = (pixels + row * rowBytes + col * bytesPerPixel);
+	unsigned char * ptr = pixels + row * rowBytes + col * bytesPerPixel;
 
 	if ((infoHeader->bitCount == 24) || (infoHeader->bitCount == 32)) {
-		ptr = (pixels + row * rowBytes + col * bytesPerPixel);
 		return (unsigned char) (0.3 * ptr[0] + 0.59 * ptr[1] + 0.11 * ptr[2]);
 	}
 	else if (infoHeader->bitCount == 8) {
 		return *ptr;
 	}
-	assert(0); /* bitCount not implemented yet */
+	UA_ASSERTS(false, "bitCount " << infoHeader->bitCount << " not implemented yet");
 	return  0;
 }
 
@@ -232,7 +243,7 @@ void Dib::setPixel(unsigned row, unsigned col, RgbQuad * quad) {
 void Dib::setPixelGrayscale(unsigned row, unsigned col,	unsigned char value) {
 	unsigned padding = (infoHeader->width * bytesPerPixel) & 0x3;
 	unsigned rowBytes = infoHeader->width * bytesPerPixel + padding;
-	unsigned char * ptr = (pixels + row * rowBytes + col * bytesPerPixel);
+	unsigned char * ptr = pixels + row * rowBytes + col * bytesPerPixel;
 
 	if ((infoHeader->bitCount == 24) || (infoHeader->bitCount == 32)) {
 		ptr[0] = value;
@@ -250,13 +261,9 @@ void Dib::setPixelGrayscale(unsigned row, unsigned col,	unsigned char value) {
 void Dib::convertGrayscale(Dib & src) {
 	UA_ASSERT_NOT_NULL(src.infoHeader);
 
-	unsigned width = src.infoHeader->width;
-	unsigned height = src.infoHeader->height;
-	unsigned row, col;
-
 	copyInternals(src);
-	for (row = 0; row < height; ++row) {
-		for (col = 0; col < width; ++col) {
+	for (unsigned row = 0; row < src.infoHeader->height; ++row) {
+		for (unsigned col = 0; col < src.infoHeader->width; ++col) {
 			setPixelGrayscale(row, col,	src.getPixelGrayscale(row, col));
 		}
 	}
@@ -321,10 +328,7 @@ void Dib::sobelEdgeDetectionWithMask(Dib & src, int mask1[3][3],
 void Dib::sobelEdgeDetection(Dib & src) {
 	UA_ASSERT_NOT_NULL(src.infoHeader);
 
-	int GX[3][3];
-	int GY[3][3];
-
-	copyInternals(src);
+	int GX[3][3], GY[3][3];
 
 	/* 3x3 GX Sobel mask.  Ref: www.cee.hw.ac.uk/hipr/html/sobel.html */
 	GX[0][0] = -1; GX[0][1] = 0; GX[0][2] = 1;
@@ -336,7 +340,8 @@ void Dib::sobelEdgeDetection(Dib & src) {
 	GY[1][0] =  0; GY[1][1] =  0; GY[1][2] =  0;
 	GY[2][0] = -1; GY[2][1] = -2; GY[2][2] = -1;
 
-	sobelEdgeDetectionWithMask(src, GX, GY);
+	copyInternals(src);
+	sobelEdgeDetectionWithMask(src, GY, NULL); //GX, GY);
 }
 
 /**
@@ -420,7 +425,4 @@ void Dib::histEqualization(Dib & src) {
 					(unsigned char) (256 * sum[src.getPixelGrayscale(row, col)]));
 		}
 	}
-}
-
-void Dib::rotateImage(Dib & src) {
 }

@@ -10,15 +10,20 @@
 #include "Dib.h"
 #include "LinkList.h"
 
+#include <iostream>
 #include <string.h>
+#include <math.h>
 
 #ifdef _VISUALC_
 // disable fopen warnings
 #pragma warning(disable : 4996)
 #endif
 
+using namespace std;
+
 Decoder::Decoder(Dib * dib) :
 	results(new LinkList()) {
+	UA_DEBUG(ua::Debug::Instance().subSysHeaderSet(1, "Decoder"));
 	decodeImage(dib);
 }
 
@@ -60,19 +65,20 @@ void Decoder::decodeImage(DmtxImage * image) {
 	}
 	results = new LinkList();
 
-	DmtxDecode * dec;
-	DmtxRegion * reg;
-	DmtxMessage * msg;
+	DmtxDecode * dec = NULL;
+	DmtxRegion * reg = NULL;
+	DmtxMessage * msg = NULL;
 	FILE * fh;
 	unsigned char *pnm;
 	int totalBytes, headerBytes;
 
-	UA_DOUT(1, 3, "image width: " << dmtxImageGetProp(image, DmtxPropWidth));
-	UA_DOUT(1, 3, "image height: " << dmtxImageGetProp(image, DmtxPropHeight));
-	UA_DOUT(1, 3, "row padding: " << dmtxImageGetProp(image, DmtxPropRowPadBytes));
-	UA_DOUT(1, 3, "image bits per pixel: "
-			<< dmtxImageGetProp(image, DmtxPropBitsPerPixel));
-	UA_DOUT(1, 3, "image row size bytes: "
+	UA_DOUT(1, 3, "decodeImage: image width/"
+			<< dmtxImageGetProp(image, DmtxPropWidth)
+			<< " image height/" << dmtxImageGetProp(image, DmtxPropHeight)
+			<< " row padding/" << dmtxImageGetProp(image, DmtxPropRowPadBytes)
+			<< " image bits per pixel/"
+			<< dmtxImageGetProp(image, DmtxPropBitsPerPixel)
+			<< " image row size bytes/"
 			<< dmtxImageGetProp(image, DmtxPropRowSizeBytes));
 
 	dec = dmtxDecodeCreate(image, 1);
@@ -86,34 +92,79 @@ void Decoder::decodeImage(DmtxImage * image) {
 			fclose(fh);
 	);
 
-	dmtxDecodeSetProp(dec, DmtxPropScanGap, DmtxPropScanGap);
-	dmtxDecodeSetProp(dec, DmtxPropSquareDevn, DmtxPropSquareDevn);
-	dmtxDecodeSetProp(dec, DmtxPropEdgeThresh, DmtxPropEdgeThresh);
+	dmtxDecodeSetProp(dec, DmtxPropScanGap, 0);
+	dmtxDecodeSetProp(dec, DmtxPropSquareDevn, 10);
+	dmtxDecodeSetProp(dec, DmtxPropEdgeThresh, 37);
 
-	reg = dmtxRegionFindNext(dec, NULL);
+	while (1) {
+		reg = dmtxRegionFindNext(dec, NULL);
+		if (reg == NULL) break;
 
-	if (reg != NULL) {
-		UA_DOUT(1, 1, "found a region...");
+		UA_DOUT(1, 3, "retrieving message from region");
 		msg = dmtxDecodeMatrixRegion(dec, reg, DmtxUndefined);
 		if (msg != NULL) {
-			char * buffer = new char[msg->outputIdx + 1];
-			UA_ASSERT_NOT_NULL(buffer);
-			memcpy(buffer, msg->output, msg->outputIdx);
-			buffer[msg->outputIdx] = 0;
-			UA_DOUT(1, 5, "barcode is: " << buffer);
-			results->append(buffer);
+			messageFound(msg->output, msg->outputIdx);
+			showStats(dec, reg, msg);
 			dmtxMessageDestroy(&msg);
 		}
-		else {
-			//no message decoded, write 10 0's
-			//TODO: put rotation code here?
-			UA_DOUT(1, 1, "Unable to read region");
-		}
-
 		dmtxRegionDestroy(&reg);
 	}
 
 	dmtxDecodeDestroy(&dec);
+}
+
+void Decoder::messageFound(unsigned char * msg, int msgSize) {
+	char * buffer = new char[msgSize + 1];
+	UA_ASSERT_NOT_NULL(buffer);
+	memcpy(buffer, msg, msgSize);
+	buffer[msgSize] = 0;
+	results->append(buffer);
+}
+
+void Decoder::showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg) {
+	int height;
+	int dataWordLength;
+	int rotateInt;
+	double rotate;
+	DmtxVector2 p00, p10, p11, p01;
+
+	height = dmtxDecodeGetProp(dec, DmtxPropHeight);
+
+	p00.X = p00.Y = p10.Y = p01.X = 0.0;
+	p10.X = p01.Y = p11.X = p11.Y = 1.0;
+	dmtxMatrix3VMultiplyBy(&p00, reg->fit2raw);
+	dmtxMatrix3VMultiplyBy(&p10, reg->fit2raw);
+	dmtxMatrix3VMultiplyBy(&p11, reg->fit2raw);
+	dmtxMatrix3VMultiplyBy(&p01, reg->fit2raw);
+
+	dataWordLength = dmtxGetSymbolAttribute(DmtxSymAttribSymbolDataWords, reg->sizeIdx);
+
+	rotate = (2 * M_PI) + (atan2(reg->fit2raw[0][1], reg->fit2raw[1][1]) -
+			atan2(reg->fit2raw[1][0], reg->fit2raw[0][0])) / 2.0;
+
+	rotateInt = (int)(rotate * 180/M_PI + 0.5);
+	if(rotateInt >= 360)
+		rotateInt -= 360;
+
+	fprintf(stdout, "--------------------------------------------------\n");
+	fprintf(stdout, "       Matrix Size: %d x %d\n",
+			dmtxGetSymbolAttribute(DmtxSymAttribSymbolRows, reg->sizeIdx),
+			dmtxGetSymbolAttribute(DmtxSymAttribSymbolCols, reg->sizeIdx));
+	fprintf(stdout, "    Data Codewords: %d (capacity %d)\n",
+			dataWordLength - msg->padCount, dataWordLength);
+	fprintf(stdout, "   Error Codewords: %d\n",
+			dmtxGetSymbolAttribute(DmtxSymAttribSymbolErrorWords, reg->sizeIdx));
+	fprintf(stdout, "      Data Regions: %d x %d\n",
+			dmtxGetSymbolAttribute(DmtxSymAttribHorizDataRegions, reg->sizeIdx),
+			dmtxGetSymbolAttribute(DmtxSymAttribVertDataRegions, reg->sizeIdx));
+	fprintf(stdout, "Interleaved Blocks: %d\n",
+			dmtxGetSymbolAttribute(DmtxSymAttribInterleavedBlocks, reg->sizeIdx));
+	fprintf(stdout, "    Rotation Angle: %d\n", rotateInt);
+	fprintf(stdout, "          Corner 0: (%0.1f, %0.1f)\n", p00.X, height - 1 - p00.Y);
+	fprintf(stdout, "          Corner 1: (%0.1f, %0.1f)\n", p10.X, height - 1 - p10.Y);
+	fprintf(stdout, "          Corner 2: (%0.1f, %0.1f)\n", p11.X, height - 1 - p11.Y);
+	fprintf(stdout, "          Corner 3: (%0.1f, %0.1f)\n", p01.X, height - 1 - p01.Y);
+	fprintf(stdout, "--------------------------------------------------\n");
 }
 
 /**
