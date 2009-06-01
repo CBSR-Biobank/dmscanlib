@@ -144,8 +144,7 @@ Application::Application(int argc, char ** argv) {
 
 		Dib * edgeDib = new Dib();
 		UA_ASSERT_NOT_NULL(edgeDib);
-		edgeDib->convertGrayscale(*dib);
-		//edgeDib->sobelEdgeDetection(*dib);
+		edgeDib->sobelEdgeDetection(*dib);
 		edgeDib->writeToFile("out.bmp");
 		return;
 	}

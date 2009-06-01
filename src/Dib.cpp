@@ -76,6 +76,10 @@ void Dib::copyInternals(Dib & src) {
 		isAllocated = true;
 		pixels = new unsigned char[infoHeader->imageSize];
 	}
+
+	bytesPerPixel = src.bytesPerPixel;
+	rowPaddingBytes = src.rowPaddingBytes;
+
 }
 
 /**
@@ -86,7 +90,7 @@ void Dib::readFromFile(const char * filename) {
 
 	FILE * fh = fopen(filename, "r"); // C4996
 	if (fh == NULL) {
-		UA_ERROR("could not open file" << filename);
+		UA_ERROR("could not open file " << filename);
 	}
 
 	fileHeader = new BitmapFileHeader;
@@ -219,7 +223,7 @@ unsigned char Dib::getPixelGrayscale(unsigned row, unsigned col) {
 	else if (infoHeader->bitCount == 8) {
 		return *ptr;
 	}
-	assert(0); /* bitCount not implemented yet */
+	UA_ASSERTS(false, "bitCount " << infoHeader->bitCount << " not implemented yet");
 	return  0;
 }
 
@@ -257,13 +261,9 @@ void Dib::setPixelGrayscale(unsigned row, unsigned col,	unsigned char value) {
 void Dib::convertGrayscale(Dib & src) {
 	UA_ASSERT_NOT_NULL(src.infoHeader);
 
-	unsigned width = src.infoHeader->width;
-	unsigned height = src.infoHeader->height;
-	unsigned row, col;
-
 	copyInternals(src);
-	for (row = 0; row < height; ++row) {
-		for (col = 0; col < width; ++col) {
+	for (unsigned row = 0; row < src.infoHeader->height; ++row) {
+		for (unsigned col = 0; col < src.infoHeader->width; ++col) {
 			setPixelGrayscale(row, col,	src.getPixelGrayscale(row, col));
 		}
 	}
@@ -328,10 +328,7 @@ void Dib::sobelEdgeDetectionWithMask(Dib & src, int mask1[3][3],
 void Dib::sobelEdgeDetection(Dib & src) {
 	UA_ASSERT_NOT_NULL(src.infoHeader);
 
-	int GX[3][3];
-	int GY[3][3];
-
-	copyInternals(src);
+	int GX[3][3], GY[3][3];
 
 	/* 3x3 GX Sobel mask.  Ref: www.cee.hw.ac.uk/hipr/html/sobel.html */
 	GX[0][0] = -1; GX[0][1] = 0; GX[0][2] = 1;
@@ -343,7 +340,8 @@ void Dib::sobelEdgeDetection(Dib & src) {
 	GY[1][0] =  0; GY[1][1] =  0; GY[1][2] =  0;
 	GY[2][0] = -1; GY[2][1] = -2; GY[2][2] = -1;
 
-	sobelEdgeDetectionWithMask(src, GX, GY);
+	copyInternals(src);
+	sobelEdgeDetectionWithMask(src, GY, NULL); //GX, GY);
 }
 
 /**
