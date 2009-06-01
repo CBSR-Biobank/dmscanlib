@@ -65,7 +65,7 @@ unsigned ImageGrabberImpl::invokeTwain(TW_IDENTITY * srcId, unsigned long dg,
  *	have to be specified every time.
  *	TODO: change return type to void?
  */
-bool ImageGrabberImpl::selectSourceAsDefault() {
+bool ImageGrabberImpl::selectSourceAsDefault(const char ** err) {
 	UA_ASSERT_NOT_NULL(g_hLib);
 
 	// Create a static window whose handle is passed to DSM_Entry() when we
@@ -82,7 +82,10 @@ bool ImageGrabberImpl::selectSourceAsDefault() {
 	// Open the data source manager.
 	rc = invokeTwain(NULL, DG_CONTROL, DAT_PARENT, MSG_OPENDSM, (TW_MEMREF) &hwnd);
 
-	UA_ASSERTS(rc == TWRC_SUCCESS, "Unable to open data source manager ");
+	if (rc != TWRC_SUCCESS) {
+		*err = "no scanners connected.";
+		return false;
+	}
 
 	// Display the "Select Source" dialog box for selecting a data source.
 	ZeroMemory (&srcID, sizeof(srcID));
@@ -90,7 +93,7 @@ bool ImageGrabberImpl::selectSourceAsDefault() {
 
 	UA_ASSERTS(rc != TWRC_FAILURE, "Unable to display user interface ");
 	if (rc == TWRC_CANCEL) {
-		// User pressed cancel for scanner selection
+		*err = "user pressed cancel for scanner selection.";
 		return false;
 	}
 
@@ -108,7 +111,7 @@ bool ImageGrabberImpl::selectSourceAsDefault() {
  *
  *	Grab an image from the twain source and convert it to the dmtxImage format
  */
-HANDLE ImageGrabberImpl::acquireImage(){
+HANDLE ImageGrabberImpl::acquireImage(const char ** err){
 	UA_ASSERT_NOT_NULL(g_hLib);
 
 	TW_UINT32 handle = 0;
@@ -132,8 +135,9 @@ HANDLE ImageGrabberImpl::acquireImage(){
 	// get the default source
 	rc = invokeTwain(NULL, DG_CONTROL, DAT_IDENTITY, MSG_GETDEFAULT, &srcID);
 	if (rc != TWRC_SUCCESS) {
-		UA_DOUT(2, 3, "acquireImage: Unable to open default data source");
-		return NULL;
+		if (!selectSourceAsDefault(err)) {
+			return NULL;
+		}
 	}
 
 	rc = invokeTwain(NULL, DG_CONTROL, DAT_IDENTITY, MSG_OPENDS, &srcID);
@@ -238,12 +242,11 @@ HANDLE ImageGrabberImpl::acquireImage(){
 	return (HANDLE) handle;
 }
 
-DmtxImage* ImageGrabberImpl::acquireDmtxImage(){
+DmtxImage* ImageGrabberImpl::acquireDmtxImage(const char ** err){
 	UA_ASSERT_NOT_NULL(g_hLib);
 
-	HANDLE h = acquireImage();
+	HANDLE h = acquireImage(err);
 	if (h == NULL) {
-		UA_WARN("aquire returned NULL");
 		return NULL;
 	}
 	UCHAR *lpVoid,*pBits;

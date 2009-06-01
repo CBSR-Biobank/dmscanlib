@@ -107,10 +107,13 @@ Application::Application(int argc, char ** argv) {
 
 		case 200:
 #ifdef WIN32
-			if (!ImageGrabber::Instance().selectSourceAsDefault()) {
-				cerr <<  "no scanner selected." << endl;
+		{
+			const char * err;
+			if (!ImageGrabber::Instance().selectSourceAsDefault(&err)) {
+				cerr <<  err << endl;
 				exit(0);
 			}
+		}
 #else
 			cerr << "this option not allowed on your operating system." << endl;
 #endif
@@ -163,9 +166,11 @@ Application::Application(int argc, char ** argv) {
 
 	if (AquirAndProcessImage) {
 #ifdef WIN32
-		HANDLE h = ImageGrabber::Instance().acquireImage();
+		const char * err;
+
+		HANDLE h = ImageGrabber::Instance().acquireImage(&err);
 		if (h == NULL) {
-			cerr <<  "ERROR: could not acquire an image from scanner." << endl;
+			cerr <<  err << endl;
 			exit(0);
 		}
 
@@ -188,10 +193,12 @@ Application::Application(int argc, char ** argv) {
 
 	if (scanImage) {
 #ifdef WIN32
+		const char * err;
+
 		UA_ASSERT_NOT_NULL(filename);
-		HANDLE h = ImageGrabber::Instance().acquireImage();
+		HANDLE h = ImageGrabber::Instance().acquireImage(&err);
 		if (h == NULL) {
-			cerr <<  "ERROR: could not acquire an image from scanner." << endl;
+			cerr <<  err << endl;
 			exit(0);
 		}
 		Dib * dib = new Dib();

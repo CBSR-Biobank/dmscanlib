@@ -19,15 +19,14 @@ public:
 
 	bool twainAvailable();
 
-	HANDLE acquireImage();
-	DmtxImage* acquireDmtxImage();
-
 	/**
 	 * returns false if user pressed cancel when presented with dialog box to
 	 * select a scanner.
 	 */
-	bool selectSourceAsDefault();
+	bool selectSourceAsDefault(const char ** err);
 
+	HANDLE acquireImage(const char ** err);
+	DmtxImage* acquireDmtxImage(const char ** err);
 	void freeImage(HANDLE handle);
 
 private:
