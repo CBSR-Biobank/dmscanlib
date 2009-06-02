@@ -1,6 +1,13 @@
 #ifndef __INCLUDE_IMAGE_GRABBER_H
 #define __INCLUDE_IMAGE_GRABBER_H
 
+/**
+ * ImageGrabber singleton.
+ *
+ * See class ImageGrabber for more information.
+ */
+
+
 #ifndef WIN32
 #error ERROR: should not be compiled for non-windows build
 #endif
@@ -12,6 +19,10 @@
 
 #include <windows.h>
 
+/**
+ * This class interfaces with the TWAIN driver to acquire images from the
+ * scanner.
+ */
 class ImageGrabberImpl {
 public:
 	ImageGrabberImpl();
@@ -33,10 +44,12 @@ private:
 	int GetPaletteSize(BITMAPINFOHEADER& bmInfo);
 	BOOL setCapability(TW_UINT16 cap,TW_UINT16 value,BOOL sign);
 
+	static const char * TWAIN_DLL_FILENAME;
+
 	// properties used by the scanner
-	static const int dpi = 300;
-	static const int scan_CONTRAST = 500;
-	static const int scan_BRIGHTNESS = 500;
+	static const int DPI = 300;
+	static const int SCAN_CONTRAST = 500;
+	static const int SCAN_BRIGHTNESS = 500;
 
 	// g_hinstDLL holds this DLL's instance handle. It is initialized in response
 	// to the DLL_PROCESS_ATTACH message. This handle is passed to CreateWindow()
@@ -62,6 +75,8 @@ private:
 			unsigned msg, void * data);
 
 	void unloadTwain();
+
+	void setFloatToIntPair(const float f, short & whole, unsigned short & frac);
 };
 
 typedef Loki::SingletonHolder<ImageGrabberImpl> ImageGrabber;

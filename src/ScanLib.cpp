@@ -260,7 +260,6 @@ void Application::acquireAndProcesImage() {
 	Decoder decoder;
 
 	dib.readFromHandle(h);
-	decoder.debugShowTags();
 	ImageGrabber::Instance().freeImage(h);
 #else
 	cerr << "this option not allowed on your operating system." << endl;

@@ -1,10 +1,17 @@
+/**
+ * Implements the ImageGrabber singleton.
+ *
+ * This class performs all interfacing with the TWAIN driver to acquire images
+ * from the scanner.
+ */
+
+
 #include "ImageGrabber.h"
-//#include "TwainException.h"
 #include "UaDebug.h"
 
 using namespace std;
 
-// Initialise g_AppID. This structure is passed to DSM_Entry() in each
+// Initialize g_AppID. This structure is passed to DSM_Entry() in each
 // function call.
 TW_IDENTITY ImageGrabberImpl::g_AppID = {
 	0,
@@ -17,13 +24,15 @@ TW_IDENTITY ImageGrabberImpl::g_AppID = {
 	"scanlib",
 };
 
+const char * ImageGrabberImpl::TWAIN_DLL_FILENAME = "TWAIN_32.DLL";
+
 /*	initGrabber() should be called prior to calling any other associated functionality,
  *	as libraries such as Twain_32.dll need to be loaded before acquire or
  *	selectDefaultAsSource work.
  */
 ImageGrabberImpl::ImageGrabberImpl() : g_hLib(NULL), g_pDSM_Entry(NULL) {
 	UA_DEBUG(ua::Debug::Instance().subSysHeaderSet(2, "ImageGrabberImpl"));
-	g_hLib = LoadLibrary("TWAIN_32.DLL");
+	g_hLib = LoadLibrary(TWAIN_DLL_FILENAME);
 
 	if (g_hLib != NULL) {
 		g_pDSM_Entry = (DSMENTRYPROC) GetProcAddress(g_hLib, "DSM_Entry");
@@ -50,7 +59,7 @@ unsigned ImageGrabberImpl::invokeTwain(TW_IDENTITY * srcId, unsigned long dg,
 			<< "\" dg/" << dg << " dat/" << dat << " msg/" << msg
 			<< " ptr/" << ptr << " returnCode/" << r);
 
-	if ((srcId == NULL) && (r != TWRC_SUCCESS)) {
+	if ((srcId == NULL) && (r != TWRC_SUCCESS) && (r != TWRC_CHECKSTATUS)) {
 		UA_DOUT(2, 3, "ImageGrabberImpl::invokeTwain: unsuccessful call to twain");
 	}
 	return r;
@@ -105,6 +114,13 @@ bool ImageGrabberImpl::selectSourceAsDefault(const char ** err) {
 	return true;
 }
 
+void ImageGrabberImpl::setFloatToIntPair(const float f, short & whole,
+		unsigned short & frac) {
+	const unsigned tmp = static_cast<unsigned>(f * 65536.0 + 0.5);
+	whole = static_cast<short>(tmp >> 16);
+	frac  = static_cast<unsigned short>(tmp & 0xffff);
+}
+
 /*
  *	@params - none
  *	@return - Image acquired from twain source, in dmtxImage format
@@ -143,8 +159,18 @@ HANDLE ImageGrabberImpl::acquireImage(const char ** err){
 	rc = invokeTwain(NULL, DG_CONTROL, DAT_IDENTITY, MSG_OPENDS, &srcID);
 	UA_ASSERTS(rc == TWRC_SUCCESS, "Unable to open default data source");
 
-	UA_DOUT(2, 3, "acquireImage: source/\""
-			<< srcID.ProductName << "\"");
+	UA_DOUT(2, 3, "acquireImage: source/\"" << srcID.ProductName << "\"");
+
+	setCapability(ICAP_UNITS, TWUN_INCHES, FALSE);
+	TW_IMAGELAYOUT layout;
+	setFloatToIntPair(8.8, layout.Frame.Top.Whole,    layout.Frame.Top.Frac);
+	setFloatToIntPair(2.1, layout.Frame.Left.Whole,   layout.Frame.Left.Frac);
+	setFloatToIntPair(2.7, layout.Frame.Bottom.Whole, layout.Frame.Bottom.Frac);
+	setFloatToIntPair(4.3, layout.Frame.Right.Whole,  layout.Frame.Right.Frac);
+	layout.DocumentNumber     = 1;
+	layout.PageNumber         = 1;
+	layout.FrameNumber        = 1;
+	rc = invokeTwain(&srcID, DG_IMAGE, DAT_IMAGELAYOUT, MSG_SET, &layout);
 
 	//Prepare to enable the default data source
 	TW_USERINTERFACE ui;
@@ -165,7 +191,6 @@ HANDLE ImageGrabberImpl::acquireImage(const char ** err){
 		event.TWMessage = MSG_NULL;
 
 		rc = invokeTwain(&srcID, DG_CONTROL, DAT_EVENT, MSG_PROCESSEVENT, &event);
-
 		if (rc == TWRC_NOTDSEVENT) {
 			TranslateMessage ((LPMSG) &msg);
 			DispatchMessage ((LPMSG) &msg);
@@ -180,13 +205,12 @@ HANDLE ImageGrabberImpl::acquireImage(const char ** err){
 			/*		TODO: these are the properties Adam set, should do something
 				with them.
 			 */
-			setCapability(ICAP_UNITS, TWUN_INCHES, FALSE);
-			setCapability(ICAP_XRESOLUTION, dpi, FALSE);
-			setCapability(ICAP_YRESOLUTION, dpi, FALSE);
+			setCapability(ICAP_XRESOLUTION, DPI, FALSE);
+			setCapability(ICAP_YRESOLUTION, DPI, FALSE);
 			setCapability(ICAP_PIXELTYPE, TWPT_RGB, FALSE);
 			setCapability(ICAP_BITDEPTH, 8, FALSE);
-			setCapability(ICAP_CONTRAST, scan_CONTRAST, FALSE);
-			setCapability(ICAP_BRIGHTNESS, scan_BRIGHTNESS, FALSE);
+			setCapability(ICAP_CONTRAST, SCAN_CONTRAST, FALSE);
+			setCapability(ICAP_BRIGHTNESS, SCAN_BRIGHTNESS, FALSE);
 
 			rc = invokeTwain(&srcID, DG_IMAGE, DAT_IMAGEINFO, MSG_GET, &ii);
 
@@ -277,7 +301,7 @@ DmtxImage* ImageGrabberImpl::acquireDmtxImage(const char ** err){
 /*
  * Sets the capability of the Twain Data Source
  */
-BOOL ImageGrabberImpl::setCapability(TW_UINT16 cap,TW_UINT16 value,BOOL sign) {
+BOOL ImageGrabberImpl::setCapability(TW_UINT16 cap,TW_UINT16 value, BOOL sign) {
 	UA_ASSERT_NOT_NULL(g_hLib);
 
 	TW_CAPABILITY twCap;
