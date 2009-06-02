@@ -77,7 +77,6 @@ void LinkList::remove(void * data) {
 	node->next->prev = node->prev;
 	node->prev->next = node->next;
 	delete node;
-
 }
 
 void LinkList::remove(LinkListNode * node) {
@@ -87,7 +86,6 @@ void LinkList::remove(LinkListNode * node) {
 	}
 	node->prev->next = node->next;
 	delete node;
-
 }
 
 unsigned LinkList::size() {
@@ -101,6 +99,7 @@ unsigned LinkList::size() {
 }
 
 void * LinkList::getItem(unsigned count) {
+	UA_ASSERT(count < size());
 	LinkListNode * node = head.next;
 	while ((count > 0) && (node != NULL)) {
 		--count;

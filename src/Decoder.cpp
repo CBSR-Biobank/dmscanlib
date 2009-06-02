@@ -21,6 +21,11 @@
 
 using namespace std;
 
+struct MessageInfo {
+	char * str;
+	DmtxVector2 pts[4];
+};
+
 Decoder::Decoder(Dib * dib) :
 	results(new LinkList()) {
 	UA_DEBUG(ua::Debug::Instance().subSysHeaderSet(1, "Decoder"));
@@ -33,6 +38,11 @@ Decoder::Decoder(DmtxImage * image) :
 }
 
 Decoder::~Decoder() {
+	while (results->size() > 0) {
+		MessageInfo * info = (MessageInfo *) results->getItem(0);
+		results->remove(info);
+		delete info;
+	}
 	delete results;
 }
 
@@ -104,9 +114,10 @@ void Decoder::decodeImage(DmtxImage * image) {
 		UA_DOUT(1, 3, "retrieving message from region " << regionCount++);
 		msg = dmtxDecodeMatrixRegion(dec, reg, DmtxUndefined);
 		if (msg != NULL) {
-			messageAdd(msg->output, msg->outputIdx);
+			messageAdd(dec, reg, msg);
 			UA_DOUT(1, 3, "message " << results->size() - 1
-					<< ": " << (char *) results->getItem(results->size() - 1));
+					<< ": "
+					<< ((MessageInfo *) results->getItem(results->size() - 1))->str);
 			//showStats(dec, reg, msg);
 			dmtxMessageDestroy(&msg);
 		}
@@ -116,12 +127,21 @@ void Decoder::decodeImage(DmtxImage * image) {
 	dmtxDecodeDestroy(&dec);
 }
 
-void Decoder::messageAdd(unsigned char * msg, int msgSize) {
-	char * buffer = new char[msgSize + 1];
-	UA_ASSERT_NOT_NULL(buffer);
-	memcpy(buffer, msg, msgSize);
-	buffer[msgSize] = 0;
-	results->append(buffer);
+void Decoder::messageAdd(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg) {
+	MessageInfo * info = new MessageInfo;
+	UA_ASSERT_NOT_NULL(info);
+	info->str = new char[msg->outputIdx + 1];
+	UA_ASSERT_NOT_NULL(info->str);
+	memcpy(info->str, msg->output, msg->outputIdx);
+	info->str[msg->outputIdx] = 0;
+
+
+
+	results->append(info);
+}
+
+void Decoder::getMsgRegion(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg) {
+
 }
 
 void Decoder::showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg) {
@@ -206,7 +226,7 @@ unsigned Decoder::getNumTags() {
 
 char * Decoder::getTag(int tagNum) {
 	UA_ASSERT_NOT_NULL(results);
-	return (char *) results->getItem(tagNum);
+	return ((MessageInfo *) results->getItem(tagNum))->str;
 }
 
 void Decoder::debugShowTags() {
@@ -214,7 +234,7 @@ void Decoder::debugShowTags() {
 	UA_DOUT(3, 1, "debugTags: tags found: " << numTags);
 	for (unsigned i = 0; i < numTags; ++i) {
 		UA_DOUT(3, 1, "debugTags: tag " << i << ": "
-				<< (char *) results->getItem(i));
+				<< ((MessageInfo *) results->getItem(i))->str);
 	}
 }
 

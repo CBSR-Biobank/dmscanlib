@@ -31,7 +31,8 @@ private:
 	LinkList * results;
 	static const unsigned NUM_SCANS = 3;
 
-	void messageAdd(unsigned char * msg, int msgSize);
+	void messageAdd(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
+	void getMsgRegion(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
 	DmtxImage * createDmtxImageFromDib(Dib * dib);
 	void showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
 
