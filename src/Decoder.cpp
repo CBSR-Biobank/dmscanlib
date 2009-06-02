@@ -96,15 +96,18 @@ void Decoder::decodeImage(DmtxImage * image) {
 	dmtxDecodeSetProp(dec, DmtxPropSquareDevn, 10);
 	dmtxDecodeSetProp(dec, DmtxPropEdgeThresh, 37);
 
+	unsigned regionCount = 0;
 	while (1) {
 		reg = dmtxRegionFindNext(dec, NULL);
 		if (reg == NULL) break;
 
-		UA_DOUT(1, 3, "retrieving message from region");
+		UA_DOUT(1, 3, "retrieving message from region " << regionCount++);
 		msg = dmtxDecodeMatrixRegion(dec, reg, DmtxUndefined);
 		if (msg != NULL) {
-			messageFound(msg->output, msg->outputIdx);
-			showStats(dec, reg, msg);
+			messageAdd(msg->output, msg->outputIdx);
+			UA_DOUT(1, 3, "message " << results->size() - 1
+					<< ": " << (char *) results->getItem(results->size() - 1));
+			//showStats(dec, reg, msg);
 			dmtxMessageDestroy(&msg);
 		}
 		dmtxRegionDestroy(&reg);
@@ -113,7 +116,7 @@ void Decoder::decodeImage(DmtxImage * image) {
 	dmtxDecodeDestroy(&dec);
 }
 
-void Decoder::messageFound(unsigned char * msg, int msgSize) {
+void Decoder::messageAdd(unsigned char * msg, int msgSize) {
 	char * buffer = new char[msgSize + 1];
 	UA_ASSERT_NOT_NULL(buffer);
 	memcpy(buffer, msg, msgSize);
@@ -204,5 +207,14 @@ unsigned Decoder::getNumTags() {
 char * Decoder::getTag(int tagNum) {
 	UA_ASSERT_NOT_NULL(results);
 	return (char *) results->getItem(tagNum);
+}
+
+void Decoder::debugShowTags() {
+	unsigned numTags = results->size();
+	UA_DOUT(3, 1, "debugTags: tags found: " << numTags);
+	for (unsigned i = 0; i < numTags; ++i) {
+		UA_DOUT(3, 1, "debugTags: tag " << i << ": "
+				<< (char *) results->getItem(i));
+	}
 }
 

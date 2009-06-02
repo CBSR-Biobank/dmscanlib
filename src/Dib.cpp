@@ -79,7 +79,6 @@ void Dib::copyInternals(Dib & src) {
 
 	bytesPerPixel = src.bytesPerPixel;
 	rowPaddingBytes = src.rowPaddingBytes;
-
 }
 
 /**
@@ -228,8 +227,7 @@ unsigned char Dib::getPixelGrayscale(unsigned row, unsigned col) {
 }
 
 void Dib::setPixel(unsigned row, unsigned col, RgbQuad * quad) {
-	unsigned padding = (infoHeader->width * bytesPerPixel) & 0x3;
-	unsigned rowBytes = infoHeader->width * bytesPerPixel + padding;
+	unsigned rowBytes = infoHeader->width * bytesPerPixel + rowPaddingBytes;
 	unsigned char * ptr = (pixels + row * rowBytes + col * bytesPerPixel);
 
 	if ((infoHeader->bitCount != 24) && (infoHeader->bitCount != 32)) {
@@ -241,8 +239,7 @@ void Dib::setPixel(unsigned row, unsigned col, RgbQuad * quad) {
 }
 
 void Dib::setPixelGrayscale(unsigned row, unsigned col,	unsigned char value) {
-	unsigned padding = (infoHeader->width * bytesPerPixel) & 0x3;
-	unsigned rowBytes = infoHeader->width * bytesPerPixel + padding;
+	unsigned rowBytes = infoHeader->width * bytesPerPixel + rowPaddingBytes;
 	unsigned char * ptr = pixels + row * rowBytes + col * bytesPerPixel;
 
 	if ((infoHeader->bitCount == 24) || (infoHeader->bitCount == 32)) {
@@ -258,9 +255,37 @@ void Dib::setPixelGrayscale(unsigned row, unsigned col,	unsigned char value) {
 	}
 }
 
+/*
+ * DIBs are flipped in Y;
+ */
 void Dib::crop(Dib &src, unsigned r1, unsigned c1, unsigned r2, unsigned c2) {
 	UA_ASSERT_NOT_NULL(src.infoHeader);
+	UA_ASSERT(c2 > c1);
+	UA_ASSERT(r2 > r1);
 
+	infoHeader = new BitmapInfoHeader;
+	*infoHeader = *src.infoHeader;
+	bytesPerPixel = src.bytesPerPixel;
+
+	infoHeader->width  = c2 - c1;
+	infoHeader->height = r2 - r1;
+
+	rowPaddingBytes = (infoHeader->width * bytesPerPixel) & 0x3;
+	unsigned destRowBytes = infoHeader->width * bytesPerPixel + rowPaddingBytes;
+
+	infoHeader->imageSize = infoHeader->height * destRowBytes;
+
+	isAllocated = true;
+	pixels = new unsigned char[infoHeader->imageSize];
+
+	unsigned srcRowBytes = src.infoHeader->width * src.bytesPerPixel + src.rowPaddingBytes;
+	unsigned char * srcRowPtr = src.pixels + (src.infoHeader->height - r2) * srcRowBytes + c1 * bytesPerPixel;
+	unsigned char * destRowPtr = pixels;
+
+	for (unsigned row = 0; row < infoHeader->height;
+		++row, srcRowPtr += srcRowBytes, destRowPtr += destRowBytes) {
+		memcpy(destRowPtr, srcRowPtr, infoHeader->width * bytesPerPixel);
+	}
 }
 
 void Dib::convertGrayscale(Dib & src) {
@@ -278,8 +303,7 @@ void Dib::sobelEdgeDetectionWithMask(Dib & src, int mask1[3][3],
 		int mask2[3][3]) {
 	UA_ASSERT_NOT_NULL(src.infoHeader);
 
-	unsigned padding = (infoHeader->width * bytesPerPixel) & 0x3;
-	unsigned rowBytes = infoHeader->width * bytesPerPixel + padding;
+	unsigned rowBytes = infoHeader->width * bytesPerPixel + rowPaddingBytes;
 
 	int I, J;
 	unsigned Y, X, SUM;
@@ -293,7 +317,8 @@ void Dib::sobelEdgeDetectionWithMask(Dib & src, int mask1[3][3],
 	assert(mask1 != NULL);
 
 	for (Y = 0; Y <= height - 1; ++Y, srcRowPtr += rowBytes, destRowPtr += rowBytes)  {
-		for (X = 0; X <= width - 1 ; ++X)  {
+		pixelStart = srcRowPtr;
+		for (X = 0; X <= width - 1 ; ++X, pixelStart += bytesPerPixel)  {
 			sum1 = 0;
 			sum2 = 0;
 
@@ -304,9 +329,6 @@ void Dib::sobelEdgeDetectionWithMask(Dib & src, int mask1[3][3],
 			}
 			else {
 				/* Convolution starts here */
-
-				pixelStart = srcRowPtr + (X - 1) * bytesPerPixel;
-
 				for (J = -1; J <= 1; ++J, pixel += rowBytes)  {
 					pixel = pixelStart;
 					for (I = -1; I <= 1; ++I, pixel += bytesPerPixel)  {

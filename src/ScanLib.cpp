@@ -8,7 +8,7 @@
  ******************************************************************************/
 
 #include "UaDebug.h"
-#include "ImageProcessor.h"
+#include "Decoder.h"
 #include "Dib.h"
 
 #ifdef WIN32
@@ -66,7 +66,7 @@ private:
 };
 
 Application::Application(int argc, char ** argv) {
-	bool AquirAndProcessImage = false;
+	bool AquireAndProcessImage = false;
 	bool processImage = false;
 	bool scanImage = false;
 	bool decodeImage = false;
@@ -87,7 +87,7 @@ Application::Application(int argc, char ** argv) {
 		if (ch == -1) break;
 		switch (ch) {
 		case 'a':
-			AquirAndProcessImage = true;
+			AquireAndProcessImage = true;
 			break;
 
 		case 'd':
@@ -105,19 +105,18 @@ Application::Application(int argc, char ** argv) {
 			filename = optarg;
 			break;
 
-		case 200:
+		case 200: {
 #ifdef WIN32
-		{
 			const char * err;
 			if (!ImageGrabber::Instance().selectSourceAsDefault(&err)) {
 				cerr <<  err << endl;
 				exit(0);
 			}
-		}
 #else
 			cerr << "this option not allowed on your operating system." << endl;
 #endif
 			break;
+		}
 
 		case 'v':
 			UA_DEBUG(ua::Debug::Instance().levelInc(ua::DebugImpl::allSubSys_m));
@@ -147,24 +146,41 @@ Application::Application(int argc, char ** argv) {
 
 		Dib * edgeDib = new Dib();
 		UA_ASSERT_NOT_NULL(edgeDib);
-		edgeDib->sobelEdgeDetection(*dib);
+		edgeDib->crop(*dib, 2590, 644, 3490, 1950);
+		//edgeDib->sobelEdgeDetection(*dib);
 		edgeDib->writeToFile("out.bmp");
+
+		Decoder * decoder = new Decoder(dib);
+		UA_ASSERT_NOT_NULL(decoder);
+		decoder->debugShowTags();
+
+		delete decoder;
+		delete edgeDib;
+		delete dib;
 		return;
 	}
 
-	if (AquirAndProcessImage && scanImage) {
+	if (AquireAndProcessImage && scanImage) {
 		cerr << "Error: invalid options selected." << endl;
 		exit(0);
 	}
 
 	if (decodeImage) {
 		UA_ASSERT_NOT_NULL(filename);
-		ImageProcessor * processor = new ImageProcessor();
-		UA_ASSERT_NOT_NULL(processor);
-		processor->decodeDib(filename);
+
+		Dib * dib = new Dib();
+		UA_ASSERT_NOT_NULL(dib);
+		dib->readFromFile(filename);
+
+		Decoder * decoder = new Decoder(dib);
+		UA_ASSERT_NOT_NULL(decoder);
+		decoder->debugShowTags();
+
+		delete decoder;
+		delete dib;
 	}
 
-	if (AquirAndProcessImage) {
+	if (AquireAndProcessImage) {
 #ifdef WIN32
 		const char * err;
 
@@ -179,9 +195,9 @@ Application::Application(int argc, char ** argv) {
 
 		dib->readFromHandle(h);
 
-		ImageProcessor * processor = new ImageProcessor();
-		UA_ASSERT_NOT_NULL(processor);
-		processor->decodeDib(dib);
+		Decoder * decoder = new Decoder(dib);
+		UA_ASSERT_NOT_NULL(decoder);
+		decoder->debugShowTags();
 
 		ImageGrabber::Instance().freeImage(h);
 		delete dib;
