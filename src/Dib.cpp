@@ -22,6 +22,31 @@ Dib::Dib() :
 	isAllocated(false) {
 }
 
+Dib::Dib(unsigned rows, unsigned cols, unsigned colorBits)  :
+	fileHeader(NULL) {
+	bytesPerPixel = colorBits >> 3;
+	rowPaddingBytes = (cols * bytesPerPixel) & 0x3;
+
+	unsigned rowBytes = cols * bytesPerPixel + rowPaddingBytes;
+
+	infoHeader = new BitmapInfoHeader;
+	infoHeader->size            = 40;
+	infoHeader->width           = cols;
+	infoHeader->height          = rows;
+	infoHeader->planes          = 1;
+	infoHeader->bitCount        = colorBits;
+	infoHeader->compression     = 0;
+	infoHeader->imageSize       = infoHeader->height * rowBytes;
+	infoHeader->hPixelsPerMeter = 0;
+	infoHeader->vPixelsPerMeter = 0;
+	infoHeader->numColors       = 0;
+	infoHeader->numColorsImp    = 0;
+
+	isAllocated = true;
+	pixels = new unsigned char[infoHeader->imageSize];
+	memset(pixels, 255, infoHeader->imageSize);
+}
+
 Dib::Dib(char * filename) :
 	fileHeader(NULL), infoHeader(NULL), pixels(NULL),
 	isAllocated(false) {
@@ -201,15 +226,15 @@ unsigned char * Dib::getRowPtr(unsigned row) {
 	return pixels + row * rowBytes;
 }
 
-void Dib::getPixel(unsigned row, unsigned col, RgbQuad * quad) {
+void Dib::getPixel(unsigned row, unsigned col, RgbQuad & quad) {
 	unsigned rowBytes = infoHeader->width * bytesPerPixel + rowPaddingBytes;
 	unsigned char * ptr = pixels + row * rowBytes + col * bytesPerPixel;
 
 	assert(infoHeader->bitCount != 8);
-	quad->rgbRed      = ptr[0];
-	quad->rgbGreen    = ptr[1];
-	quad->rgbBlue     = ptr[2];
-	quad->rgbReserved = 0;
+	quad.rgbRed      = ptr[0];
+	quad.rgbGreen    = ptr[1];
+	quad.rgbBlue     = ptr[2];
+	quad.rgbReserved = 0;
 }
 
 unsigned char Dib::getPixelGrayscale(unsigned row, unsigned col) {
@@ -226,19 +251,25 @@ unsigned char Dib::getPixelGrayscale(unsigned row, unsigned col) {
 	return  0;
 }
 
-void Dib::setPixel(unsigned row, unsigned col, RgbQuad * quad) {
+void Dib::setPixel(unsigned row, unsigned col, RgbQuad & quad) {
+	UA_ASSERT(row < infoHeader->height);
+	UA_ASSERT(col < infoHeader->width);
+
 	unsigned rowBytes = infoHeader->width * bytesPerPixel + rowPaddingBytes;
 	unsigned char * ptr = (pixels + row * rowBytes + col * bytesPerPixel);
 
 	if ((infoHeader->bitCount != 24) && (infoHeader->bitCount != 32)) {
 		UA_ERROR("can't assign RgbQuad to dib");
 	}
-	ptr[0] = quad->rgbRed;
-	ptr[1] = quad->rgbGreen;
-	ptr[2] = quad->rgbBlue;
+	ptr[2] = quad.rgbRed;
+	ptr[1] = quad.rgbGreen;
+	ptr[0] = quad.rgbBlue;
 }
 
 void Dib::setPixelGrayscale(unsigned row, unsigned col,	unsigned char value) {
+	UA_ASSERT(row < infoHeader->height);
+	UA_ASSERT(col < infoHeader->width);
+
 	unsigned rowBytes = infoHeader->width * bytesPerPixel + rowPaddingBytes;
 	unsigned char * ptr = pixels + row * rowBytes + col * bytesPerPixel;
 
@@ -260,6 +291,10 @@ void Dib::setPixelGrayscale(unsigned row, unsigned col,	unsigned char value) {
  */
 void Dib::crop(Dib &src, unsigned r1, unsigned c1, unsigned r2, unsigned c2) {
 	UA_ASSERT_NOT_NULL(src.infoHeader);
+	UA_ASSERT(r1 < infoHeader->height);
+	UA_ASSERT(r2 < infoHeader->height);
+	UA_ASSERT(c1 < infoHeader->width);
+	UA_ASSERT(c2 < infoHeader->width);
 	UA_ASSERT(c2 > c1);
 	UA_ASSERT(r2 > r1);
 
@@ -466,6 +501,66 @@ void Dib::histEqualization(Dib & src) {
 			setPixelGrayscale(
 					row, col,
 					(unsigned char) (256 * sum[src.getPixelGrayscale(row, col)]));
+		}
+	}
+}
+
+/*
+ * generate x,y coordinates to draw a line from x0,y0 to x1,y1 and output the
+ * coordinates in the same direction that they are drawn.
+ *
+ * any coordinates which overlap other coordinates are duplicates and are
+ * removed from the output because they are redundant.
+ *
+ * Taken from: http://en.wikipedia.org/wiki/Bresenham's_line_algorithm
+ */
+void Dib::line(unsigned r0, unsigned c0, unsigned r1, unsigned c1, RgbQuad & quad) {
+	UA_ASSERT_NOT_NULL(infoHeader);
+	UA_ASSERT(r0 < infoHeader->height);
+	UA_ASSERT(r1 < infoHeader->height);
+	UA_ASSERT(c0 < infoHeader->width);
+	UA_ASSERT(c1 < infoHeader->width);
+
+	unsigned x, deltax, y, deltay, st;
+	int cx, cy, error, xstep, ystep;
+
+	r0 =  infoHeader->height - r0;
+	r1 =  infoHeader->height - r1;
+
+	// find largest delta for pixel steps
+	st = (abs(r1 - r0) > abs(c1 - c0));
+
+	// if deltay > deltax then swap x,y
+	if (st) {
+		c0 ^= r0; r0 ^= c0; c0 ^= r0; // swap(c0, r0);
+		c1 ^= r1; r1 ^= c1; c1 ^= r1; // swap(c1, r1);
+	}
+
+	deltax = abs(c1 - c0);
+	deltay = abs(r1 - r0);
+	error  = (deltax / 2);
+	y = r0;
+
+	if (c0 > c1) { xstep = -1; }
+	else         { xstep =  1; }
+
+	if (r0 > r1) { ystep = -1; }
+	else         { ystep =  1; }
+
+	for (x = c0; x != c1 + xstep; x += xstep) {
+		cx = x; cy = y; // copy of x, copy of y
+
+		// if x,y swapped above, swap them back now
+		if (st) {
+			cx ^= cy; cy ^= cx; cx ^= cy;
+		}
+
+		setPixel(cy, cx, quad);
+		error -= deltay; // converge toward end of line
+
+		if (error < 0) { // not done yet
+			y += ystep;
+			error += deltax;
 		}
 	}
 }

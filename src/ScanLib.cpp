@@ -82,7 +82,7 @@ Application::Application(int argc, char ** argv) {
 		int option_index = 0;
 
 
-		ch = getopt_long (argc, argv, "ad:hp:s:v", long_options, &option_index);
+		ch = getopt_long (argc, argv, "ad:hp:s:tv", long_options, &option_index);
 
 		if (ch == -1) break;
 		switch (ch) {
@@ -104,6 +104,19 @@ Application::Application(int argc, char ** argv) {
 			scanImage = true;
 			filename = optarg;
 			break;
+
+		case 't': {
+			Dib * dib = new Dib(100, 100, 24);
+			UA_ASSERT_NOT_NULL(dib);
+			RgbQuad quad;
+			quad.rgbRed = 0;
+			quad.rgbGreen = 255;
+			quad.rgbBlue = 0;
+			dib->line(10, 0, 80, 99, quad);
+			dib->writeToFile("out.bmp");
+			delete dib;
+			break;
+		}
 
 		case 200: {
 #ifdef WIN32

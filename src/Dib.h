@@ -38,15 +38,16 @@ struct BitmapInfoHeader{
 /* Colour palette
  */
 struct RgbQuad {
-	unsigned char rgbBlue;
-	unsigned char rgbGreen;
 	unsigned char rgbRed;
+	unsigned char rgbGreen;
+	unsigned char rgbBlue;
 	unsigned char rgbReserved;
 };
 
 class Dib {
 public:
 	Dib();
+	Dib(unsigned rows, unsigned cols, unsigned colorBits);
 	Dib(char * filename);
 	~Dib();
 	void readFromFile(const char * filename) ;
@@ -62,9 +63,9 @@ public:
 	unsigned getBitsPerPixel();
 	unsigned char * getPixelBuffer();
 	unsigned char * getRowPtr(unsigned row);
-	void getPixel(unsigned row, unsigned col, RgbQuad * quad);
+	void getPixel(unsigned row, unsigned col, RgbQuad & quad);
 	unsigned char getPixelGrayscale(unsigned row, unsigned col);
-	void setPixel(unsigned row, unsigned col, RgbQuad * quad);
+	void setPixel(unsigned row, unsigned col, RgbQuad & quad);
 	void setPixelGrayscale(unsigned row, unsigned col, unsigned char value);
 	unsigned char * getPixelsNoPadding();
 	void setPixelsNoPadding(unsigned char * pixels);
@@ -75,6 +76,7 @@ public:
 	void sobelEdgeDetection(Dib & src);
 	void laplaceEdgeDetection(Dib & src);
 	void histEqualization(Dib & src);
+	void line(unsigned x0, unsigned y0, unsigned x1, unsigned y1, RgbQuad & quad);
 
 private:
 	BitmapFileHeader * fileHeader;
@@ -85,6 +87,8 @@ private:
 	bool isAllocated;
 
 	void copyInternals(Dib & src);
+
+	unsigned idx, dupe; // used by line drawing
 
 };
 
