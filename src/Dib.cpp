@@ -222,11 +222,16 @@ unsigned char * Dib::getPixelBuffer() {
 }
 
 unsigned char * Dib::getRowPtr(unsigned row) {
+	UA_ASSERT(row < infoHeader->height);
+
 	unsigned rowBytes = infoHeader->width * bytesPerPixel + rowPaddingBytes;
 	return pixels + row * rowBytes;
 }
 
 void Dib::getPixel(unsigned row, unsigned col, RgbQuad & quad) {
+	UA_ASSERT(row < infoHeader->height);
+	UA_ASSERT(col < infoHeader->width);
+
 	unsigned rowBytes = infoHeader->width * bytesPerPixel + rowPaddingBytes;
 	unsigned char * ptr = pixels + row * rowBytes + col * bytesPerPixel;
 
@@ -238,6 +243,9 @@ void Dib::getPixel(unsigned row, unsigned col, RgbQuad & quad) {
 }
 
 unsigned char Dib::getPixelGrayscale(unsigned row, unsigned col) {
+	UA_ASSERT(row < infoHeader->height);
+	UA_ASSERT(col < infoHeader->width);
+
 	unsigned rowBytes = infoHeader->width * bytesPerPixel + rowPaddingBytes;
 	unsigned char * ptr = pixels + row * rowBytes + col * bytesPerPixel;
 
