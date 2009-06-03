@@ -193,7 +193,8 @@ Application::Application(int argc, char ** argv) {
 			markedDib.line((unsigned) p01.Y, (unsigned) p01.X,
 					(unsigned) p00.Y, (unsigned) p00.X, quad);
 		}
-		markedDib.writeToFile("out.bmp");	}
+		markedDib.writeToFile("out.bmp");
+	}
 
 	if (AquireAndProcessImage) {
 #ifdef WIN32
