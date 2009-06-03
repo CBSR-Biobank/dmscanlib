@@ -56,14 +56,14 @@ void Decoder::clearResults() {
 		delete info;
 	}
 	while (rowRegions.size() > 0) {
-		Rectangle * info = rowRegions.back();
-		results.pop_back();
-		delete info;
+		Rectangle * r = rowRegions.back();
+		rowRegions.pop_back();
+		delete r;
 	}
 	while (colRegions.size() > 0) {
-		Rectangle * info = colRegions.back();
-		results.pop_back();
-		delete info;
+		Rectangle * c = colRegions.back();
+		rowRegions.pop_back();
+		delete c;
 	}
 }
 
