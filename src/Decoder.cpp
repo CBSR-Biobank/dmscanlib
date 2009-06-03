@@ -25,15 +25,21 @@ struct MessageInfo {
 	DmtxVector2 p00, p10, p11, p01;
 };
 
-struct Rectangle {
+struct RegionRect {
 	DmtxPixelLoc corner0;
 	DmtxPixelLoc corner1;
 
-	Rectangle (int x0, int y0, int x1, int y1) {
+	RegionRect() { }
+
+	RegionRect (int x0, int y0, int x1, int y1) {
 		corner0.X = x0; corner0.Y = y0;
 		corner1.X = x1; corner1.Y = y1;
 	}
 };
+
+Decoder::Decoder() {
+	UA_DEBUG(ua::Debug::Instance().subSysHeaderSet(1, "Decoder"));
+}
 
 Decoder::Decoder(Dib & dib) {
 	UA_DEBUG(ua::Debug::Instance().subSysHeaderSet(1, "Decoder"));
@@ -41,6 +47,7 @@ Decoder::Decoder(Dib & dib) {
 }
 
 Decoder::Decoder(DmtxImage & image) {
+	UA_DEBUG(ua::Debug::Instance().subSysHeaderSet(1, "Decoder"));
 	decodeImage(image);
 }
 
@@ -49,6 +56,8 @@ Decoder::~Decoder() {
 }
 
 void Decoder::clearResults() {
+	RegionRect * rect;
+
 	while (results.size() > 0) {
 		MessageInfo * info = results.back();
 		results.pop_back();
@@ -56,14 +65,14 @@ void Decoder::clearResults() {
 		delete info;
 	}
 	while (rowRegions.size() > 0) {
-		Rectangle * r = rowRegions.back();
+		rect = rowRegions.back();
 		rowRegions.pop_back();
-		delete r;
+		delete rect;
 	}
 	while (colRegions.size() > 0) {
-		Rectangle * c = colRegions.back();
+		rect = colRegions.back();
 		rowRegions.pop_back();
-		delete c;
+		delete rect;
 	}
 }
 
@@ -284,7 +293,7 @@ void Decoder::sortRegions() {
 		int right = (int) (info.p11.X > info.p01.X ? info.p11.X : info.p01.X);
 
 		for (unsigned r = 0, rn = rowRegions.size(); r < rn; ++r) {
-			Rectangle & rowRegion = *rowRegions[r];
+			RegionRect & rowRegion = *rowRegions[r];
 			int topDiff = rowRegion.corner0.Y - top;
 			int botDiff = rowRegion.corner1.Y - bot;
 			if ((topDiff > 0) && (topDiff < ROW_REGION_PIX_THRESH)) {
@@ -296,7 +305,7 @@ void Decoder::sortRegions() {
 		}
 
 		for (unsigned c = 0, cn = colRegions.size(); c < cn; ++c) {
-			Rectangle & colRegion = *colRegions[c];
+			RegionRect & colRegion = *colRegions[c];
 			int leftDiff = colRegion.corner0.X - left;
 			int rightDiff = colRegion.corner1.X - right;
 			if ((leftDiff > 0) && (leftDiff < ROW_REGION_PIX_THRESH)) {
@@ -308,12 +317,12 @@ void Decoder::sortRegions() {
 		}
 
 		if (!rowRegionFound) {
-			Rectangle * newRegion = new Rectangle(0, top, 0, bot);
+			RegionRect * newRegion = new RegionRect(0, top, 0, bot);
 			rowRegions.push_back(newRegion);
 		}
 
 		if (!colRegionFound) {
-			Rectangle * newRegion = new Rectangle(left, 0, right, 0);
+			RegionRect * newRegion = new RegionRect(left, 0, right, 0);
 			colRegions.push_back(newRegion);
 		}
 	}

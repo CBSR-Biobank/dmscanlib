@@ -184,14 +184,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\ImageProcessor.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\src\utils\LinkList.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\src\windows\my_getopt.c"
 				>
 			</File>
@@ -239,14 +231,6 @@
 			</File>
 			<File
 				RelativePath=".\src\ImageGrabber.h"
-				>
-			</File>
-			<File
-				RelativePath=".\src\ImageProcessor.h"
-				>
-			</File>
-			<File
-				RelativePath=".\src\utils\LinkList.h"
 				>
 			</File>
 			<File

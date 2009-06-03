@@ -13,13 +13,13 @@
 
 using namespace std;
 
-
 class Dib;
 struct MessageInfo;
-struct Rectangle;
+struct RegionRect;
 
 class Decoder {
 public:
+	Decoder();
 	Decoder(Dib & dib);
 	Decoder(DmtxImage & image);
 	virtual ~Decoder();
@@ -36,9 +36,9 @@ public:
 
 private:
 	vector<MessageInfo *> results;
-	vector<Rectangle *>   rowRegions;
-	vector<Rectangle *>   colRegions;
-	static const int     ROW_REGION_PIX_THRESH = 5;
+	vector<RegionRect *>  rowRegions;
+	vector<RegionRect *>  colRegions;
+	static const int      ROW_REGION_PIX_THRESH = 5;
 
 	void clearResults();
 	void messageAdd(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
