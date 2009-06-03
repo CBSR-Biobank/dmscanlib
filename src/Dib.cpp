@@ -18,8 +18,13 @@
 #endif
 
 Dib::Dib() :
-	fileHeader(NULL), infoHeader(NULL), pixels(NULL),
-	isAllocated(false) {
+	fileHeader(NULL), infoHeader(NULL), pixels(NULL), isAllocated(false) {
+}
+
+Dib::Dib(Dib & src) :
+	fileHeader(NULL), infoHeader(NULL), pixels(NULL), isAllocated(false) {
+	copyInternals(src);
+	memcpy(pixels, src.pixels, infoHeader->imageSize);
 }
 
 Dib::Dib(unsigned rows, unsigned cols, unsigned colorBits)  :

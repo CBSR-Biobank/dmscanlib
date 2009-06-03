@@ -23,16 +23,16 @@ using namespace std;
 
 struct MessageInfo {
 	char * str;
-	DmtxVector2 pts[4];
+	DmtxVector2 p00, p10, p11, p01;
 };
 
-Decoder::Decoder(Dib * dib) :
+Decoder::Decoder(Dib & dib) :
 	results(new LinkList()) {
 	UA_DEBUG(ua::Debug::Instance().subSysHeaderSet(1, "Decoder"));
 	decodeImage(dib);
 }
 
-Decoder::Decoder(DmtxImage * image) :
+Decoder::Decoder(DmtxImage & image) :
 	results(new LinkList()) {
 	decodeImage(image);
 }
@@ -56,18 +56,15 @@ Decoder::~Decoder() {
  *	file. If a DmxtImage can be created, decode it. All barcodes decoded are
  *	stored in the supplied buffer, up to a max length of bufferSize.
  */
-void Decoder::decodeImage(Dib * dib){
-	UA_ASSERT_NOT_NULL(dib);
+void Decoder::decodeImage(Dib & dib){
 	UA_ASSERT_NOT_NULL(results);
 
 	DmtxImage * image = createDmtxImageFromDib(dib);
-	decodeImage(image);
+	decodeImage(*image);
 	dmtxImageDestroy(&image);
 }
 
-void Decoder::decodeImage(DmtxImage * image) {
-	UA_ASSERT_NOT_NULL(image);
-
+void Decoder::decodeImage(DmtxImage & image) {
 	if (results != NULL) {
 		// an image was already created, destroy this one as a new one
 		// is created below
@@ -83,15 +80,15 @@ void Decoder::decodeImage(DmtxImage * image) {
 	int totalBytes, headerBytes;
 
 	UA_DOUT(1, 3, "decodeImage: image width/"
-			<< dmtxImageGetProp(image, DmtxPropWidth)
-			<< " image height/" << dmtxImageGetProp(image, DmtxPropHeight)
-			<< " row padding/" << dmtxImageGetProp(image, DmtxPropRowPadBytes)
+			<< dmtxImageGetProp(&image, DmtxPropWidth)
+			<< " image height/" << dmtxImageGetProp(&image, DmtxPropHeight)
+			<< " row padding/" << dmtxImageGetProp(&image, DmtxPropRowPadBytes)
 			<< " image bits per pixel/"
-			<< dmtxImageGetProp(image, DmtxPropBitsPerPixel)
+			<< dmtxImageGetProp(&image, DmtxPropBitsPerPixel)
 			<< " image row size bytes/"
-			<< dmtxImageGetProp(image, DmtxPropRowSizeBytes));
+			<< dmtxImageGetProp(&image, DmtxPropRowSizeBytes));
 
-	dec = dmtxDecodeCreate(image, 1);
+	dec = dmtxDecodeCreate(&image, 1);
 	assert(dec != NULL);
 
 	// save image to a PNM file
@@ -135,13 +132,20 @@ void Decoder::messageAdd(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg) {
 	memcpy(info->str, msg->output, msg->outputIdx);
 	info->str[msg->outputIdx] = 0;
 
+	int height = dmtxDecodeGetProp(dec, DmtxPropHeight);
+	info->p00.X = info->p00.Y = info->p10.Y = info->p01.X = 0.0;
+	info->p10.X = info->p01.Y = info->p11.X = info->p11.Y = 1.0;
+	dmtxMatrix3VMultiplyBy(&info->p00, reg->fit2raw);
+	dmtxMatrix3VMultiplyBy(&info->p10, reg->fit2raw);
+	dmtxMatrix3VMultiplyBy(&info->p11, reg->fit2raw);
+	dmtxMatrix3VMultiplyBy(&info->p01, reg->fit2raw);
 
+	info->p00.Y = height - 1 - info->p00.Y;
+	info->p10.Y = height - 1 - info->p10.Y;
+	info->p11.Y = height - 1 - info->p11.Y;
+	info->p01.Y = height - 1 - info->p01.Y;
 
 	results->append(info);
-}
-
-void Decoder::getMsgRegion(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg) {
-
 }
 
 void Decoder::showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg) {
@@ -200,21 +204,19 @@ void Decoder::showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg) {
  *	@return - DmtxImage: the newly created image from the file.
  *
  */
-DmtxImage * Decoder::createDmtxImageFromDib(Dib * dib) {
-	UA_ASSERT_NOT_NULL(dib);
-
+DmtxImage * Decoder::createDmtxImageFromDib(Dib & dib) {
 	int pack = DmtxPack24bppRGB;
 
-	if (dib->getBitsPerPixel() == 32) {
+	if (dib.getBitsPerPixel() == 32) {
 		pack = DmtxPack32bppXRGB;
 	}
 
 	// create dmtxImage from the dib
-	DmtxImage * image = dmtxImageCreate(dib->getPixelBuffer(), dib->getWidth(),
-			dib->getHeight(), pack);
+	DmtxImage * image = dmtxImageCreate(dib.getPixelBuffer(), dib.getWidth(),
+			dib.getHeight(), pack);
 
 	//set the properties (pad bytes, flip)
-	dmtxImageSetProp(image, DmtxPropRowPadBytes, dib->getRowPadBytes());
+	dmtxImageSetProp(image, DmtxPropRowPadBytes, dib.getRowPadBytes());
 	dmtxImageSetProp(image, DmtxPropImageFlip, DmtxFlipY); // DIBs are flipped in Y
 	return image;
 }
@@ -229,12 +231,26 @@ char * Decoder::getTag(int tagNum) {
 	return ((MessageInfo *) results->getItem(tagNum))->str;
 }
 
+void Decoder::getTagCorners(int tagNum, DmtxVector2 & p00, DmtxVector2 & p10,
+		DmtxVector2 & p11, DmtxVector2 & p01) {
+	UA_ASSERT_NOT_NULL(results);
+	MessageInfo & info = *((MessageInfo *) results->getItem(tagNum));
+	p00 = info.p00;
+	p10 = info.p10;
+	p11 = info.p11;
+	p01 = info.p01;
+}
+
 void Decoder::debugShowTags() {
 	unsigned numTags = results->size();
-	UA_DOUT(3, 1, "debugTags: tags found: " << numTags);
+	UA_DOUT(1, 1, "debugTags: tags found: " << numTags);
 	for (unsigned i = 0; i < numTags; ++i) {
-		UA_DOUT(3, 1, "debugTags: tag " << i << ": "
-				<< ((MessageInfo *) results->getItem(i))->str);
+		MessageInfo & info = *((MessageInfo *) results->getItem(i));
+		UA_DOUT(1, 1, "debugTags: tag " << i << ": " << info.str
+				<< ", corners: (" << info.p00.X << ", " << info.p00.Y << "), "
+				<< "(" << info.p10.X << ", " << info.p10.Y << "), "
+				<< "(" << info.p11.X << ", " << info.p11.Y << "), "
+				<< "(" << info.p01.X << ", " << info.p01.Y << ")");
 	}
 }
 

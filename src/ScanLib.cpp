@@ -108,10 +108,7 @@ Application::Application(int argc, char ** argv) {
 		case 't': {
 			Dib * dib = new Dib(100, 100, 24);
 			UA_ASSERT_NOT_NULL(dib);
-			RgbQuad quad;
-			quad.rgbRed = 0;
-			quad.rgbGreen = 255;
-			quad.rgbBlue = 0;
+			RgbQuad quad(0, 255, 0);
 			dib->line(10, 0, 80, 99, quad);
 			dib->writeToFile("out.bmp");
 			delete dib;
@@ -153,23 +150,16 @@ Application::Application(int argc, char ** argv) {
 	}
 
 	if (processImage) {
-		Dib * dib = new Dib();
-		UA_ASSERT_NOT_NULL(dib);
-		dib->readFromFile(filename);
+		Dib dib;
+		dib.readFromFile(filename);
 
-		Dib * edgeDib = new Dib();
-		UA_ASSERT_NOT_NULL(edgeDib);
-		edgeDib->crop(*dib, 2590, 644, 3490, 1950);
+		Dib edgeDib;
+		edgeDib.crop(dib, 2590, 644, 3490, 1950);
 		//edgeDib->sobelEdgeDetection(*dib);
-		edgeDib->writeToFile("out.bmp");
+		edgeDib.writeToFile("out.bmp");
 
-		Decoder * decoder = new Decoder(dib);
-		UA_ASSERT_NOT_NULL(decoder);
-		decoder->debugShowTags();
-
-		delete decoder;
-		delete edgeDib;
-		delete dib;
+		Decoder decoder(dib);
+		decoder.debugShowTags();
 		return;
 	}
 
@@ -181,17 +171,29 @@ Application::Application(int argc, char ** argv) {
 	if (decodeImage) {
 		UA_ASSERT_NOT_NULL(filename);
 
-		Dib * dib = new Dib();
-		UA_ASSERT_NOT_NULL(dib);
-		dib->readFromFile(filename);
+		Dib dib;
+		dib.readFromFile(filename);
 
-		Decoder * decoder = new Decoder(dib);
-		UA_ASSERT_NOT_NULL(decoder);
-		decoder->debugShowTags();
+		Decoder decoder(dib);
+		decoder.debugShowTags();
 
-		delete decoder;
-		delete dib;
-	}
+		RgbQuad quad(255, 0, 0);
+
+		Dib markedDib(dib);
+		DmtxVector2 p00, p10, p11, p01;
+		unsigned numTags = decoder.getNumTags();
+		for (unsigned i = 0; i < numTags; ++i) {
+			decoder.getTagCorners(i, p00, p10, p11, p01);
+			markedDib.line((unsigned) p00.Y, (unsigned) p00.X,
+					(unsigned) p10.Y, (unsigned) p10.X, quad);
+			markedDib.line((unsigned) p10.Y, (unsigned) p10.X,
+					(unsigned) p11.Y, (unsigned) p11.X, quad);
+			markedDib.line((unsigned) p11.Y, (unsigned) p11.X,
+					(unsigned) p01.Y, (unsigned) p01.X, quad);
+			markedDib.line((unsigned) p01.Y, (unsigned) p01.X,
+					(unsigned) p00.Y, (unsigned) p00.X, quad);
+		}
+		markedDib.writeToFile("out.bmp");	}
 
 	if (AquireAndProcessImage) {
 #ifdef WIN32
@@ -203,18 +205,12 @@ Application::Application(int argc, char ** argv) {
 			exit(0);
 		}
 
-		Dib * dib = new Dib();
-		UA_ASSERT_NOT_NULL(dib);
+		Dib dib;
+		Decoder decoder;
 
-		dib->readFromHandle(h);
-
-		Decoder * decoder = new Decoder(dib);
-		UA_ASSERT_NOT_NULL(decoder);
-		decoder->debugShowTags();
-
+		dib.readFromHandle(h);
+		decoder.debugShowTags();
 		ImageGrabber::Instance().freeImage(h);
-		delete dib;
-		delete processor;
 #else
 		cerr << "this option not allowed on your operating system." << endl;
 #endif
@@ -230,14 +226,10 @@ Application::Application(int argc, char ** argv) {
 			cerr <<  err << endl;
 			exit(0);
 		}
-		Dib * dib = new Dib();
-		UA_ASSERT_NOT_NULL(dib);
-
-		dib->readFromHandle(h);
-		dib->writeToFile(filename);
-
+		Dib dib;
+		dib.readFromHandle(h);
+		dib.writeToFile(filename);
 		ImageGrabber::Instance().freeImage(h);
-		delete dib;
 #else
 		cerr << "this option not allowed on your operating system." << endl;
 #endif

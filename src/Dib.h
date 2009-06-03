@@ -38,6 +38,9 @@ struct BitmapInfoHeader{
 /* Colour palette
  */
 struct RgbQuad {
+	RgbQuad(unsigned char r, unsigned char g, unsigned char b) {
+		rgbRed = r; rgbGreen = g; rgbBlue = b;
+	}
 	unsigned char rgbRed;
 	unsigned char rgbGreen;
 	unsigned char rgbBlue;
@@ -47,6 +50,7 @@ struct RgbQuad {
 class Dib {
 public:
 	Dib();
+	Dib(Dib & src);
 	Dib(unsigned rows, unsigned cols, unsigned colorBits);
 	Dib(char * filename);
 	~Dib();

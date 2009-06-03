@@ -74,7 +74,9 @@ void LinkList::remove(void * data) {
 		UA_WARN("node " << data << " not found");
 		return;
 	}
-	node->next->prev = node->prev;
+	if (node->next != NULL) {
+		node->next->prev = node->prev;
+	}
 	node->prev->next = node->next;
 	delete node;
 }
