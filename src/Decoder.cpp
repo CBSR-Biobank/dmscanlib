@@ -37,6 +37,16 @@ struct RegionRect {
 	}
 };
 
+struct RegionRectSort {
+	// use distance from origin
+	bool operator()(RegionRect* const& a, RegionRect* const& b) {
+		unsigned aDistSquared = a->corner0.X *  a->corner0.X + a->corner0.Y * a->corner0.Y;
+		unsigned bDistSquared = b->corner0.X *  b->corner0.X + b->corner0.Y * b->corner0.Y;
+
+		return (aDistSquared < bDistSquared);
+	}
+};
+
 Decoder::Decoder() {
 	UA_DEBUG(ua::Debug::Instance().subSysHeaderSet(1, "Decoder"));
 }
@@ -71,7 +81,7 @@ void Decoder::clearResults() {
 	}
 	while (colRegions.size() > 0) {
 		rect = colRegions.back();
-		rowRegions.pop_back();
+		colRegions.pop_back();
 		delete rect;
 	}
 }
@@ -105,10 +115,11 @@ void Decoder::decodeImage(DmtxImage & image) {
 	FILE * fh;
 	unsigned char *pnm;
 	int totalBytes, headerBytes;
+	unsigned width = dmtxImageGetProp(&image, DmtxPropWidth);
+	unsigned height = dmtxImageGetProp(&image, DmtxPropHeight);
 
-	UA_DOUT(1, 3, "decodeImage: image width/"
-			<< dmtxImageGetProp(&image, DmtxPropWidth)
-			<< " image height/" << dmtxImageGetProp(&image, DmtxPropHeight)
+	UA_DOUT(1, 3, "decodeImage: image width/" << width
+			<< " image height/" << height
 			<< " row padding/" << dmtxImageGetProp(&image, DmtxPropRowPadBytes)
 			<< " image bits per pixel/"
 			<< dmtxImageGetProp(&image, DmtxPropBitsPerPixel)
@@ -149,6 +160,7 @@ void Decoder::decodeImage(DmtxImage & image) {
 	}
 
 	dmtxDecodeDestroy(&dec);
+	sortRegions(height, width);
 }
 
 void Decoder::messageAdd(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg) {
@@ -272,14 +284,14 @@ void Decoder::debugShowTags() {
 	for (unsigned i = 0; i < numTags; ++i) {
 		MessageInfo & info = *results[i];
 		UA_DOUT(1, 1, "debugTags: tag " << i << ": " << info.str
-				<< ", corners: (" << info.p00.Y << ", " << info.p00.X << "), "
-				<< "(" << info.p10.Y << ", " << info.p10.X << "), "
-				<< "(" << info.p11.Y << ", " << info.p11.X << "), "
-				<< "(" << info.p01.Y << ", " << info.p01.X << ")");
+				<< ", corners: (" << info.p00.X << ", " << info.p00.Y << "), "
+				<< "(" << info.p10.X << ", " << info.p10.Y << "), "
+				<< "(" << info.p11.X << ", " << info.p11.Y << "), "
+				<< "(" << info.p01.X << ", " << info.p01.Y << ")");
 	}
 }
 
-void Decoder::sortRegions() {
+void Decoder::sortRegions(unsigned imageHeight, unsigned imageWidth) {
 	bool rowRegionFound;
 	bool colRegionFound;
 
@@ -292,38 +304,83 @@ void Decoder::sortRegions() {
 		int left  = (int) (info.p00.X > info.p10.X ? info.p00.X : info.p00.X);
 		int right = (int) (info.p11.X > info.p01.X ? info.p11.X : info.p01.X);
 
-		for (unsigned r = 0, rn = rowRegions.size(); r < rn; ++r) {
-			RegionRect & rowRegion = *rowRegions[r];
-			int topDiff = rowRegion.corner0.Y - top;
-			int botDiff = rowRegion.corner1.Y - bot;
-			if ((topDiff > 0) && (topDiff < ROW_REGION_PIX_THRESH)) {
-				rowRegion.corner0.Y = top;
-			}
-			if ((botDiff < 0) && (botDiff > -ROW_REGION_PIX_THRESH)) {
-				rowRegion.corner0.Y = bot;
-			}
-		}
+		UA_DOUT(1, 9, "tag " << i << " : top/" << top << " bottom/" << bot
+				<< " left/" << left << " right/" << right);
 
 		for (unsigned c = 0, cn = colRegions.size(); c < cn; ++c) {
 			RegionRect & colRegion = *colRegions[c];
 			int leftDiff = colRegion.corner0.X - left;
 			int rightDiff = colRegion.corner1.X - right;
-			if ((leftDiff > 0) && (leftDiff < ROW_REGION_PIX_THRESH)) {
-				colRegion.corner0.X = left;
+			UA_DOUT(1, 9, "col " << c << ": leftDiff/" << leftDiff << " rightDiff/" << rightDiff);
+
+			if ((leftDiff <= 0) && (rightDiff >= 0)) {
+				colRegionFound = true;
 			}
-			if ((rightDiff < 0) && (rightDiff > -ROW_REGION_PIX_THRESH)) {
-				colRegion.corner0.X = right;
+
+			if ((leftDiff > 0) && (leftDiff < REGION_PIX_THRESH)) {
+				colRegion.corner0.X = left;
+				UA_DOUT(1, 9, "col " << c << ": new left: " << left);
+				colRegionFound = true;
+			}
+
+			if ((rightDiff < 0) && (rightDiff > -REGION_PIX_THRESH)) {
+				colRegion.corner1.X = right;
+				UA_DOUT(1, 9, "col " << c << ": new right: " << right);
+				colRegionFound = true;
 			}
 		}
 
-		if (!rowRegionFound) {
-			RegionRect * newRegion = new RegionRect(0, top, 0, bot);
-			rowRegions.push_back(newRegion);
+		for (unsigned r = 0, rn = rowRegions.size(); r < rn; ++r) {
+			RegionRect & rowRegion = *rowRegions[r];
+			int topDiff = rowRegion.corner0.Y - top;
+			int botDiff = rowRegion.corner1.Y - bot;
+			UA_DOUT(1, 9, "row " << r << ": topDiff/" << topDiff << " botDiff/" << botDiff);
+
+			if ((topDiff <= 0) && (botDiff >= 0)) {
+				rowRegionFound = true;
+			}
+
+			if ((topDiff > 0) && (topDiff < REGION_PIX_THRESH)) {
+				rowRegion.corner0.Y = top;
+				UA_DOUT(1, 9, "row " << r << ": new top: " << top);
+				rowRegionFound = true;
+			}
+
+			if ((botDiff < 0) && (botDiff > -REGION_PIX_THRESH)) {
+				rowRegion.corner1.Y = bot;
+				UA_DOUT(1, 9, "row " << r << ": new bot: " << bot);
+				rowRegionFound = true;
+			}
 		}
 
 		if (!colRegionFound) {
-			RegionRect * newRegion = new RegionRect(left, 0, right, 0);
+			RegionRect * newRegion = new RegionRect(left, 0, right, imageHeight
+					);
+			UA_DOUT(1, 9, "new col " << colRegions.size() << ": left/" << left << " right/" << right);
 			colRegions.push_back(newRegion);
 		}
+
+		if (!rowRegionFound) {
+			RegionRect * newRegion = new RegionRect(0, top, imageWidth, bot);
+			UA_DOUT(1, 9, "new row " << rowRegions.size() << ": top/" << top << " bot/" << bot);
+			rowRegions.push_back(newRegion);
+		}
+	}
+
+	sort(rowRegions.begin(), rowRegions.end(), RegionRectSort());
+	sort(colRegions.begin(), colRegions.end(), RegionRectSort());
+
+	for (unsigned i = 0, n = rowRegions.size(); i < n; ++ i) {
+		RegionRect & r = *rowRegions[i];
+		UA_DOUT(1, 1, "row region " << i
+				<< " (" << r.corner0.X << "," << r.corner0.Y << ")"
+				<< " (" << r.corner1.X << "," << r.corner1.Y << ")");
+	}
+
+	for (unsigned i = 0, n = colRegions.size(); i < n; ++ i) {
+		RegionRect & r = *colRegions[i];
+		UA_DOUT(1, 1, "col region " << i
+				<< " (" << r.corner0.X << "," << r.corner0.Y << ")"
+				<< " (" << r.corner1.X << "," << r.corner1.Y << ")");
 	}
 }

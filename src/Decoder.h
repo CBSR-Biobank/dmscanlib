@@ -38,13 +38,13 @@ private:
 	vector<MessageInfo *> results;
 	vector<RegionRect *>  rowRegions;
 	vector<RegionRect *>  colRegions;
-	static const int      ROW_REGION_PIX_THRESH = 5;
+	static const int      REGION_PIX_THRESH = 5;
 
 	void clearResults();
 	void messageAdd(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
 	DmtxImage * createDmtxImageFromDib(Dib & dib);
 	void showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
-	void sortRegions();
+	void sortRegions(unsigned imageHeight, unsigned imageWidth);
 
 };
 

@@ -527,40 +527,40 @@ void Dib::histEqualization(Dib & src) {
  *
  * Taken from: http://en.wikipedia.org/wiki/Bresenham's_line_algorithm
  */
-void Dib::line(unsigned r0, unsigned c0, unsigned r1, unsigned c1, RgbQuad & quad) {
+void Dib::line(unsigned x0, unsigned y0, unsigned x1, unsigned y1, RgbQuad & quad) {
 	UA_ASSERT_NOT_NULL(infoHeader);
-	UA_ASSERT(r0 < infoHeader->height);
-	UA_ASSERT(r1 < infoHeader->height);
-	UA_ASSERT(c0 < infoHeader->width);
-	UA_ASSERT(c1 < infoHeader->width);
+	UA_ASSERT(y0 < infoHeader->height);
+	UA_ASSERT(y1 < infoHeader->height);
+	UA_ASSERT(x0 < infoHeader->width);
+	UA_ASSERT(x1 < infoHeader->width);
 
 	unsigned x, deltax, y, deltay, st;
 	int cx, cy, error, xstep, ystep;
 
-	r0 =  infoHeader->height - r0;
-	r1 =  infoHeader->height - r1;
+	y0 =  infoHeader->height - y0;
+	y1 =  infoHeader->height - y1;
 
 	// find largest delta for pixel steps
-	st = (abs(r1 - r0) > abs(c1 - c0));
+	st = (abs(y1 - y0) > abs(x1 - x0));
 
 	// if deltay > deltax then swap x,y
 	if (st) {
-		c0 ^= r0; r0 ^= c0; c0 ^= r0; // swap(c0, r0);
-		c1 ^= r1; r1 ^= c1; c1 ^= r1; // swap(c1, r1);
+		x0 ^= y0; y0 ^= x0; x0 ^= y0; // swap(x0, y0);
+		x1 ^= y1; y1 ^= x1; x1 ^= y1; // swap(x1, y1);
 	}
 
-	deltax = abs(c1 - c0);
-	deltay = abs(r1 - r0);
+	deltax = abs(x1 - x0);
+	deltay = abs(y1 - y0);
 	error  = (deltax / 2);
-	y = r0;
+	y = y0;
 
-	if (c0 > c1) { xstep = -1; }
+	if (x0 > x1) { xstep = -1; }
 	else         { xstep =  1; }
 
-	if (r0 > r1) { ystep = -1; }
+	if (y0 > y1) { ystep = -1; }
 	else         { ystep =  1; }
 
-	for (x = c0; x != c1 + xstep; x += xstep) {
+	for (x = x0; x != x1 + xstep; x += xstep) {
 		cx = x; cy = y; // copy of x, copy of y
 
 		// if x,y swapped above, swap them back now
