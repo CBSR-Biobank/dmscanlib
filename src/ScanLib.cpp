@@ -184,6 +184,7 @@ Application::Application(int argc, char ** argv) {
 		unsigned numTags = decoder.getNumTags();
 		for (unsigned i = 0; i < numTags; ++i) {
 			decoder.getTagCorners(i, p00, p10, p11, p01);
+			UA_DOUT(1, 1, "marking tag " << i);
 			markedDib.line((unsigned) p00.Y, (unsigned) p00.X,
 					(unsigned) p10.Y, (unsigned) p10.X, quad);
 			markedDib.line((unsigned) p10.Y, (unsigned) p10.X,
