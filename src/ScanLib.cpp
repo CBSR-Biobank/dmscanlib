@@ -61,16 +61,32 @@ public:
 
 private:
 	void usage();
+	void decodeImage(char * filename);
+	void processImage(char * filename);
+	void acquireAndProcesImage();
+	void scanImage(char * filename);
 
 	const char * progname;
 };
 
+struct Options {
+	bool aquireAndProcessImage;
+	bool processImage;
+	bool scanImage;
+	bool decodeImage;
+	char * filename;
+
+	Options() {
+		aquireAndProcessImage = false;
+		processImage = false;
+		scanImage = false;
+		decodeImage = false;
+		filename = NULL;
+	}
+};
+
 Application::Application(int argc, char ** argv) {
-	bool AquireAndProcessImage = false;
-	bool processImage = false;
-	bool scanImage = false;
-	bool decodeImage = false;
-	char * filename = NULL;
+	Options options;
 	int ch;
 
 	progname = strrchr(argv[0], DIR_SEP_CHR) + 1;
@@ -87,22 +103,22 @@ Application::Application(int argc, char ** argv) {
 		if (ch == -1) break;
 		switch (ch) {
 		case 'a':
-			AquireAndProcessImage = true;
+			options.aquireAndProcessImage = true;
 			break;
 
 		case 'd':
-			decodeImage = true;
-			filename = optarg;
+			options.decodeImage = true;
+			options.filename = optarg;
 			break;
 
 		case 'p':
-			processImage = true;
-			filename = optarg;
+			options.processImage = true;
+			options.filename = optarg;
 			break;
 
 		case 's':
-			scanImage = true;
-			filename = optarg;
+			options.scanImage = true;
+			options.filename = optarg;
 			break;
 
 		case 't': {
@@ -149,100 +165,117 @@ Application::Application(int argc, char ** argv) {
 		exit(-1);
 	}
 
-	if (processImage) {
-		Dib dib;
-		dib.readFromFile(filename);
-
-		Dib edgeDib;
-		edgeDib.crop(dib, 2590, 644, 3490, 1950);
-		//edgeDib->sobelEdgeDetection(*dib);
-		edgeDib.writeToFile("out.bmp");
-
-		Decoder decoder(dib);
-		decoder.debugShowTags();
+	if (options.processImage) {
+		processImage(options.filename);
 		return;
 	}
-
-	if (AquireAndProcessImage && scanImage) {
+	else if (options.aquireAndProcessImage && options.scanImage) {
 		cerr << "Error: invalid options selected." << endl;
 		exit(0);
 	}
-
-	if (decodeImage) {
-		UA_ASSERT_NOT_NULL(filename);
-
-		Dib dib;
-		dib.readFromFile(filename);
-
-		Decoder decoder(dib);
-		decoder.debugShowTags();
-
-		RgbQuad quad(255, 0, 0);
-
-		Dib markedDib(dib);
-		DmtxVector2 p00, p10, p11, p01;
-		unsigned numTags = decoder.getNumTags();
-		for (unsigned i = 0; i < numTags; ++i) {
-			decoder.getTagCorners(i, p00, p10, p11, p01);
-			UA_DOUT(1, 1, "marking tag " << i);
-			markedDib.line((unsigned) p00.Y, (unsigned) p00.X,
-					(unsigned) p10.Y, (unsigned) p10.X, quad);
-			markedDib.line((unsigned) p10.Y, (unsigned) p10.X,
-					(unsigned) p11.Y, (unsigned) p11.X, quad);
-			markedDib.line((unsigned) p11.Y, (unsigned) p11.X,
-					(unsigned) p01.Y, (unsigned) p01.X, quad);
-			markedDib.line((unsigned) p01.Y, (unsigned) p01.X,
-					(unsigned) p00.Y, (unsigned) p00.X, quad);
-		}
-		markedDib.writeToFile("out.bmp");
+	else if (options.decodeImage) {
+		decodeImage(options.filename);
 	}
-
-	if (AquireAndProcessImage) {
-#ifdef WIN32
-		const char * err;
-
-		HANDLE h = ImageGrabber::Instance().acquireImage(&err);
-		if (h == NULL) {
-			cerr <<  err << endl;
-			exit(0);
-		}
-
-		Dib dib;
-		Decoder decoder;
-
-		dib.readFromHandle(h);
-		decoder.debugShowTags();
-		ImageGrabber::Instance().freeImage(h);
-#else
-		cerr << "this option not allowed on your operating system." << endl;
-#endif
+	else if (options.aquireAndProcessImage) {
+		acquireAndProcesImage();
 	}
-
-	if (scanImage) {
-#ifdef WIN32
-		const char * err;
-
-		UA_ASSERT_NOT_NULL(filename);
-		HANDLE h = ImageGrabber::Instance().acquireImage(&err);
-		if (h == NULL) {
-			cerr <<  err << endl;
-			exit(0);
-		}
-		Dib dib;
-		dib.readFromHandle(h);
-		dib.writeToFile(filename);
-		ImageGrabber::Instance().freeImage(h);
-#else
-		cerr << "this option not allowed on your operating system." << endl;
-#endif
+	else if (options.scanImage) {
+		scanImage(options.filename);
 	}
+}
+
+Application::~Application() {
+
 }
 
 void Application::usage() {
 	printf(USAGE_FMT, progname);
 }
 
+void Application::decodeImage(char * filename) {
+	UA_ASSERT_NOT_NULL(filename);
+
+	Dib dib;
+	dib.readFromFile(filename);
+
+	Decoder decoder(dib);
+	decoder.debugShowTags();
+
+	RgbQuad quad(255, 0, 0);
+
+	Dib markedDib(dib);
+	DmtxVector2 p00, p10, p11, p01;
+	unsigned numTags = decoder.getNumTags();
+	UA_DOUT(1, 3, "marking tags ");
+	for (unsigned i = 0; i < numTags; ++i) {
+		decoder.getTagCorners(i, p00, p10, p11, p01);
+		UA_DOUT(1, 9, "marking tag " << i);
+		markedDib.line((unsigned) p00.Y, (unsigned) p00.X,
+				(unsigned) p10.Y, (unsigned) p10.X, quad);
+		markedDib.line((unsigned) p10.Y, (unsigned) p10.X,
+				(unsigned) p11.Y, (unsigned) p11.X, quad);
+		markedDib.line((unsigned) p11.Y, (unsigned) p11.X,
+				(unsigned) p01.Y, (unsigned) p01.X, quad);
+		markedDib.line((unsigned) p01.Y, (unsigned) p01.X,
+				(unsigned) p00.Y, (unsigned) p00.X, quad);
+	}
+	markedDib.writeToFile("out.bmp");
+}
+
+void Application::processImage(char * filename) {
+	Dib dib;
+	dib.readFromFile(filename);
+
+	Dib edgeDib;
+	edgeDib.crop(dib, 2590, 644, 3490, 1950);
+	//edgeDib->sobelEdgeDetection(*dib);
+	edgeDib.writeToFile("out.bmp");
+
+	Decoder decoder(dib);
+	decoder.debugShowTags();
+}
+
+void Application::acquireAndProcesImage() {
+#ifdef WIN32
+	const char * err;
+
+	HANDLE h = ImageGrabber::Instance().acquireImage(&err);
+	if (h == NULL) {
+		cerr <<  err << endl;
+		exit(0);
+	}
+
+	Dib dib;
+	Decoder decoder;
+
+	dib.readFromHandle(h);
+	decoder.debugShowTags();
+	ImageGrabber::Instance().freeImage(h);
+#else
+	cerr << "this option not allowed on your operating system." << endl;
+#endif
+}
+
+void Application::scanImage(char * filename) {
+#ifdef WIN32
+	const char * err;
+
+	UA_ASSERT_NOT_NULL(filename);
+	HANDLE h = ImageGrabber::Instance().acquireImage(&err);
+	if (h == NULL) {
+		cerr <<  err << endl;
+		exit(0);
+	}
+	Dib dib;
+	dib.readFromHandle(h);
+	dib.writeToFile(filename);
+	ImageGrabber::Instance().freeImage(h);
+#else
+	cerr << "this option not allowed on your operating system." << endl;
+#endif
+}
+
 int main(int argc, char ** argv) {
-	new Application(argc, argv);
+	Application app(argc, argv);
 }
 

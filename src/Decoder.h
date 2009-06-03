@@ -9,9 +9,14 @@
  */
 
 #include "dmtx.h"
+#include <vector>
+
+using namespace std;
+
 
 class Dib;
-class LinkList;
+struct MessageInfo;
+struct Rectangle;
 
 class Decoder {
 public:
@@ -23,19 +28,23 @@ public:
 	void decodeImage(DmtxImage & image);
 
 	unsigned getNumTags();
-	char * getTag(int tagNum);
+	char * getTag(unsigned tagNum);
 	void getTagCorners(int tagNum, DmtxVector2 & p00, DmtxVector2 & p10,
 			DmtxVector2 & p11, DmtxVector2 & p01);
 
 	void debugShowTags();
 
 private:
-	LinkList * results;
-	static const unsigned NUM_SCANS = 3;
+	vector<MessageInfo *> results;
+	vector<Rectangle *>   rowRegions;
+	vector<Rectangle *>   colRegions;
+	static const int     ROW_REGION_PIX_THRESH = 5;
 
+	void clearResults();
 	void messageAdd(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
 	DmtxImage * createDmtxImageFromDib(Dib & dib);
 	void showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
+	void sortRegions();
 
 };
 

@@ -58,6 +58,34 @@ Dib::Dib(char * filename) :
 	readFromFile(filename);
 }
 
+Dib::~Dib() {
+	if (fileHeader != NULL) {
+		delete fileHeader;
+	}
+	delete infoHeader;
+
+	if ((isAllocated) && (pixels != NULL)) {
+		delete [] pixels;
+	}
+}
+
+void Dib::copyInternals(Dib & src) {
+	if ((fileHeader != NULL) && (src.fileHeader != NULL)) {
+		*fileHeader = *src.fileHeader;
+	}
+	if (infoHeader == NULL) {
+		infoHeader = new BitmapInfoHeader;
+	}
+	*infoHeader = *src.infoHeader;
+	if (pixels == NULL) {
+		isAllocated = true;
+		pixels = new unsigned char[infoHeader->imageSize];
+	}
+
+	bytesPerPixel = src.bytesPerPixel;
+	rowPaddingBytes = src.rowPaddingBytes;
+}
+
 #ifdef WIN32
 void Dib::readFromHandle(HANDLE handle) {
 	BITMAPINFOHEADER * dibHeaderPtr = (BITMAPINFOHEADER *) GlobalLock(handle);
@@ -82,34 +110,6 @@ void Dib::readFromHandle(HANDLE handle) {
 	rowPaddingBytes = (infoHeader->width * bytesPerPixel) & 0x3;
 }
 #endif
-
-Dib::~Dib() {
-	if (fileHeader != NULL) {
-		delete fileHeader;
-	}
-	delete infoHeader;
-
-	if ((isAllocated) && (pixels != NULL)) {
-		delete pixels;
-	}
-}
-
-void Dib::copyInternals(Dib & src) {
-	if ((fileHeader != NULL) && (src.fileHeader != NULL)) {
-		*fileHeader = *src.fileHeader;
-	}
-	if (infoHeader == NULL) {
-		infoHeader = new BitmapInfoHeader;
-	}
-	*infoHeader = *src.infoHeader;
-	if (pixels == NULL) {
-		isAllocated = true;
-		pixels = new unsigned char[infoHeader->imageSize];
-	}
-
-	bytesPerPixel = src.bytesPerPixel;
-	rowPaddingBytes = src.rowPaddingBytes;
-}
 
 /**
  * All values in little-endian except for BitmapFileHeader.type.

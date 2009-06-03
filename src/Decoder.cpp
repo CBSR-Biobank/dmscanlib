@@ -8,7 +8,6 @@
 #include "Decoder.h"
 #include "UaDebug.h"
 #include "Dib.h"
-#include "LinkList.h"
 
 #include <iostream>
 #include <string.h>
@@ -26,24 +25,46 @@ struct MessageInfo {
 	DmtxVector2 p00, p10, p11, p01;
 };
 
-Decoder::Decoder(Dib & dib) :
-	results(new LinkList()) {
+struct Rectangle {
+	DmtxPixelLoc corner0;
+	DmtxPixelLoc corner1;
+
+	Rectangle (int x0, int y0, int x1, int y1) {
+		corner0.X = x0; corner0.Y = y0;
+		corner1.X = x1; corner1.Y = y1;
+	}
+};
+
+Decoder::Decoder(Dib & dib) {
 	UA_DEBUG(ua::Debug::Instance().subSysHeaderSet(1, "Decoder"));
 	decodeImage(dib);
 }
 
-Decoder::Decoder(DmtxImage & image) :
-	results(new LinkList()) {
+Decoder::Decoder(DmtxImage & image) {
 	decodeImage(image);
 }
 
 Decoder::~Decoder() {
-	while (results->size() > 0) {
-		MessageInfo * info = (MessageInfo *) results->getItem(0);
-		results->remove(info);
+	clearResults();
+}
+
+void Decoder::clearResults() {
+	while (results.size() > 0) {
+		MessageInfo * info = results.back();
+		results.pop_back();
+		delete [] info->str;
 		delete info;
 	}
-	delete results;
+	while (rowRegions.size() > 0) {
+		Rectangle * info = rowRegions.back();
+		results.pop_back();
+		delete info;
+	}
+	while (colRegions.size() > 0) {
+		Rectangle * info = colRegions.back();
+		results.pop_back();
+		delete info;
+	}
 }
 
 /*
@@ -57,20 +78,17 @@ Decoder::~Decoder() {
  *	stored in the supplied buffer, up to a max length of bufferSize.
  */
 void Decoder::decodeImage(Dib & dib){
-	UA_ASSERT_NOT_NULL(results);
-
 	DmtxImage * image = createDmtxImageFromDib(dib);
 	decodeImage(*image);
 	dmtxImageDestroy(&image);
 }
 
 void Decoder::decodeImage(DmtxImage & image) {
-	if (results != NULL) {
+	if (results.size() > 0) {
 		// an image was already created, destroy this one as a new one
 		// is created below
-		delete results;
+		clearResults();
 	}
-	results = new LinkList();
 
 	DmtxDecode * dec = NULL;
 	DmtxRegion * reg = NULL;
@@ -97,6 +115,7 @@ void Decoder::decodeImage(DmtxImage & image) {
 			fh = fopen("out.pnm", "w");
 			fwrite(pnm, sizeof(unsigned char), totalBytes, fh);
 			fclose(fh);
+			free(pnm);
 	);
 
 	dmtxDecodeSetProp(dec, DmtxPropScanGap, 0);
@@ -112,9 +131,8 @@ void Decoder::decodeImage(DmtxImage & image) {
 		msg = dmtxDecodeMatrixRegion(dec, reg, DmtxUndefined);
 		if (msg != NULL) {
 			messageAdd(dec, reg, msg);
-			UA_DOUT(1, 3, "message " << results->size() - 1
-					<< ": "
-					<< ((MessageInfo *) results->getItem(results->size() - 1))->str);
+			UA_DOUT(1, 3, "message " << results.size() - 1
+					<< ": "	<< results.back()->str);
 			//showStats(dec, reg, msg);
 			dmtxMessageDestroy(&msg);
 		}
@@ -145,7 +163,7 @@ void Decoder::messageAdd(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg) {
 	info->p11.Y = height - 1 - info->p11.Y;
 	info->p01.Y = height - 1 - info->p01.Y;
 
-	results->append(info);
+	results.push_back(info);
 }
 
 void Decoder::showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg) {
@@ -222,19 +240,17 @@ DmtxImage * Decoder::createDmtxImageFromDib(Dib & dib) {
 }
 
 unsigned Decoder::getNumTags() {
-	UA_ASSERT_NOT_NULL(results);
-	return results->size();
+	return results.size();
 }
 
-char * Decoder::getTag(int tagNum) {
-	UA_ASSERT_NOT_NULL(results);
-	return ((MessageInfo *) results->getItem(tagNum))->str;
+char * Decoder::getTag(unsigned tagNum) {
+	UA_ASSERT(tagNum < results.size());
+	return results[tagNum]->str;
 }
 
 void Decoder::getTagCorners(int tagNum, DmtxVector2 & p00, DmtxVector2 & p10,
 		DmtxVector2 & p11, DmtxVector2 & p01) {
-	UA_ASSERT_NOT_NULL(results);
-	MessageInfo & info = *((MessageInfo *) results->getItem(tagNum));
+	MessageInfo & info = *results[tagNum];
 	p00 = info.p00;
 	p10 = info.p10;
 	p11 = info.p11;
@@ -242,15 +258,63 @@ void Decoder::getTagCorners(int tagNum, DmtxVector2 & p00, DmtxVector2 & p10,
 }
 
 void Decoder::debugShowTags() {
-	unsigned numTags = results->size();
+	unsigned numTags = results.size();
 	UA_DOUT(1, 1, "debugTags: tags found: " << numTags);
 	for (unsigned i = 0; i < numTags; ++i) {
-		MessageInfo & info = *((MessageInfo *) results->getItem(i));
+		MessageInfo & info = *results[i];
 		UA_DOUT(1, 1, "debugTags: tag " << i << ": " << info.str
-				<< ", corners: (" << info.p00.X << ", " << info.p00.Y << "), "
-				<< "(" << info.p10.X << ", " << info.p10.Y << "), "
-				<< "(" << info.p11.X << ", " << info.p11.Y << "), "
-				<< "(" << info.p01.X << ", " << info.p01.Y << ")");
+				<< ", corners: (" << info.p00.Y << ", " << info.p00.X << "), "
+				<< "(" << info.p10.Y << ", " << info.p10.X << "), "
+				<< "(" << info.p11.Y << ", " << info.p11.X << "), "
+				<< "(" << info.p01.Y << ", " << info.p01.X << ")");
 	}
 }
 
+void Decoder::sortRegions() {
+	bool rowRegionFound;
+	bool colRegionFound;
+
+	for (unsigned i = 0, n = results.size(); i < n; ++i) {
+		MessageInfo & info = *results[i];
+		rowRegionFound = false;
+		colRegionFound = false;
+		int top = (int) (info.p00.Y > info.p00.Y ? info.p00.Y : info.p00.Y);
+		int bot = (int) (info.p10.Y > info.p11.Y ? info.p10.Y : info.p11.Y);
+		int left  = (int) (info.p00.X > info.p10.X ? info.p00.X : info.p00.X);
+		int right = (int) (info.p11.X > info.p01.X ? info.p11.X : info.p01.X);
+
+		for (unsigned r = 0, rn = rowRegions.size(); r < rn; ++r) {
+			Rectangle & rowRegion = *rowRegions[r];
+			int topDiff = rowRegion.corner0.Y - top;
+			int botDiff = rowRegion.corner1.Y - bot;
+			if ((topDiff > 0) && (topDiff < ROW_REGION_PIX_THRESH)) {
+				rowRegion.corner0.Y = top;
+			}
+			if ((botDiff < 0) && (botDiff > -ROW_REGION_PIX_THRESH)) {
+				rowRegion.corner0.Y = bot;
+			}
+		}
+
+		for (unsigned c = 0, cn = colRegions.size(); c < cn; ++c) {
+			Rectangle & colRegion = *colRegions[c];
+			int leftDiff = colRegion.corner0.X - left;
+			int rightDiff = colRegion.corner1.X - right;
+			if ((leftDiff > 0) && (leftDiff < ROW_REGION_PIX_THRESH)) {
+				colRegion.corner0.X = left;
+			}
+			if ((rightDiff < 0) && (rightDiff > -ROW_REGION_PIX_THRESH)) {
+				colRegion.corner0.X = right;
+			}
+		}
+
+		if (!rowRegionFound) {
+			Rectangle * newRegion = new Rectangle(0, top, 0, bot);
+			rowRegions.push_back(newRegion);
+		}
+
+		if (!colRegionFound) {
+			Rectangle * newRegion = new Rectangle(left, 0, right, 0);
+			colRegions.push_back(newRegion);
+		}
+	}
+}
