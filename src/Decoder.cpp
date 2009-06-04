@@ -57,30 +57,7 @@ struct MessageInfo {
 	}
 
 	DmtxVector2 & getTopLeftCorner() {
-		double minDist = numeric_limits<double>::max();
-		unsigned min = 4;
-
-		double dist[4] = {
-				dmtxVector2Mag(&p00),
-				dmtxVector2Mag(&p10),
-				dmtxVector2Mag(&p11),
-				dmtxVector2Mag(&p01),
-		};
-
-		for (unsigned i = 0; i < 4; ++i) {
-			if (dist[i] < minDist) {
-				minDist = dist[i];
-				min = i;
-			}
-		}
-
-		switch (min) {
-			case 0: return p00;
-			case 1: return p10;
-			case 2: return p11;
-			case 3: return p01;
-		}
-		UA_ASSERTS(false, "invalid value for min: " << min);
+		return p00;
 	}
 
 	friend ostream & operator<<(ostream & os, MessageInfo & m);
@@ -217,11 +194,11 @@ void Decoder::decodeImage(DmtxImage & image) {
 		reg = dmtxRegionFindNext(dec, NULL);
 		if (reg == NULL) break;
 
-		UA_DOUT(1, 3, "retrieving message from region " << regionCount++);
+		UA_DOUT(1, 5, "retrieving message from region " << regionCount++);
 		msg = dmtxDecodeMatrixRegion(dec, reg, DmtxUndefined);
 		if (msg != NULL) {
 			messageAdd(dec, reg, msg);
-			UA_DOUT(1, 3, "message " << results.size() - 1
+			UA_DOUT(1, 5, "message " << results.size() - 1
 					<< ": "	<< results.back()->str);
 			//showStats(dec, reg, msg);
 			dmtxMessageDestroy(&msg);
@@ -250,6 +227,8 @@ void Decoder::messageAdd(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg) {
 	info->p10.Y = height - 1 - info->p10.Y;
 	info->p11.Y = height - 1 - info->p11.Y;
 	info->p01.Y = height - 1 - info->p01.Y;
+
+	//showStats(dec, reg, msg);
 
 	results.push_back(info);
 }
@@ -354,6 +333,21 @@ void Decoder::debugShowTags() {
 	}
 }
 
+string Decoder::getResults() {
+	ostringstream out;
+	for (unsigned i = 0, numTags = results.size(); i < numTags; ++i) {
+		MessageInfo & info = *results[i];
+		out << info.str;
+		if (info.colCluster->rank == 0) {
+			out << endl;
+		}
+		else {
+			out << ",";
+		}
+	}
+	return out.str();
+}
+
 /* Finds rows and columns by examining each decode region's top left corner.
  * Each region is assigned to a row and column.
  *
@@ -420,17 +414,22 @@ void Decoder::sortRegions(unsigned imageHeight, unsigned imageWidth) {
 
 	sort(rowClusters.begin(), rowClusters.end(), ClusterSort());
 	sort(colClusters.begin(), colClusters.end(), ClusterSort());
-	for (unsigned i = 0, n = rowClusters.size(); i < n; ++ i) {
-		Cluster & c = *rowClusters[i];
-		c.rank = i;
-		UA_DOUT(1, 1, "row cluster " << i << ": " << c);
-	}
 
+	// assign ranks now
 	for (unsigned i = 0, n = colClusters.size(); i < n; ++ i) {
 		Cluster & c = *colClusters[i];
 		c.rank = i;
-		UA_DOUT(1, 1, "col cluster " << i << ": " << c);
+		UA_DOUT(1, 5, "col cluster " << i << ": " << c);
 	}
+	for (unsigned i = 0, n = rowClusters.size(); i < n; ++ i) {
+		Cluster & c = *rowClusters[i];
+		c.rank = i;
+		UA_DOUT(1, 5, "row cluster " << i << ": " << c);
+	}
+
+
+	UA_DOUT(1, 3, "number of columns: " << colClusters.size());
+	UA_DOUT(1, 3, "number of rows: " << rowClusters.size());
 
 	sort(results.begin(), results.end(), MessageInfoSort());
 }

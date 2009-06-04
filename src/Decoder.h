@@ -10,6 +10,7 @@
 
 #include "dmtx.h"
 #include <vector>
+#include <string>
 
 using namespace std;
 
@@ -32,6 +33,7 @@ public:
 	void getTagCorners(int tagNum, DmtxVector2 & p00, DmtxVector2 & p10,
 			DmtxVector2 & p11, DmtxVector2 & p01);
 
+	string getResults();
 	void debugShowTags();
 
 private:

@@ -220,6 +220,8 @@ void Application::decodeImage(char * filename) {
 				(unsigned) p00.X, (unsigned) p00.Y, quad);
 	}
 	markedDib.writeToFile("out.bmp");
+
+	cout << decoder.getResults();
 }
 
 void Application::processImage(char * filename) {
