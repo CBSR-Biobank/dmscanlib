@@ -197,15 +197,14 @@ void Application::decodeImage(char * filename) {
 	UA_ASSERT_NOT_NULL(filename);
 
 	Dib dib;
-	dib.readFromFile(filename);
+	RgbQuad quad(255, 0, 0);
+	DmtxVector2 p00, p10, p11, p01;
 
+	dib.readFromFile(filename);
+	Dib markedDib(dib);
 	Decoder decoder(dib);
 	decoder.debugShowTags();
 
-	RgbQuad quad(255, 0, 0);
-
-	Dib markedDib(dib);
-	DmtxVector2 p00, p10, p11, p01;
 	unsigned numTags = decoder.getNumTags();
 	UA_DOUT(1, 3, "marking tags ");
 	for (unsigned i = 0; i < numTags; ++i) {

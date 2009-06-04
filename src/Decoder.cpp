@@ -23,9 +23,38 @@
 
 using namespace std;
 
+struct Cluster {
+	unsigned position;
+	unsigned rank;
+
+	Cluster(unsigned p) {
+		position = p;
+		rank = numeric_limits<unsigned>::max();
+	}
+
+	friend ostream & operator<<(ostream & os, Cluster & r);
+};
+
+ostream & operator<<(ostream & os, Cluster & c) {
+	os << "pos/" << c.position << " rank/" << c.rank;
+	return os;
+}
+
+struct ClusterSort {
+	bool operator()(Cluster* const& a, Cluster* const& b) {
+		return (a->position < b->position);
+	}
+};
+
 struct MessageInfo {
 	string str;
 	DmtxVector2 p00, p10, p11, p01;
+	Cluster * colCluster;
+	Cluster * rowCluster;
+
+	MessageInfo() {
+		colCluster = rowCluster = NULL;
+	}
 
 	DmtxVector2 & getTopLeftCorner() {
 		double minDist = numeric_limits<double>::max();
@@ -65,26 +94,27 @@ ostream & operator<<(ostream &os, MessageInfo & m) {
 	return os;
 }
 
-struct Cluster {
-	unsigned position;
-	unsigned rank;
+struct MessageInfoSort {
+	/* should only be invoked by Decoder::sortRegions().
+	 *
+	 * Need to sort right to left, then top to bottom. That is how Biobank
+	 * numbers the tubes.
+	 */
+	bool operator()(MessageInfo* const& a, MessageInfo* const& b) {
+		UA_ASSERT_NOT_NULL(a->colCluster);
+		UA_ASSERT_NOT_NULL(a->rowCluster);
+		UA_ASSERT_NOT_NULL(b->colCluster);
+		UA_ASSERT_NOT_NULL(b->rowCluster);
+		UA_ASSERT(a->rowCluster->rank != numeric_limits<unsigned>::max());
+		UA_ASSERT(a->colCluster->rank != numeric_limits<unsigned>::max());
+		UA_ASSERT(b->rowCluster->rank != numeric_limits<unsigned>::max());
+		UA_ASSERT(b->colCluster->rank != numeric_limits<unsigned>::max());
 
-	Cluster(unsigned p) {
-		position = p;
-		rank = numeric_limits<int>::max();
-	}
-
-	friend ostream & operator<<(ostream & os, Cluster & r);
-};
-
-ostream & operator<<(ostream & os, Cluster & c) {
-	os << "pos/" << c.position << " rank/" << c.rank;
-	return os;
-}
-
-struct ClusterSort {
-	bool operator()(Cluster* const& a, Cluster* const& b) {
-		return (a->position < b->position);
+		int diff = a->rowCluster->rank - b->rowCluster->rank;
+		if (diff == 0) {
+			return (a->colCluster->rank > b->colCluster->rank);
+		}
+		return (diff < 0);
 	}
 };
 
@@ -324,6 +354,12 @@ void Decoder::debugShowTags() {
 	}
 }
 
+/* Finds rows and columns by examining each decode region's top left corner.
+ * Each region is assigned to a row and column.
+ *
+ * Once rows and columns are determined, they are sorted. Once this is done,
+ * the regions can then be sorted according to row and column.
+ */
 void Decoder::sortRegions(unsigned imageHeight, unsigned imageWidth) {
 	bool rowClusterFound;
 	bool colClusterFound;
@@ -342,11 +378,12 @@ void Decoder::sortRegions(unsigned imageHeight, unsigned imageWidth) {
 
 			if (abs(diff) < CLUSTER_THRESH) {
 				colClusterFound = true;
-			}
+				results[i]->colCluster = &cluster;
 
-			// update cluster position based on cumulative moving average
-			cluster.position += (unsigned) ((double) diff / (double) (i+1));
-			UA_DOUT(1, 9, "col update position " << cluster);
+				// update cluster position based on cumulative moving average
+				cluster.position += (unsigned) ((double) diff / (double) (i+1));
+				UA_DOUT(1, 9, "col update position " << cluster);
+			}
 		}
 
 		for (unsigned r = 0, rn = rowClusters.size(); r < rn; ++r) {
@@ -356,11 +393,12 @@ void Decoder::sortRegions(unsigned imageHeight, unsigned imageWidth) {
 
 			if (abs(diff) < CLUSTER_THRESH) {
 				rowClusterFound = true;
-			}
+				results[i]->rowCluster = &cluster;
 
-			// update cluster position based on cumulative moving average
-			cluster.position += (unsigned) ((double) diff / (double) (i+1));
-			UA_DOUT(1, 9, "row update position " << cluster);
+				// update cluster position based on cumulative moving average
+				cluster.position += (unsigned) ((double) diff / (double) (i+1));
+				UA_DOUT(1, 9, "row update position " << cluster);
+			}
 		}
 
 		if (!colClusterFound) {
@@ -368,6 +406,7 @@ void Decoder::sortRegions(unsigned imageHeight, unsigned imageWidth) {
 			UA_ASSERT_NOT_NULL(newCluster);
 			UA_DOUT(1, 9, "new col " << colClusters.size() << ": " << *newCluster);
 			colClusters.push_back(newCluster);
+			results[i]->colCluster = newCluster;
 		}
 
 		if (!rowClusterFound) {
@@ -375,12 +414,12 @@ void Decoder::sortRegions(unsigned imageHeight, unsigned imageWidth) {
 			UA_ASSERT_NOT_NULL(newCluster);
 			UA_DOUT(1, 9, "new row " << rowClusters.size() << ": " << *newCluster);
 			rowClusters.push_back(newCluster);
+			results[i]->rowCluster = newCluster;
 		}
 	}
 
 	sort(rowClusters.begin(), rowClusters.end(), ClusterSort());
 	sort(colClusters.begin(), colClusters.end(), ClusterSort());
-
 	for (unsigned i = 0, n = rowClusters.size(); i < n; ++ i) {
 		Cluster & c = *rowClusters[i];
 		c.rank = i;
@@ -392,4 +431,6 @@ void Decoder::sortRegions(unsigned imageHeight, unsigned imageWidth) {
 		c.rank = i;
 		UA_DOUT(1, 1, "col cluster " << i << ": " << c);
 	}
+
+	sort(results.begin(), results.end(), MessageInfoSort());
 }
