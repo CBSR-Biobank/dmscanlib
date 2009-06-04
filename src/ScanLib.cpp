@@ -11,6 +11,9 @@
 #include "Decoder.h"
 #include "Dib.h"
 
+#define SI_SUPPORT_IOSTREAMS
+#include "SimpleIni.h"
+
 #ifdef WIN32
 #include "getopt.h"
 #include "ImageGrabber.h"
@@ -22,29 +25,32 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <fstream>
 
 using namespace std;
 
 const char * USAGE_FMT =
 	"Usage: %s [OPTIONS]\n"
 	"\n"
-	"  -a, --acquire       Scans an image from the scanner and decodes the 2D barcodes\n"
-	"                      on the trays.\n"
-	"  -d, --decode FILE   Decodes the 2D barcode in the specified DIB image file.\n"
-	"  -p, --process FILE  Attempts to find all trays in image.\n"
-	"  -s, --scan FILE     Scans an image and saves it as a DIB.\n"
-	"  --select            User will be asked to select the scanner.\n"
-	"  -v, --verbose NUM   Sets debugging level. Debugging messages are output "
-	"                      to stdout. Only when built UA_HAVE_DEBUG on.\n";
+	"  -a, --acquire         Scans an image from the scanner and decodes the 2D barcodes\n"
+	"                        on the trays.\n"
+	"  -c, --calibrate FILE  Calibrates decode regions to those found in bitmap FILE.\n"
+	"  -d, --decode FILE     Decodes the 2D barcode in the specified DIB image file.\n"
+	"  -p, --process FILE    Attempts to find all trays in image.\n"
+	"  -s, --scan FILE       Scans an image and saves it as a DIB.\n"
+	"  --select              User will be asked to select the scanner.\n"
+	"  -v, --verbose NUM     Sets debugging level. Debugging messages are output "
+	"                        to stdout. Only when built UA_HAVE_DEBUG on.\n";
 
 /* Allowed command line arguments.  */
 static struct option long_options[] = {
-		{ "acquire", no_argument,       NULL, 'a' },
-		{ "decode",  required_argument, NULL, 'd' },
-		{ "process", required_argument, NULL, 'p' },
-		{ "scan",    required_argument, NULL, 's' },
-		{ "select",  no_argument,       NULL, 200 },
-		{ "verbose", required_argument, NULL, 'v' },
+		{ "acquire",   no_argument,       NULL, 'a' },
+		{ "calibrate", required_argument, NULL, 'c' },
+		{ "decode",    required_argument, NULL, 'd' },
+		{ "process",   required_argument, NULL, 'p' },
+		{ "scan",      required_argument, NULL, 's' },
+		{ "select",    no_argument,       NULL, 200 },
+		{ "verbose",   required_argument, NULL, 'v' },
 		{ 0, 0, 0, 0 }
 };
 
@@ -54,6 +60,24 @@ static struct option long_options[] = {
 #define DIR_SEP_CHR '/'
 #endif
 
+struct Options {
+	bool aquireAndProcessImage;
+	bool calibrate;
+	bool decodeImage;
+	bool processImage;
+	bool scanImage;
+	char * filename;
+
+	Options() {
+		aquireAndProcessImage = false;
+		calibrate = false;
+		decodeImage = false;
+		processImage = false;
+		scanImage = false;
+		filename = NULL;
+	}
+};
+
 class Application {
 public:
 	Application(int argc, char ** argv);
@@ -61,31 +85,22 @@ public:
 
 private:
 	void usage();
+	void acquireAndProcesImage();
+	void calibrateToImage(char * filename);
 	void decodeImage(char * filename);
 	void processImage(char * filename);
-	void acquireAndProcesImage();
 	void scanImage(char * filename);
 
+	static const char * INI_FILE_NAME;
+
 	const char * progname;
+	CSimpleIniA ini;
 };
 
-struct Options {
-	bool aquireAndProcessImage;
-	bool processImage;
-	bool scanImage;
-	bool decodeImage;
-	char * filename;
+const char * Application::INI_FILE_NAME = "scanlib.ini";
 
-	Options() {
-		aquireAndProcessImage = false;
-		processImage = false;
-		scanImage = false;
-		decodeImage = false;
-		filename = NULL;
-	}
-};
-
-Application::Application(int argc, char ** argv) {
+Application::Application(int argc, char ** argv) :
+	ini(true, true, true) {
 	Options options;
 	int ch;
 
@@ -98,12 +113,17 @@ Application::Application(int argc, char ** argv) {
 		int option_index = 0;
 
 
-		ch = getopt_long (argc, argv, "ad:hp:s:tv:", long_options, &option_index);
+		ch = getopt_long (argc, argv, "ac:d:hp:s:tv:", long_options, &option_index);
 
 		if (ch == -1) break;
 		switch (ch) {
 		case 'a':
 			options.aquireAndProcessImage = true;
+			break;
+
+		case 'c':
+			options.calibrate = true;
+			options.filename = optarg;
 			break;
 
 		case 'd':
@@ -166,7 +186,23 @@ Application::Application(int argc, char ** argv) {
 		exit(-1);
 	}
 
-	if (options.processImage) {
+
+	/*
+	 * Loads the file if it is present.
+	 */
+	fstream inifile;
+	inifile.open(INI_FILE_NAME, fstream::in);
+	if (inifile.is_open()) {
+		SI_Error rc = ini.Load(inifile);
+		UA_ASSERTS(rc >= 0, "attempt to load ini file returned: " << rc);
+		inifile.close();
+	}
+
+	if (options.calibrate) {
+		calibrateToImage(options.filename);
+		return;
+	}
+	else if (options.processImage) {
 		processImage(options.filename);
 		return;
 	}
@@ -191,6 +227,39 @@ Application::~Application() {
 
 void Application::usage() {
 	printf(USAGE_FMT, progname);
+}
+
+void Application::calibrateToImage(char * filename) {
+	UA_ASSERT_NOT_NULL(filename);
+
+	Dib dib;
+	RgbQuad quad(255, 0, 0);
+	DmtxVector2 p00, p10, p11, p01;
+
+	dib.readFromFile(filename);
+	Dib markedDib(dib);
+	Decoder decoder(dib);
+	decoder.debugShowTags();
+	decoder.saveResutlsToIni(ini);
+	ini.SaveFile(INI_FILE_NAME);
+
+	unsigned numTags = decoder.getNumTags();
+	UA_DOUT(1, 3, "marking tags ");
+	for (unsigned i = 0; i < numTags; ++i) {
+		decoder.getTagCorners(i, p00, p10, p11, p01);
+		UA_DOUT(1, 9, "marking tag " << i);
+		markedDib.line((unsigned) p00.X, (unsigned) p00.Y,
+				(unsigned) p10.X, (unsigned) p10.Y, quad);
+		markedDib.line((unsigned) p10.X, (unsigned) p10.Y,
+				(unsigned) p11.X, (unsigned) p11.Y, quad);
+		markedDib.line((unsigned) p11.X, (unsigned) p11.Y,
+				(unsigned) p01.X, (unsigned) p01.Y, quad);
+		markedDib.line((unsigned) p01.X, (unsigned) p01.Y,
+				(unsigned) p00.X, (unsigned) p00.Y, quad);
+	}
+	markedDib.writeToFile("out.bmp");
+
+	cout << decoder.getResults();
 }
 
 void Application::decodeImage(char * filename) {

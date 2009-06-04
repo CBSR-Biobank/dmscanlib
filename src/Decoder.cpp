@@ -51,13 +51,45 @@ struct MessageInfo {
 	DmtxVector2 p00, p10, p11, p01;
 	Cluster * colCluster;
 	Cluster * rowCluster;
+	DmtxVector2 * topLeft;
+	DmtxVector2 * botRight;
 
 	MessageInfo() {
 		colCluster = rowCluster = NULL;
+		topLeft = botRight = NULL;
 	}
 
-	DmtxVector2 & getTopLeftCorner() {
-		return p00;
+	DmtxVector2 & getCorners() {
+		double minDist = numeric_limits<double>::max(), maxDist = 0;;
+		unsigned min = 4, max = 4;
+
+		double dist[4] = {
+				dmtxVector2Mag(&p00),
+				dmtxVector2Mag(&p10),
+				dmtxVector2Mag(&p11),
+				dmtxVector2Mag(&p01),
+		};
+
+		for (unsigned i = 0; i < 4; ++i) {
+			if (dist[i] < minDist) {
+				minDist = dist[i];
+				min = i;
+			}
+		}
+
+		switch (min) {
+		case 0: topLeft = &p00;
+		case 1: topLeft = & p10;
+		case 2: topLeft = & p11;
+		case 3: topLeft = & p01;
+		default:
+			UA_ASSERTS(false, "invalid value for min: " << min);
+		}
+	}
+
+
+	DmtxVector2 & getTopLeftCorners() {
+
 	}
 
 	friend ostream & operator<<(ostream & os, MessageInfo & m);
@@ -335,16 +367,17 @@ void Decoder::debugShowTags() {
 
 string Decoder::getResults() {
 	ostringstream out;
+	unsigned curRow = 0;
+
 	for (unsigned i = 0, numTags = results.size(); i < numTags; ++i) {
 		MessageInfo & info = *results[i];
-		out << info.str;
-		if (info.colCluster->rank == 0) {
+		if (info.rowCluster->rank != curRow) {
 			out << endl;
+			curRow = info.rowCluster->rank;
 		}
-		else {
-			out << ",";
-		}
+		out << info.str << " ";
 	}
+	out << endl;
 	return out.str();
 }
 
@@ -432,4 +465,27 @@ void Decoder::sortRegions(unsigned imageHeight, unsigned imageWidth) {
 	UA_DOUT(1, 3, "number of rows: " << rowClusters.size());
 
 	sort(results.begin(), results.end(), MessageInfoSort());
+}
+
+void Decoder::saveResutlsToIni(CSimpleIniA & ini) {
+	UA_ASSERT(results.size() > 0);
+	SI_Error rc = ini.SetValue("barcode-regions", NULL, NULL);
+	UA_ASSERT(rc >= 0);
+
+	unsigned maxCol = results[0]->colCluster->rank;
+	ostringstream key, value;
+	for (unsigned i = 0, numTags = results.size(); i < numTags; ++i) {
+		MessageInfo & info = *results[i];
+		key.str("");
+		value.str("");
+
+		key << "Region" << info.rowCluster->rank << "_" << maxCol - info.colCluster->rank;
+		value << info.p00.X << "," << info.p00.Y << ","
+		 << info.p10.X << "," << info.p10.Y << ","
+		 << info.p11.X << "," << info.p11.Y << ","
+		 << info.p01.X << "," << info.p01.Y;
+
+		SI_Error rc = ini.SetValue("barcode-regions", key.str().c_str(), value.str().c_str());
+		UA_ASSERT(rc >= 0);
+	}
 }

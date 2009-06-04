@@ -9,6 +9,10 @@
  */
 
 #include "dmtx.h"
+
+#define SI_SUPPORT_IOSTREAMS
+#include "SimpleIni.h"
+
 #include <vector>
 #include <string>
 
@@ -35,6 +39,7 @@ public:
 
 	string getResults();
 	void debugShowTags();
+	void saveResutlsToIni(CSimpleIniA & ini);
 
 private:
 	vector<MessageInfo *> results;
@@ -47,7 +52,6 @@ private:
 	DmtxImage * createDmtxImageFromDib(Dib & dib);
 	void showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
 	void sortRegions(unsigned imageHeight, unsigned imageWidth);
-
 };
 
 #endif /* DECODER_H_ */
