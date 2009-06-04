@@ -12,6 +12,8 @@
 #include <iostream>
 #include <string.h>
 #include <math.h>
+#include <string>
+#include <sstream>
 
 #ifdef _VISUALC_
 // disable fopen warnings
@@ -28,12 +30,24 @@ struct MessageInfo {
 struct RegionRect {
 	DmtxPixelLoc corner0;
 	DmtxPixelLoc corner1;
+	unsigned rank;
 
-	RegionRect() { }
+	RegionRect() {
+		corner0.X = corner0.Y = corner1.X = corner1.Y = 0;
+		rank = 0;
+	}
 
 	RegionRect (int x0, int y0, int x1, int y1) {
 		corner0.X = x0; corner0.Y = y0;
 		corner1.X = x1; corner1.Y = y1;
+		rank = 0;
+	}
+
+	string toString() {
+		ostringstream out;
+		out << " (" << corner0.X << "," << corner0.Y << ")"
+		<< " (" << corner1.X << "," << corner1.Y << ")";
+		return out.str();
 	}
 };
 
@@ -372,6 +386,7 @@ void Decoder::sortRegions(unsigned imageHeight, unsigned imageWidth) {
 
 	for (unsigned i = 0, n = rowRegions.size(); i < n; ++ i) {
 		RegionRect & r = *rowRegions[i];
+		r.rank = i;
 		UA_DOUT(1, 1, "row region " << i
 				<< " (" << r.corner0.X << "," << r.corner0.Y << ")"
 				<< " (" << r.corner1.X << "," << r.corner1.Y << ")");
@@ -379,8 +394,7 @@ void Decoder::sortRegions(unsigned imageHeight, unsigned imageWidth) {
 
 	for (unsigned i = 0, n = colRegions.size(); i < n; ++ i) {
 		RegionRect & r = *colRegions[i];
-		UA_DOUT(1, 1, "col region " << i
-				<< " (" << r.corner0.X << "," << r.corner0.Y << ")"
-				<< " (" << r.corner1.X << "," << r.corner1.Y << ")");
+		r.rank = i;
+		UA_DOUT(1, 1, "col region " << i << r.toString());
 	}
 }

@@ -210,14 +210,14 @@ void Application::decodeImage(char * filename) {
 	for (unsigned i = 0; i < numTags; ++i) {
 		decoder.getTagCorners(i, p00, p10, p11, p01);
 		UA_DOUT(1, 9, "marking tag " << i);
-		markedDib.line((unsigned) p00.Y, (unsigned) p00.X,
-				(unsigned) p10.Y, (unsigned) p10.X, quad);
-		markedDib.line((unsigned) p10.Y, (unsigned) p10.X,
-				(unsigned) p11.Y, (unsigned) p11.X, quad);
-		markedDib.line((unsigned) p11.Y, (unsigned) p11.X,
-				(unsigned) p01.Y, (unsigned) p01.X, quad);
-		markedDib.line((unsigned) p01.Y, (unsigned) p01.X,
-				(unsigned) p00.Y, (unsigned) p00.X, quad);
+		markedDib.line((unsigned) p00.X, (unsigned) p00.Y,
+				(unsigned) p10.X, (unsigned) p10.Y, quad);
+		markedDib.line((unsigned) p10.X, (unsigned) p10.Y,
+				(unsigned) p11.X, (unsigned) p11.Y, quad);
+		markedDib.line((unsigned) p11.X, (unsigned) p11.Y,
+				(unsigned) p01.X, (unsigned) p01.Y, quad);
+		markedDib.line((unsigned) p01.X, (unsigned) p01.Y,
+				(unsigned) p00.X, (unsigned) p00.Y, quad);
 	}
 	markedDib.writeToFile("out.bmp");
 }
