@@ -14,6 +14,7 @@
 #include <math.h>
 #include <string>
 #include <sstream>
+#include <limits>
 
 #ifdef _VISUALC_
 // disable fopen warnings
@@ -23,41 +24,67 @@
 using namespace std;
 
 struct MessageInfo {
-	char * str;
+	string str;
 	DmtxVector2 p00, p10, p11, p01;
+
+	DmtxVector2 & getTopLeftCorner() {
+		double minDist = numeric_limits<double>::max();
+		unsigned min = 4;
+
+		double dist[4] = {
+				dmtxVector2Mag(&p00),
+				dmtxVector2Mag(&p10),
+				dmtxVector2Mag(&p11),
+				dmtxVector2Mag(&p01),
+		};
+
+		for (unsigned i = 0; i < 4; ++i) {
+			if (dist[i] < minDist) {
+				minDist = dist[i];
+				min = i;
+			}
+		}
+
+		switch (min) {
+			case 0: return p00;
+			case 1: return p10;
+			case 2: return p11;
+			case 3: return p01;
+		}
+		UA_ASSERTS(false, "invalid value for min: " << min);
+	}
+
+	friend ostream & operator<<(ostream & os, MessageInfo & m);
 };
 
-struct RegionRect {
-	DmtxPixelLoc corner0;
-	DmtxPixelLoc corner1;
+ostream & operator<<(ostream &os, MessageInfo & m) {
+	os << "\"" << m.str	<< "\" (" << m.p00.X << ", " << m.p00.Y << "), "
+		<< "(" << m.p10.X << ", " << m.p10.Y << "), "
+		<< "(" << m.p11.X << ", " << m.p11.Y << "), "
+		<< "(" << m.p01.X << ", " << m.p01.Y << ")";
+	return os;
+}
+
+struct Cluster {
+	unsigned position;
 	unsigned rank;
 
-	RegionRect() {
-		corner0.X = corner0.Y = corner1.X = corner1.Y = 0;
-		rank = 0;
+	Cluster(unsigned p) {
+		position = p;
+		rank = numeric_limits<int>::max();
 	}
 
-	RegionRect (int x0, int y0, int x1, int y1) {
-		corner0.X = x0; corner0.Y = y0;
-		corner1.X = x1; corner1.Y = y1;
-		rank = 0;
-	}
-
-	string toString() {
-		ostringstream out;
-		out << " (" << corner0.X << "," << corner0.Y << ")"
-		<< " (" << corner1.X << "," << corner1.Y << ")";
-		return out.str();
-	}
+	friend ostream & operator<<(ostream & os, Cluster & r);
 };
 
-struct RegionRectSort {
-	// use distance from origin
-	bool operator()(RegionRect* const& a, RegionRect* const& b) {
-		unsigned aDistSquared = a->corner0.X *  a->corner0.X + a->corner0.Y * a->corner0.Y;
-		unsigned bDistSquared = b->corner0.X *  b->corner0.X + b->corner0.Y * b->corner0.Y;
+ostream & operator<<(ostream & os, Cluster & c) {
+	os << "pos/" << c.position << " rank/" << c.rank;
+	return os;
+}
 
-		return (aDistSquared < bDistSquared);
+struct ClusterSort {
+	bool operator()(Cluster* const& a, Cluster* const& b) {
+		return (a->position < b->position);
 	}
 };
 
@@ -80,23 +107,22 @@ Decoder::~Decoder() {
 }
 
 void Decoder::clearResults() {
-	RegionRect * rect;
+	Cluster * c;
 
 	while (results.size() > 0) {
 		MessageInfo * info = results.back();
 		results.pop_back();
-		delete [] info->str;
 		delete info;
 	}
-	while (rowRegions.size() > 0) {
-		rect = rowRegions.back();
-		rowRegions.pop_back();
-		delete rect;
+	while (rowClusters.size() > 0) {
+		c = rowClusters.back();
+		rowClusters.pop_back();
+		delete c;
 	}
-	while (colRegions.size() > 0) {
-		rect = colRegions.back();
-		colRegions.pop_back();
-		delete rect;
+	while (colClusters.size() > 0) {
+		c = colClusters.back();
+		colClusters.pop_back();
+		delete c;
 	}
 }
 
@@ -180,10 +206,7 @@ void Decoder::decodeImage(DmtxImage & image) {
 void Decoder::messageAdd(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg) {
 	MessageInfo * info = new MessageInfo;
 	UA_ASSERT_NOT_NULL(info);
-	info->str = new char[msg->outputIdx + 1];
-	UA_ASSERT_NOT_NULL(info->str);
-	memcpy(info->str, msg->output, msg->outputIdx);
-	info->str[msg->outputIdx] = 0;
+	info->str.append((char *) msg->output, msg->outputIdx);
 
 	int height = dmtxDecodeGetProp(dec, DmtxPropHeight);
 	info->p00.X = info->p00.Y = info->p10.Y = info->p01.X = 0.0;
@@ -278,9 +301,9 @@ unsigned Decoder::getNumTags() {
 	return results.size();
 }
 
-char * Decoder::getTag(unsigned tagNum) {
+const char * Decoder::getTag(unsigned tagNum) {
 	UA_ASSERT(tagNum < results.size());
-	return results[tagNum]->str;
+	return results[tagNum]->str.c_str();
 }
 
 void Decoder::getTagCorners(int tagNum, DmtxVector2 & p00, DmtxVector2 & p10,
@@ -297,104 +320,76 @@ void Decoder::debugShowTags() {
 	UA_DOUT(1, 1, "debugTags: tags found: " << numTags);
 	for (unsigned i = 0; i < numTags; ++i) {
 		MessageInfo & info = *results[i];
-		UA_DOUT(1, 1, "debugTags: tag " << i << ": " << info.str
-				<< ", corners: (" << info.p00.X << ", " << info.p00.Y << "), "
-				<< "(" << info.p10.X << ", " << info.p10.Y << "), "
-				<< "(" << info.p11.X << ", " << info.p11.Y << "), "
-				<< "(" << info.p01.X << ", " << info.p01.Y << ")");
+		UA_DOUT(1, 1, "debugTags: tag " << i << ": " << info);
 	}
 }
 
 void Decoder::sortRegions(unsigned imageHeight, unsigned imageWidth) {
-	bool rowRegionFound;
-	bool colRegionFound;
+	bool rowClusterFound;
+	bool colClusterFound;
 
 	for (unsigned i = 0, n = results.size(); i < n; ++i) {
-		MessageInfo & info = *results[i];
-		rowRegionFound = false;
-		colRegionFound = false;
-		int top = (int) (info.p00.Y > info.p00.Y ? info.p00.Y : info.p00.Y);
-		int bot = (int) (info.p10.Y > info.p11.Y ? info.p10.Y : info.p11.Y);
-		int left  = (int) (info.p00.X > info.p10.X ? info.p00.X : info.p00.X);
-		int right = (int) (info.p11.X > info.p01.X ? info.p11.X : info.p01.X);
+		rowClusterFound = false;
+		colClusterFound = false;
 
-		UA_DOUT(1, 9, "tag " << i << " : top/" << top << " bottom/" << bot
-				<< " left/" << left << " right/" << right);
+		DmtxVector2 & tagCorner = results[i]->getTopLeftCorner();
+		UA_DOUT(1, 9, "tag " << i << " : corner/" << tagCorner.X << "," << tagCorner.Y);
 
-		for (unsigned c = 0, cn = colRegions.size(); c < cn; ++c) {
-			RegionRect & colRegion = *colRegions[c];
-			int leftDiff = colRegion.corner0.X - left;
-			int rightDiff = colRegion.corner1.X - right;
-			UA_DOUT(1, 9, "col " << c << ": leftDiff/" << leftDiff << " rightDiff/" << rightDiff);
+		for (unsigned c = 0, cn = colClusters.size(); c < cn; ++c) {
+			Cluster & cluster = *colClusters[c];
+			int diff = (int) tagCorner.X - (int)cluster.position;
+			UA_DOUT(1, 9, "col " << c << ": diff/" << diff);
 
-			if ((leftDiff <= 0) && (rightDiff >= 0)) {
-				colRegionFound = true;
+			if (abs(diff) < CLUSTER_THRESH) {
+				colClusterFound = true;
 			}
 
-			if ((leftDiff > 0) && (leftDiff < REGION_PIX_THRESH)) {
-				colRegion.corner0.X = left;
-				UA_DOUT(1, 9, "col " << c << ": new left: " << left);
-				colRegionFound = true;
-			}
-
-			if ((rightDiff < 0) && (rightDiff > -REGION_PIX_THRESH)) {
-				colRegion.corner1.X = right;
-				UA_DOUT(1, 9, "col " << c << ": new right: " << right);
-				colRegionFound = true;
-			}
+			// update cluster position based on cumulative moving average
+			cluster.position += (unsigned) ((double) diff / (double) (i+1));
+			UA_DOUT(1, 9, "col update position " << cluster);
 		}
 
-		for (unsigned r = 0, rn = rowRegions.size(); r < rn; ++r) {
-			RegionRect & rowRegion = *rowRegions[r];
-			int topDiff = rowRegion.corner0.Y - top;
-			int botDiff = rowRegion.corner1.Y - bot;
-			UA_DOUT(1, 9, "row " << r << ": topDiff/" << topDiff << " botDiff/" << botDiff);
+		for (unsigned r = 0, rn = rowClusters.size(); r < rn; ++r) {
+			Cluster & cluster = *rowClusters[r];
+			int diff = (int) tagCorner.Y - (int)cluster.position;
+			UA_DOUT(1, 9, "row " << r << ": diff/" << diff);
 
-			if ((topDiff <= 0) && (botDiff >= 0)) {
-				rowRegionFound = true;
+			if (abs(diff) < CLUSTER_THRESH) {
+				rowClusterFound = true;
 			}
 
-			if ((topDiff > 0) && (topDiff < REGION_PIX_THRESH)) {
-				rowRegion.corner0.Y = top;
-				UA_DOUT(1, 9, "row " << r << ": new top: " << top);
-				rowRegionFound = true;
-			}
-
-			if ((botDiff < 0) && (botDiff > -REGION_PIX_THRESH)) {
-				rowRegion.corner1.Y = bot;
-				UA_DOUT(1, 9, "row " << r << ": new bot: " << bot);
-				rowRegionFound = true;
-			}
+			// update cluster position based on cumulative moving average
+			cluster.position += (unsigned) ((double) diff / (double) (i+1));
+			UA_DOUT(1, 9, "row update position " << cluster);
 		}
 
-		if (!colRegionFound) {
-			RegionRect * newRegion = new RegionRect(left, 0, right, imageHeight
-					);
-			UA_DOUT(1, 9, "new col " << colRegions.size() << ": left/" << left << " right/" << right);
-			colRegions.push_back(newRegion);
+		if (!colClusterFound) {
+			Cluster * newCluster = new Cluster((unsigned) tagCorner.X);
+			UA_ASSERT_NOT_NULL(newCluster);
+			UA_DOUT(1, 9, "new col " << colClusters.size() << ": " << *newCluster);
+			colClusters.push_back(newCluster);
 		}
 
-		if (!rowRegionFound) {
-			RegionRect * newRegion = new RegionRect(0, top, imageWidth, bot);
-			UA_DOUT(1, 9, "new row " << rowRegions.size() << ": top/" << top << " bot/" << bot);
-			rowRegions.push_back(newRegion);
+		if (!rowClusterFound) {
+			Cluster * newCluster = new Cluster((unsigned) tagCorner.Y);
+			UA_ASSERT_NOT_NULL(newCluster);
+			UA_DOUT(1, 9, "new row " << rowClusters.size() << ": " << *newCluster);
+			rowClusters.push_back(newCluster);
 		}
 	}
 
-	sort(rowRegions.begin(), rowRegions.end(), RegionRectSort());
-	sort(colRegions.begin(), colRegions.end(), RegionRectSort());
+	sort(rowClusters.begin(), rowClusters.end(), ClusterSort());
+	sort(colClusters.begin(), colClusters.end(), ClusterSort());
 
-	for (unsigned i = 0, n = rowRegions.size(); i < n; ++ i) {
-		RegionRect & r = *rowRegions[i];
-		r.rank = i;
-		UA_DOUT(1, 1, "row region " << i
-				<< " (" << r.corner0.X << "," << r.corner0.Y << ")"
-				<< " (" << r.corner1.X << "," << r.corner1.Y << ")");
+	for (unsigned i = 0, n = rowClusters.size(); i < n; ++ i) {
+		Cluster & c = *rowClusters[i];
+		c.rank = i;
+		UA_DOUT(1, 1, "row cluster " << i << ": " << c);
 	}
 
-	for (unsigned i = 0, n = colRegions.size(); i < n; ++ i) {
-		RegionRect & r = *colRegions[i];
-		r.rank = i;
-		UA_DOUT(1, 1, "col region " << i << r.toString());
+	for (unsigned i = 0, n = colClusters.size(); i < n; ++ i) {
+		Cluster & c = *colClusters[i];
+		c.rank = i;
+		UA_DOUT(1, 1, "col cluster " << i << ": " << c);
 	}
 }

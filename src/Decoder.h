@@ -15,7 +15,7 @@ using namespace std;
 
 class Dib;
 struct MessageInfo;
-struct RegionRect;
+struct Cluster;
 
 class Decoder {
 public:
@@ -28,7 +28,7 @@ public:
 	void decodeImage(DmtxImage & image);
 
 	unsigned getNumTags();
-	char * getTag(unsigned tagNum);
+	const char * getTag(unsigned tagNum);
 	void getTagCorners(int tagNum, DmtxVector2 & p00, DmtxVector2 & p10,
 			DmtxVector2 & p11, DmtxVector2 & p01);
 
@@ -36,9 +36,9 @@ public:
 
 private:
 	vector<MessageInfo *> results;
-	vector<RegionRect *>  rowRegions;
-	vector<RegionRect *>  colRegions;
-	static const int      REGION_PIX_THRESH = 5;
+	vector<Cluster *>     rowClusters;
+	vector<Cluster *>     colClusters;
+	static const int      CLUSTER_THRESH = 15;
 
 	void clearResults();
 	void messageAdd(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);

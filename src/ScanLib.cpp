@@ -34,8 +34,8 @@ const char * USAGE_FMT =
 	"  -p, --process FILE  Attempts to find all trays in image.\n"
 	"  -s, --scan FILE     Scans an image and saves it as a DIB.\n"
 	"  --select            User will be asked to select the scanner.\n"
-	"  -v, --verbose       Debugging messages are output to stdout. Only when built\n"
-	"                      UA_HAVE_DEBUG on.\n";
+	"  -v, --verbose NUM   Sets debugging level. Debugging messages are output "
+	"                      to stdout. Only when built UA_HAVE_DEBUG on.\n";
 
 /* Allowed command line arguments.  */
 static struct option long_options[] = {
@@ -98,7 +98,7 @@ Application::Application(int argc, char ** argv) {
 		int option_index = 0;
 
 
-		ch = getopt_long (argc, argv, "ad:hp:s:tv", long_options, &option_index);
+		ch = getopt_long (argc, argv, "ad:hp:s:tv:", long_options, &option_index);
 
 		if (ch == -1) break;
 		switch (ch) {
@@ -145,7 +145,8 @@ Application::Application(int argc, char ** argv) {
 		}
 
 		case 'v':
-			UA_DEBUG(ua::Debug::Instance().levelInc(ua::DebugImpl::allSubSys_m));
+			UA_DEBUG(ua::Debug::Instance().levelSet(
+					ua::DebugImpl::allSubSys_m, atoi(optarg)));
 			break;
 
 		case '?':
