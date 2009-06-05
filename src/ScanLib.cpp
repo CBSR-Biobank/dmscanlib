@@ -8,8 +8,8 @@
  ******************************************************************************/
 
 #include "UaDebug.h"
-#include "Calibrator.h"
 #include "Decoder.h"
+#include "Calibrator.h"
 #include "Dib.h"
 
 #define SI_SUPPORT_IOSTREAMS
@@ -237,9 +237,9 @@ void Application::calibrateToImage(char * filename) {
 	dib.readFromFile(filename);
 	Dib markedDib(dib);
 	Calibrator calibrator;
-	calibrator.processImage(dib);
+	calibrator.processDib(dib);
 	calibrator.debugShowTags();
-	//calibrator.saveRegionsToIni(ini);
+	calibrator.saveRegionsToIni(ini);
 	ini.SaveFile(INI_FILE_NAME);
 
 	unsigned numTags = calibrator.getNumTags();

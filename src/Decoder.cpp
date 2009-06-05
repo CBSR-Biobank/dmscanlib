@@ -36,7 +36,7 @@ Decoder::Decoder() {
 
 Decoder::Decoder(Dib & dib) {
 	UA_DEBUG(ua::Debug::Instance().subSysHeaderSet(1, "Decoder"));
-	processImage(dib);
+	processDib(dib);
 }
 
 Decoder::Decoder(DmtxImage & image) {
@@ -66,7 +66,7 @@ void Decoder::clearResults() {
  *	file. If a DmxtImage can be created, decode it. All barcodes decoded are
  *	stored in the supplied buffer, up to a max length of bufferSize.
  */
-void Decoder::processImage(Dib & dib){
+void Decoder::processDib(Dib & dib){
 	DmtxImage * image = createDmtxImageFromDib(dib);
 	processImage(*image);
 	dmtxImageDestroy(&image);
@@ -366,12 +366,12 @@ void Decoder::processImageRegions(Dib & dib) {
 		Dib croppedDib;
 		croppedDib.crop(dib, region.topLeft.X, region.topLeft.Y,
 				region.botRight.X, region.botRight.Y);
-		processImage(croppedDib);
+		processDib(croppedDib);
 	}
 }
 
 
-ostream & operator<<(ostream &os, Decoder::DecodeRegion & r) {
+ostream & operator<<(ostream &os, DecodeRegion & r) {
 	os << r.row	<< "," << r.col << ": "
 		<< "(" << r.topLeft.X << ", " << r.topLeft.Y << "), "
 		<< "(" << r.botRight.X << ", " << r.botRight.Y << ")";

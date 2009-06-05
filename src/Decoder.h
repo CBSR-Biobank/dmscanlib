@@ -21,6 +21,13 @@ using namespace std;
 class Dib;
 class MessageInfo;
 
+struct DecodeRegion {
+	int row, col;
+	DmtxPixelLoc topLeft, botRight;
+};
+
+ostream & operator<<(ostream &os, DecodeRegion & r);
+
 class Decoder {
 public:
 	Decoder();
@@ -28,7 +35,7 @@ public:
 	Decoder(DmtxImage & image);
 	virtual ~Decoder();
 
-	void processImage(Dib & dib);
+	void processDib(Dib & dib);
 	void processImageRegions(Dib & dib);
 	virtual void processImage(DmtxImage & image);
 
@@ -42,10 +49,6 @@ public:
 	void getRegionsFromIni(CSimpleIniA & ini);
 
 protected:
-	struct DecodeRegion {
-		int row, col;
-		DmtxPixelLoc topLeft, botRight;
-	};
 
 	static const char * INI_SECTION_NAME;
 	static const char * INI_REGION_LABEL;
@@ -57,8 +60,6 @@ protected:
 	void messageAdd(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
 	DmtxImage * createDmtxImageFromDib(Dib & dib);
 	void showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
-
-	friend ostream & operator<<(ostream &os, DecodeRegion & r);
 };
 
 #endif /* DECODER_H_ */
