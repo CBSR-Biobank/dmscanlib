@@ -19,9 +19,7 @@
 using namespace std;
 
 class Dib;
-struct MessageInfo;
-struct Cluster;
-struct DecodeRegion;
+class MessageInfo;
 
 class Decoder {
 public:
@@ -30,9 +28,9 @@ public:
 	Decoder(DmtxImage & image);
 	virtual ~Decoder();
 
-	void decodeImage(Dib & dib);
-	void decodeImageRegions(Dib & dib);
-	void decodeImage(DmtxImage & image);
+	void processImage(Dib & dib);
+	void processImageRegions(Dib & dib);
+	virtual void processImage(DmtxImage & image);
 
 	unsigned getNumTags();
 	const char * getTag(unsigned tagNum);
@@ -41,23 +39,26 @@ public:
 
 	string getResults();
 	void debugShowTags();
-	void saveRegionsToIni(CSimpleIniA & ini);
 	void getRegionsFromIni(CSimpleIniA & ini);
 
-private:
-	vector<MessageInfo *> calRegions;
+protected:
+	struct DecodeRegion {
+		int row, col;
+		DmtxPixelLoc topLeft, botRight;
+	};
+
+	static const char * INI_SECTION_NAME;
+	static const char * INI_REGION_LABEL;
+
+	vector<MessageInfo *>  calRegions;
 	vector<DecodeRegion *> decodeRegions;
-	vector<Cluster *>     rowClusters;
-	vector<Cluster *>     colClusters;
-	static const int      CLUSTER_THRESH = 15;
-	static const char *   INI_SECTION_NAME;
-	static const char *   INI_REGION_LABEL;
 
 	void clearResults();
 	void messageAdd(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
 	DmtxImage * createDmtxImageFromDib(Dib & dib);
 	void showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
-	void sortRegions(unsigned imageHeight, unsigned imageWidth);
+
+	friend ostream & operator<<(ostream &os, DecodeRegion & r);
 };
 
 #endif /* DECODER_H_ */

@@ -5,20 +5,21 @@ ifeq ($(OSTYPE),msys)
 endif
 
 SRC := \
+	src/BinRegion.cpp \
+	src/Calibrator.cpp \
 	src/Decoder.cpp \
 	src/Dib.c \
-	src/ImageProcessor.cpp \
+	src/MessageInfo.cpp \
 	src/ScanLib.cpp \
 	src/utils/UaDebug.cpp \
-	src/utils/LinkList.cpp \
+	src/utils/Util.cpp \
 	libdmtx/dmtx.c \
-	iniParser/dictionary.c \
-	iniParser/iniparser.c
+	simpleini/ConvertUTF.c
 
 ifeq ($(OSTYPE),msys)
 SRC += \
 	src/ImageGrabber.cpp
-endif	
+endif
 
 DEBUG=1
 
@@ -33,7 +34,7 @@ CPPFLAGS := $(CFLAGS)
 SED := /bin/sed
 LIBS += -lm -lstdc++
 
-INCLUDE_PATH := src libdmtx src/loki src/utils iniParser
+INCLUDE_PATH := src libdmtx src/loki src/utils simpleini
 VPATH := $(CURDIR) $(INCLUDE_PATH) $(BUILD_DIR)
 
 OBJS := $(addsuffix .o, $(basename $(notdir $(SRC))))
@@ -62,7 +63,7 @@ endif
 ifeq ($(OSTYPE),msys)
 	CFLAGS += -DWIN32
 	CXXFLAGS += -DWIN32
-else	
+else
 	CFLAGS += -D_UNIX_ -fPIC
 	CXXFLAGS += -D_UNIX_ -fPIC
 endif

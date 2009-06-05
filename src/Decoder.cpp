@@ -9,6 +9,8 @@
 #include "UaDebug.h"
 #include "Dib.h"
 #include "Util.h"
+#include "MessageInfo.h"
+#include "BinRegion.h"
 
 #include <iostream>
 #include <string.h>
@@ -24,146 +26,6 @@
 
 using namespace std;
 
-struct Cluster {
-	unsigned position;
-	unsigned rank;
-
-	Cluster(unsigned p) {
-		position = p;
-		rank = numeric_limits<unsigned>::max();
-	}
-
-	friend ostream & operator<<(ostream & os, Cluster & r);
-};
-
-ostream & operator<<(ostream & os, Cluster & c) {
-	os << "pos/" << c.position << " rank/" << c.rank;
-	return os;
-}
-
-struct ClusterSort {
-	bool operator()(Cluster* const& a, Cluster* const& b) {
-		return (a->position < b->position);
-	}
-};
-
-struct MessageInfo {
-	string str;
-	DmtxVector2 p00, p10, p11, p01;
-	Cluster * colCluster;
-	Cluster * rowCluster;
-	DmtxVector2 * topLeft;
-	DmtxVector2 * botRight;
-
-	MessageInfo() {
-		colCluster = rowCluster = NULL;
-		topLeft = botRight = NULL;
-	}
-
-	void getCorners() {
-		double minDist = numeric_limits<double>::max(), maxDist = 0;;
-		unsigned min = 4, max = 4;
-
-		double dist[4] = {
-				dmtxVector2Mag(&p00),
-				dmtxVector2Mag(&p10),
-				dmtxVector2Mag(&p11),
-				dmtxVector2Mag(&p01),
-		};
-
-		for (unsigned i = 0; i < 4; ++i) {
-			if (dist[i] < minDist) {
-				minDist = dist[i];
-				min = i;
-			}
-			if (dist[i] > maxDist) {
-				maxDist = dist[i];
-				max = i;
-			}
-		}
-
-		switch (min) {
-		case 0: topLeft = &p00; break;
-		case 1: topLeft = &p10; break;
-		case 2: topLeft = &p11; break;
-		case 3: topLeft = &p01; break;
-		default:
-			UA_ASSERTS(false, "invalid value for min: " << min);
-		}
-
-		switch (max) {
-		case 0: botRight = &p00; break;
-		case 1: botRight = &p10; break;
-		case 2: botRight = &p11; break;
-		case 3: botRight = &p01; break;
-		default:
-			UA_ASSERTS(false, "invalid value for max: " << max);
-		}
-	}
-
-	DmtxVector2 & getTopLeftCorner() {
-		if (topLeft == NULL) {
-			getCorners();
-		}
-		UA_ASSERT_NOT_NULL(topLeft);
-		return *topLeft;
-	}
-
-	DmtxVector2 & getBotRightCorner() {
-		if (botRight == NULL) {
-			getCorners();
-		}
-		UA_ASSERT_NOT_NULL(topLeft);
-		return *botRight;
-	}
-
-	friend ostream & operator<<(ostream & os, MessageInfo & m);
-};
-
-ostream & operator<<(ostream &os, MessageInfo & m) {
-	os << "\"" << m.str	<< "\" (" << m.p00.X << ", " << m.p00.Y << "), "
-		<< "(" << m.p10.X << ", " << m.p10.Y << "), "
-		<< "(" << m.p11.X << ", " << m.p11.Y << "), "
-		<< "(" << m.p01.X << ", " << m.p01.Y << ")";
-	return os;
-}
-
-struct MessageInfoSort {
-	/* should only be invoked by Decoder::sortRegions().
-	 *
-	 * Need to sort right to left, then top to bottom. That is how Biobank
-	 * numbers the tubes.
-	 */
-	bool operator()(MessageInfo* const& a, MessageInfo* const& b) {
-		UA_ASSERT_NOT_NULL(a->colCluster);
-		UA_ASSERT_NOT_NULL(a->rowCluster);
-		UA_ASSERT_NOT_NULL(b->colCluster);
-		UA_ASSERT_NOT_NULL(b->rowCluster);
-		UA_ASSERT(a->rowCluster->rank != numeric_limits<unsigned>::max());
-		UA_ASSERT(a->colCluster->rank != numeric_limits<unsigned>::max());
-		UA_ASSERT(b->rowCluster->rank != numeric_limits<unsigned>::max());
-		UA_ASSERT(b->colCluster->rank != numeric_limits<unsigned>::max());
-
-		int diff = a->rowCluster->rank - b->rowCluster->rank;
-		if (diff == 0) {
-			return (a->colCluster->rank > b->colCluster->rank);
-		}
-		return (diff < 0);
-	}
-};
-
-struct DecodeRegion {
-	int row, col;
-	DmtxPixelLoc topLeft, botRight;
-};
-
-ostream & operator<<(ostream &os, DecodeRegion & r) {
-	os << r.row	<< "," << r.col << ": "
-		<< "(" << r.topLeft.X << ", " << r.topLeft.Y << "), "
-		<< "(" << r.botRight.X << ", " << r.botRight.Y << ")";
-	return os;
-}
-
 const char * Decoder::INI_SECTION_NAME = "barcode-regions";
 
 const char * Decoder::INI_REGION_LABEL = "region";
@@ -174,12 +36,12 @@ Decoder::Decoder() {
 
 Decoder::Decoder(Dib & dib) {
 	UA_DEBUG(ua::Debug::Instance().subSysHeaderSet(1, "Decoder"));
-	decodeImage(dib);
+	processImage(dib);
 }
 
 Decoder::Decoder(DmtxImage & image) {
 	UA_DEBUG(ua::Debug::Instance().subSysHeaderSet(1, "Decoder"));
-	decodeImage(image);
+	processImage(image);
 }
 
 Decoder::~Decoder() {
@@ -187,22 +49,10 @@ Decoder::~Decoder() {
 }
 
 void Decoder::clearResults() {
-	Cluster * c;
-
 	while (calRegions.size() > 0) {
 		MessageInfo * info = calRegions.back();
 		calRegions.pop_back();
 		delete info;
-	}
-	while (rowClusters.size() > 0) {
-		c = rowClusters.back();
-		rowClusters.pop_back();
-		delete c;
-	}
-	while (colClusters.size() > 0) {
-		c = colClusters.back();
-		colClusters.pop_back();
-		delete c;
 	}
 }
 
@@ -216,13 +66,13 @@ void Decoder::clearResults() {
  *	file. If a DmxtImage can be created, decode it. All barcodes decoded are
  *	stored in the supplied buffer, up to a max length of bufferSize.
  */
-void Decoder::decodeImage(Dib & dib){
+void Decoder::processImage(Dib & dib){
 	DmtxImage * image = createDmtxImageFromDib(dib);
-	decodeImage(*image);
+	processImage(*image);
 	dmtxImageDestroy(&image);
 }
 
-void Decoder::decodeImage(DmtxImage & image) {
+void Decoder::processImage(DmtxImage & image) {
 	if (calRegions.size() > 0) {
 		// an image was already created, destroy this one as a new one
 		// is created below
@@ -238,7 +88,7 @@ void Decoder::decodeImage(DmtxImage & image) {
 	unsigned width = dmtxImageGetProp(&image, DmtxPropWidth);
 	unsigned height = dmtxImageGetProp(&image, DmtxPropHeight);
 
-	UA_DOUT(1, 3, "decodeImage: image width/" << width
+	UA_DOUT(1, 3, "processImage: image width/" << width
 			<< " image height/" << height
 			<< " row padding/" << dmtxImageGetProp(&image, DmtxPropRowPadBytes)
 			<< " image bits per pixel/"
@@ -272,7 +122,7 @@ void Decoder::decodeImage(DmtxImage & image) {
 		if (msg != NULL) {
 			messageAdd(dec, reg, msg);
 			UA_DOUT(1, 5, "message " << calRegions.size() - 1
-					<< ": "	<< calRegions.back()->str);
+					<< ": "	<< calRegions.back()->getMsg());
 			//showStats(dec, reg, msg);
 			dmtxMessageDestroy(&msg);
 		}
@@ -280,29 +130,13 @@ void Decoder::decodeImage(DmtxImage & image) {
 	}
 
 	dmtxDecodeDestroy(&dec);
-	sortRegions(height, width);
 }
 
 void Decoder::messageAdd(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg) {
-	MessageInfo * info = new MessageInfo;
+	MessageInfo * info = new MessageInfo(dec, reg, msg);
 	UA_ASSERT_NOT_NULL(info);
-	info->str.append((char *) msg->output, msg->outputIdx);
-
-	int height = dmtxDecodeGetProp(dec, DmtxPropHeight);
-	info->p00.X = info->p00.Y = info->p10.Y = info->p01.X = 0.0;
-	info->p10.X = info->p01.Y = info->p11.X = info->p11.Y = 1.0;
-	dmtxMatrix3VMultiplyBy(&info->p00, reg->fit2raw);
-	dmtxMatrix3VMultiplyBy(&info->p10, reg->fit2raw);
-	dmtxMatrix3VMultiplyBy(&info->p11, reg->fit2raw);
-	dmtxMatrix3VMultiplyBy(&info->p01, reg->fit2raw);
-
-	info->p00.Y = height - 1 - info->p00.Y;
-	info->p10.Y = height - 1 - info->p10.Y;
-	info->p11.Y = height - 1 - info->p11.Y;
-	info->p01.Y = height - 1 - info->p01.Y;
 
 	//showStats(dec, reg, msg);
-
 	calRegions.push_back(info);
 }
 
@@ -385,16 +219,13 @@ unsigned Decoder::getNumTags() {
 
 const char * Decoder::getTag(unsigned tagNum) {
 	UA_ASSERT(tagNum < calRegions.size());
-	return calRegions[tagNum]->str.c_str();
+	return calRegions[tagNum]->getMsg().c_str();
 }
 
 void Decoder::getTagCorners(int tagNum, DmtxVector2 & p00, DmtxVector2 & p10,
 		DmtxVector2 & p11, DmtxVector2 & p01) {
 	MessageInfo & info = *calRegions[tagNum];
-	p00 = info.p00;
-	p10 = info.p10;
-	p11 = info.p11;
-	p01 = info.p01;
+	info.getCorners(p00, p10, p11, p01);
 }
 
 void Decoder::debugShowTags() {
@@ -412,124 +243,14 @@ string Decoder::getResults() {
 
 	for (unsigned i = 0, numTags = calRegions.size(); i < numTags; ++i) {
 		MessageInfo & info = *calRegions[i];
-		if (info.rowCluster->rank != curRow) {
+		if (info.getRowBinRegion().getRank() != curRow) {
 			out << endl;
-			curRow = info.rowCluster->rank;
+			curRow = info.getRowBinRegion().getRank();
 		}
-		out << info.str << " ";
+		out << info.getMsg() << " ";
 	}
 	out << endl;
 	return out.str();
-}
-
-/* Finds rows and columns by examining each decode region's top left corner.
- * Each region is assigned to a row and column.
- *
- * Once rows and columns are determined, they are sorted. Once this is done,
- * the regions can then be sorted according to row and column.
- */
-void Decoder::sortRegions(unsigned imageHeight, unsigned imageWidth) {
-	bool rowClusterFound;
-	bool colClusterFound;
-
-	for (unsigned i = 0, n = calRegions.size(); i < n; ++i) {
-		rowClusterFound = false;
-		colClusterFound = false;
-
-		DmtxVector2 & tagCorner = calRegions[i]->getTopLeftCorner();
-		UA_DOUT(1, 9, "tag " << i << " : corner/" << tagCorner.X << "," << tagCorner.Y);
-
-		for (unsigned c = 0, cn = colClusters.size(); c < cn; ++c) {
-			Cluster & cluster = *colClusters[c];
-			int diff = (int) tagCorner.X - (int)cluster.position;
-			UA_DOUT(1, 9, "col " << c << ": diff/" << diff);
-
-			if (abs(diff) < CLUSTER_THRESH) {
-				colClusterFound = true;
-				calRegions[i]->colCluster = &cluster;
-
-				// update cluster position based on cumulative moving average
-				cluster.position += (unsigned) ((double) diff / (double) (i+1));
-				UA_DOUT(1, 9, "col update position " << cluster);
-			}
-		}
-
-		for (unsigned r = 0, rn = rowClusters.size(); r < rn; ++r) {
-			Cluster & cluster = *rowClusters[r];
-			int diff = (int) tagCorner.Y - (int)cluster.position;
-			UA_DOUT(1, 9, "row " << r << ": diff/" << diff);
-
-			if (abs(diff) < CLUSTER_THRESH) {
-				rowClusterFound = true;
-				calRegions[i]->rowCluster = &cluster;
-
-				// update cluster position based on cumulative moving average
-				cluster.position += (unsigned) ((double) diff / (double) (i+1));
-				UA_DOUT(1, 9, "row update position " << cluster);
-			}
-		}
-
-		if (!colClusterFound) {
-			Cluster * newCluster = new Cluster((unsigned) tagCorner.X);
-			UA_ASSERT_NOT_NULL(newCluster);
-			UA_DOUT(1, 9, "new col " << colClusters.size() << ": " << *newCluster);
-			colClusters.push_back(newCluster);
-			calRegions[i]->colCluster = newCluster;
-		}
-
-		if (!rowClusterFound) {
-			Cluster * newCluster = new Cluster((unsigned) tagCorner.Y);
-			UA_ASSERT_NOT_NULL(newCluster);
-			UA_DOUT(1, 9, "new row " << rowClusters.size() << ": " << *newCluster);
-			rowClusters.push_back(newCluster);
-			calRegions[i]->rowCluster = newCluster;
-		}
-	}
-
-	sort(rowClusters.begin(), rowClusters.end(), ClusterSort());
-	sort(colClusters.begin(), colClusters.end(), ClusterSort());
-
-	// assign ranks now
-	for (unsigned i = 0, n = colClusters.size(); i < n; ++ i) {
-		Cluster & c = *colClusters[i];
-		c.rank = i;
-		UA_DOUT(1, 5, "col cluster " << i << ": " << c);
-	}
-	for (unsigned i = 0, n = rowClusters.size(); i < n; ++ i) {
-		Cluster & c = *rowClusters[i];
-		c.rank = i;
-		UA_DOUT(1, 5, "row cluster " << i << ": " << c);
-	}
-
-
-	UA_DOUT(1, 3, "number of columns: " << colClusters.size());
-	UA_DOUT(1, 3, "number of rows: " << rowClusters.size());
-
-	sort(calRegions.begin(), calRegions.end(), MessageInfoSort());
-}
-
-void Decoder::saveRegionsToIni(CSimpleIniA & ini) {
-	UA_ASSERT(calRegions.size() > 0);
-	SI_Error rc = ini.SetValue(INI_SECTION_NAME, NULL, NULL);
-	UA_ASSERT(rc >= 0);
-
-	unsigned maxCol = calRegions[0]->colCluster->rank;
-	ostringstream key, value;
-	for (unsigned i = 0, numTags = calRegions.size(); i < numTags; ++i) {
-		MessageInfo & info = *calRegions[i];
-		key.str("");
-		value.str("");
-
-		DmtxVector2 & tl = info.getTopLeftCorner();
-		DmtxVector2 & br = info.getBotRightCorner();
-
-		key << INI_REGION_LABEL << info.rowCluster->rank << "_" << maxCol - info.colCluster->rank;
-		value << (int) tl.X << "," << (int) tl.Y << ","
-			  << (int) br.X << "," << (int) br.Y;
-
-		SI_Error rc = ini.SetValue(INI_SECTION_NAME, key.str().c_str(), value.str().c_str());
-		UA_ASSERT(rc >= 0);
-	}
 }
 
 void Decoder::getRegionsFromIni(CSimpleIniA & ini) {
@@ -634,7 +355,7 @@ void Decoder::getRegionsFromIni(CSimpleIniA & ini) {
 /*
  * Should only be called after regions are loaded from INI file.
  */
-void Decoder::decodeImageRegions(Dib & dib) {
+void Decoder::processImageRegions(Dib & dib) {
 	if (decodeRegions.size() == 0) {
 		UA_WARN("no decoded regions; exiting.");
 		return;
@@ -645,6 +366,14 @@ void Decoder::decodeImageRegions(Dib & dib) {
 		Dib croppedDib;
 		croppedDib.crop(dib, region.topLeft.X, region.topLeft.Y,
 				region.botRight.X, region.botRight.Y);
-		decodeImage(croppedDib);
+		processImage(croppedDib);
 	}
+}
+
+
+ostream & operator<<(ostream &os, Decoder::DecodeRegion & r) {
+	os << r.row	<< "," << r.col << ": "
+		<< "(" << r.topLeft.X << ", " << r.topLeft.Y << "), "
+		<< "(" << r.botRight.X << ", " << r.botRight.Y << ")";
+	return os;
 }

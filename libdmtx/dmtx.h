@@ -1,3 +1,6 @@
+#ifndef __DMTX_H__
+#define __DMTX_H__
+
 /*
 libdmtx - Data Matrix Encoding/Decoding Library
 
@@ -26,9 +29,6 @@ Contact: mike@dragonflylogic.com
  * @file dmtx.h
  * @brief Main libdmtx header
  */
-
-#ifndef __DMTX_H__
-#define __DMTX_H__
 
 /* Time headers are required for DmtxTime struct below */
 

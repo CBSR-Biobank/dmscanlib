@@ -8,6 +8,7 @@
  ******************************************************************************/
 
 #include "UaDebug.h"
+#include "Calibrator.h"
 #include "Decoder.h"
 #include "Dib.h"
 
@@ -22,9 +23,6 @@
 #endif
 
 #include <iostream>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <fstream>
 
 using namespace std;
@@ -210,8 +208,8 @@ Application::Application(int argc, char ** argv) :
 		cerr << "Error: invalid options selected." << endl;
 		exit(0);
 	}
-	else if (options.decodeImage) {
-		decodeImage(options.filename);
+	else if (options.processImage) {
+		processImage(options.filename);
 	}
 	else if (options.aquireAndProcessImage) {
 		acquireAndProcesImage();
@@ -238,15 +236,16 @@ void Application::calibrateToImage(char * filename) {
 
 	dib.readFromFile(filename);
 	Dib markedDib(dib);
-	Decoder decoder(dib);
-	decoder.debugShowTags();
-	decoder.saveRegionsToIni(ini);
+	Calibrator calibrator;
+	calibrator.processImage(dib);
+	calibrator.debugShowTags();
+	//calibrator.saveRegionsToIni(ini);
 	ini.SaveFile(INI_FILE_NAME);
 
-	unsigned numTags = decoder.getNumTags();
+	unsigned numTags = calibrator.getNumTags();
 	UA_DOUT(1, 3, "marking tags ");
 	for (unsigned i = 0; i < numTags; ++i) {
-		decoder.getTagCorners(i, p00, p10, p11, p01);
+		calibrator.getTagCorners(i, p00, p10, p11, p01);
 		UA_DOUT(1, 9, "marking tag " << i);
 		markedDib.line((unsigned) p00.X, (unsigned) p00.Y,
 				(unsigned) p10.X, (unsigned) p10.Y, quad);
@@ -259,7 +258,7 @@ void Application::calibrateToImage(char * filename) {
 	}
 	markedDib.writeToFile("out.bmp");
 
-	cout << decoder.getResults();
+	cout << calibrator.getResults();
 }
 
 void Application::decodeImage(char * filename) {
@@ -273,7 +272,7 @@ void Application::decodeImage(char * filename) {
 	Dib markedDib(dib);
 	Decoder decoder;
 	decoder.getRegionsFromIni(ini);
-	decoder.decodeImageRegions(dib);
+	decoder.processImageRegions(dib);
 
 	unsigned numTags = decoder.getNumTags();
 	UA_DOUT(1, 3, "marking tags ");
