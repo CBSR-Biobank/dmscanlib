@@ -73,7 +73,7 @@ public:
 	void setPixelGrayscale(unsigned row, unsigned col, unsigned char value);
 	unsigned char * getPixelsNoPadding();
 	void setPixelsNoPadding(unsigned char * pixels);
-	void crop(Dib &src, unsigned r1, unsigned c1, unsigned r2, unsigned c2);
+	void crop(Dib &src, unsigned x0, unsigned y0, unsigned x1, unsigned y1);
 	void convertGrayscale(Dib & src);
 	void sobelEdgeDetectionWithMask(Dib & src, int mask1[3][3],
 			int mask2[3][3]);

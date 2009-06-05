@@ -100,7 +100,7 @@ private:
 const char * Application::INI_FILE_NAME = "scanlib.ini";
 
 Application::Application(int argc, char ** argv) :
-	ini(true, true, true) {
+	ini(true, false, true) {
 	Options options;
 	int ch;
 
@@ -240,7 +240,7 @@ void Application::calibrateToImage(char * filename) {
 	Dib markedDib(dib);
 	Decoder decoder(dib);
 	decoder.debugShowTags();
-	decoder.saveResutlsToIni(ini);
+	decoder.saveRegionsToIni(ini);
 	ini.SaveFile(INI_FILE_NAME);
 
 	unsigned numTags = decoder.getNumTags();
@@ -271,8 +271,9 @@ void Application::decodeImage(char * filename) {
 
 	dib.readFromFile(filename);
 	Dib markedDib(dib);
-	Decoder decoder(dib);
-	decoder.debugShowTags();
+	Decoder decoder;
+	decoder.getRegionsFromIni(ini);
+	decoder.decodeImageRegions(dib);
 
 	unsigned numTags = decoder.getNumTags();
 	UA_DOUT(1, 3, "marking tags ");

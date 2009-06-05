@@ -21,6 +21,7 @@ using namespace std;
 class Dib;
 struct MessageInfo;
 struct Cluster;
+struct DecodeRegion;
 
 class Decoder {
 public:
@@ -30,6 +31,7 @@ public:
 	virtual ~Decoder();
 
 	void decodeImage(Dib & dib);
+	void decodeImageRegions(Dib & dib);
 	void decodeImage(DmtxImage & image);
 
 	unsigned getNumTags();
@@ -39,13 +41,17 @@ public:
 
 	string getResults();
 	void debugShowTags();
-	void saveResutlsToIni(CSimpleIniA & ini);
+	void saveRegionsToIni(CSimpleIniA & ini);
+	void getRegionsFromIni(CSimpleIniA & ini);
 
 private:
-	vector<MessageInfo *> results;
+	vector<MessageInfo *> calRegions;
+	vector<DecodeRegion *> decodeRegions;
 	vector<Cluster *>     rowClusters;
 	vector<Cluster *>     colClusters;
 	static const int      CLUSTER_THRESH = 15;
+	static const char *   INI_SECTION_NAME;
+	static const char *   INI_REGION_LABEL;
 
 	void clearResults();
 	void messageAdd(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);

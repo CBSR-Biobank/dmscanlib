@@ -8,6 +8,7 @@
 #include "Decoder.h"
 #include "UaDebug.h"
 #include "Dib.h"
+#include "Util.h"
 
 #include <iostream>
 #include <string.h>
@@ -59,7 +60,7 @@ struct MessageInfo {
 		topLeft = botRight = NULL;
 	}
 
-	DmtxVector2 & getCorners() {
+	void getCorners() {
 		double minDist = numeric_limits<double>::max(), maxDist = 0;;
 		unsigned min = 4, max = 4;
 
@@ -75,21 +76,45 @@ struct MessageInfo {
 				minDist = dist[i];
 				min = i;
 			}
+			if (dist[i] > maxDist) {
+				maxDist = dist[i];
+				max = i;
+			}
 		}
 
 		switch (min) {
-		case 0: topLeft = &p00;
-		case 1: topLeft = & p10;
-		case 2: topLeft = & p11;
-		case 3: topLeft = & p01;
+		case 0: topLeft = &p00; break;
+		case 1: topLeft = &p10; break;
+		case 2: topLeft = &p11; break;
+		case 3: topLeft = &p01; break;
 		default:
 			UA_ASSERTS(false, "invalid value for min: " << min);
 		}
+
+		switch (max) {
+		case 0: botRight = &p00; break;
+		case 1: botRight = &p10; break;
+		case 2: botRight = &p11; break;
+		case 3: botRight = &p01; break;
+		default:
+			UA_ASSERTS(false, "invalid value for max: " << max);
+		}
 	}
 
+	DmtxVector2 & getTopLeftCorner() {
+		if (topLeft == NULL) {
+			getCorners();
+		}
+		UA_ASSERT_NOT_NULL(topLeft);
+		return *topLeft;
+	}
 
-	DmtxVector2 & getTopLeftCorners() {
-
+	DmtxVector2 & getBotRightCorner() {
+		if (botRight == NULL) {
+			getCorners();
+		}
+		UA_ASSERT_NOT_NULL(topLeft);
+		return *botRight;
 	}
 
 	friend ostream & operator<<(ostream & os, MessageInfo & m);
@@ -127,6 +152,22 @@ struct MessageInfoSort {
 	}
 };
 
+struct DecodeRegion {
+	int row, col;
+	DmtxPixelLoc topLeft, botRight;
+};
+
+ostream & operator<<(ostream &os, DecodeRegion & r) {
+	os << r.row	<< "," << r.col << ": "
+		<< "(" << r.topLeft.X << ", " << r.topLeft.Y << "), "
+		<< "(" << r.botRight.X << ", " << r.botRight.Y << ")";
+	return os;
+}
+
+const char * Decoder::INI_SECTION_NAME = "barcode-regions";
+
+const char * Decoder::INI_REGION_LABEL = "region";
+
 Decoder::Decoder() {
 	UA_DEBUG(ua::Debug::Instance().subSysHeaderSet(1, "Decoder"));
 }
@@ -148,9 +189,9 @@ Decoder::~Decoder() {
 void Decoder::clearResults() {
 	Cluster * c;
 
-	while (results.size() > 0) {
-		MessageInfo * info = results.back();
-		results.pop_back();
+	while (calRegions.size() > 0) {
+		MessageInfo * info = calRegions.back();
+		calRegions.pop_back();
 		delete info;
 	}
 	while (rowClusters.size() > 0) {
@@ -182,7 +223,7 @@ void Decoder::decodeImage(Dib & dib){
 }
 
 void Decoder::decodeImage(DmtxImage & image) {
-	if (results.size() > 0) {
+	if (calRegions.size() > 0) {
 		// an image was already created, destroy this one as a new one
 		// is created below
 		clearResults();
@@ -230,8 +271,8 @@ void Decoder::decodeImage(DmtxImage & image) {
 		msg = dmtxDecodeMatrixRegion(dec, reg, DmtxUndefined);
 		if (msg != NULL) {
 			messageAdd(dec, reg, msg);
-			UA_DOUT(1, 5, "message " << results.size() - 1
-					<< ": "	<< results.back()->str);
+			UA_DOUT(1, 5, "message " << calRegions.size() - 1
+					<< ": "	<< calRegions.back()->str);
 			//showStats(dec, reg, msg);
 			dmtxMessageDestroy(&msg);
 		}
@@ -262,7 +303,7 @@ void Decoder::messageAdd(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg) {
 
 	//showStats(dec, reg, msg);
 
-	results.push_back(info);
+	calRegions.push_back(info);
 }
 
 void Decoder::showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg) {
@@ -339,17 +380,17 @@ DmtxImage * Decoder::createDmtxImageFromDib(Dib & dib) {
 }
 
 unsigned Decoder::getNumTags() {
-	return results.size();
+	return calRegions.size();
 }
 
 const char * Decoder::getTag(unsigned tagNum) {
-	UA_ASSERT(tagNum < results.size());
-	return results[tagNum]->str.c_str();
+	UA_ASSERT(tagNum < calRegions.size());
+	return calRegions[tagNum]->str.c_str();
 }
 
 void Decoder::getTagCorners(int tagNum, DmtxVector2 & p00, DmtxVector2 & p10,
 		DmtxVector2 & p11, DmtxVector2 & p01) {
-	MessageInfo & info = *results[tagNum];
+	MessageInfo & info = *calRegions[tagNum];
 	p00 = info.p00;
 	p10 = info.p10;
 	p11 = info.p11;
@@ -357,10 +398,10 @@ void Decoder::getTagCorners(int tagNum, DmtxVector2 & p00, DmtxVector2 & p10,
 }
 
 void Decoder::debugShowTags() {
-	unsigned numTags = results.size();
+	unsigned numTags = calRegions.size();
 	UA_DOUT(1, 1, "debugTags: tags found: " << numTags);
 	for (unsigned i = 0; i < numTags; ++i) {
-		MessageInfo & info = *results[i];
+		MessageInfo & info = *calRegions[i];
 		UA_DOUT(1, 1, "debugTags: tag " << i << ": " << info);
 	}
 }
@@ -369,8 +410,8 @@ string Decoder::getResults() {
 	ostringstream out;
 	unsigned curRow = 0;
 
-	for (unsigned i = 0, numTags = results.size(); i < numTags; ++i) {
-		MessageInfo & info = *results[i];
+	for (unsigned i = 0, numTags = calRegions.size(); i < numTags; ++i) {
+		MessageInfo & info = *calRegions[i];
 		if (info.rowCluster->rank != curRow) {
 			out << endl;
 			curRow = info.rowCluster->rank;
@@ -391,11 +432,11 @@ void Decoder::sortRegions(unsigned imageHeight, unsigned imageWidth) {
 	bool rowClusterFound;
 	bool colClusterFound;
 
-	for (unsigned i = 0, n = results.size(); i < n; ++i) {
+	for (unsigned i = 0, n = calRegions.size(); i < n; ++i) {
 		rowClusterFound = false;
 		colClusterFound = false;
 
-		DmtxVector2 & tagCorner = results[i]->getTopLeftCorner();
+		DmtxVector2 & tagCorner = calRegions[i]->getTopLeftCorner();
 		UA_DOUT(1, 9, "tag " << i << " : corner/" << tagCorner.X << "," << tagCorner.Y);
 
 		for (unsigned c = 0, cn = colClusters.size(); c < cn; ++c) {
@@ -405,7 +446,7 @@ void Decoder::sortRegions(unsigned imageHeight, unsigned imageWidth) {
 
 			if (abs(diff) < CLUSTER_THRESH) {
 				colClusterFound = true;
-				results[i]->colCluster = &cluster;
+				calRegions[i]->colCluster = &cluster;
 
 				// update cluster position based on cumulative moving average
 				cluster.position += (unsigned) ((double) diff / (double) (i+1));
@@ -420,7 +461,7 @@ void Decoder::sortRegions(unsigned imageHeight, unsigned imageWidth) {
 
 			if (abs(diff) < CLUSTER_THRESH) {
 				rowClusterFound = true;
-				results[i]->rowCluster = &cluster;
+				calRegions[i]->rowCluster = &cluster;
 
 				// update cluster position based on cumulative moving average
 				cluster.position += (unsigned) ((double) diff / (double) (i+1));
@@ -433,7 +474,7 @@ void Decoder::sortRegions(unsigned imageHeight, unsigned imageWidth) {
 			UA_ASSERT_NOT_NULL(newCluster);
 			UA_DOUT(1, 9, "new col " << colClusters.size() << ": " << *newCluster);
 			colClusters.push_back(newCluster);
-			results[i]->colCluster = newCluster;
+			calRegions[i]->colCluster = newCluster;
 		}
 
 		if (!rowClusterFound) {
@@ -441,7 +482,7 @@ void Decoder::sortRegions(unsigned imageHeight, unsigned imageWidth) {
 			UA_ASSERT_NOT_NULL(newCluster);
 			UA_DOUT(1, 9, "new row " << rowClusters.size() << ": " << *newCluster);
 			rowClusters.push_back(newCluster);
-			results[i]->rowCluster = newCluster;
+			calRegions[i]->rowCluster = newCluster;
 		}
 	}
 
@@ -464,28 +505,146 @@ void Decoder::sortRegions(unsigned imageHeight, unsigned imageWidth) {
 	UA_DOUT(1, 3, "number of columns: " << colClusters.size());
 	UA_DOUT(1, 3, "number of rows: " << rowClusters.size());
 
-	sort(results.begin(), results.end(), MessageInfoSort());
+	sort(calRegions.begin(), calRegions.end(), MessageInfoSort());
 }
 
-void Decoder::saveResutlsToIni(CSimpleIniA & ini) {
-	UA_ASSERT(results.size() > 0);
-	SI_Error rc = ini.SetValue("barcode-regions", NULL, NULL);
+void Decoder::saveRegionsToIni(CSimpleIniA & ini) {
+	UA_ASSERT(calRegions.size() > 0);
+	SI_Error rc = ini.SetValue(INI_SECTION_NAME, NULL, NULL);
 	UA_ASSERT(rc >= 0);
 
-	unsigned maxCol = results[0]->colCluster->rank;
+	unsigned maxCol = calRegions[0]->colCluster->rank;
 	ostringstream key, value;
-	for (unsigned i = 0, numTags = results.size(); i < numTags; ++i) {
-		MessageInfo & info = *results[i];
+	for (unsigned i = 0, numTags = calRegions.size(); i < numTags; ++i) {
+		MessageInfo & info = *calRegions[i];
 		key.str("");
 		value.str("");
 
-		key << "Region" << info.rowCluster->rank << "_" << maxCol - info.colCluster->rank;
-		value << info.p00.X << "," << info.p00.Y << ","
-		 << info.p10.X << "," << info.p10.Y << ","
-		 << info.p11.X << "," << info.p11.Y << ","
-		 << info.p01.X << "," << info.p01.Y;
+		DmtxVector2 & tl = info.getTopLeftCorner();
+		DmtxVector2 & br = info.getBotRightCorner();
 
-		SI_Error rc = ini.SetValue("barcode-regions", key.str().c_str(), value.str().c_str());
+		key << INI_REGION_LABEL << info.rowCluster->rank << "_" << maxCol - info.colCluster->rank;
+		value << (int) tl.X << "," << (int) tl.Y << ","
+			  << (int) br.X << "," << (int) br.Y;
+
+		SI_Error rc = ini.SetValue(INI_SECTION_NAME, key.str().c_str(), value.str().c_str());
 		UA_ASSERT(rc >= 0);
+	}
+}
+
+void Decoder::getRegionsFromIni(CSimpleIniA & ini) {
+	const CSimpleIniA::TKeyVal * values = ini.GetSection(INI_SECTION_NAME);
+	if (values == NULL) {
+		cerr << "INI file error: section [barcode-regions] not defined in ini file." << endl
+			 << "Please run calibration first." << endl;
+		exit(1);
+	}
+	if (values->size() == 0) {
+		cerr << "INI file error: section [barcode-regions] does not define any regions." << endl
+		     << "Please run calibration again." << endl;
+		exit(1);
+	}
+
+	string label(INI_REGION_LABEL);
+	unsigned labelSize = label.size(), pos, prevPos;
+	DecodeRegion * region;
+
+	for(CSimpleIniA::TKeyVal::const_iterator it = values->begin();
+		it != values->end(); it++) {
+		string key(it->first.pItem);
+		string value(it->second);
+
+		region = new DecodeRegion;
+		UA_ASSERT_NOT_NULL(region);
+
+		pos =  key.find(label);
+		if (pos == string::npos) {
+			cerr << "INI file error: section [barcode-regions], key name \""
+				 << key << "\" is invalid."  << endl
+			     << "Please run calibration again." << endl;
+			exit(1);
+		}
+
+		pos = key.find_first_of('_');
+		if (pos == string::npos) {
+			cerr << "INI file error: section [barcode-regions], key name \""
+				 << key << "\" is invalid."  << endl
+			     << "Please run calibration again." << endl;
+			exit(1);
+		}
+
+		string numStr = key.substr(labelSize, pos - labelSize);
+		if (!Util::strToNum(numStr, region->row, 10)) {
+			cerr << "INI file error: section [barcode-regions], key name \""
+				 << key << "\" is invalid."  << endl
+			     << "Please run calibration again." << endl;
+			exit(1);
+		}
+
+		numStr = key.substr(pos + 1);
+		if (!Util::strToNum(numStr, region->col, 10)) {
+			cerr << "INI file error: section [barcode-regions], key name \""
+				 << key << "\" is invalid."  << endl
+			     << "Please run calibration again." << endl;
+			exit(1);
+		}
+
+		pos = value.find_first_of(',');
+		numStr = value.substr(0, pos - 1);
+		if (!Util::strToNum(numStr, region->topLeft.X, 10)) {
+			cerr << "INI file error: section [barcode-regions], first value for key \""
+				 << key << "\" is invalid:" << numStr << endl
+			     << "Please run calibration again." << endl;
+			exit(1);
+		}
+
+		prevPos = pos + 1;
+		pos = value.find_first_of(',', prevPos);
+		numStr = value.substr(prevPos, pos - prevPos);
+		if (!Util::strToNum(numStr, region->topLeft.Y, 10)) {
+			cerr << "INI file error: section [barcode-regions], second value for key \""
+				 << key << "\" is invalid:" << numStr << endl
+			     << "Please run calibration again." << endl;
+			exit(1);
+		}
+
+		prevPos = pos + 1;
+		pos = value.find_first_of(',', prevPos);
+		numStr = value.substr(prevPos, pos - prevPos);
+		if (!Util::strToNum(numStr, region->botRight.X, 10)) {
+			cerr << "INI file error: section [barcode-regions], third value for key \""
+				 << key << "\" is invalid:" << numStr << endl
+			     << "Please run calibration again." << endl;
+			exit(1);
+		}
+
+		numStr = value.substr(pos + 1);
+		if (!Util::strToNum(numStr, region->botRight.Y, 10)) {
+			cerr << "INI file error: section [barcode-regions], fourth value for key \""
+				 << key << "\" is invalid:" << numStr << endl
+			     << "Please run calibration again." << endl;
+			exit(1);
+		}
+
+		decodeRegions.push_back(region);
+		UA_DOUT(1, 3, "getRegionsFromIni: " << *region);
+	}
+}
+
+/*
+ * Should only be called after regions are loaded from INI file.
+ */
+void Decoder::decodeImageRegions(Dib & dib) {
+	if (decodeRegions.size() == 0) {
+		UA_WARN("no decoded regions; exiting.");
+		return;
+	}
+
+	for (unsigned i = 0, n = decodeRegions.size(); i < n; ++i) {
+		DecodeRegion & region = *decodeRegions[i];
+		Dib croppedDib;
+		croppedDib.crop(dib, region.topLeft.X, region.topLeft.Y,
+				region.botRight.X, region.botRight.Y);
+		decodeImage(croppedDib);
 	}
 }

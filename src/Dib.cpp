@@ -302,21 +302,22 @@ void Dib::setPixelGrayscale(unsigned row, unsigned col,	unsigned char value) {
 /*
  * DIBs are flipped in Y;
  */
-void Dib::crop(Dib &src, unsigned r1, unsigned c1, unsigned r2, unsigned c2) {
+void Dib::crop(Dib &src, unsigned x0, unsigned y0, unsigned x1, unsigned y1) {
 	UA_ASSERT_NOT_NULL(src.infoHeader);
-	UA_ASSERT(r1 < infoHeader->height);
-	UA_ASSERT(r2 < infoHeader->height);
-	UA_ASSERT(c1 < infoHeader->width);
-	UA_ASSERT(c2 < infoHeader->width);
-	UA_ASSERT(c2 > c1);
-	UA_ASSERT(r2 > r1);
+	UA_ASSERT(x1 > x0);
+	UA_ASSERT(y1 > y0);
 
 	infoHeader = new BitmapInfoHeader;
 	*infoHeader = *src.infoHeader;
 	bytesPerPixel = src.bytesPerPixel;
 
-	infoHeader->width  = c2 - c1;
-	infoHeader->height = r2 - r1;
+	UA_ASSERT(y0 < infoHeader->height);
+	UA_ASSERT(y1 < infoHeader->height);
+	UA_ASSERT(x0 < infoHeader->width);
+	UA_ASSERT(x1 < infoHeader->width);
+
+	infoHeader->width  = x1 - x0;
+	infoHeader->height = y1 - y0;
 
 	rowPaddingBytes = (infoHeader->width * bytesPerPixel) & 0x3;
 	unsigned destRowBytes = infoHeader->width * bytesPerPixel + rowPaddingBytes;
@@ -327,7 +328,7 @@ void Dib::crop(Dib &src, unsigned r1, unsigned c1, unsigned r2, unsigned c2) {
 	pixels = new unsigned char[infoHeader->imageSize];
 
 	unsigned srcRowBytes = src.infoHeader->width * src.bytesPerPixel + src.rowPaddingBytes;
-	unsigned char * srcRowPtr = src.pixels + (src.infoHeader->height - r2) * srcRowBytes + c1 * bytesPerPixel;
+	unsigned char * srcRowPtr = src.pixels + (src.infoHeader->height - y1) * srcRowBytes + x0 * bytesPerPixel;
 	unsigned char * destRowPtr = pixels;
 
 	for (unsigned row = 0; row < infoHeader->height;
