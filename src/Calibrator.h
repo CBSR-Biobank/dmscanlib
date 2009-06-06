@@ -18,17 +18,22 @@ class Calibrator : public Decoder {
 public:
 	Calibrator();
 	virtual ~Calibrator();
-	virtual void processImage(DmtxImage & image);
+	void processImage(Dib & dib);
+	void processImage(DmtxImage & image);
 	void saveRegionsToIni(CSimpleIniA & ini);
 	void imageShowBins(Dib & dib, RgbQuad & quad);
 
 private:
 	static const int BIN_THRESH = 15;
 
+	unsigned width;;
+	unsigned height;
+
+	vector<MessageInfo *>  msgInfos;
 	vector<BinRegion *> rowBinRegions;
 	vector<BinRegion *> colBinRegions;
 
-	void sortRegions(unsigned imageHeight, unsigned imageWidth);
+	void sortRegions();
 };
 
 #endif /* CALIBRATOR_H_ */

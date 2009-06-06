@@ -24,6 +24,11 @@ class MessageInfo;
 struct DecodeRegion {
 	int row, col;
 	DmtxPixelLoc topLeft, botRight;
+	MessageInfo * msgInfo;
+
+	DecodeRegion() {
+		msgInfo = NULL;
+	}
 };
 
 ostream & operator<<(ostream &os, DecodeRegion & r);
@@ -31,21 +36,9 @@ ostream & operator<<(ostream &os, DecodeRegion & r);
 class Decoder {
 public:
 	Decoder();
-	Decoder(Dib & dib);
-	Decoder(DmtxImage & image);
 	virtual ~Decoder();
 
-	void processDib(Dib & dib);
 	void processImageRegions(Dib & dib);
-	virtual void processImage(DmtxImage & image);
-
-	unsigned getNumTags();
-	const char * getTag(unsigned tagNum);
-	void getTagBoundingBox(int tagNum, DmtxVector2 & p00, DmtxVector2 & p10,
-			DmtxVector2 & p11, DmtxVector2 & p01);
-
-	string getResults();
-	void debugShowTags();
 	void getRegionsFromIni(CSimpleIniA & ini);
 
 protected:
@@ -53,13 +46,14 @@ protected:
 	static const char * INI_SECTION_NAME;
 	static const char * INI_REGION_LABEL;
 
-	vector<MessageInfo *>  calRegions;
 	vector<DecodeRegion *> decodeRegions;
 
 	void clearResults();
 	void messageAdd(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
 	DmtxImage * createDmtxImageFromDib(Dib & dib);
 	void showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
+	void processImage(Dib & dib, vector<MessageInfo *>  & msgInfos);
+	void processImage(DmtxImage & image, vector<MessageInfo *>  & msgInfos);
 };
 
 #endif /* DECODER_H_ */

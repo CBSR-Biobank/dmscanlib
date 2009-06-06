@@ -45,7 +45,6 @@ static struct option long_options[] = {
 		{ "acquire",   no_argument,       NULL, 'a' },
 		{ "calibrate", required_argument, NULL, 'c' },
 		{ "decode",    required_argument, NULL, 'd' },
-		{ "process",   required_argument, NULL, 'p' },
 		{ "scan",      required_argument, NULL, 's' },
 		{ "select",    no_argument,       NULL, 200 },
 		{ "verbose",   required_argument, NULL, 'v' },
@@ -62,7 +61,6 @@ struct Options {
 	bool aquireAndProcessImage;
 	bool calibrate;
 	bool decodeImage;
-	bool processImage;
 	bool scanImage;
 	char * filename;
 
@@ -70,7 +68,6 @@ struct Options {
 		aquireAndProcessImage = false;
 		calibrate = false;
 		decodeImage = false;
-		processImage = false;
 		scanImage = false;
 		filename = NULL;
 	}
@@ -86,7 +83,6 @@ private:
 	void acquireAndProcesImage();
 	void calibrateToImage(char * filename);
 	void decodeImage(char * filename);
-	void processImage(char * filename);
 	void scanImage(char * filename);
 
 	static const char * INI_FILE_NAME;
@@ -125,11 +121,6 @@ Application::Application(int argc, char ** argv) :
 
 		case 'd':
 			options.decodeImage = true;
-			options.filename = optarg;
-			break;
-
-		case 'p':
-			options.processImage = true;
 			options.filename = optarg;
 			break;
 
@@ -207,9 +198,6 @@ Application::Application(int argc, char ** argv) :
 		cerr << "Error: invalid options selected." << endl;
 		exit(0);
 	}
-	else if (options.processImage) {
-		processImage(options.filename);
-	}
 	else if (options.aquireAndProcessImage) {
 		acquireAndProcesImage();
 	}
@@ -235,14 +223,12 @@ void Application::calibrateToImage(char * filename) {
 	dib.readFromFile(filename);
 	Dib markedDib(dib);
 	Calibrator calibrator;
-	calibrator.processDib(dib);
-	calibrator.debugShowTags();
+	calibrator.processImage(dib);
 	calibrator.saveRegionsToIni(ini);
 	ini.SaveFile(INI_FILE_NAME);
 
 	calibrator.imageShowBins(markedDib, quad);
 	markedDib.writeToFile("out.bmp");
-	cout << calibrator.getResults();
 }
 
 void Application::decodeImage(char * filename) {
@@ -258,20 +244,6 @@ void Application::decodeImage(char * filename) {
 	decoder.getRegionsFromIni(ini);
 	decoder.processImageRegions(dib);
 	markedDib.writeToFile("out.bmp");
-	cout << decoder.getResults();
-}
-
-void Application::processImage(char * filename) {
-	Dib dib;
-	dib.readFromFile(filename);
-
-	Dib edgeDib;
-	edgeDib.crop(dib, 2590, 644, 3490, 1950);
-	//edgeDib->sobelEdgeDetection(*dib);
-	edgeDib.writeToFile("out.bmp");
-
-	Decoder decoder(dib);
-	decoder.debugShowTags();
 }
 
 void Application::acquireAndProcesImage() {

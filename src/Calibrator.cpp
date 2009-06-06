@@ -29,11 +29,18 @@ Calibrator::~Calibrator() {
 	}
 }
 
+void Calibrator::processImage(Dib & dib) {
+	Decoder::processImage(dib, msgInfos);
+	width = dib.getWidth();
+	height = dib.getHeight();
+	sortRegions();
+}
+
 void Calibrator::processImage(DmtxImage & image) {
-	Decoder::processImage(image);
-	unsigned width = dmtxImageGetProp(&image, DmtxPropWidth);
-	unsigned height = dmtxImageGetProp(&image, DmtxPropHeight);
-	sortRegions(height, width);
+	Decoder::processImage(image, msgInfos);
+	width = dmtxImageGetProp(&image, DmtxPropWidth);
+	height = dmtxImageGetProp(&image, DmtxPropHeight);
+	sortRegions();
 }
 
 /* Finds rows and columns by examining each decode region's top left corner.
@@ -42,16 +49,16 @@ void Calibrator::processImage(DmtxImage & image) {
  * Once rows and columns are determined, they are sorted. Once this is done,
  * the regions can then be sorted according to row and column.
  */
-void Calibrator::sortRegions(unsigned imageHeight, unsigned imageWidth) {
+void Calibrator::sortRegions() {
 	bool insideRowBin;
 	bool insideColBin;
 
-	for (unsigned i = 0, n = calRegions.size(); i < n; ++i) {
+	for (unsigned i = 0, n = msgInfos.size(); i < n; ++i) {
 		insideRowBin = false;
 		insideColBin = false;
 
-		DmtxPixelLoc & tlCorner = calRegions[i]->getTopLeftCorner();
-		DmtxPixelLoc & brCorner = calRegions[i]->getBotRightCorner();
+		DmtxPixelLoc & tlCorner = msgInfos[i]->getTopLeftCorner();
+		DmtxPixelLoc & brCorner = msgInfos[i]->getBotRightCorner();
 
 		UA_DOUT(1, 9, "tag " << i << " : tlCorner/" << tlCorner.X << "," << tlCorner.Y
 				<< "  brCorner/" << brCorner.X << "," << brCorner.Y);
@@ -66,17 +73,17 @@ void Calibrator::sortRegions(unsigned imageHeight, unsigned imageWidth) {
 
 			if ((lDiff >= 0) && (rDiff <= 0)) {
 				insideColBin = true;
-				calRegions[i]->setColBinRegion(&bin);
+				msgInfos[i]->setColBinRegion(&bin);
 			}
 			else if ((lDiff < 0) && (lDiff > -BIN_THRESH)) {
 				insideColBin = true;
-				calRegions[i]->setColBinRegion(&bin);
+				msgInfos[i]->setColBinRegion(&bin);
 				bin.setMin(tlCorner.X);
 				UA_DOUT(1, 9, "col update min " << bin.getMin());
 			}
 			else if ((rDiff > 0) && (rDiff < BIN_THRESH)) {
 				insideColBin = true;
-				calRegions[i]->setColBinRegion(&bin);
+				msgInfos[i]->setColBinRegion(&bin);
 				bin.setMax(brCorner.X);
 				UA_DOUT(1, 9, "col update max " << bin.getMax());
 			}
@@ -92,17 +99,17 @@ void Calibrator::sortRegions(unsigned imageHeight, unsigned imageWidth) {
 
 			if ((tDiff >= 0) && (bDiff <= 0)) {
 				insideRowBin = true;
-				calRegions[i]->setRowBinRegion(&bin);
+				msgInfos[i]->setRowBinRegion(&bin);
 			}
 			else if ((tDiff < 0) && (tDiff > -BIN_THRESH)) {
 				insideRowBin = true;
-				calRegions[i]->setRowBinRegion(&bin);
+				msgInfos[i]->setRowBinRegion(&bin);
 				bin.setMin(tlCorner.Y);
 				UA_DOUT(1, 9, "row update min " << bin.getMin());
 			}
 			else if ((bDiff > 0) && (bDiff < BIN_THRESH)) {
 				insideRowBin = true;
-				calRegions[i]->setRowBinRegion(&bin);
+				msgInfos[i]->setRowBinRegion(&bin);
 				bin.setMax(brCorner.Y);
 				UA_DOUT(1, 9, "row update max " << bin.getMax());
 			}
@@ -114,7 +121,7 @@ void Calibrator::sortRegions(unsigned imageHeight, unsigned imageWidth) {
 			UA_ASSERT_NOT_NULL(newBinRegion);
 			UA_DOUT(1, 9, "new col " << colBinRegions.size() << ": " << *newBinRegion);
 			colBinRegions.push_back(newBinRegion);
-			calRegions[i]->setColBinRegion(newBinRegion);
+			msgInfos[i]->setColBinRegion(newBinRegion);
 		}
 
 		if (!insideRowBin) {
@@ -123,7 +130,7 @@ void Calibrator::sortRegions(unsigned imageHeight, unsigned imageWidth) {
 			UA_ASSERT_NOT_NULL(newBinRegion);
 			UA_DOUT(1, 9, "new row " << rowBinRegions.size() << ": " << *newBinRegion);
 			rowBinRegions.push_back(newBinRegion);
-			calRegions[i]->setRowBinRegion(newBinRegion);
+			msgInfos[i]->setRowBinRegion(newBinRegion);
 		}
 	}
 
@@ -138,7 +145,7 @@ void Calibrator::sortRegions(unsigned imageHeight, unsigned imageWidth) {
 		c.setMin(min > 15 ? min - 15 : 0);
 
 		unsigned max = c.getMax();
-		c.setMax(max < imageWidth - 15 ? max + 15 : imageWidth);
+		c.setMax(max < width - 15 ? max + 15 : width);
 
 		c.setRank(i);
 		UA_DOUT(1, 5, "col BinRegion " << i << ": " << c);
@@ -150,7 +157,7 @@ void Calibrator::sortRegions(unsigned imageHeight, unsigned imageWidth) {
 		c.setMin(min > 15 ? min - 15 : 0);
 
 		unsigned max = c.getMax();
-		c.setMax(max < imageWidth - 15 ? max + 15 : imageWidth);
+		c.setMax(max < height - 15 ? max + 15 : height);
 
 		c.setRank(i);
 		UA_DOUT(1, 5, "row BinRegion " << i << ": " << c);
@@ -159,15 +166,15 @@ void Calibrator::sortRegions(unsigned imageHeight, unsigned imageWidth) {
 	UA_DOUT(1, 3, "number of columns: " << colBinRegions.size());
 	UA_DOUT(1, 3, "number of rows: " << rowBinRegions.size());
 
-	sort(calRegions.begin(), calRegions.end(), MessageInfoSort());
+	sort(msgInfos.begin(), msgInfos.end(), MessageInfoSort());
 }
 
 void Calibrator::saveRegionsToIni(CSimpleIniA & ini) {
-	UA_ASSERT(calRegions.size() > 0);
+	UA_ASSERT(msgInfos.size() > 0);
 	SI_Error rc = ini.SetValue(INI_SECTION_NAME, NULL, NULL);
 	UA_ASSERT(rc >= 0);
 
-	unsigned maxCol = calRegions[0]->getColBinRegion().getRank();
+	unsigned maxCol = msgInfos[0]->getColBinRegion().getRank();
 	ostringstream key, value;
 	for (int r = rowBinRegions.size() - 1; r >= 0; --r) {
 		for (unsigned c = 0, cn = colBinRegions.size(); c < cn; ++c) {

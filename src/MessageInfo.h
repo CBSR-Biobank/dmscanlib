@@ -54,6 +54,9 @@ public:
 		return *rowBinRegion;
 	}
 
+	static void removeItems(vector<MessageInfo *>  & msgInfos);
+	static void debugShowItems(vector<MessageInfo *>  & msgInfos);
+
 private:
 	string str;
 	DmtxVector2 p00, p10, p11, p01;

@@ -96,6 +96,25 @@ DmtxPixelLoc & MessageInfo::getBotRightCorner() {
 	return botRight;
 }
 
+
+
+void MessageInfo::removeItems(vector<MessageInfo *>  & msgInfos) {
+	while (msgInfos.size() > 0) {
+		MessageInfo * info = msgInfos.back();
+		msgInfos.pop_back();
+		delete info;
+	}
+}
+
+void MessageInfo::debugShowItems(vector<MessageInfo *>  & msgInfos) {
+	unsigned numTags = msgInfos.size();
+	UA_DOUT(1, 1, "debugTags: tags found: " << numTags);
+	for (unsigned i = 0; i < numTags; ++i) {
+		MessageInfo & info = *msgInfos[i];
+		UA_DOUT(1, 1, "debugTags: tag " << i << ": " << info);
+	}
+}
+
 ostream & operator<<(ostream &os, MessageInfo & m) {
 	os << "\"" << m.str	<< "\" (" << m.p00.X << ", " << m.p00.Y << "), "
 	<< "(" << m.p10.X << ", " << m.p10.Y << "), "

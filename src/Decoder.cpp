@@ -34,26 +34,7 @@ Decoder::Decoder() {
 	UA_DEBUG(ua::Debug::Instance().subSysHeaderSet(1, "Decoder"));
 }
 
-Decoder::Decoder(Dib & dib) {
-	UA_DEBUG(ua::Debug::Instance().subSysHeaderSet(1, "Decoder"));
-	processDib(dib);
-}
-
-Decoder::Decoder(DmtxImage & image) {
-	UA_DEBUG(ua::Debug::Instance().subSysHeaderSet(1, "Decoder"));
-	processImage(image);
-}
-
 Decoder::~Decoder() {
-	clearResults();
-}
-
-void Decoder::clearResults() {
-	while (calRegions.size() > 0) {
-		MessageInfo * info = calRegions.back();
-		calRegions.pop_back();
-		delete info;
-	}
 }
 
 /*
@@ -66,19 +47,13 @@ void Decoder::clearResults() {
  *	file. If a DmxtImage can be created, decode it. All barcodes decoded are
  *	stored in the supplied buffer, up to a max length of bufferSize.
  */
-void Decoder::processDib(Dib & dib){
+void Decoder::processImage(Dib & dib, vector<MessageInfo *>  & msgInfos){
 	DmtxImage * image = createDmtxImageFromDib(dib);
-	processImage(*image);
+	processImage(*image, msgInfos);
 	dmtxImageDestroy(&image);
 }
 
-void Decoder::processImage(DmtxImage & image) {
-	if (calRegions.size() > 0) {
-		// an image was already created, destroy this one as a new one
-		// is created below
-		clearResults();
-	}
-
+void Decoder::processImage(DmtxImage & image, vector<MessageInfo *>  & msgInfos) {
 	DmtxDecode * dec = NULL;
 	DmtxRegion * reg = NULL;
 	DmtxMessage * msg = NULL;
@@ -120,9 +95,13 @@ void Decoder::processImage(DmtxImage & image) {
 		UA_DOUT(1, 5, "retrieving message from region " << regionCount++);
 		msg = dmtxDecodeMatrixRegion(dec, reg, DmtxUndefined);
 		if (msg != NULL) {
-			messageAdd(dec, reg, msg);
-			UA_DOUT(1, 5, "message " << calRegions.size() - 1
-					<< ": "	<< calRegions.back()->getMsg());
+			MessageInfo * info = new MessageInfo(dec, reg, msg);
+			UA_ASSERT_NOT_NULL(info);
+
+			//showStats(dec, reg, msg);
+			msgInfos.push_back(info);
+			UA_DOUT(1, 5, "message " << msgInfos.size() - 1
+					<< ": "	<< msgInfos.back()->getMsg());
 			//showStats(dec, reg, msg);
 			dmtxMessageDestroy(&msg);
 		}
@@ -130,14 +109,6 @@ void Decoder::processImage(DmtxImage & image) {
 	}
 
 	dmtxDecodeDestroy(&dec);
-}
-
-void Decoder::messageAdd(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg) {
-	MessageInfo * info = new MessageInfo(dec, reg, msg);
-	UA_ASSERT_NOT_NULL(info);
-
-	//showStats(dec, reg, msg);
-	calRegions.push_back(info);
 }
 
 void Decoder::showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg) {
@@ -211,46 +182,6 @@ DmtxImage * Decoder::createDmtxImageFromDib(Dib & dib) {
 	dmtxImageSetProp(image, DmtxPropRowPadBytes, dib.getRowPadBytes());
 	dmtxImageSetProp(image, DmtxPropImageFlip, DmtxFlipY); // DIBs are flipped in Y
 	return image;
-}
-
-unsigned Decoder::getNumTags() {
-	return calRegions.size();
-}
-
-const char * Decoder::getTag(unsigned tagNum) {
-	UA_ASSERT(tagNum < calRegions.size());
-	return calRegions[tagNum]->getMsg().c_str();
-}
-
-void Decoder::getTagBoundingBox(int tagNum, DmtxVector2 & p00, DmtxVector2 & p10,
-		DmtxVector2 & p11, DmtxVector2 & p01) {
-	MessageInfo & info = *calRegions[tagNum];
-	info.getCorners(p00, p10, p11, p01);
-}
-
-void Decoder::debugShowTags() {
-	unsigned numTags = calRegions.size();
-	UA_DOUT(1, 1, "debugTags: tags found: " << numTags);
-	for (unsigned i = 0; i < numTags; ++i) {
-		MessageInfo & info = *calRegions[i];
-		UA_DOUT(1, 1, "debugTags: tag " << i << ": " << info);
-	}
-}
-
-string Decoder::getResults() {
-	ostringstream out;
-	unsigned curRow = 0;
-
-	for (unsigned i = 0, numTags = calRegions.size(); i < numTags; ++i) {
-		MessageInfo & info = *calRegions[i];
-		if (info.getRowBinRegion().getRank() != curRow) {
-			out << endl;
-			curRow = info.getRowBinRegion().getRank();
-		}
-		out << info.getMsg() << " ";
-	}
-	out << endl;
-	return out.str();
 }
 
 void Decoder::getRegionsFromIni(CSimpleIniA & ini) {
@@ -365,15 +296,22 @@ void Decoder::processImageRegions(Dib & dib) {
 		return;
 	}
 
+	vector<MessageInfo *>  msgInfos;
+
 	for (unsigned i = 0, n = decodeRegions.size(); i < n; ++i) {
 		DecodeRegion & region = *decodeRegions[i];
 		Dib croppedDib;
 		croppedDib.crop(dib, region.topLeft.X, region.topLeft.Y,
 				region.botRight.X, region.botRight.Y);
-		processDib(croppedDib);
+		msgInfos.clear();
+		processImage(croppedDib, msgInfos);
+		unsigned size = msgInfos.size();
+		UA_ASSERT(size <= 1);
+		if (size == 1) {
+			region.msgInfo = msgInfos[0];
+		}
 	}
 }
-
 
 ostream & operator<<(ostream &os, DecodeRegion & r) {
 	os << r.row	<< "," << r.col << ": "
