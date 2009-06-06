@@ -31,8 +31,8 @@ public:
 
 	void getCorners(DmtxVector2 & p00, DmtxVector2 & p10,
 			DmtxVector2 & p11, DmtxVector2 & p01);
-	DmtxVector2 & getTopLeftCorner();
-	DmtxVector2 & getBotRightCorner();
+	DmtxPixelLoc & getTopLeftCorner();
+	DmtxPixelLoc & getBotRightCorner();
 
 	void setColBinRegion(BinRegion * c) {
 		UA_ASSERT_NOT_NULL(c);
@@ -59,10 +59,10 @@ private:
 	DmtxVector2 p00, p10, p11, p01;
 	BinRegion * colBinRegion;
 	BinRegion * rowBinRegion;
-	DmtxVector2 * topLeft;
-	DmtxVector2 * botRight;
+	DmtxPixelLoc topLeft;
+	DmtxPixelLoc botRight;
 
-	void getCorners() ;
+	void getBoundingBox() ;
 
 	friend ostream & operator<<(ostream & os, MessageInfo & m);
 	friend struct MessageInfoSort;

@@ -41,7 +41,7 @@ public:
 
 	unsigned getNumTags();
 	const char * getTag(unsigned tagNum);
-	void getTagCorners(int tagNum, DmtxVector2 & p00, DmtxVector2 & p10,
+	void getTagBoundingBox(int tagNum, DmtxVector2 & p00, DmtxVector2 & p10,
 			DmtxVector2 & p11, DmtxVector2 & p01);
 
 	string getResults();

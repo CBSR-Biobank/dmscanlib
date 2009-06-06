@@ -11,7 +11,7 @@
 
 
 MessageInfo::MessageInfo(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg) :
-	colBinRegion(NULL), rowBinRegion(NULL), topLeft(NULL), botRight(NULL) {
+	colBinRegion(NULL), rowBinRegion(NULL) {
 	str.append((char *) msg->output, msg->outputIdx);
 
 	int height = dmtxDecodeGetProp(dec, DmtxPropHeight);
@@ -26,6 +26,7 @@ MessageInfo::MessageInfo(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg) :
 	p10.Y = height - 1 - p10.Y;
 	p11.Y = height - 1 - p11.Y;
 	p01.Y = height - 1 - p01.Y;
+	getBoundingBox();
 }
 
 MessageInfo::~MessageInfo() {
@@ -40,61 +41,59 @@ void MessageInfo::getCorners(DmtxVector2 & rp00, DmtxVector2 & rp10,
 	rp01 = p01;
 }
 
-void MessageInfo::getCorners() {
-	double minDist = numeric_limits<double>::max(), maxDist = 0;;
-	unsigned min = 4, max = 4;
+void MessageInfo::getBoundingBox() {
+	topLeft.X = (int) p00.X;
+	topLeft.Y = (int) p00.Y;
+	botRight.X = (int) p00.X;
+	botRight.Y = (int) p00.Y;
 
-	double dist[4] = {
-			dmtxVector2Mag(&p00),
-			dmtxVector2Mag(&p10),
-			dmtxVector2Mag(&p11),
-			dmtxVector2Mag(&p01),
-	};
-
-	for (unsigned i = 0; i < 4; ++i) {
-		if (dist[i] < minDist) {
-			minDist = dist[i];
-			min = i;
-		}
-		if (dist[i] > maxDist) {
-			maxDist = dist[i];
-			max = i;
-		}
+	if ((int) p10.X < topLeft.X) {
+		topLeft.X = (int) p10.X;
+	}
+	if ((int) p11.X < topLeft.X) {
+		topLeft.X = (int) p11.X;
+	}
+	if ((int) p01.X < topLeft.X) {
+		topLeft.X = (int) p01.X;
 	}
 
-	switch (min) {
-	case 0: topLeft = &p00; break;
-	case 1: topLeft = &p10; break;
-	case 2: topLeft = &p11; break;
-	case 3: topLeft = &p01; break;
-	default:
-		UA_ASSERTS(false, "invalid value for min: " << min);
+	if ((int) p10.Y < topLeft.Y) {
+		topLeft.Y = (int) p10.Y;
+	}
+	if ((int) p11.Y < topLeft.Y) {
+		topLeft.Y = (int) p11.Y;
+	}
+	if ((int) p01.Y < topLeft.Y) {
+		topLeft.Y = (int) p01.Y;
 	}
 
-	switch (max) {
-	case 0: botRight = &p00; break;
-	case 1: botRight = &p10; break;
-	case 2: botRight = &p11; break;
-	case 3: botRight = &p01; break;
-	default:
-		UA_ASSERTS(false, "invalid value for max: " << max);
+	if ((int) p10.X > botRight.X) {
+		botRight.X = (int) p10.X;
+	}
+	if ((int) p11.X > botRight.X) {
+		botRight.X = (int) p11.X;
+	}
+	if ((int) p01.X > botRight.X) {
+		botRight.X = (int) p01.X;
+	}
+
+	if ((int) p10.Y > botRight.Y) {
+		botRight.Y = (int) p10.Y;
+	}
+	if ((int) p11.Y > botRight.Y) {
+		botRight.Y = (int) p11.Y;
+	}
+	if ((int) p01.Y > botRight.Y) {
+		botRight.Y = (int) p01.Y;
 	}
 }
 
-DmtxVector2 & MessageInfo::getTopLeftCorner() {
-	if (topLeft == NULL) {
-		getCorners();
-	}
-	UA_ASSERT_NOT_NULL(topLeft);
-	return *topLeft;
+DmtxPixelLoc & MessageInfo::getTopLeftCorner() {
+	return topLeft;
 }
 
-DmtxVector2 & MessageInfo::getBotRightCorner() {
-	if (botRight == NULL) {
-		getCorners();
-	}
-	UA_ASSERT_NOT_NULL(topLeft);
-	return *botRight;
+DmtxPixelLoc & MessageInfo::getBotRightCorner() {
+	return botRight;
 }
 
 ostream & operator<<(ostream &os, MessageInfo & m) {

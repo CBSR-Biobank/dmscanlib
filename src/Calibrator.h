@@ -12,6 +12,7 @@
 
 class Dib;
 class BinRegion;
+struct RgbQuad;
 
 class Calibrator : public Decoder {
 public:
@@ -19,6 +20,7 @@ public:
 	virtual ~Calibrator();
 	virtual void processImage(DmtxImage & image);
 	void saveRegionsToIni(CSimpleIniA & ini);
+	void imageShowBins(Dib & dib, RgbQuad & quad);
 
 private:
 	static const int BIN_THRESH = 15;

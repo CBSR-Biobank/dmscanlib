@@ -222,7 +222,7 @@ const char * Decoder::getTag(unsigned tagNum) {
 	return calRegions[tagNum]->getMsg().c_str();
 }
 
-void Decoder::getTagCorners(int tagNum, DmtxVector2 & p00, DmtxVector2 & p10,
+void Decoder::getTagBoundingBox(int tagNum, DmtxVector2 & p00, DmtxVector2 & p10,
 		DmtxVector2 & p11, DmtxVector2 & p01) {
 	MessageInfo & info = *calRegions[tagNum];
 	info.getCorners(p00, p10, p11, p01);
@@ -280,40 +280,41 @@ void Decoder::getRegionsFromIni(CSimpleIniA & ini) {
 
 		pos =  key.find(label);
 		if (pos == string::npos) {
-			cerr << "INI file error: section [barcode-regions], key name \""
-				 << key << "\" is invalid."  << endl
+			cerr << "INI file error: section [" << INI_SECTION_NAME
+			     << "], key name \"" << key << "\" is invalid."  << endl
 			     << "Please run calibration again." << endl;
 			exit(1);
 		}
 
 		pos = key.find_first_of('_');
 		if (pos == string::npos) {
-			cerr << "INI file error: section [barcode-regions], key name \""
-				 << key << "\" is invalid."  << endl
+			cerr << "INI file error: section [" << INI_SECTION_NAME
+			     << "], key name \"" << key << "\" is invalid."  << endl
 			     << "Please run calibration again." << endl;
 			exit(1);
 		}
 
 		string numStr = key.substr(labelSize, pos - labelSize);
 		if (!Util::strToNum(numStr, region->row, 10)) {
-			cerr << "INI file error: section [barcode-regions], key name \""
-				 << key << "\" is invalid."  << endl
+			cerr << "INI file error: section " << INI_SECTION_NAME
+			     << "], key name \"" << key << "\" is invalid."  << endl
 			     << "Please run calibration again." << endl;
 			exit(1);
 		}
 
 		numStr = key.substr(pos + 1);
 		if (!Util::strToNum(numStr, region->col, 10)) {
-			cerr << "INI file error: section [barcode-regions], key name \""
-				 << key << "\" is invalid."  << endl
+			cerr << "INI file error: section [" << INI_SECTION_NAME
+			     << "], key name \"" << key << "\" is invalid."  << endl
 			     << "Please run calibration again." << endl;
 			exit(1);
 		}
 
 		pos = value.find_first_of(',');
-		numStr = value.substr(0, pos - 1);
+		numStr = value.substr(0, pos);
 		if (!Util::strToNum(numStr, region->topLeft.X, 10)) {
-			cerr << "INI file error: section [barcode-regions], first value for key \""
+			cerr << "INI file error: section [" << INI_SECTION_NAME
+			     << "], first value for key \""
 				 << key << "\" is invalid:" << numStr << endl
 			     << "Please run calibration again." << endl;
 			exit(1);
@@ -323,7 +324,8 @@ void Decoder::getRegionsFromIni(CSimpleIniA & ini) {
 		pos = value.find_first_of(',', prevPos);
 		numStr = value.substr(prevPos, pos - prevPos);
 		if (!Util::strToNum(numStr, region->topLeft.Y, 10)) {
-			cerr << "INI file error: section [barcode-regions], second value for key \""
+			cerr << "INI file error: section [" << INI_SECTION_NAME
+			     << "], second value for key \""
 				 << key << "\" is invalid:" << numStr << endl
 			     << "Please run calibration again." << endl;
 			exit(1);
@@ -333,7 +335,8 @@ void Decoder::getRegionsFromIni(CSimpleIniA & ini) {
 		pos = value.find_first_of(',', prevPos);
 		numStr = value.substr(prevPos, pos - prevPos);
 		if (!Util::strToNum(numStr, region->botRight.X, 10)) {
-			cerr << "INI file error: section [barcode-regions], third value for key \""
+			cerr << "INI file error: section [" << INI_SECTION_NAME
+			     << "], third value for key \""
 				 << key << "\" is invalid:" << numStr << endl
 			     << "Please run calibration again." << endl;
 			exit(1);
@@ -341,7 +344,8 @@ void Decoder::getRegionsFromIni(CSimpleIniA & ini) {
 
 		numStr = value.substr(pos + 1);
 		if (!Util::strToNum(numStr, region->botRight.Y, 10)) {
-			cerr << "INI file error: section [barcode-regions], fourth value for key \""
+			cerr << "INI file error: section [" << INI_SECTION_NAME
+			     << "], fourth value for key \""
 				 << key << "\" is invalid:" << numStr << endl
 			     << "Please run calibration again." << endl;
 			exit(1);

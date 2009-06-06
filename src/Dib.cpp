@@ -264,12 +264,12 @@ unsigned char Dib::getPixelGrayscale(unsigned row, unsigned col) {
 	return  0;
 }
 
-void Dib::setPixel(unsigned row, unsigned col, RgbQuad & quad) {
-	UA_ASSERT(row < infoHeader->height);
-	UA_ASSERT(col < infoHeader->width);
+void Dib::setPixel(unsigned x, unsigned y, RgbQuad & quad) {
+	UA_ASSERT(x < infoHeader->width);
+	UA_ASSERT(y < infoHeader->height);
 
 	unsigned rowBytes = infoHeader->width * bytesPerPixel + rowPaddingBytes;
-	unsigned char * ptr = (pixels + row * rowBytes + col * bytesPerPixel);
+	unsigned char * ptr = (pixels + y * rowBytes + x * bytesPerPixel);
 
 	if ((infoHeader->bitCount != 24) && (infoHeader->bitCount != 32)) {
 		UA_ERROR("can't assign RgbQuad to dib");
@@ -538,8 +538,8 @@ void Dib::line(unsigned x0, unsigned y0, unsigned x1, unsigned y1, RgbQuad & qua
 	unsigned x, deltax, y, deltay, st;
 	int cx, cy, error, xstep, ystep;
 
-	y0 =  infoHeader->height - y0;
-	y1 =  infoHeader->height - y1;
+	y0 =  infoHeader->height - y0 - 1;
+	y1 =  infoHeader->height - y1 - 1;
 
 	// find largest delta for pixel steps
 	st = (abs(y1 - y0) > abs(x1 - x0));
@@ -569,7 +569,7 @@ void Dib::line(unsigned x0, unsigned y0, unsigned x1, unsigned y1, RgbQuad & qua
 			cx ^= cy; cy ^= cx; cx ^= cy;
 		}
 
-		setPixel(cy, cx, quad);
+		setPixel(cx, cy, quad);
 		error -= deltay; // converge toward end of line
 
 		if (error < 0) { // not done yet

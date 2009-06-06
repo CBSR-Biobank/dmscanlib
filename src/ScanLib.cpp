@@ -110,7 +110,6 @@ Application::Application(int argc, char ** argv) :
 	while (1) {
 		int option_index = 0;
 
-
 		ch = getopt_long (argc, argv, "ac:d:hp:s:tv:", long_options, &option_index);
 
 		if (ch == -1) break;
@@ -200,8 +199,8 @@ Application::Application(int argc, char ** argv) :
 		calibrateToImage(options.filename);
 		return;
 	}
-	else if (options.processImage) {
-		processImage(options.filename);
+	else if (options.decodeImage) {
+		decodeImage(options.filename);
 		return;
 	}
 	else if (options.aquireAndProcessImage && options.scanImage) {
@@ -232,7 +231,6 @@ void Application::calibrateToImage(char * filename) {
 
 	Dib dib;
 	RgbQuad quad(255, 0, 0);
-	DmtxVector2 p00, p10, p11, p01;
 
 	dib.readFromFile(filename);
 	Dib markedDib(dib);
@@ -242,22 +240,8 @@ void Application::calibrateToImage(char * filename) {
 	calibrator.saveRegionsToIni(ini);
 	ini.SaveFile(INI_FILE_NAME);
 
-	unsigned numTags = calibrator.getNumTags();
-	UA_DOUT(1, 3, "marking tags ");
-	for (unsigned i = 0; i < numTags; ++i) {
-		calibrator.getTagCorners(i, p00, p10, p11, p01);
-		UA_DOUT(1, 9, "marking tag " << i);
-		markedDib.line((unsigned) p00.X, (unsigned) p00.Y,
-				(unsigned) p10.X, (unsigned) p10.Y, quad);
-		markedDib.line((unsigned) p10.X, (unsigned) p10.Y,
-				(unsigned) p11.X, (unsigned) p11.Y, quad);
-		markedDib.line((unsigned) p11.X, (unsigned) p11.Y,
-				(unsigned) p01.X, (unsigned) p01.Y, quad);
-		markedDib.line((unsigned) p01.X, (unsigned) p01.Y,
-				(unsigned) p00.X, (unsigned) p00.Y, quad);
-	}
+	calibrator.imageShowBins(markedDib, quad);
 	markedDib.writeToFile("out.bmp");
-
 	cout << calibrator.getResults();
 }
 
@@ -266,30 +250,14 @@ void Application::decodeImage(char * filename) {
 
 	Dib dib;
 	RgbQuad quad(255, 0, 0);
-	DmtxVector2 p00, p10, p11, p01;
+	//DmtxVector2 p00, p10, p11, p01;
 
 	dib.readFromFile(filename);
 	Dib markedDib(dib);
 	Decoder decoder;
 	decoder.getRegionsFromIni(ini);
 	decoder.processImageRegions(dib);
-
-	unsigned numTags = decoder.getNumTags();
-	UA_DOUT(1, 3, "marking tags ");
-	for (unsigned i = 0; i < numTags; ++i) {
-		decoder.getTagCorners(i, p00, p10, p11, p01);
-		UA_DOUT(1, 9, "marking tag " << i);
-		markedDib.line((unsigned) p00.X, (unsigned) p00.Y,
-				(unsigned) p10.X, (unsigned) p10.Y, quad);
-		markedDib.line((unsigned) p10.X, (unsigned) p10.Y,
-				(unsigned) p11.X, (unsigned) p11.Y, quad);
-		markedDib.line((unsigned) p11.X, (unsigned) p11.Y,
-				(unsigned) p01.X, (unsigned) p01.Y, quad);
-		markedDib.line((unsigned) p01.X, (unsigned) p01.Y,
-				(unsigned) p00.X, (unsigned) p00.Y, quad);
-	}
 	markedDib.writeToFile("out.bmp");
-
 	cout << decoder.getResults();
 }
 
