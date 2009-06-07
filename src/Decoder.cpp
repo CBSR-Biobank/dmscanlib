@@ -37,16 +37,6 @@ Decoder::Decoder() {
 Decoder::~Decoder() {
 }
 
-/*
- *	decodeDib
- *	@params - filename: char* corresponding to the filename of an image
- *	@return - The number of bytes that got truncated to fit the barcodes
- *			  in the supplied buffer.
- *
- *	Create a file from the filename given, then create a DmtxImage from this
- *	file. If a DmxtImage can be created, decode it. All barcodes decoded are
- *	stored in the supplied buffer, up to a max length of bufferSize.
- */
 void Decoder::processImage(Dib & dib, vector<MessageInfo *>  & msgInfos){
 	DmtxImage * image = createDmtxImageFromDib(dib);
 	processImage(*image, msgInfos);
@@ -74,6 +64,7 @@ void Decoder::processImage(DmtxImage & image, vector<MessageInfo *>  & msgInfos)
 	dec = dmtxDecodeCreate(&image, 1);
 	assert(dec != NULL);
 
+#if 0
 	// save image to a PNM file
 	UA_DEBUG(
 			pnm = dmtxDecodeCreateDiagnostic(dec, &totalBytes, &headerBytes, 0);
@@ -82,6 +73,7 @@ void Decoder::processImage(DmtxImage & image, vector<MessageInfo *>  & msgInfos)
 			fclose(fh);
 			free(pnm);
 	);
+#endif
 
 	dmtxDecodeSetProp(dec, DmtxPropScanGap, 0);
 	dmtxDecodeSetProp(dec, DmtxPropSquareDevn, 10);
@@ -157,14 +149,8 @@ void Decoder::showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg) {
 	fprintf(stdout, "--------------------------------------------------\n");
 }
 
-/**
- *	createDmtxImageFromFile
- *
- *	Open the file and create a DmtxImage out of it.
- *
- *	@params - filename: char* corresponding to the filename of an image
- *			  dib - a blank Divice Independant Bitmap to read the image into
- *	@return - DmtxImage: the newly created image from the file.
+/*
+ *	createDmtxImageFromDib
  *
  */
 DmtxImage * Decoder::createDmtxImageFromDib(Dib & dib) {
