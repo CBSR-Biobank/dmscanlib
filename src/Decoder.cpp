@@ -174,12 +174,14 @@ DmtxImage * Decoder::createDmtxImageFromDib(Dib & dib) {
 void Decoder::getRegionsFromIni(CSimpleIniA & ini) {
 	const CSimpleIniA::TKeyVal * values = ini.GetSection(INI_SECTION_NAME);
 	if (values == NULL) {
-		cerr << "INI file error: section [barcode-regions] not defined in ini file." << endl
+		cerr << "INI file error: section [" << INI_SECTION_NAME
+			     << "] not defined in ini file." << endl
 			 << "Please run calibration first." << endl;
 		exit(1);
 	}
 	if (values->size() == 0) {
-		cerr << "INI file error: section [barcode-regions] does not define any regions." << endl
+		cerr << "INI file error: section [" << INI_SECTION_NAME
+			     << "] does not define any regions." << endl
 		     << "Please run calibration again." << endl;
 		exit(1);
 	}

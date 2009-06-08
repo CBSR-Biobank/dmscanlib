@@ -16,6 +16,7 @@
 #include "dmtx.h"
 #include "twain.h"     // Standard TWAIN header.
 #include "Singleton.h"
+#include "simpleini.h"
 
 #include <windows.h>
 
@@ -36,15 +37,15 @@ public:
 	 */
 	bool selectSourceAsDefault(const char ** err);
 
-	HANDLE acquireImage(const char ** err);
+	HANDLE acquireImage(const char ** err, double top, double left,
+			double bottom, double right);
 	DmtxImage* acquireDmtxImage(const char ** err);
 	void freeImage(HANDLE handle);
 
 private:
-	int GetPaletteSize(BITMAPINFOHEADER& bmInfo);
-	BOOL setCapability(TW_UINT16 cap,TW_UINT16 value,BOOL sign);
-
 	static const char * TWAIN_DLL_FILENAME;
+
+	static const char * INI_SECTION_NAME;
 
 	// properties used by the scanner
 	static const int DPI = 300;
@@ -77,6 +78,12 @@ private:
 	void unloadTwain();
 
 	void setFloatToIntPair(const float f, short & whole, unsigned short & frac);
+
+	void getConfigFromIni(CSimpleIniA & ini);
+
+	int GetPaletteSize(BITMAPINFOHEADER& bmInfo);
+
+	BOOL setCapability(TW_UINT16 cap,TW_UINT16 value,BOOL sign);
 };
 
 typedef Loki::SingletonHolder<ImageGrabberImpl> ImageGrabber;

@@ -26,6 +26,8 @@ TW_IDENTITY ImageGrabberImpl::g_AppID = {
 
 const char * ImageGrabberImpl::TWAIN_DLL_FILENAME = "TWAIN_32.DLL";
 
+const char * Decoder::INI_SECTION_NAME = "plate";
+
 /*	initGrabber() should be called prior to calling any other associated functionality,
  *	as libraries such as Twain_32.dll need to be loaded before acquire or
  *	selectDefaultAsSource work.
@@ -127,7 +129,8 @@ void ImageGrabberImpl::setFloatToIntPair(const float f, short & whole,
  *
  *	Grab an image from the twain source and convert it to the dmtxImage format
  */
-HANDLE ImageGrabberImpl::acquireImage(const char ** err){
+HANDLE ImageGrabberImpl::acquireImage(const char ** err, double top, double left,
+		double bottom, double right) {
 	UA_ASSERT_NOT_NULL(g_hLib);
 
 	TW_UINT32 handle = 0;
@@ -163,10 +166,10 @@ HANDLE ImageGrabberImpl::acquireImage(const char ** err){
 
 	setCapability(ICAP_UNITS, TWUN_INCHES, FALSE);
 	TW_IMAGELAYOUT layout;
-	setFloatToIntPair(8.8, layout.Frame.Top.Whole,    layout.Frame.Top.Frac);
-	setFloatToIntPair(2.1, layout.Frame.Left.Whole,   layout.Frame.Left.Frac);
-	setFloatToIntPair(2.7, layout.Frame.Bottom.Whole, layout.Frame.Bottom.Frac);
-	setFloatToIntPair(4.3, layout.Frame.Right.Whole,  layout.Frame.Right.Frac);
+	setFloatToIntPair(top,   layout.Frame.Top.Whole,    layout.Frame.Top.Frac);
+	setFloatToIntPair(left,  layout.Frame.Left.Whole,   layout.Frame.Left.Frac);
+	setFloatToIntPair(right, layout.Frame.Bottom.Whole, layout.Frame.Bottom.Frac);
+	setFloatToIntPair(left,  layout.Frame.Right.Whole,  layout.Frame.Right.Frac);
 	layout.DocumentNumber     = 1;
 	layout.PageNumber         = 1;
 	layout.FrameNumber        = 1;
@@ -269,7 +272,7 @@ HANDLE ImageGrabberImpl::acquireImage(const char ** err){
 DmtxImage* ImageGrabberImpl::acquireDmtxImage(const char ** err){
 	UA_ASSERT_NOT_NULL(g_hLib);
 
-	HANDLE h = acquireImage(err);
+	HANDLE h = acquireImage(err, 0, 0, 0, 0);
 	if (h == NULL) {
 		return NULL;
 	}
@@ -357,3 +360,107 @@ void ImageGrabberImpl::unloadTwain(){
 	FreeLibrary(g_hLib);
 	g_hLib = NULL;
 }
+
+void ImageGrabberImpl::getConfigFromIni(CSimpleIniA & ini) {
+	const CSimpleIniA::TKeyVal * values = ini.GetSection(INI_SECTION_NAME);
+	if (values == NULL) {
+		cerr << "INI file error: section [barcode-regions] not defined in ini file." << endl
+			 << "Please run calibration first." << endl;
+		exit(1);
+	}
+	if (values->size() == 0) {
+		cerr << "INI file error: section [barcode-regions] does not define any regions." << endl
+		     << "Please run calibration again." << endl;
+		exit(1);
+	}
+
+	string label(INI_REGION_LABEL);
+	unsigned labelSize = label.size(), pos, prevPos;
+	DecodeRegion * region;
+
+	for(CSimpleIniA::TKeyVal::const_iterator it = values->begin();
+		it != values->end(); it++) {
+		string key(it->first.pItem);
+		string value(it->second);
+
+		region = new DecodeRegion;
+		UA_ASSERT_NOT_NULL(region);
+
+		pos =  key.find(label);
+		if (pos == string::npos) {
+			cerr << "INI file error: section [" << INI_SECTION_NAME
+			     << "], key name \"" << key << "\" is invalid."  << endl
+			     << "Please run calibration again." << endl;
+			exit(1);
+		}
+
+		pos = key.find_first_of('_');
+		if (pos == string::npos) {
+			cerr << "INI file error: section [" << INI_SECTION_NAME
+			     << "], key name \"" << key << "\" is invalid."  << endl
+			     << "Please run calibration again." << endl;
+			exit(1);
+		}
+
+		string numStr = key.substr(labelSize, pos - labelSize);
+		if (!Util::strToNum(numStr, region->row, 10)) {
+			cerr << "INI file error: section " << INI_SECTION_NAME
+			     << "], key name \"" << key << "\" is invalid."  << endl
+			     << "Please run calibration again." << endl;
+			exit(1);
+		}
+
+		numStr = key.substr(pos + 1);
+		if (!Util::strToNum(numStr, region->col, 10)) {
+			cerr << "INI file error: section [" << INI_SECTION_NAME
+			     << "], key name \"" << key << "\" is invalid."  << endl
+			     << "Please run calibration again." << endl;
+			exit(1);
+		}
+
+		pos = value.find_first_of(',');
+		numStr = value.substr(0, pos);
+		if (!Util::strToNum(numStr, region->topLeft.X, 10)) {
+			cerr << "INI file error: section [" << INI_SECTION_NAME
+			     << "], first value for key \""
+				 << key << "\" is invalid:" << numStr << endl
+			     << "Please run calibration again." << endl;
+			exit(1);
+		}
+
+		prevPos = pos + 1;
+		pos = value.find_first_of(',', prevPos);
+		numStr = value.substr(prevPos, pos - prevPos);
+		if (!Util::strToNum(numStr, region->topLeft.Y, 10)) {
+			cerr << "INI file error: section [" << INI_SECTION_NAME
+			     << "], second value for key \""
+				 << key << "\" is invalid:" << numStr << endl
+			     << "Please run calibration again." << endl;
+			exit(1);
+		}
+
+		prevPos = pos + 1;
+		pos = value.find_first_of(',', prevPos);
+		numStr = value.substr(prevPos, pos - prevPos);
+		if (!Util::strToNum(numStr, region->botRight.X, 10)) {
+			cerr << "INI file error: section [" << INI_SECTION_NAME
+			     << "], third value for key \""
+				 << key << "\" is invalid:" << numStr << endl
+			     << "Please run calibration again." << endl;
+			exit(1);
+		}
+
+		numStr = value.substr(pos + 1);
+		if (!Util::strToNum(numStr, region->botRight.Y, 10)) {
+			cerr << "INI file error: section [" << INI_SECTION_NAME
+			     << "], fourth value for key \""
+				 << key << "\" is invalid:" << numStr << endl
+			     << "Please run calibration again." << endl;
+			exit(1);
+		}
+
+		decodeRegions.push_back(region);
+		UA_DOUT(1, 3, "getRegionsFromIni: " << *region);
+	}
+}
+

@@ -29,12 +29,13 @@ using namespace std;
 
 const char * USAGE_FMT =
 	"Usage: %s [OPTIONS]\n"
+	"Test tool for scanlib library."
 	"\n"
-	"  -a, --acquire         Scans an image from the scanner and decodes the 2D barcodes\n"
-	"                        on the trays.\n"
+	"  -a, --acquire NUM     Scans an image from the scanner, corresponding to"
+	"                        the defined coordinates for plate NUM, and decodes "
+	"                        the 2D barcodes on the palette placed there.\n"
 	"  -c, --calibrate FILE  Calibrates decode regions to those found in bitmap FILE.\n"
 	"  -d, --decode FILE     Decodes the 2D barcode in the specified DIB image file.\n"
-	"  -p, --process FILE    Attempts to find all trays in image.\n"
 	"  -s, --scan FILE       Scans an image and saves it as a DIB.\n"
 	"  --select              User will be asked to select the scanner.\n"
 	"  -v, --verbose NUM     Sets debugging level. Debugging messages are output "
@@ -250,7 +251,7 @@ void Application::acquireAndProcesImage() {
 #ifdef WIN32
 	const char * err;
 
-	HANDLE h = ImageGrabber::Instance().acquireImage(&err);
+	HANDLE h = ImageGrabber::Instance().acquireImage(&err, 0, 0, 0, 0);
 	if (h == NULL) {
 		cerr <<  err << endl;
 		exit(0);
@@ -271,7 +272,7 @@ void Application::scanImage(char * filename) {
 	const char * err;
 
 	UA_ASSERT_NOT_NULL(filename);
-	HANDLE h = ImageGrabber::Instance().acquireImage(&err);
+	HANDLE h = ImageGrabber::Instance().acquireImage(&err, 0, 0, 0, 0);
 	if (h == NULL) {
 		cerr <<  err << endl;
 		exit(0);
