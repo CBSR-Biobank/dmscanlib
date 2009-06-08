@@ -26,7 +26,7 @@ public:
 private:
 	static const int BIN_THRESH = 15;
 
-	unsigned width;;
+	unsigned width;
 	unsigned height;
 
 	vector<MessageInfo *>  msgInfos;

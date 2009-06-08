@@ -47,9 +47,6 @@ void Decoder::processImage(DmtxImage & image, vector<MessageInfo *>  & msgInfos)
 	DmtxDecode * dec = NULL;
 	DmtxRegion * reg = NULL;
 	DmtxMessage * msg = NULL;
-	FILE * fh;
-	unsigned char *pnm;
-	int totalBytes, headerBytes;
 	unsigned width = dmtxImageGetProp(&image, DmtxPropWidth);
 	unsigned height = dmtxImageGetProp(&image, DmtxPropHeight);
 
@@ -66,6 +63,10 @@ void Decoder::processImage(DmtxImage & image, vector<MessageInfo *>  & msgInfos)
 
 #if 0
 	// save image to a PNM file
+	FILE * fh;
+	unsigned char *pnm;
+	int totalBytes, headerBytes;
+
 	UA_DEBUG(
 			pnm = dmtxDecodeCreateDiagnostic(dec, &totalBytes, &headerBytes, 0);
 			fh = fopen("out.pnm", "w");
