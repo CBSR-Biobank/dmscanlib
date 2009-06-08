@@ -10,24 +10,14 @@
 #include <stdlib.h>
 
 bool Util::strToNum(string & str, int & number, unsigned base) {
-	/* Don't know for registerReset case */
-	if (base == 10) {
-		unsigned pos = str.find_first_not_of("0123456789");
-		if (pos != string::npos) return false;
-	}
-	else if (base == 2) {
-		unsigned pos = str.find_first_not_of("01");
-		if (pos != string::npos) return false;
-	}
-	else if (base == 8) {
-		unsigned pos = str.find_first_not_of("01234567");
-		if (pos != string::npos) return false;
-	}
-	else if ((base == 16) || (base == 0)) {
-		unsigned pos = str.find_first_not_of("0123456789abcdefABCDEF");
-		if (pos != string::npos) return false;
-	}
+	char  * end = 0;
+	number = strtoul(str.c_str (), &end, base);
+	return (*end == 0);
+}
 
-	number = strtoul(str.c_str (), NULL, base);
-	return true;
+bool Util::strToNum(string & str, double & number) {
+	char  * end = 0;
+	number = strtod(str.c_str (), &end);
+	return (*end == 0);
+
 }

@@ -20,6 +20,8 @@
 
 #include <windows.h>
 
+#include <map>
+
 /**
  * This class interfaces with the TWAIN driver to acquire images from the
  * scanner.
@@ -47,10 +49,18 @@ private:
 
 	static const char * INI_SECTION_NAME;
 
-	// properties used by the scanner
-	static const int DPI = 300;
-	static const int SCAN_CONTRAST = 500;
-	static const int SCAN_BRIGHTNESS = 500;
+	unsigned invokeTwain(TW_IDENTITY * srcId, unsigned long dg, unsigned dat,
+			unsigned msg, void * data);
+
+	void unloadTwain();
+
+	void setFloatToIntPair(const float f, short & whole, unsigned short & frac);
+
+	void getConfigFromIni(CSimpleIniA & ini);
+
+	int GetPaletteSize(BITMAPINFOHEADER& bmInfo);
+
+	BOOL setCapability(TW_UINT16 cap,TW_UINT16 value,BOOL sign);
 
 	// g_hinstDLL holds this DLL's instance handle. It is initialized in response
 	// to the DLL_PROCESS_ATTACH message. This handle is passed to CreateWindow()
@@ -72,18 +82,14 @@ private:
 	// application process responsible for making calls to function DSM_Entry().
 	static TW_IDENTITY g_AppID;
 
-	unsigned invokeTwain(TW_IDENTITY * srcId, unsigned long dg, unsigned dat,
-			unsigned msg, void * data);
+	// properties used by the scanner
+	static const int DPI = 300;
+	static const int SCAN_CONTRAST = 500;
+	static const int SCAN_BRIGHTNESS = 500;
 
-	void unloadTwain();
+	static const unsigned MAX_PLATES = 4;
 
-	void setFloatToIntPair(const float f, short & whole, unsigned short & frac);
-
-	void getConfigFromIni(CSimpleIniA & ini);
-
-	int GetPaletteSize(BITMAPINFOHEADER& bmInfo);
-
-	BOOL setCapability(TW_UINT16 cap,TW_UINT16 value,BOOL sign);
+	map<unsigned, ScFrame> plateFrames;
 };
 
 typedef Loki::SingletonHolder<ImageGrabberImpl> ImageGrabber;

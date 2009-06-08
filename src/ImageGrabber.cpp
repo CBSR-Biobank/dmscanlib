@@ -7,6 +7,7 @@
 
 
 #include "ImageGrabber.h"
+#include "ScanLib.h"
 #include "UaDebug.h"
 
 using namespace std;
@@ -42,6 +43,7 @@ ImageGrabberImpl::ImageGrabberImpl() : g_hLib(NULL), g_pDSM_Entry(NULL) {
 		UA_ASSERTS(g_pDSM_Entry != 0,
 				"ImageGrabberImpl: Unable to fetch DSM_Entry address");
 	}
+	plateFrames.resize(MAX_FRAMES);
 }
 
 ImageGrabberImpl::~ImageGrabberImpl() {
@@ -361,104 +363,74 @@ void ImageGrabberImpl::unloadTwain(){
 	g_hLib = NULL;
 }
 
-void ImageGrabberImpl::getConfigFromIni(CSimpleIniA & ini) {
-	const CSimpleIniA::TKeyVal * values = ini.GetSection(INI_SECTION_NAME);
-	if (values == NULL) {
-		cerr << "INI file error: section [" << INI_SECTION_NAME
-			     << "] not defined in ini file." << endl
-			 << "Please run calibration first." << endl;
-		exit(1);
+void ImageGrabberImpl::getConfigFromIni(CSimpleIniA & ini, string & err) {
+	for (unsigned i = 1; i < MAX_PLATES; ++i) {
+		getConfigFromIni(ini, i);
 	}
-	if (values->size() == 0) {
-		cerr << "INI file error: section [" << INI_SECTION_NAME
-			     << "] does not define any regions." << endl
-		     << "Please run calibration again." << endl;
-		exit(1);
+}
+
+bool ImageGrabberImpl::getConfigFromIni(CSimpleIniA & ini, unsigned plateNum, string & err) {
+	stringstream errStrm;
+	stringstream secName;
+
+	secName << INI_SECTION_NAME << "-" << plateNum;
+
+	const CSimpleIniA::TKeyVal * values = ini.GetSection(secName.str().c_str());
+	if ((values == NULL) || (values->size() == 0)) {
+		return;
 	}
+
+	ScFrame & frame = plateFrames[plateNum];
+	frame.frameId = plateNum;
 
 	for(CSimpleIniA::TKeyVal::const_iterator it = values->begin();
 		it != values->end(); it++) {
 		string key(it->first.pItem);
 		string value(it->second);
 
-		region = new DecodeRegion;
-		UA_ASSERT_NOT_NULL(region);
-
-		pos =  key.find(label);
-		if (pos == string::npos) {
-			cerr << "INI file error: section [" << INI_SECTION_NAME
-			     << "], key name \"" << key << "\" is invalid."  << endl
-			     << "Please run calibration again." << endl;
-			exit(1);
+		if (key == "top") {
+			if (!Util::strToNum(value, frame.x0)) {
+				errStrm << "INI file error: section [" << INI_SECTION_NAME
+				        << "], value for key \""
+					    << key << "\" is invalid:" << value << endl;
+				err = errStrm.str();
+				return false;
+			}
 		}
-
-		pos = key.find_first_of('_');
-		if (pos == string::npos) {
-			cerr << "INI file error: section [" << INI_SECTION_NAME
-			     << "], key name \"" << key << "\" is invalid."  << endl
-			     << "Please run calibration again." << endl;
-			exit(1);
+		else if (key == "left") {
+			if (!Util::strToNum(value, frame.y0)) {
+				errStrm << "INI file error: section [" << INI_SECTION_NAME
+				        << "], value for key \""
+					    << key << "\" is invalid:" << value << endl;
+				err = errStrm.str();
+				return false;
+			}
 		}
-
-		string numStr = key.substr(labelSize, pos - labelSize);
-		if (!Util::strToNum(numStr, region->row, 10)) {
-			cerr << "INI file error: section " << INI_SECTION_NAME
-			     << "], key name \"" << key << "\" is invalid."  << endl
-			     << "Please run calibration again." << endl;
-			exit(1);
+		else if (key == "bottom") {
+			if (!Util::strToNum(value, frame.x1)) {
+				errStrm << "INI file error: section [" << INI_SECTION_NAME
+				        << "], value for key \""
+					    << key << "\" is invalid:" << value << endl;
+				err = errStrm.str();
+				return false;
+			}
 		}
-
-		numStr = key.substr(pos + 1);
-		if (!Util::strToNum(numStr, region->col, 10)) {
-			cerr << "INI file error: section [" << INI_SECTION_NAME
-			     << "], key name \"" << key << "\" is invalid."  << endl
-			     << "Please run calibration again." << endl;
-			exit(1);
+		else if (key == "right") {
+			if (!Util::strToNum(value, frame.y1)) {
+				errStrm << "INI file error: section [" << INI_SECTION_NAME
+				        << "], value for key \""
+					    << key << "\" is invalid:" << value << endl;
+				err = errStrm.str();
+				return false;
+			}
 		}
-
-		pos = value.find_first_of(',');
-		numStr = value.substr(0, pos);
-		if (!Util::strToNum(numStr, region->topLeft.X, 10)) {
-			cerr << "INI file error: section [" << INI_SECTION_NAME
-			     << "], first value for key \""
-				 << key << "\" is invalid:" << numStr << endl
-			     << "Please run calibration again." << endl;
-			exit(1);
+		else {
+			errStrm << "INI file error: section [" << INI_SECTION_NAME
+			        << "], key is invalid:" << key << endl;
+			err = errStrm.str();
+			return false;
 		}
-
-		prevPos = pos + 1;
-		pos = value.find_first_of(',', prevPos);
-		numStr = value.substr(prevPos, pos - prevPos);
-		if (!Util::strToNum(numStr, region->topLeft.Y, 10)) {
-			cerr << "INI file error: section [" << INI_SECTION_NAME
-			     << "], second value for key \""
-				 << key << "\" is invalid:" << numStr << endl
-			     << "Please run calibration again." << endl;
-			exit(1);
-		}
-
-		prevPos = pos + 1;
-		pos = value.find_first_of(',', prevPos);
-		numStr = value.substr(prevPos, pos - prevPos);
-		if (!Util::strToNum(numStr, region->botRight.X, 10)) {
-			cerr << "INI file error: section [" << INI_SECTION_NAME
-			     << "], third value for key \""
-				 << key << "\" is invalid:" << numStr << endl
-			     << "Please run calibration again." << endl;
-			exit(1);
-		}
-
-		numStr = value.substr(pos + 1);
-		if (!Util::strToNum(numStr, region->botRight.Y, 10)) {
-			cerr << "INI file error: section [" << INI_SECTION_NAME
-			     << "], fourth value for key \""
-				 << key << "\" is invalid:" << numStr << endl
-			     << "Please run calibration again." << endl;
-			exit(1);
-		}
-
-		decodeRegions.push_back(region);
-		UA_DOUT(1, 3, "getRegionsFromIni: " << *region);
 	}
+	return true;
 }
 
