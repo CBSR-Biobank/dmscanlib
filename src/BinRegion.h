@@ -12,6 +12,10 @@
 
 using namespace std;
 
+/**
+ * Represents a region in an image that contains either a row or column of
+ * 2D barcode tubes.
+ */
 class BinRegion {
 public:
 	BinRegion(unsigned orientation, unsigned min, unsigned max);
