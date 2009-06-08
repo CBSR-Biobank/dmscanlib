@@ -17,10 +17,12 @@
 #include "twain.h"     // Standard TWAIN header.
 #include "Singleton.h"
 #include "simpleini.h"
+#include "ScanLib.h"
 
 #include <windows.h>
-
 #include <map>
+
+using namespace std;
 
 /**
  * This class interfaces with the TWAIN driver to acquire images from the
@@ -37,30 +39,34 @@ public:
 	 * returns false if user pressed cancel when presented with dialog box to
 	 * select a scanner.
 	 */
-	bool selectSourceAsDefault(const char ** err);
+	bool selectSourceAsDefault(string & err);
 
-	HANDLE acquireImage(const char ** err, double top, double left,
+	HANDLE acquireImage(string & err, double top, double left,
 			double bottom, double right);
-	DmtxImage* acquireDmtxImage(const char ** err);
+	HANDLE acquirePlateImage(string & err, unsigned plate);
+	DmtxImage* acquireDmtxImage(string & err);
 	void freeImage(HANDLE handle);
 
+	void getConfigFromIni(CSimpleIniA & ini, string & err);
+
+
 private:
-	static const char * TWAIN_DLL_FILENAME;
-
-	static const char * INI_SECTION_NAME;
-
 	unsigned invokeTwain(TW_IDENTITY * srcId, unsigned long dg, unsigned dat,
 			unsigned msg, void * data);
 
 	void unloadTwain();
 
 	void setFloatToIntPair(const float f, short & whole, unsigned short & frac);
-
-	void getConfigFromIni(CSimpleIniA & ini);
-
 	int GetPaletteSize(BITMAPINFOHEADER& bmInfo);
 
 	BOOL setCapability(TW_UINT16 cap,TW_UINT16 value,BOOL sign);
+
+	bool getConfigFromIni(CSimpleIniA & ini, unsigned plateNum, string & err);
+
+
+	static const char * TWAIN_DLL_FILENAME;
+
+	static const char * INI_SECTION_NAME;
 
 	// g_hinstDLL holds this DLL's instance handle. It is initialized in response
 	// to the DLL_PROCESS_ATTACH message. This handle is passed to CreateWindow()

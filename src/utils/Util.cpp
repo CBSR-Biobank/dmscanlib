@@ -9,6 +9,12 @@
 
 #include <stdlib.h>
 
+bool Util::strToNum(const char * str, int & number, unsigned base) {
+	char  * end = 0;
+	number = strtoul(str, &end, base);
+	return (*end == 0);
+}
+
 bool Util::strToNum(string & str, int & number, unsigned base) {
 	char  * end = 0;
 	number = strtoul(str.c_str (), &end, base);

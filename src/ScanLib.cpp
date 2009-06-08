@@ -11,6 +11,7 @@
 #include "Decoder.h"
 #include "Calibrator.h"
 #include "Dib.h"
+#include "Util.h"
 
 #define SI_SUPPORT_IOSTREAMS
 #include "SimpleIni.h"
@@ -64,6 +65,7 @@ struct Options {
 	bool decodeImage;
 	bool scanImage;
 	char * filename;
+	int plateNum;
 
 	Options() {
 		aquireAndProcessImage = false;
@@ -81,7 +83,7 @@ public:
 
 private:
 	void usage();
-	void acquireAndProcesImage();
+	void acquireAndProcesImage(unsigned plateNum);
 	void calibrateToImage(char * filename);
 	void decodeImage(char * filename);
 	void scanImage(char * filename);
@@ -107,12 +109,16 @@ Application::Application(int argc, char ** argv) :
 	while (1) {
 		int option_index = 0;
 
-		ch = getopt_long (argc, argv, "ac:d:hp:s:tv:", long_options, &option_index);
+		ch = getopt_long (argc, argv, "a:c:d:hp:s:tv:", long_options, &option_index);
 
 		if (ch == -1) break;
 		switch (ch) {
 		case 'a':
 			options.aquireAndProcessImage = true;
+			if (!Util::strToNum(optarg, static_cast<int &>(options.plateNum))) {
+				cerr << "invalid value for plate number: " << optarg << endl;
+				exit(1);
+			}
 			break;
 
 		case 'c':
@@ -142,8 +148,8 @@ Application::Application(int argc, char ** argv) :
 
 		case 200: {
 #ifdef WIN32
-			const char * err;
-			if (!ImageGrabber::Instance().selectSourceAsDefault(&err)) {
+			string err;
+			if (!ImageGrabber::Instance().selectSourceAsDefault(err)) {
 				cerr <<  err << endl;
 				exit(0);
 			}
@@ -153,10 +159,16 @@ Application::Application(int argc, char ** argv) :
 			break;
 		}
 
-		case 'v':
+		case 'v': {
+			int level;
+			if (!Util::strToNum(optarg, level)) {
+				cerr << "not a valid number for verbose option: " << optarg << endl;
+				exit(1);
+			}
 			UA_DEBUG(ua::Debug::Instance().levelSet(
-					ua::DebugImpl::allSubSys_m, atoi(optarg)));
+					ua::DebugImpl::allSubSys_m, level));
 			break;
+		}
 
 		case '?':
 		case 'h':
@@ -200,7 +212,7 @@ Application::Application(int argc, char ** argv) :
 		exit(0);
 	}
 	else if (options.aquireAndProcessImage) {
-		acquireAndProcesImage();
+		acquireAndProcesImage(options.plateNum);
 	}
 	else if (options.scanImage) {
 		scanImage(options.filename);
@@ -247,11 +259,13 @@ void Application::decodeImage(char * filename) {
 	markedDib.writeToFile("out.bmp");
 }
 
-void Application::acquireAndProcesImage() {
+void Application::acquireAndProcesImage(unsigned plateNum) {
 #ifdef WIN32
-	const char * err;
+	string err;
 
-	HANDLE h = ImageGrabber::Instance().acquireImage(&err, 0, 0, 0, 0);
+	ImageGrabber::Instance().getConfigFromIni(ini, err);
+
+	HANDLE h = ImageGrabber::Instance().acquirePlateImage(err, plateNum);
 	if (h == NULL) {
 		cerr <<  err << endl;
 		exit(0);
@@ -262,6 +276,7 @@ void Application::acquireAndProcesImage() {
 
 	dib.readFromHandle(h);
 	ImageGrabber::Instance().freeImage(h);
+	dib.writeToFile("out.bmp");
 #else
 	cerr << "this option not allowed on your operating system." << endl;
 #endif
@@ -269,10 +284,10 @@ void Application::acquireAndProcesImage() {
 
 void Application::scanImage(char * filename) {
 #ifdef WIN32
-	const char * err;
+	string err;
 
 	UA_ASSERT_NOT_NULL(filename);
-	HANDLE h = ImageGrabber::Instance().acquireImage(&err, 0, 0, 0, 0);
+	HANDLE h = ImageGrabber::Instance().acquireImage(err, 0, 0, 0, 0);
 	if (h == NULL) {
 		cerr <<  err << endl;
 		exit(0);
