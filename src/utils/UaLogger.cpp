@@ -21,7 +21,7 @@
  *
  *****************************************************************************/
 
-#include "UaDebug.h"
+#include "UaLogger.h"
 
 #ifdef WIN32
 #include <time.h>
@@ -40,15 +40,15 @@
 #include <string>
 #include <sstream>
 
-#ifdef UA_HAVE_DEBUG
+#ifdef UA_LOGGER
 
 using namespace std;
 using namespace ua;
 
-DebugStringBuf<char> ua::debugstream;
-std::ostream ua::cdebug (&ua::debugstream);
+LoggerStringBuf<char> ua::logstream;
+std::ostream ua::cdebug (&ua::logstream);
 
-DebugImpl::DebugImpl() {
+LoggerImpl::LoggerImpl() {
     std::ostringstream header;
 
     for (unsigned i = 0; i < maxSubSys_m; ++i) {
@@ -59,7 +59,7 @@ DebugImpl::DebugImpl() {
     }
 }
 
-void DebugImpl::levelInc(unsigned subsys) {
+void LoggerImpl::levelInc(unsigned subsys) {
     assert(subsys <= allSubSys_m);
 
     if (subsys == allSubSys_m) {
@@ -74,7 +74,7 @@ void DebugImpl::levelInc(unsigned subsys) {
         ++levels_am[subsys];
 }
 
-void DebugImpl::levelDec(unsigned subsys) {
+void LoggerImpl::levelDec(unsigned subsys) {
     assert(subsys <= allSubSys_m);
 
     if (subsys == allSubSys_m) {
@@ -89,7 +89,7 @@ void DebugImpl::levelDec(unsigned subsys) {
         --levels_am[subsys];
 }
 
-void DebugImpl::levelSet(unsigned subsys, unsigned level) {
+void LoggerImpl::levelSet(unsigned subsys, unsigned level) {
     assert(subsys <= allSubSys_m);
     assert(level <= maxLevel_m);
 
@@ -104,36 +104,36 @@ void DebugImpl::levelSet(unsigned subsys, unsigned level) {
         levels_am[subsys] = level;
 }
 
-unsigned DebugImpl::levelGet(unsigned subsys) {
+unsigned LoggerImpl::levelGet(unsigned subsys) {
     assert(subsys < allSubSys_m);
     return levels_am[subsys];
 }
 
-void DebugImpl::subSysHeaderSet(unsigned subsys, std::string header) {
+void LoggerImpl::subSysHeaderSet(unsigned subsys, std::string header) {
     assert(subsys < allSubSys_m);
     headers_am[subsys] = header;
 }
 
-std::string & DebugImpl::subSysHeaderGet(unsigned subsys) {
+std::string & LoggerImpl::subSysHeaderGet(unsigned subsys) {
     assert(subsys < allSubSys_m);
     return headers_am[subsys];
 }
 
 
 // Turns off all debugging
-void DebugImpl::reset() {
+void LoggerImpl::reset() {
     for (unsigned i = 0; i < maxSubSys_m; ++i) {
         levels_am[i] = 0;
     }
 }
 
 // Returns true if this level is enabled for debugging.
-bool DebugImpl::isDebug (unsigned subsys, unsigned level) {
+bool LoggerImpl::isDebug (unsigned subsys, unsigned level) {
     assert(subsys < allSubSys_m);
     return (level <= levels_am[subsys]);
 }
 
-void DebugSink::standardHeader(std::string & str_r) {
+void LoggerSink::standardHeader(std::string & str_r) {
     char buf_a[100];
 
 #if defined(WIN32) && defined(__MINGW32__)
@@ -169,7 +169,7 @@ void DebugSink::standardHeader(std::string & str_r) {
     str_r = buf_a;
 }
 
-void DebugSinkStdoutImpl::write(const std::string& str_r) {
+void LoggerSinkStdoutImpl::write(const std::string& str_r) {
     if (str_r.size() == 0)
         return;
 
@@ -188,7 +188,7 @@ void DebugSinkStdoutImpl::write(const std::string& str_r) {
     std::cout << op;
 }
 
-void DebugSinkFileImpl::write(const std::string& str_r) {
+void LoggerSinkFileImpl::write(const std::string& str_r) {
     if (file_m.size() == 0)
         return;
 
@@ -212,7 +212,7 @@ void DebugSinkFileImpl::write(const std::string& str_r) {
 }
 
 
-void DebugSinkFileImpl::setFile(const std::string& file_r) {
+void LoggerSinkFileImpl::setFile(const std::string& file_r) {
     file_m = file_r;
 }
 

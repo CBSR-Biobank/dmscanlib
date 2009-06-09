@@ -3,7 +3,8 @@
  ******************************************************************************/
 
 #include "Dib.h"
-#include "UaDebug.h"
+#include "UaLogger.h"
+#include "UaAssert.h"
 
 #include <stdio.h>
 #include <stdlib.h>

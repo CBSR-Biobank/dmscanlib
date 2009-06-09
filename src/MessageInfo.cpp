@@ -6,7 +6,8 @@
  */
 
 #include "MessageInfo.h"
-#include "UaDebug.h"
+#include "UaLogger.h"
+#include "UaAssert.h"
 #include "BinRegion.h"
 
 

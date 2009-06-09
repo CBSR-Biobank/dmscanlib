@@ -7,7 +7,8 @@
  *
  ******************************************************************************/
 
-#include "UaDebug.h"
+#include "UaLogger.h"
+#include "UaAssert.h"
 #include "Decoder.h"
 #include "Calibrator.h"
 #include "Dib.h"
@@ -32,14 +33,18 @@ CSimpleIniA ini(true, false, true);
 /*
  * Loads the INI file if it is present.
  */
-void initialize() {
+bool initialize() {
 	fstream inifile;
 	inifile.open(INI_FILE_NAME, fstream::in);
-	if (inifile.is_open()) {
-		SI_Error rc = ini.Load(inifile);
-		UA_ASSERTS(rc >= 0, "attempt to load ini file returned: " << rc);
-		inifile.close();
+	if (!inifile.is_open()) return false;
+
+	SI_Error rc = ini.Load(inifile);
+	if (rc >= 0) {
+		// attempt to load ini file failed
+		return false;
 	}
+	inifile.close();
+	return true;
 }
 
 void calibrateToImage(char * filename) {

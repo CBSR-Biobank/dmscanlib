@@ -6,7 +6,8 @@
  */
 
 #include "Decoder.h"
-#include "UaDebug.h"
+#include "UaLogger.h"
+#include "UaAssert.h"
 #include "Dib.h"
 #include "Util.h"
 #include "MessageInfo.h"
@@ -31,7 +32,7 @@ const char * Decoder::INI_SECTION_NAME = "barcode-regions";
 const char * Decoder::INI_REGION_LABEL = "region";
 
 Decoder::Decoder() {
-	UA_DEBUG(ua::Debug::Instance().subSysHeaderSet(1, "Decoder"));
+	UA_DEBUG(ua::Logger::Instance().subSysHeaderSet(1, "Decoder"));
 }
 
 Decoder::~Decoder() {
@@ -61,20 +62,19 @@ void Decoder::processImage(DmtxImage & image, vector<MessageInfo *>  & msgInfos)
 	dec = dmtxDecodeCreate(&image, 1);
 	assert(dec != NULL);
 
-#if 0
 	// save image to a PNM file
-	FILE * fh;
-	unsigned char *pnm;
-	int totalBytes, headerBytes;
-
 	UA_DEBUG(
+			FILE * fh;
+			unsigned char *pnm;
+			int totalBytes;
+			int headerBytes;
+
 			pnm = dmtxDecodeCreateDiagnostic(dec, &totalBytes, &headerBytes, 0);
 			fh = fopen("out.pnm", "w");
 			fwrite(pnm, sizeof(unsigned char), totalBytes, fh);
 			fclose(fh);
 			free(pnm);
 	);
-#endif
 
 	dmtxDecodeSetProp(dec, DmtxPropScanGap, 0);
 	dmtxDecodeSetProp(dec, DmtxPropSquareDevn, 10);

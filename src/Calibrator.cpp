@@ -9,7 +9,8 @@
 #include "MessageInfo.h"
 #include "BinRegion.h"
 #include "Dib.h"
-#include "UaDebug.h"
+#include "UaLogger.h"
+#include "UaAssert.h"
 
 Calibrator::Calibrator() {
 }
@@ -188,7 +189,7 @@ void Calibrator::saveRegionsToIni(CSimpleIniA & ini) {
 			      << colBinRegions[c]->getMax() << ","
 			      << rowBinRegions[r]->getMax();
 
-			SI_Error rc = ini.SetValue(INI_SECTION_NAME, key.str().c_str(), value.str().c_str());
+			rc = ini.SetValue(INI_SECTION_NAME, key.str().c_str(), value.str().c_str());
 			UA_ASSERT(rc >= 0);
 
 		}

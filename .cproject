@@ -32,7 +32,7 @@
 <option id="gnu.cpp.compiler.mingw.so.debug.option.optimization.level.986754058" name="Optimization Level" superClass="gnu.cpp.compiler.mingw.so.debug.option.optimization.level" value="gnu.cpp.compiler.optimization.level.none" valueType="enumerated"/>
 <option id="gnu.cpp.compiler.mingw.so.debug.option.debugging.level.1250068434" name="Debug Level" superClass="gnu.cpp.compiler.mingw.so.debug.option.debugging.level" value="gnu.cpp.compiler.debugging.level.max" valueType="enumerated"/>
 <option id="gnu.cpp.compiler.option.preprocessor.def.483079313" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
-<listOptionValue builtIn="false" value="UA_HAVE_DEBUG"/>
+<listOptionValue builtIn="false" value="UA_LOGGER"/>
 <listOptionValue builtIn="false" value="_DEBUG"/>
 </option>
 <option id="gnu.cpp.compiler.option.include.paths.838515367" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
@@ -613,6 +613,16 @@
 <tool id="cdt.managedbuild.tool.gnu.cpp.compiler.mingw.so.release.41323409" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.mingw.so.release">
 <option id="gnu.cpp.compiler.mingw.so.release.option.optimization.level.1728993409" name="Optimization Level" superClass="gnu.cpp.compiler.mingw.so.release.option.optimization.level" value="gnu.cpp.compiler.optimization.level.most" valueType="enumerated"/>
 <option id="gnu.cpp.compiler.mingw.so.release.option.debugging.level.206012833" name="Debug Level" superClass="gnu.cpp.compiler.mingw.so.release.option.debugging.level" value="gnu.cpp.compiler.debugging.level.none" valueType="enumerated"/>
+<option id="gnu.cpp.compiler.option.include.paths.2134176498" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
+<listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/libdmtx}&quot;"/>
+<listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/simpleini}&quot;"/>
+<listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/src}&quot;"/>
+<listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/src/loki}&quot;"/>
+<listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/src/utils}&quot;"/>
+</option>
+<option id="gnu.cpp.compiler.option.preprocessor.def.796594367" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
+<listOptionValue builtIn="false" value="UA_LOGGER"/>
+</option>
 <inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.562958609" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 </tool>
 <tool id="cdt.managedbuild.tool.gnu.c.compiler.mingw.so.release.1621842276" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.mingw.so.release">

@@ -36,13 +36,11 @@
 #include <sstream>
 #include <vector>
 
-#ifdef UA_HAVE_DEBUG
-
 namespace ua {
-    class DebugSink {
+    class LoggerSink {
     public:
-        DebugSink () : enableHeader_m(false) {};
-        virtual ~DebugSink () {};
+    	LoggerSink () : enableHeader_m(false) {};
+        virtual ~LoggerSink () {};
 
         virtual void write (const std::string& str) = 0;
 
@@ -60,28 +58,28 @@ namespace ua {
         bool enableHeader_m; // true writes header when buffer is flushed
     };
 
-    class DebugSinkNullImpl : public DebugSink  {
+    class LoggerSinkNullImpl : public LoggerSink  {
     public:
-        DebugSinkNullImpl() {};
+        LoggerSinkNullImpl() {};
         virtual void write (const std::string& str) {}
     };
 
-    typedef Loki::SingletonHolder<DebugSinkNullImpl> DebugSinkNull;
+    typedef Loki::SingletonHolder<LoggerSinkNullImpl> LoggerSinkNull;
 
 
-    class DebugSinkStdoutImpl : public DebugSink {
+    class LoggerSinkStdoutImpl : public LoggerSink {
     public:
-        DebugSinkStdoutImpl () {};
+        LoggerSinkStdoutImpl () {};
 
         virtual void write (const std::string& str);
     };
 
-    typedef Loki::SingletonHolder<DebugSinkStdoutImpl> DebugSinkStdout;
+    typedef Loki::SingletonHolder<LoggerSinkStdoutImpl> LoggerSinkStdout;
 
-    class DebugSinkFileImpl : public DebugSinkStdoutImpl {
+    class LoggerSinkFileImpl : public LoggerSinkStdoutImpl {
     public:
-        DebugSinkFileImpl() {};
-        virtual ~DebugSinkFileImpl() {};
+        LoggerSinkFileImpl() {};
+        virtual ~LoggerSinkFileImpl() {};
 
         virtual void write (const std::string& str);
 
@@ -93,16 +91,16 @@ namespace ua {
         std::string file_m;
     };
 
-    typedef Loki::SingletonHolder<DebugSinkFileImpl> DebugSinkFile;
+    typedef Loki::SingletonHolder<LoggerSinkFileImpl> LoggerSinkFile;
 
     template<class T, class Tr = std::char_traits<T>,
              class A = std::allocator<T> >
-    class DebugStringBuf : public std::basic_stringbuf<T, Tr, A> {
+    class LoggerStringBuf : public std::basic_stringbuf<T, Tr, A> {
     public:
-        DebugStringBuf (DebugSink& s = DebugSinkNull::Instance())
+        LoggerStringBuf (LoggerSink& s = LoggerSinkNull::Instance())
                 : sink_m (&s) {
         }
-        ~DebugStringBuf () {
+        ~LoggerStringBuf () {
             if (std::basic_stringbuf<T, Tr, A>::str().size() > 0) {
                 std::cerr << "debug buffer contents: " << std::endl
                           << std::basic_stringbuf<T, Tr, A>::str()
@@ -118,18 +116,18 @@ namespace ua {
             return 0;
         }
 
-        void sink (DebugSink& s) {
+        void sink (LoggerSink& s) {
             // Change our sink
             sink_m = &s;
         }
 
     private:
-        DebugSink* sink_m;
+        LoggerSink* sink_m;
     };
 
-    class DebugImpl {
+    class LoggerImpl {
     public:
-        DebugImpl ();
+        LoggerImpl ();
 
         void levelInc(unsigned subsys);
         void levelDec(unsigned subsys);
@@ -154,102 +152,22 @@ namespace ua {
         std::string headers_am[maxSubSys_m];
     };
 
-    typedef Loki::SingletonHolder<DebugImpl> Debug;
+    typedef Loki::SingletonHolder<LoggerImpl> Logger;
 
-    extern DebugStringBuf<char> debugstream;
+    extern LoggerStringBuf<char> logstream;
     extern std::ostream cdebug;
 }
 
-#define UA_DEBUG(statements)                     \
-    do {                                         \
-        statements;                              \
-    }                                            \
-    while(0)
-
 #define UA_DOUT(subsys, level, display)                                 \
     do {                                                                \
-        if (ua::Debug::Instance().isDebug(subsys, level)) {             \
-            ua::cdebug << ua::Debug::Instance().subSysHeaderGet(subsys) \
+        if (ua::Logger::Instance().isDebug(subsys, level)) {             \
+            ua::cdebug << ua::Logger::Instance().subSysHeaderGet(subsys) \
                        << " "                                           \
-                       << ua::Debug::Instance().levelGet(subsys)        \
+                       << ua::Logger::Instance().levelGet(subsys)        \
                        << " "                                           \
                        << display << std::endl;                         \
         }                                                               \
     }                                                                   \
     while(0)
-
-/**
- * When an cond is false, an error message is generated and the program exits.
- */
-#define UA_ASSERT(cond) assert ( (cond) )
-
-/**
- * When an cond is false, an error message is generated and the program exits.
- */
-#define UA_ASSERT_NOT_NULL(ptr) assert ( (ptr) != NULL )
-
-/**
- * When an cond is false, an error message is generated and the program exits.
- */
-#define UA_ASSERTS(cond, msg)                    \
-    do {                                         \
-        if (! (cond) ) {                         \
-            std::cerr << "ASSERT FAILED!" << std::endl  \
-                      << __FILE__ << ":" << __LINE__    \
-                      << ": " << msg << std::endl;      \
-            abort();                             \
-        }                                        \
-    }                                            \
-    while(0)
-
-/**
- * Outputs an error message and halts the program.
- */
-#define UA_ERROR(msg)                                                   \
-    do {                                                                \
-        std::cerr << "ERROR!" << std::endl << __FILE__ << ":" << __LINE__ \
-                  << ": " << msg << std::endl;                          \
-        abort();                                                        \
-    }                                                                   \
-    while(0)
-
-
-/**
- * Outputs an warning message and does not terminate the program.
- */
-#define UA_WARN(msg)                                                    \
-    do {                                                                \
-        std::cerr << "WARNING: " << __FILE__ << ":" << __LINE__         \
-                  << ": " << msg << std::endl;                          \
-    }                                                                   \
-    while(0)
-
-#else /* _DEBUG */
-
-#define UA_DEBUG(statements)
-
-#define UA_DOUT(subsys, level, statements)
-
-/**
- * Does nothing if load is not compiled in DEBUG mode.
- */
-#define UA_ASSERT(cond)
-
-/**
- * Does nothing if load is not compiled in DEBUG mode.
- */
-#define UA_ASSERTS(cond, msg)
-
-/**
- * Does nothing if load is not compiled in DEBUG mode.
- */
-#define UA_ERROR(msg)
-
-/**
- * Does nothing if load is not compiled in DEBUG mode.
- */
-#define UA_WARN(msg)
-
-#endif  /* DEBUG */
 
 #endif /* __INC_bkDebug_h */

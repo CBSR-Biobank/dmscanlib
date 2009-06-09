@@ -7,7 +7,8 @@
 
 
 #include "ImageGrabber.h"
-#include "UaDebug.h"
+#include "UaLogger.h"
+#include "UaAssert.h"
 #include "Util.h"
 
 using namespace std;
@@ -34,7 +35,7 @@ const char * ImageGrabberImpl::INI_SECTION_NAME = "plate";
  *	selectDefaultAsSource work.
  */
 ImageGrabberImpl::ImageGrabberImpl() : g_hLib(NULL), g_pDSM_Entry(NULL) {
-	UA_DEBUG(ua::Debug::Instance().subSysHeaderSet(2, "ImageGrabberImpl"));
+	UA_DEBUG(ua::Logger::Instance().subSysHeaderSet(2, "ImageGrabberImpl"));
 	g_hLib = LoadLibrary(TWAIN_DLL_FILENAME);
 
 	if (g_hLib != NULL) {
@@ -316,7 +317,10 @@ BOOL ImageGrabberImpl::setCapability(TW_UINT16 cap,TW_UINT16 value, BOOL sign) {
 	// get the default source
 	TW_UINT16 rc = invokeTwain(NULL, DG_CONTROL, DAT_IDENTITY, MSG_GETDEFAULT, &srcID);
 
-	UA_ASSERTS(rc == TWRC_SUCCESS, "Unable to open default data source");
+	if (rc != TWRC_SUCCESS) {
+		// Unable to open default data source"
+		return false;
+	}
 
 	twCap.Cap = cap;
 	twCap.ConType = TWON_ONEVALUE;
