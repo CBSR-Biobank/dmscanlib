@@ -5,6 +5,8 @@
 extern "C" {
 #endif
 
+#define EXPORT __declspec(dllimport)
+
 typedef struct sScPixelLoc {
 	int x;
 	int y;
@@ -28,6 +30,8 @@ typedef struct sScFrame {
 	double y1; // right
 
 } ScFrame;
+
+EXPORT bool isTwainAvailable();
 
 #ifdef __cplusplus
 }
