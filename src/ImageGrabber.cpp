@@ -15,7 +15,7 @@ using namespace std;
 
 // Initialize g_AppID. This structure is passed to DSM_Entry() in each
 // function call.
-TW_IDENTITY ImageGrabberImpl::g_AppID = {
+TW_IDENTITY ImageGrabber::g_AppID = {
 	0,
 	{ 1, 0, TWLG_ENGLISH_USA, TWCY_USA, "scanlib 1.0" },
 	TWON_PROTOCOLMAJOR,
@@ -26,45 +26,45 @@ TW_IDENTITY ImageGrabberImpl::g_AppID = {
 	"scanlib",
 };
 
-const char * ImageGrabberImpl::TWAIN_DLL_FILENAME = "TWAIN_32.DLL";
+const char * ImageGrabber::TWAIN_DLL_FILENAME = "TWAIN_32.DLL";
 
-const char * ImageGrabberImpl::INI_SECTION_NAME = "plate";
+const char * ImageGrabber::INI_SECTION_NAME = "plate";
 
 /*	initGrabber() should be called prior to calling any other associated functionality,
  *	as libraries such as Twain_32.dll need to be loaded before acquire or
  *	selectDefaultAsSource work.
  */
-ImageGrabberImpl::ImageGrabberImpl() : g_hLib(NULL), g_pDSM_Entry(NULL) {
-	UA_DEBUG(ua::Logger::Instance().subSysHeaderSet(2, "ImageGrabberImpl"));
+ImageGrabber::ImageGrabber() : g_hLib(NULL), g_pDSM_Entry(NULL) {
+	UA_DEBUG(ua::Logger::Instance().subSysHeaderSet(2, "ImageGrabber"));
 	g_hLib = LoadLibrary(TWAIN_DLL_FILENAME);
 
 	if (g_hLib != NULL) {
 		g_pDSM_Entry = (DSMENTRYPROC) GetProcAddress(g_hLib, "DSM_Entry");
 
 		UA_ASSERTS(g_pDSM_Entry != 0,
-				"ImageGrabberImpl: Unable to fetch DSM_Entry address");
+				"ImageGrabber: Unable to fetch DSM_Entry address");
 	}
 }
 
-ImageGrabberImpl::~ImageGrabberImpl() {
+ImageGrabber::~ImageGrabber() {
 	unloadTwain();
 }
 
-bool ImageGrabberImpl::twainAvailable() {
+bool ImageGrabber::twainAvailable() {
 	return (g_hLib != NULL);
 }
 
-unsigned ImageGrabberImpl::invokeTwain(TW_IDENTITY * srcId, unsigned long dg,
+unsigned ImageGrabber::invokeTwain(TW_IDENTITY * srcId, unsigned long dg,
 		unsigned dat, unsigned msg, void * ptr) {
 	UA_ASSERT_NOT_NULL(g_pDSM_Entry);
 	unsigned r = (*g_pDSM_Entry) (&g_AppID, srcId, dg, dat, msg, ptr);
-	UA_DOUT(2, 3, "ImageGrabberImpl::invokeTwain: srcId/\""
+	UA_DOUT(2, 3, "ImageGrabber::invokeTwain: srcId/\""
 			<< ((srcId != NULL) ? srcId->ProductName : "NULL")
 			<< "\" dg/" << dg << " dat/" << dat << " msg/" << msg
 			<< " ptr/" << ptr << " returnCode/" << r);
 
 	if ((srcId == NULL) && (r != TWRC_SUCCESS) && (r != TWRC_CHECKSTATUS)) {
-		UA_DOUT(2, 3, "ImageGrabberImpl::invokeTwain: unsuccessful call to twain");
+		UA_DOUT(2, 3, "ImageGrabber::invokeTwain: unsuccessful call to twain");
 	}
 	return r;
 }
@@ -78,7 +78,7 @@ unsigned ImageGrabberImpl::invokeTwain(TW_IDENTITY * srcId, unsigned long dg,
  *	have to be specified every time.
  *	TODO: change return type to void?
  */
-bool ImageGrabberImpl::selectSourceAsDefault(string & err) {
+bool ImageGrabber::selectSourceAsDefault(string & err) {
 	UA_ASSERT_NOT_NULL(g_hLib);
 
 	// Create a static window whose handle is passed to DSM_Entry() when we
@@ -118,7 +118,7 @@ bool ImageGrabberImpl::selectSourceAsDefault(string & err) {
 	return true;
 }
 
-void ImageGrabberImpl::setFloatToIntPair(const float f, short & whole,
+void ImageGrabber::setFloatToIntPair(const float f, short & whole,
 		unsigned short & frac) {
 	const unsigned tmp = static_cast<unsigned>(f * 65536.0 + 0.5);
 	whole = static_cast<short>(tmp >> 16);
@@ -131,8 +131,8 @@ void ImageGrabberImpl::setFloatToIntPair(const float f, short & whole,
  *
  *	Grab an image from the twain source and convert it to the dmtxImage format
  */
-HANDLE ImageGrabberImpl::acquireImage(string & err, double top, double left,
-		double bottom, double right) {
+HANDLE ImageGrabber::acquireImage(string & err, double left, double top,
+		double right, double bottom) {
 	UA_ASSERT_NOT_NULL(g_hLib);
 
 	TW_UINT32 handle = 0;
@@ -164,14 +164,18 @@ HANDLE ImageGrabberImpl::acquireImage(string & err, double top, double left,
 	rc = invokeTwain(NULL, DG_CONTROL, DAT_IDENTITY, MSG_OPENDS, &srcID);
 	UA_ASSERTS(rc == TWRC_SUCCESS, "Unable to open default data source");
 
-	UA_DOUT(2, 3, "acquireImage: source/\"" << srcID.ProductName << "\"");
+	UA_DOUT(2, 3, "acquireImage: source/\"" << srcID.ProductName << "\""
+			<< " left/" << left
+			<< " top/" << top
+			<< " right/" << right
+			<< " bottom/" << bottom);
 
 	setCapability(ICAP_UNITS, TWUN_INCHES, FALSE);
 	TW_IMAGELAYOUT layout;
-	setFloatToIntPair(top,   layout.Frame.Top.Whole,    layout.Frame.Top.Frac);
-	setFloatToIntPair(left,  layout.Frame.Left.Whole,   layout.Frame.Left.Frac);
-	setFloatToIntPair(right, layout.Frame.Bottom.Whole, layout.Frame.Bottom.Frac);
-	setFloatToIntPair(left,  layout.Frame.Right.Whole,  layout.Frame.Right.Frac);
+	setFloatToIntPair(left,   layout.Frame.Left.Whole,   layout.Frame.Left.Frac);
+	setFloatToIntPair(top,    layout.Frame.Top.Whole,    layout.Frame.Top.Frac);
+	setFloatToIntPair(right,  layout.Frame.Right.Whole,  layout.Frame.Right.Frac);
+	setFloatToIntPair(bottom, layout.Frame.Bottom.Whole, layout.Frame.Bottom.Frac);
 	layout.DocumentNumber     = 1;
 	layout.PageNumber         = 1;
 	layout.FrameNumber        = 1;
@@ -271,7 +275,7 @@ HANDLE ImageGrabberImpl::acquireImage(string & err, double top, double left,
 	return (HANDLE) handle;
 }
 
-DmtxImage* ImageGrabberImpl::acquireDmtxImage(string & err){
+DmtxImage* ImageGrabber::acquireDmtxImage(string & err){
 	UA_ASSERT_NOT_NULL(g_hLib);
 
 	HANDLE h = acquireImage(err, 0, 0, 0, 0);
@@ -306,7 +310,7 @@ DmtxImage* ImageGrabberImpl::acquireDmtxImage(string & err){
 /*
  * Sets the capability of the Twain Data Source
  */
-BOOL ImageGrabberImpl::setCapability(TW_UINT16 cap,TW_UINT16 value, BOOL sign) {
+BOOL ImageGrabber::setCapability(TW_UINT16 cap,TW_UINT16 value, BOOL sign) {
 	UA_ASSERT_NOT_NULL(g_hLib);
 
 	TW_CAPABILITY twCap;
@@ -345,9 +349,9 @@ BOOL ImageGrabberImpl::setCapability(TW_UINT16 cap,TW_UINT16 value, BOOL sign) {
  *
  *	Unlock the handle to the image from twain, and free the memory.
  */
-void ImageGrabberImpl::freeImage(HANDLE handle) {
+void ImageGrabber::freeImage(HANDLE handle) {
+	UA_ASSERT_NOT_NULL(handle);
 	UA_ASSERT_NOT_NULL(g_hLib);
-
 	GlobalUnlock(handle);
 	GlobalFree(handle);
 }
@@ -360,13 +364,13 @@ void ImageGrabberImpl::freeImage(HANDLE handle) {
  *
  *	If twain_32.dll was loaded, it will be removed from memory
  */
-void ImageGrabberImpl::unloadTwain(){
+void ImageGrabber::unloadTwain(){
 	UA_ASSERT_NOT_NULL(g_hLib);
 	FreeLibrary(g_hLib);
 	g_hLib = NULL;
 }
 
-void ImageGrabberImpl::getConfigFromIni(CSimpleIniA & ini, string & err) {
+void ImageGrabber::getConfigFromIni(CSimpleIniA & ini, string & err) {
 	for (unsigned i = 1; i < MAX_PLATES; ++i) {
 		getConfigFromIni(ini, i, err);
 
@@ -377,7 +381,7 @@ void ImageGrabberImpl::getConfigFromIni(CSimpleIniA & ini, string & err) {
 	}
 }
 
-bool ImageGrabberImpl::getConfigFromIni(CSimpleIniA & ini, unsigned plateNum, string & err) {
+bool ImageGrabber::getConfigFromIni(CSimpleIniA & ini, unsigned plateNum, string & err) {
 	stringstream errStrm;
 	stringstream secName;
 
@@ -449,7 +453,7 @@ bool ImageGrabberImpl::getConfigFromIni(CSimpleIniA & ini, unsigned plateNum, st
 	return true;
 }
 
-HANDLE ImageGrabberImpl::acquirePlateImage(string & err, unsigned plate) {
+HANDLE ImageGrabber::acquirePlateImage(string & err, unsigned plate) {
 	stringstream errStrm;
 	map<unsigned, ScFrame>::iterator it = plateFrames.find(plate);
 	if (it == plateFrames.end()) {

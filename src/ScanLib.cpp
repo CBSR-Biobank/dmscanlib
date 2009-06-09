@@ -7,6 +7,7 @@
  *
  ******************************************************************************/
 
+#include "ScanLib.h"
 #include "UaLogger.h"
 #include "UaAssert.h"
 #include "Decoder.h"
@@ -33,18 +34,12 @@ CSimpleIniA ini(true, false, true);
 /*
  * Loads the INI file if it is present.
  */
-bool initialize() {
-	fstream inifile;
-	inifile.open(INI_FILE_NAME, fstream::in);
-	if (!inifile.is_open()) return false;
-
-	SI_Error rc = ini.Load(inifile);
-	if (rc >= 0) {
-		// attempt to load ini file failed
-		return false;
+unsigned short slIsTwainAvailable() {
+	ImageGrabber ig;
+	if (ig.twainAvailable()) {
+		return SC_SUCCESS;
 	}
-	inifile.close();
-	return true;
+	return SC_TWAIN_UAVAIL;
 }
 
 void calibrateToImage(char * filename) {
@@ -82,10 +77,11 @@ void decodeImage(char * filename) {
 void acquireAndProcesImage(unsigned plateNum) {
 #ifdef WIN32
 	string err;
+	ImageGrabber ig;
 
-	ImageGrabber::Instance().getConfigFromIni(ini, err);
+	ig.getConfigFromIni(ini, err);
 
-	HANDLE h = ImageGrabber::Instance().acquirePlateImage(err, plateNum);
+	HANDLE h = ig.acquirePlateImage(err, plateNum);
 	if (h == NULL) {
 		cerr <<  err << endl;
 		exit(0);
@@ -95,27 +91,35 @@ void acquireAndProcesImage(unsigned plateNum) {
 	Decoder decoder;
 
 	dib.readFromHandle(h);
-	ImageGrabber::Instance().freeImage(h);
+	ig.freeImage(h);
 	dib.writeToFile("out.bmp");
 #else
 	cerr << "this option not allowed on your operating system." << endl;
 #endif
 }
 
-void scanImage(char * filename) {
+unsigned short scanImage(char * filename, double left, double top, double right,
+		double bottom) {
 #ifdef WIN32
 	string err;
+	ImageGrabber ig;
 
-	UA_ASSERT_NOT_NULL(filename);
-	HANDLE h = ImageGrabber::Instance().acquireImage(err, 0, 0, 0, 0);
+	ua::logstream.sink(ua::LoggerSinkStdout::Instance());
+	ua::LoggerSinkStdout::Instance().showHeader(true);
+	ua::Logger::Instance().levelSet(ua::LoggerImpl::allSubSys_m, 5);
+
+	if (filename == NULL) {
+		return SC_FAIL;
+	}
+	HANDLE h = ig.acquireImage(err, left, top, right, bottom);
 	if (h == NULL) {
-		cerr <<  err << endl;
-		exit(0);
+		return SC_FAIL;
 	}
 	Dib dib;
 	dib.readFromHandle(h);
 	dib.writeToFile(filename);
-	ImageGrabber::Instance().freeImage(h);
+	ig.freeImage(h);
+	return SC_SUCCESS;
 #else
 	cerr << "this option not allowed on your operating system." << endl;
 #endif

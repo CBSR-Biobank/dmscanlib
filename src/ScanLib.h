@@ -5,7 +5,9 @@
 extern "C" {
 #endif
 
-#define EXPORT __declspec(dllimport)
+#include <windows.h>
+
+#define EXPORT __declspec(dllexport)
 
 typedef struct sScPixelLoc {
 	int x;
@@ -31,7 +33,19 @@ typedef struct sScFrame {
 
 } ScFrame;
 
-EXPORT bool isTwainAvailable();
+const unsigned short SC_SUCCESS      = 0;
+const unsigned short SC_FAIL         = 1;
+const unsigned short SC_TWAIN_UAVAIL = 2;
+
+EXPORT unsigned short slIsTwainAvailable();
+
+EXPORT unsigned short scanImage(char * filename, double x0, double y0,
+		double x1, double y1);
+
+typedef unsigned short (FAR PASCAL *SL_ISTWAINAVAILABLE) ();
+
+typedef unsigned short (FAR PASCAL *SL_SCANIMAGE) (char * filename, double x0,
+		double y0,	double x1, double y1);
 
 #ifdef __cplusplus
 }

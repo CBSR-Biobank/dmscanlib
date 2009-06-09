@@ -28,10 +28,10 @@ using namespace std;
  * This class interfaces with the TWAIN driver to acquire images from the
  * scanner.
  */
-class ImageGrabberImpl {
+class ImageGrabber {
 public:
-	ImageGrabberImpl();
-	~ImageGrabberImpl();
+	ImageGrabber();
+	~ImageGrabber();
 
 	bool twainAvailable();
 
@@ -97,7 +97,5 @@ private:
 
 	map<unsigned, ScFrame> plateFrames;
 };
-
-typedef Loki::SingletonHolder<ImageGrabberImpl> ImageGrabber;
 
 #endif /* __INCLUDE_IMAGE_GRABBER_H */
