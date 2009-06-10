@@ -35,7 +35,7 @@ const char * ImageGrabber::INI_SECTION_NAME = "plate";
  *	selectDefaultAsSource work.
  */
 ImageGrabber::ImageGrabber() : g_hLib(NULL), g_pDSM_Entry(NULL) {
-	UA_DEBUG(ua::Logger::Instance().subSysHeaderSet(2, "ImageGrabber"));
+	ua::Logger::Instance().subSysHeaderSet(2, "ImageGrabber");
 	g_hLib = LoadLibrary(TWAIN_DLL_FILENAME);
 
 	if (g_hLib != NULL) {
@@ -448,7 +448,7 @@ HANDLE ImageGrabber::acquirePlateImage(unsigned plate) {
 	stringstream errStrm;
 	map<unsigned, ScFrame>::iterator it = plateFrames.find(plate);
 	if (it == plateFrames.end()) {
-		errStrm << "plate number " << plate << " is not defined in INI file." << endl;
+		UA_DOUT(2, 1,  "plate number " << plate << " is not defined in INI file.");
 		return NULL;
 	}
 	ScFrame & f = it->second;

@@ -32,7 +32,7 @@ const char * Decoder::INI_SECTION_NAME = "barcode-regions";
 const char * Decoder::INI_REGION_LABEL = "region";
 
 Decoder::Decoder() {
-	UA_DEBUG(ua::Logger::Instance().subSysHeaderSet(1, "Decoder"));
+	ua::Logger::Instance().subSysHeaderSet(3, "Decoder");
 }
 
 Decoder::~Decoder() {

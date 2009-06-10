@@ -57,6 +57,14 @@ EXPORT unsigned short slScanImage(char * filename, double left,	double top,
 typedef unsigned short (FAR PASCAL *SL_SCANIMAGE) (char * filename, double x0,
 		double y0,	double x1, double y1);
 
+EXPORT unsigned short slCalibrateToPlate(unsigned short plateNum);
+
+typedef unsigned short (FAR PASCAL *SL_CALIBRATETOPLATE) (unsigned int plateNum);
+
+EXPORT unsigned short slDecodePlate(unsigned short plateNum);
+
+typedef unsigned short (FAR PASCAL *SL_DECODEPLATE) (unsigned int plateNum);
+
 #ifdef __cplusplus
 }
 #endif
