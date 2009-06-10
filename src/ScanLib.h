@@ -39,10 +39,20 @@ const unsigned short SC_TWAIN_UAVAIL = 2;
 
 EXPORT unsigned short slIsTwainAvailable();
 
-EXPORT unsigned short scanImage(char * filename, double x0, double y0,
-		double x1, double y1);
-
 typedef unsigned short (FAR PASCAL *SL_ISTWAINAVAILABLE) ();
+
+EXPORT unsigned short slSelectSourceAsDefault();
+
+typedef unsigned short (FAR PASCAL *SL_SELECTSOURCEASDEFAULT) ();
+
+EXPORT unsigned short slConfigPlateFrame(unsigned short plateNum, double left,
+		double top,	double right, double bottom);
+
+typedef unsigned short (FAR PASCAL *SL_CONFIGPLATEFRAME) (unsigned short, double x0,
+		double y0,	double x1, double y1);
+
+EXPORT unsigned short slScanImage(char * filename, double left,	double top,
+		double right, double bottom);
 
 typedef unsigned short (FAR PASCAL *SL_SCANIMAGE) (char * filename, double x0,
 		double y0,	double x1, double y1);

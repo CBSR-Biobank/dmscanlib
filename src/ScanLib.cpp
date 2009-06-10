@@ -34,6 +34,29 @@ CSimpleIniA ini(true, false, true);
 /*
  * Loads the INI file if it is present.
  */
+bool iniLoad(CSimpleIniA & ini) {
+	fstream inifile;
+	inifile.open(INI_FILE_NAME, fstream::in);
+	if (!inifile.is_open()) return false;
+
+	SI_Error rc = ini.Load(inifile);
+	if (rc >= 0) {
+		// attempt to load ini file failed
+		return false;
+	}
+	inifile.close();
+	return true;
+}
+
+void configLogging(unsigned level) {
+	ua::logstream.sink(ua::LoggerSinkStdout::Instance());
+	ua::LoggerSinkStdout::Instance().showHeader(true);
+	ua::Logger::Instance().levelSet(ua::LoggerImpl::allSubSys_m, level);
+}
+
+/*
+ * Loads the INI file if it is present.
+ */
 unsigned short slIsTwainAvailable() {
 	ImageGrabber ig;
 	if (ig.twainAvailable()) {
@@ -41,6 +64,64 @@ unsigned short slIsTwainAvailable() {
 	}
 	return SC_TWAIN_UAVAIL;
 }
+
+unsigned short slSelectSourceAsDefault() {
+	ImageGrabber ig;
+	if (ig.selectSourceAsDefault()) {
+		return SC_SUCCESS;
+	}
+	return SC_FAIL;
+}
+
+unsigned short slScanImage(char * filename, double left, double top, double right,
+		double bottom) {
+#ifdef WIN32
+	string err;
+	ImageGrabber ig;
+
+	if (filename == NULL) {
+		return SC_FAIL;
+	}
+
+	configLogging(5);
+	HANDLE h = ig.acquireImage(left, top, right, bottom);
+	if (h == NULL) {
+		return SC_FAIL;
+	}
+	Dib dib;
+	dib.readFromHandle(h);
+	dib.writeToFile(filename);
+	ig.freeImage(h);
+	return SC_SUCCESS;
+#else
+	cerr << "this option not allowed on your operating system." << endl;
+#endif
+}
+
+unsigned short slConfigPlateFrame(unsigned short plateNum, double left,
+		double top,	double right, double bottom) {
+	CSimpleIniA ini(true, false, true);
+	SI_Error rc;
+
+	iniLoad(ini);
+	string secname = "plate-" + to_string(plateNum);
+
+	rc = ini.SetValue(secname.c_str(), "left", to_string(left).c_str());
+	if (rc < 0) return SC_FAIL;
+
+	rc = ini.SetValue(secname.c_str(), "top", to_string(top).c_str());
+	if (rc < 0) return SC_FAIL;
+
+	rc = ini.SetValue(secname.c_str(), "right", to_string(right).c_str());
+	if (rc < 0) return SC_FAIL;
+
+	rc = ini.SetValue(secname.c_str(), "bottom", to_string(bottom).c_str());
+	if (rc < 0) return SC_FAIL;
+
+	ini.SaveFile(INI_FILE_NAME);
+	return SC_SUCCESS;
+}
+
 
 void calibrateToImage(char * filename) {
 	UA_ASSERT_NOT_NULL(filename);
@@ -76,14 +157,12 @@ void decodeImage(char * filename) {
 
 void acquireAndProcesImage(unsigned plateNum) {
 #ifdef WIN32
-	string err;
 	ImageGrabber ig;
 
-	ig.getConfigFromIni(ini, err);
+	ig.getConfigFromIni(ini);
 
-	HANDLE h = ig.acquirePlateImage(err, plateNum);
+	HANDLE h = ig.acquirePlateImage(plateNum);
 	if (h == NULL) {
-		cerr <<  err << endl;
 		exit(0);
 	}
 
@@ -93,33 +172,6 @@ void acquireAndProcesImage(unsigned plateNum) {
 	dib.readFromHandle(h);
 	ig.freeImage(h);
 	dib.writeToFile("out.bmp");
-#else
-	cerr << "this option not allowed on your operating system." << endl;
-#endif
-}
-
-unsigned short scanImage(char * filename, double left, double top, double right,
-		double bottom) {
-#ifdef WIN32
-	string err;
-	ImageGrabber ig;
-
-	ua::logstream.sink(ua::LoggerSinkStdout::Instance());
-	ua::LoggerSinkStdout::Instance().showHeader(true);
-	ua::Logger::Instance().levelSet(ua::LoggerImpl::allSubSys_m, 5);
-
-	if (filename == NULL) {
-		return SC_FAIL;
-	}
-	HANDLE h = ig.acquireImage(err, left, top, right, bottom);
-	if (h == NULL) {
-		return SC_FAIL;
-	}
-	Dib dib;
-	dib.readFromHandle(h);
-	dib.writeToFile(filename);
-	ig.freeImage(h);
-	return SC_SUCCESS;
 #else
 	cerr << "this option not allowed on your operating system." << endl;
 #endif

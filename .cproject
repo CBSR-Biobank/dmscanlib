@@ -23,42 +23,46 @@
 <builder buildPath="${workspace_loc:/scanlib}" id="org.eclipse.cdt.build.core.settings.default.builder.159761899" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="Gnu Make Builder" parallelBuildOn="true" parallelizationNumber="3" superClass="org.eclipse.cdt.build.core.settings.default.builder"/>
 <tool id="org.eclipse.cdt.build.core.settings.holder.libs.1073656516" name="holder for library settings" superClass="org.eclipse.cdt.build.core.settings.holder.libs"/>
 <tool id="org.eclipse.cdt.build.core.settings.holder.190194255" name="Assembly" superClass="org.eclipse.cdt.build.core.settings.holder">
-<option id="org.eclipse.cdt.build.core.settings.holder.incpaths.1515127417" superClass="org.eclipse.cdt.build.core.settings.holder.incpaths" valueType="includePath">
+<option id="org.eclipse.cdt.build.core.settings.holder.incpaths.1515127417" name="Include Paths" superClass="org.eclipse.cdt.build.core.settings.holder.incpaths" valueType="includePath">
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/src/loki}&quot;"/>
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/src/utils}&quot;"/>
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/libdmtx}&quot;"/>
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/simpleini}&quot;"/>
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/src}&quot;"/>
+<listOptionValue builtIn="false" value="/home/nelson/apps/cross-tools/include"/>
 </option>
 <inputType id="org.eclipse.cdt.build.core.settings.holder.inType.1662999097" languageId="org.eclipse.cdt.core.assembly" languageName="Assembly" sourceContentType="org.eclipse.cdt.core.asmSource" superClass="org.eclipse.cdt.build.core.settings.holder.inType"/>
 </tool>
 <tool id="org.eclipse.cdt.build.core.settings.holder.1613893843" name="UPC" superClass="org.eclipse.cdt.build.core.settings.holder">
-<option id="org.eclipse.cdt.build.core.settings.holder.incpaths.2131196212" superClass="org.eclipse.cdt.build.core.settings.holder.incpaths" valueType="includePath">
+<option id="org.eclipse.cdt.build.core.settings.holder.incpaths.2131196212" name="Include Paths" superClass="org.eclipse.cdt.build.core.settings.holder.incpaths" valueType="includePath">
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/src/loki}&quot;"/>
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/src/utils}&quot;"/>
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/libdmtx}&quot;"/>
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/simpleini}&quot;"/>
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/src}&quot;"/>
+<listOptionValue builtIn="false" value="/home/nelson/apps/cross-tools/include"/>
 </option>
 <inputType id="org.eclipse.cdt.build.core.settings.holder.inType.1351702459" languageId="org.eclipse.cdt.core.parser.upc.upc" languageName="UPC" sourceContentType="org.eclipse.cdt.core.parser.upc.upcSource" superClass="org.eclipse.cdt.build.core.settings.holder.inType"/>
 </tool>
 <tool id="org.eclipse.cdt.build.core.settings.holder.1858569176" name="GNU C++" superClass="org.eclipse.cdt.build.core.settings.holder">
-<option id="org.eclipse.cdt.build.core.settings.holder.incpaths.737054013" superClass="org.eclipse.cdt.build.core.settings.holder.incpaths" valueType="includePath">
+<option id="org.eclipse.cdt.build.core.settings.holder.incpaths.737054013" name="Include Paths" superClass="org.eclipse.cdt.build.core.settings.holder.incpaths" valueType="includePath">
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/libdmtx}&quot;"/>
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/simpleini}&quot;"/>
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/src}&quot;"/>
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/src/loki}&quot;"/>
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/src/utils}&quot;"/>
+<listOptionValue builtIn="false" value="/home/nelson/apps/cross-tools/include"/>
 </option>
 <inputType id="org.eclipse.cdt.build.core.settings.holder.inType.2047562932" languageId="org.eclipse.cdt.core.g++" languageName="GNU C++" sourceContentType="org.eclipse.cdt.core.cxxSource,org.eclipse.cdt.core.cxxHeader" superClass="org.eclipse.cdt.build.core.settings.holder.inType"/>
 </tool>
 <tool id="org.eclipse.cdt.build.core.settings.holder.1595389172" name="GNU C" superClass="org.eclipse.cdt.build.core.settings.holder">
-<option id="org.eclipse.cdt.build.core.settings.holder.incpaths.158196103" superClass="org.eclipse.cdt.build.core.settings.holder.incpaths" valueType="includePath">
+<option id="org.eclipse.cdt.build.core.settings.holder.incpaths.158196103" name="Include Paths" superClass="org.eclipse.cdt.build.core.settings.holder.incpaths" valueType="includePath">
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/src/loki}&quot;"/>
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/src/utils}&quot;"/>
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/libdmtx}&quot;"/>
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/simpleini}&quot;"/>
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/src}&quot;"/>
+<listOptionValue builtIn="false" value="/home/nelson/apps/cross-tools/include"/>
 </option>
 <inputType id="org.eclipse.cdt.build.core.settings.holder.inType.1467167443" languageId="org.eclipse.cdt.core.gcc" languageName="GNU C" sourceContentType="org.eclipse.cdt.core.cSource,org.eclipse.cdt.core.cHeader" superClass="org.eclipse.cdt.build.core.settings.holder.inType"/>
 </tool>
@@ -392,7 +396,7 @@
 <buildArguments>-fwin32.mk VERBOSE=1</buildArguments>
 <buildTarget>clean</buildTarget>
 <stopOnError>true</stopOnError>
-<useDefaultCommand>false</useDefaultCommand>
+<useDefaultCommand>true</useDefaultCommand>
 <runAllBuilders>true</runAllBuilders>
 </target>
 </buildTargets>
@@ -424,6 +428,7 @@
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/libdmtx}&quot;"/>
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/simpleini}&quot;"/>
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/src}&quot;"/>
+<listOptionValue builtIn="false" value="/home/nelson/apps/cross-tools/include"/>
 </option>
 <inputType id="org.eclipse.cdt.build.core.settings.holder.inType.107605999" languageId="org.eclipse.cdt.core.assembly" languageName="Assembly" sourceContentType="org.eclipse.cdt.core.asmSource" superClass="org.eclipse.cdt.build.core.settings.holder.inType"/>
 </tool>
@@ -434,6 +439,7 @@
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/libdmtx}&quot;"/>
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/simpleini}&quot;"/>
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/src}&quot;"/>
+<listOptionValue builtIn="false" value="/home/nelson/apps/cross-tools/include"/>
 </option>
 <inputType id="org.eclipse.cdt.build.core.settings.holder.inType.1598558226" languageId="org.eclipse.cdt.core.parser.upc.upc" languageName="UPC" sourceContentType="org.eclipse.cdt.core.parser.upc.upcSource" superClass="org.eclipse.cdt.build.core.settings.holder.inType"/>
 </tool>
@@ -444,6 +450,7 @@
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/src}&quot;"/>
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/src/loki}&quot;"/>
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/src/utils}&quot;"/>
+<listOptionValue builtIn="false" value="/home/nelson/apps/cross-tools/include"/>
 </option>
 <inputType id="org.eclipse.cdt.build.core.settings.holder.inType.1811277963" languageId="org.eclipse.cdt.core.g++" languageName="GNU C++" sourceContentType="org.eclipse.cdt.core.cxxSource,org.eclipse.cdt.core.cxxHeader" superClass="org.eclipse.cdt.build.core.settings.holder.inType"/>
 </tool>
@@ -454,6 +461,7 @@
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/libdmtx}&quot;"/>
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/simpleini}&quot;"/>
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/src}&quot;"/>
+<listOptionValue builtIn="false" value="/home/nelson/apps/cross-tools/include"/>
 </option>
 <inputType id="org.eclipse.cdt.build.core.settings.holder.inType.667982087" languageId="org.eclipse.cdt.core.gcc" languageName="GNU C" sourceContentType="org.eclipse.cdt.core.cSource,org.eclipse.cdt.core.cHeader" superClass="org.eclipse.cdt.build.core.settings.holder.inType"/>
 </tool>
@@ -787,7 +795,7 @@
 <buildArguments>-fwin32.mk VERBOSE=1</buildArguments>
 <buildTarget>clean</buildTarget>
 <stopOnError>true</stopOnError>
-<useDefaultCommand>false</useDefaultCommand>
+<useDefaultCommand>true</useDefaultCommand>
 <runAllBuilders>true</runAllBuilders>
 </target>
 </buildTargets>

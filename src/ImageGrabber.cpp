@@ -78,7 +78,7 @@ unsigned ImageGrabber::invokeTwain(TW_IDENTITY * srcId, unsigned long dg,
  *	have to be specified every time.
  *	TODO: change return type to void?
  */
-bool ImageGrabber::selectSourceAsDefault(string & err) {
+bool ImageGrabber::selectSourceAsDefault() {
 	UA_ASSERT_NOT_NULL(g_hLib);
 
 	// Create a static window whose handle is passed to DSM_Entry() when we
@@ -96,7 +96,6 @@ bool ImageGrabber::selectSourceAsDefault(string & err) {
 	rc = invokeTwain(NULL, DG_CONTROL, DAT_PARENT, MSG_OPENDSM, (TW_MEMREF) &hwnd);
 
 	if (rc != TWRC_SUCCESS) {
-		err = "no scanners connected.";
 		return false;
 	}
 
@@ -106,13 +105,12 @@ bool ImageGrabber::selectSourceAsDefault(string & err) {
 
 	UA_ASSERTS(rc != TWRC_FAILURE, "Unable to display user interface ");
 	if (rc == TWRC_CANCEL) {
-		err = "user pressed cancel for scanner selection.";
 		return false;
 	}
 
 	// Close the data source manager.
 	invokeTwain(NULL, DG_CONTROL, DAT_PARENT, MSG_CLOSEDSM, &hwnd);
-	DestroyWindow (hwnd);
+	DestroyWindow(hwnd);
 
 	UA_DOUT(2, 3, "selectSourceAsDefault: " << srcID.ProductName);
 	return true;
@@ -131,7 +129,7 @@ void ImageGrabber::setFloatToIntPair(const float f, short & whole,
  *
  *	Grab an image from the twain source and convert it to the dmtxImage format
  */
-HANDLE ImageGrabber::acquireImage(string & err, double left, double top,
+HANDLE ImageGrabber::acquireImage(double left, double top,
 		double right, double bottom) {
 	UA_ASSERT_NOT_NULL(g_hLib);
 
@@ -156,7 +154,7 @@ HANDLE ImageGrabber::acquireImage(string & err, double left, double top,
 	// get the default source
 	rc = invokeTwain(NULL, DG_CONTROL, DAT_IDENTITY, MSG_GETDEFAULT, &srcID);
 	if (rc != TWRC_SUCCESS) {
-		if (!selectSourceAsDefault(err)) {
+		if (!selectSourceAsDefault()) {
 			return NULL;
 		}
 	}
@@ -275,10 +273,10 @@ HANDLE ImageGrabber::acquireImage(string & err, double left, double top,
 	return (HANDLE) handle;
 }
 
-DmtxImage* ImageGrabber::acquireDmtxImage(string & err){
+DmtxImage* ImageGrabber::acquireDmtxImage(){
 	UA_ASSERT_NOT_NULL(g_hLib);
 
-	HANDLE h = acquireImage(err, 0, 0, 0, 0);
+	HANDLE h = acquireImage(0, 0, 0, 0);
 	if (h == NULL) {
 		return NULL;
 	}
@@ -370,9 +368,9 @@ void ImageGrabber::unloadTwain(){
 	g_hLib = NULL;
 }
 
-void ImageGrabber::getConfigFromIni(CSimpleIniA & ini, string & err) {
+void ImageGrabber::getConfigFromIni(CSimpleIniA & ini) {
 	for (unsigned i = 1; i < MAX_PLATES; ++i) {
-		getConfigFromIni(ini, i, err);
+		getConfigFromIni(ini, i);
 
 		UA_DOUT(2, 3, "plate " << i << ": top/" << plateFrames[i].y0
 				<< " left/" << plateFrames[i].x0
@@ -381,7 +379,7 @@ void ImageGrabber::getConfigFromIni(CSimpleIniA & ini, string & err) {
 	}
 }
 
-bool ImageGrabber::getConfigFromIni(CSimpleIniA & ini, unsigned plateNum, string & err) {
+bool ImageGrabber::getConfigFromIni(CSimpleIniA & ini, unsigned plateNum) {
 	stringstream errStrm;
 	stringstream secName;
 
@@ -393,8 +391,6 @@ bool ImageGrabber::getConfigFromIni(CSimpleIniA & ini, unsigned plateNum, string
 	if (values->size() == 0) {
 		errStrm << "INI file error: section [" << INI_SECTION_NAME
 		        << "], has no values" << endl;
-		err = errStrm.str();
-
 		return false;
 	}
 
@@ -411,7 +407,6 @@ bool ImageGrabber::getConfigFromIni(CSimpleIniA & ini, unsigned plateNum, string
 				errStrm << "INI file error: section [" << INI_SECTION_NAME
 				        << "], value for key \""
 					    << key << "\" is invalid:" << value << endl;
-				err = errStrm.str();
 				return false;
 			}
 		}
@@ -420,7 +415,6 @@ bool ImageGrabber::getConfigFromIni(CSimpleIniA & ini, unsigned plateNum, string
 				errStrm << "INI file error: section [" << INI_SECTION_NAME
 				        << "], value for key \""
 					    << key << "\" is invalid:" << value << endl;
-				err = errStrm.str();
 				return false;
 			}
 		}
@@ -429,7 +423,6 @@ bool ImageGrabber::getConfigFromIni(CSimpleIniA & ini, unsigned plateNum, string
 				errStrm << "INI file error: section [" << INI_SECTION_NAME
 				        << "], value for key \""
 					    << key << "\" is invalid:" << value << endl;
-				err = errStrm.str();
 				return false;
 			}
 		}
@@ -438,14 +431,12 @@ bool ImageGrabber::getConfigFromIni(CSimpleIniA & ini, unsigned plateNum, string
 				errStrm << "INI file error: section [" << INI_SECTION_NAME
 				        << "], value for key \""
 					    << key << "\" is invalid:" << value << endl;
-				err = errStrm.str();
 				return false;
 			}
 		}
 		else {
 			errStrm << "INI file error: section [" << INI_SECTION_NAME
 			        << "], key is invalid:" << key << endl;
-			err = errStrm.str();
 			return false;
 		}
 	}
@@ -453,14 +444,13 @@ bool ImageGrabber::getConfigFromIni(CSimpleIniA & ini, unsigned plateNum, string
 	return true;
 }
 
-HANDLE ImageGrabber::acquirePlateImage(string & err, unsigned plate) {
+HANDLE ImageGrabber::acquirePlateImage(unsigned plate) {
 	stringstream errStrm;
 	map<unsigned, ScFrame>::iterator it = plateFrames.find(plate);
 	if (it == plateFrames.end()) {
 		errStrm << "plate number " << plate << " is not defined in INI file." << endl;
-		err = errStrm.str();
 		return NULL;
 	}
 	ScFrame & f = it->second;
-	return acquireImage(err, f.x0, f.y0, f.x1, f.y1);
+	return acquireImage(f.x0, f.y0, f.x1, f.y1);
 }

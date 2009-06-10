@@ -39,15 +39,15 @@ public:
 	 * returns false if user pressed cancel when presented with dialog box to
 	 * select a scanner.
 	 */
-	bool selectSourceAsDefault(string & err);
+	bool selectSourceAsDefault();
 
-	HANDLE acquireImage(string & err, double top, double left,
+	HANDLE acquireImage(double top, double left,
 			double bottom, double right);
-	HANDLE acquirePlateImage(string & err, unsigned plate);
-	DmtxImage* acquireDmtxImage(string & err);
+	HANDLE acquirePlateImage(unsigned plate);
+	DmtxImage* acquireDmtxImage();
 	void freeImage(HANDLE handle);
 
-	void getConfigFromIni(CSimpleIniA & ini, string & err);
+	void getConfigFromIni(CSimpleIniA & ini);
 
 
 private:
@@ -61,7 +61,7 @@ private:
 
 	BOOL setCapability(TW_UINT16 cap,TW_UINT16 value,BOOL sign);
 
-	bool getConfigFromIni(CSimpleIniA & ini, unsigned plateNum, string & err);
+	bool getConfigFromIni(CSimpleIniA & ini, unsigned plateNum);
 
 
 	static const char * TWAIN_DLL_FILENAME;
