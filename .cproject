@@ -415,10 +415,10 @@
 <folderInfo id="0.873975778.490463487." name="/" resourcePath="">
 <toolChain id="org.eclipse.cdt.build.core.prefbase.toolchain.1126162976" name="No ToolChain" resourceTypeBasedDiscovery="false" superClass="org.eclipse.cdt.build.core.prefbase.toolchain">
 <targetPlatform binaryParser="org.eclipse.cdt.core.ELF" id="org.eclipse.cdt.build.core.prefbase.toolchain.1126162976.312751296" name=""/>
-<builder arguments="-fwin32.mk VERBOSE=1" buildPath="${workspace_loc:/scanlib}" command="make" id="org.eclipse.cdt.build.core.settings.default.builder.2122386558" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="Gnu Make Builder" parallelBuildOn="true" parallelizationNumber="3" superClass="org.eclipse.cdt.build.core.settings.default.builder"/>
+<builder arguments="-f linux-mingw.mk VERBOSE=1" buildPath="${workspace_loc:/scanlib}" command="make" id="org.eclipse.cdt.build.core.settings.default.builder.2122386558" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="Gnu Make Builder" parallelBuildOn="true" parallelizationNumber="3" superClass="org.eclipse.cdt.build.core.settings.default.builder"/>
 <tool id="org.eclipse.cdt.build.core.settings.holder.libs.186870480" name="holder for library settings" superClass="org.eclipse.cdt.build.core.settings.holder.libs"/>
 <tool id="org.eclipse.cdt.build.core.settings.holder.866832553" name="Assembly" superClass="org.eclipse.cdt.build.core.settings.holder">
-<option id="org.eclipse.cdt.build.core.settings.holder.incpaths.1649353289" superClass="org.eclipse.cdt.build.core.settings.holder.incpaths" valueType="includePath">
+<option id="org.eclipse.cdt.build.core.settings.holder.incpaths.1649353289" name="Include Paths" superClass="org.eclipse.cdt.build.core.settings.holder.incpaths" valueType="includePath">
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/src/loki}&quot;"/>
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/src/utils}&quot;"/>
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/libdmtx}&quot;"/>
@@ -428,7 +428,7 @@
 <inputType id="org.eclipse.cdt.build.core.settings.holder.inType.107605999" languageId="org.eclipse.cdt.core.assembly" languageName="Assembly" sourceContentType="org.eclipse.cdt.core.asmSource" superClass="org.eclipse.cdt.build.core.settings.holder.inType"/>
 </tool>
 <tool id="org.eclipse.cdt.build.core.settings.holder.112428187" name="UPC" superClass="org.eclipse.cdt.build.core.settings.holder">
-<option id="org.eclipse.cdt.build.core.settings.holder.incpaths.49828048" superClass="org.eclipse.cdt.build.core.settings.holder.incpaths" valueType="includePath">
+<option id="org.eclipse.cdt.build.core.settings.holder.incpaths.49828048" name="Include Paths" superClass="org.eclipse.cdt.build.core.settings.holder.incpaths" valueType="includePath">
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/src/loki}&quot;"/>
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/src/utils}&quot;"/>
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/libdmtx}&quot;"/>
@@ -438,7 +438,7 @@
 <inputType id="org.eclipse.cdt.build.core.settings.holder.inType.1598558226" languageId="org.eclipse.cdt.core.parser.upc.upc" languageName="UPC" sourceContentType="org.eclipse.cdt.core.parser.upc.upcSource" superClass="org.eclipse.cdt.build.core.settings.holder.inType"/>
 </tool>
 <tool id="org.eclipse.cdt.build.core.settings.holder.1973749922" name="GNU C++" superClass="org.eclipse.cdt.build.core.settings.holder">
-<option id="org.eclipse.cdt.build.core.settings.holder.incpaths.30589579" superClass="org.eclipse.cdt.build.core.settings.holder.incpaths" valueType="includePath">
+<option id="org.eclipse.cdt.build.core.settings.holder.incpaths.30589579" name="Include Paths" superClass="org.eclipse.cdt.build.core.settings.holder.incpaths" valueType="includePath">
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/libdmtx}&quot;"/>
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/simpleini}&quot;"/>
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/src}&quot;"/>
@@ -448,7 +448,7 @@
 <inputType id="org.eclipse.cdt.build.core.settings.holder.inType.1811277963" languageId="org.eclipse.cdt.core.g++" languageName="GNU C++" sourceContentType="org.eclipse.cdt.core.cxxSource,org.eclipse.cdt.core.cxxHeader" superClass="org.eclipse.cdt.build.core.settings.holder.inType"/>
 </tool>
 <tool id="org.eclipse.cdt.build.core.settings.holder.1541139325" name="GNU C" superClass="org.eclipse.cdt.build.core.settings.holder">
-<option id="org.eclipse.cdt.build.core.settings.holder.incpaths.1766306577" superClass="org.eclipse.cdt.build.core.settings.holder.incpaths" valueType="includePath">
+<option id="org.eclipse.cdt.build.core.settings.holder.incpaths.1766306577" name="Include Paths" superClass="org.eclipse.cdt.build.core.settings.holder.incpaths" valueType="includePath">
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/src/loki}&quot;"/>
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/src/utils}&quot;"/>
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/libdmtx}&quot;"/>

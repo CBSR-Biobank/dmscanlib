@@ -1,4 +1,4 @@
-PROJECT := scanlib.dll
+PROJECT := libscanlib.dll
 
 SRC := \
 	src/BinRegion.cpp \

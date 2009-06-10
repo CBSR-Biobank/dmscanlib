@@ -23,7 +23,7 @@
 				</dictionary>
 				<dictionary>
 					<key>org.eclipse.cdt.make.core.buildArguments</key>
-					<value>-fwin32.mk VERBOSE=1  -j3</value>
+					<value>-f linux-mingw.mk VERBOSE=1  -j3</value>
 				</dictionary>
 				<dictionary>
 					<key>org.eclipse.cdt.make.core.buildCommand</key>
