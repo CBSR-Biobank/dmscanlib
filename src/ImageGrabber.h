@@ -12,11 +12,11 @@
 #error ERROR: should not be compiled for non-windows build
 #endif
 
-#include "dib.h"
+#include "Dib.h"
 #include "dmtx.h"
 #include "twain.h"     // Standard TWAIN header.
 #include "Singleton.h"
-#include "simpleini.h"
+#include "SimpleIni.h"
 #include "ScanLib.h"
 
 #include <windows.h>
