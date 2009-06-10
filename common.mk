@@ -57,7 +57,7 @@ $(PROJECT) : $(OBJS)
 # Include the dependency files.  If they don't exist, then silent ignore it.
 #
 ifneq ($(MAKECMDGOALS),clean)
--include $(DEPS_FULL_PATH)
+#-include $(DEPS_FULL_PATH)
 endif
 
 #------------------------------------------------------------------------------
@@ -67,14 +67,14 @@ endif
 # to look for for for included makefiles.
 #
 $(CURDIR)/$(BUILD_DIR)/%.d : %.c
-	@echo "updating dependencies for $(notdir $@)..."
+	@echo "updating dependencies for $@..."
 	$(SILENT) test -d "$(BUILD_DIR_FULL_PATH)" || mkdir -p "$(BUILD_DIR_FULL_PATH)"
 	$(SILENT) $(SHELL) -ec '$(CC) -MM $(CPPFLAGS) $< \
 		| $(SED) '\''s|\($(notdir $*)\)\.o[ :]*|\1.o $@: |g'\'' > $@; \
 		[ -s $@ ] || rm -f $@'
 
 $(CURDIR)/$(BUILD_DIR)/%.d : %.cpp
-	@echo "updating dependencies for $(notdir $@)..."
+	@echo "updating dependencies for $@..."
 	$(SILENT) test -d "$(BUILD_DIR_FULL_PATH)" || mkdir -p "$(BUILD_DIR_FULL_PATH)"
 	$(SILENT) $(SHELL) -ec '$(CXX) -MM $(CPPFLAGS) $< \
 		| $(SED) '\''s|\($(notdir $*)\)\.o[ :]*|\1.o $@: |g'\'' > $@; \

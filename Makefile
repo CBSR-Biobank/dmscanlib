@@ -1,8 +1,4 @@
-PROJECT := scanlib
-
-ifeq ($(OSTYPE),msys)
-  PROJECT := $(PROJECT).exe
-endif
+PROJECT := scanlib.exe
 
 SRC := \
 	src/BinRegion.cpp \
@@ -11,15 +7,11 @@ SRC := \
 	src/Dib.c \
 	src/MessageInfo.cpp \
 	src/ScanLib.cpp \
-	src/utils/UaDebug.cpp \
+	src/utils/UaLogger.cpp \
 	src/utils/Util.cpp \
 	libdmtx/dmtx.c \
-	simpleini/ConvertUTF.c
-
-ifeq ($(OSTYPE),msys)
-SRC += \
+	simpleini/ConvertUTF.c \
 	src/ImageGrabber.cpp
-endif
 
 DEBUG=1
 
@@ -28,12 +20,13 @@ BUILD_DIR_FULL_PATH := $(CURDIR)/$(BUILD_DIR)
 
 CC := gcc
 CXX := g++
-CFLAGS := -Wall -pedantic -fmessage-length=0 -DUA_HAVE_DEBUG
+CFLAGS := -Wall -pedantic -fmessage-length=0 -DUA_LOGGER
 CXXFLAGS := $(CFLAGS)
 CPPFLAGS := $(CFLAGS)
-SED := /bin/sed
+SED := sed
 LIBS += -lm -lstdc++
+LDFLAGS := -shared -Wl,--out-implib,$(basename $(PROJECT)).a
 
 INCLUDE_PATH := src libdmtx src/loki src/utils simpleini
 
--include common.mk
+include common.mk
