@@ -14,6 +14,7 @@
 #include "Calibrator.h"
 #include "Dib.h"
 #include "Util.h"
+#include "MessageInfo.h"
 
 #ifdef WIN32
 #include "ImageGrabber.h"
@@ -145,16 +146,37 @@ unsigned short slCalibrateToPlate(unsigned short plateNum) {
 		return SC_FAIL;
 	}
 	dib.readFromHandle(h);
+	dib.writeToFile("out.bmp");
 	calibrator.processImage(dib);
-	calibrator.saveRegionsToIni(ini);
+	calibrator.saveRegionsToIni(plateNum, ini);
+	ini.SaveFile(INI_FILE_NAME);
 
 	Dib markedDib(dib);
 
 	calibrator.imageShowBins(markedDib, quad);
-	markedDib.writeToFile("out.bmp");
+	markedDib.writeToFile("marked.bmp");
 	ig.freeImage(h);
-	ini.SaveFile(INI_FILE_NAME);
 	return SC_SUCCESS;
+}
+
+
+void saveDecodeResults(unsigned plateNum, vector<DecodeRegion *> & decodeRegions) {
+	ofstream file;
+	file.open("scanlib.txt", ios::out);
+
+	file << "#Plate,Row,Col,Barcode" << endl;
+
+	for (unsigned i = 0, n = decodeRegions.size(); i < n; ++i) {
+		DecodeRegion & region = *decodeRegions[i];
+
+		if (region.msgInfo == NULL) continue;
+
+		file << to_string(plateNum) << ","
+		     << to_string(region.row) << ","
+		     << to_string(region.col) << ","
+		     << region.msgInfo->getMsg() << endl;
+	}
+	file.close();
 }
 
 unsigned short slDecodePlate(unsigned short plateNum) {
@@ -174,11 +196,11 @@ unsigned short slDecodePlate(unsigned short plateNum) {
 	ig.getConfigFromIni(ini);
 	HANDLE h = ig.acquirePlateImage(plateNum);
 	if (h == NULL) {
-		UA_DOUT(1, 1, "could not aquire plate image: " << plateNum);
+		UA_DOUT(1, 1, "could not acquire plate image: " << plateNum);
 		return SC_FAIL;
 	}
 	dib.readFromHandle(h);
-	decoder.getRegionsFromIni(ini);
-	decoder.processImageRegions(dib);
+	decoder.processImageRegions(ini, dib);
+	saveDecodeResults(plateNum, decoder.getDecodeRegions());
 	return SC_SUCCESS;
 }

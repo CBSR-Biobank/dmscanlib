@@ -20,7 +20,7 @@ public:
 	virtual ~Calibrator();
 	void processImage(Dib & dib);
 	void processImage(DmtxImage & image);
-	void saveRegionsToIni(CSimpleIniA & ini);
+	void saveRegionsToIni(unsigned plateNum, CSimpleIniA & ini);
 	void imageShowBins(Dib & dib, RgbQuad & quad);
 
 private:

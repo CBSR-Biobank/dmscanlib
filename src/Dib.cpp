@@ -31,9 +31,6 @@ Dib::Dib(Dib & src) :
 Dib::Dib(unsigned rows, unsigned cols, unsigned colorBits)  :
 	fileHeader(NULL) {
 	bytesPerPixel = colorBits >> 3;
-	rowPaddingBytes = (cols * bytesPerPixel) & 0x3;
-
-	unsigned rowBytes = cols * bytesPerPixel + rowPaddingBytes;
 
 	infoHeader = new BitmapInfoHeader;
 	infoHeader->size            = 40;
@@ -42,11 +39,14 @@ Dib::Dib(unsigned rows, unsigned cols, unsigned colorBits)  :
 	infoHeader->planes          = 1;
 	infoHeader->bitCount        = colorBits;
 	infoHeader->compression     = 0;
-	infoHeader->imageSize       = infoHeader->height * rowBytes;
 	infoHeader->hPixelsPerMeter = 0;
 	infoHeader->vPixelsPerMeter = 0;
 	infoHeader->numColors       = 0;
 	infoHeader->numColorsImp    = 0;
+
+	rowBytes = (infoHeader->width * infoHeader->bitCount + 31) >> 3;
+	rowPaddingBytes = rowBytes - (infoHeader->width * bytesPerPixel);
+	infoHeader->imageSize       = infoHeader->height * rowBytes;
 
 	isAllocated = true;
 	pixels = new unsigned char[infoHeader->imageSize];
@@ -108,7 +108,8 @@ void Dib::readFromHandle(HANDLE handle) {
 	pixels = (unsigned char *) dibHeaderPtr + sizeof(BITMAPINFOHEADER);
 
 	bytesPerPixel = infoHeader->bitCount >> 3;
-	rowPaddingBytes = (infoHeader->width * bytesPerPixel) & 0x3;
+	rowBytes = (infoHeader->width * infoHeader->bitCount + 31) >> 3;
+	rowPaddingBytes = rowBytes - (infoHeader->width * bytesPerPixel);
 }
 #endif
 
@@ -153,7 +154,9 @@ void Dib::readFromFile(const char * filename) {
 	infoHeader->numColorsImp    = *(unsigned *)&infoHeaderRaw[0x32 - 0xE];
 
 	bytesPerPixel = infoHeader->bitCount >> 3;
-	rowPaddingBytes = (infoHeader->width * bytesPerPixel) & 0x3;
+	rowBytes = (infoHeader->width * infoHeader->bitCount + 31) >> 3;
+	rowPaddingBytes = rowBytes - (infoHeader->width * bytesPerPixel);
+
 
 	isAllocated = true;
 	pixels = new unsigned char[infoHeader->imageSize];
@@ -229,8 +232,6 @@ unsigned char * Dib::getPixelBuffer() {
 
 unsigned char * Dib::getRowPtr(unsigned row) {
 	UA_ASSERT(row < infoHeader->height);
-
-	unsigned rowBytes = infoHeader->width * bytesPerPixel + rowPaddingBytes;
 	return pixels + row * rowBytes;
 }
 
@@ -238,7 +239,6 @@ void Dib::getPixel(unsigned row, unsigned col, RgbQuad & quad) {
 	UA_ASSERT(row < infoHeader->height);
 	UA_ASSERT(col < infoHeader->width);
 
-	unsigned rowBytes = infoHeader->width * bytesPerPixel + rowPaddingBytes;
 	unsigned char * ptr = pixels + row * rowBytes + col * bytesPerPixel;
 
 	assert(infoHeader->bitCount != 8);
@@ -252,7 +252,6 @@ unsigned char Dib::getPixelGrayscale(unsigned row, unsigned col) {
 	UA_ASSERT(row < infoHeader->height);
 	UA_ASSERT(col < infoHeader->width);
 
-	unsigned rowBytes = infoHeader->width * bytesPerPixel + rowPaddingBytes;
 	unsigned char * ptr = pixels + row * rowBytes + col * bytesPerPixel;
 
 	if ((infoHeader->bitCount == 24) || (infoHeader->bitCount == 32)) {
@@ -269,7 +268,6 @@ void Dib::setPixel(unsigned x, unsigned y, RgbQuad & quad) {
 	UA_ASSERT(x < infoHeader->width);
 	UA_ASSERT(y < infoHeader->height);
 
-	unsigned rowBytes = infoHeader->width * bytesPerPixel + rowPaddingBytes;
 	unsigned char * ptr = (pixels + y * rowBytes + x * bytesPerPixel);
 
 	if ((infoHeader->bitCount != 24) && (infoHeader->bitCount != 32)) {
@@ -284,7 +282,6 @@ void Dib::setPixelGrayscale(unsigned row, unsigned col,	unsigned char value) {
 	UA_ASSERT(row < infoHeader->height);
 	UA_ASSERT(col < infoHeader->width);
 
-	unsigned rowBytes = infoHeader->width * bytesPerPixel + rowPaddingBytes;
 	unsigned char * ptr = pixels + row * rowBytes + col * bytesPerPixel;
 
 	if ((infoHeader->bitCount == 24) || (infoHeader->bitCount == 32)) {
@@ -320,20 +317,20 @@ void Dib::crop(Dib &src, unsigned x0, unsigned y0, unsigned x1, unsigned y1) {
 	infoHeader->width  = x1 - x0;
 	infoHeader->height = y1 - y0;
 
-	rowPaddingBytes = (infoHeader->width * bytesPerPixel) & 0x3;
-	unsigned destRowBytes = infoHeader->width * bytesPerPixel + rowPaddingBytes;
+	rowBytes = (infoHeader->width * infoHeader->bitCount + 31) >> 3;
+	rowPaddingBytes = rowBytes - (infoHeader->width * bytesPerPixel);
 
-	infoHeader->imageSize = infoHeader->height * destRowBytes;
+	infoHeader->imageSize = infoHeader->height * rowBytes;
 
 	isAllocated = true;
 	pixels = new unsigned char[infoHeader->imageSize];
 
-	unsigned srcRowBytes = src.infoHeader->width * src.bytesPerPixel + src.rowPaddingBytes;
-	unsigned char * srcRowPtr = src.pixels + (src.infoHeader->height - y1) * srcRowBytes + x0 * bytesPerPixel;
+	unsigned char * srcRowPtr =
+		src.pixels + (src.infoHeader->height - y1) * src.rowBytes + x0 * bytesPerPixel;
 	unsigned char * destRowPtr = pixels;
 
 	for (unsigned row = 0; row < infoHeader->height;
-		++row, srcRowPtr += srcRowBytes, destRowPtr += destRowBytes) {
+		++row, srcRowPtr += src.rowBytes, destRowPtr += rowBytes) {
 		memcpy(destRowPtr, srcRowPtr, infoHeader->width * bytesPerPixel);
 	}
 }
@@ -352,8 +349,6 @@ void Dib::convertGrayscale(Dib & src) {
 void Dib::sobelEdgeDetectionWithMask(Dib & src, int mask1[3][3],
 		int mask2[3][3]) {
 	UA_ASSERT_NOT_NULL(src.infoHeader);
-
-	unsigned rowBytes = infoHeader->width * bytesPerPixel + rowPaddingBytes;
 
 	int I, J;
 	unsigned Y, X, SUM;

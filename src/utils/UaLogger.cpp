@@ -23,7 +23,7 @@
 
 #include "UaLogger.h"
 
-#ifdef WIN32
+#if defined (WIN32) && ! defined(__MINGW32__)
 #include <time.h>
 #include <sys/timeb.h>
 #else
@@ -136,12 +136,14 @@ bool LoggerImpl::isDebug (unsigned subsys, unsigned level) {
 void LoggerSink::standardHeader(std::string & str_r) {
     char buf_a[100];
 
-#if defined(WIN32) && defined(__MINGW32__)
-    time_t now = time(NULL);
-    struct tm *tm_ptr = localtime(&now);
-    snprintf(buf_a, sizeof (buf_a), "%02d:%02d:%02d:000 ",
-             tm_ptr->tm_hour, tm_ptr->tm_min, tm_ptr->tm_sec);
-#elif defined(WIN32)
+//#if defined(WIN32) && defined(__MINGW32__)
+//    time_t now = time(NULL);
+//    struct tm *tm_ptr = localtime(&now);
+//    snprintf(buf_a, sizeof (buf_a), "%02d:%02d:%02d:000 ",
+//             tm_ptr->tm_hour, tm_ptr->tm_min, tm_ptr->tm_sec);
+//#elif defined(WIN32)
+
+#if defined (WIN32) && ! defined(__MINGW32__)
    time_t ltime;
    struct _timeb tstruct;
    char timebuf[26];

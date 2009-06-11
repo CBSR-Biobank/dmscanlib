@@ -86,6 +86,7 @@ private:
 	BitmapFileHeader * fileHeader;
 	BitmapInfoHeader * infoHeader;
 	unsigned bytesPerPixel;
+	unsigned rowBytes;
 	unsigned rowPaddingBytes;
 	unsigned char * pixels;
 	bool isAllocated;

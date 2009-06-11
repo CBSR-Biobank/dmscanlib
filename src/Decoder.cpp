@@ -279,13 +279,14 @@ void Decoder::getRegionsFromIni(CSimpleIniA & ini) {
 /*
  * Should only be called after regions are loaded from INI file.
  */
-void Decoder::processImageRegions(Dib & dib) {
+void Decoder::processImageRegions(CSimpleIniA & ini, Dib & dib) {
+	getRegionsFromIni(ini);
 	if (decodeRegions.size() == 0) {
 		UA_WARN("no decoded regions; exiting.");
 		return;
 	}
 
-	vector<MessageInfo *>  msgInfos;
+	vector<MessageInfo *> msgInfos;
 
 	for (unsigned i = 0, n = decodeRegions.size(); i < n; ++i) {
 		DecodeRegion & region = *decodeRegions[i];
@@ -293,11 +294,14 @@ void Decoder::processImageRegions(Dib & dib) {
 		croppedDib.crop(dib, region.topLeft.X, region.topLeft.Y,
 				region.botRight.X, region.botRight.Y);
 		msgInfos.clear();
+		UA_DOUT(1, 3, "processing region at row/" << region.row << " col/" << region.col);
 		processImage(croppedDib, msgInfos);
 		unsigned size = msgInfos.size();
 		UA_ASSERT(size <= 1);
 		if (size == 1) {
 			region.msgInfo = msgInfos[0];
+			UA_DOUT(1, 3, "barcode found at row/" << region.row
+					<< " col/" << region.col << " barcode/" << region.msgInfo->getMsg());
 		}
 	}
 }

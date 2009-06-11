@@ -11,6 +11,7 @@
 #include "Dib.h"
 #include "UaLogger.h"
 #include "UaAssert.h"
+#include "Util.h"
 
 Calibrator::Calibrator() {
 }
@@ -170,10 +171,11 @@ void Calibrator::sortRegions() {
 	sort(msgInfos.begin(), msgInfos.end(), MessageInfoSort());
 }
 
-void Calibrator::saveRegionsToIni(CSimpleIniA & ini) {
+void Calibrator::saveRegionsToIni(unsigned plateNum, CSimpleIniA & ini) {
 	UA_ASSERT(msgInfos.size() > 0);
-	SI_Error rc = ini.SetValue(INI_SECTION_NAME, NULL, NULL);
-	UA_ASSERT(rc >= 0);
+
+	SI_Error rc;
+	string secName = "plate-" + to_string(plateNum) + "-" + INI_SECTION_NAME;
 
 	unsigned maxCol = msgInfos[0]->getColBinRegion().getRank();
 	ostringstream key, value;
@@ -189,9 +191,8 @@ void Calibrator::saveRegionsToIni(CSimpleIniA & ini) {
 			      << colBinRegions[c]->getMax() << ","
 			      << rowBinRegions[r]->getMax();
 
-			rc = ini.SetValue(INI_SECTION_NAME, key.str().c_str(), value.str().c_str());
+			rc = ini.SetValue(secName.c_str(), key.str().c_str(), value.str().c_str());
 			UA_ASSERT(rc >= 0);
-
 		}
 	}
 }
@@ -199,12 +200,26 @@ void Calibrator::saveRegionsToIni(CSimpleIniA & ini) {
 void Calibrator::imageShowBins(Dib & dib, RgbQuad & quad) {
 	UA_DOUT(1, 3, "marking tags ");
 	for (unsigned c = 0, cn = colBinRegions.size(); c < cn; ++c) {
+		UA_DOUT(1, 3, "line (" << colBinRegions[c]->getMin() << ", 0) ("
+				 << colBinRegions[c]->getMin() << ", "
+				 << dib.getHeight()-1 << ")");
+		UA_DOUT(1, 3, "line (" << colBinRegions[c]->getMax() << ", 0) ("
+				 << colBinRegions[c]->getMax() << ", "
+				 << dib.getHeight()-1 << ")");
+
 		dib.line(colBinRegions[c]->getMin(), 0,
 				 colBinRegions[c]->getMin(), dib.getHeight()-1, quad);
 		dib.line(colBinRegions[c]->getMax(), 0,
 				 colBinRegions[c]->getMax(), dib.getHeight()-1, quad);
 	}
 	for (unsigned r = 0, rn = rowBinRegions.size(); r < rn; ++r) {
+		UA_DOUT(1, 3, "line (0, " << rowBinRegions[r]->getMin() << ") ("
+				 << dib.getWidth()-1 << ", "
+				 << ", " << rowBinRegions[r]->getMin() << ")");
+		UA_DOUT(1, 3, "line (0, " << rowBinRegions[r]->getMax() << ") ("
+				 << dib.getWidth()-1 << ", "
+				 << ", " << rowBinRegions[r]->getMax() << ")");
+
 		dib.line(0, rowBinRegions[r]->getMin(),
 				 dib.getWidth()-1, rowBinRegions[r]->getMin(), quad);
 		dib.line(0, rowBinRegions[r]->getMax(),

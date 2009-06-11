@@ -38,8 +38,10 @@ public:
 	Decoder();
 	virtual ~Decoder();
 
-	void processImageRegions(Dib & dib);
-	void getRegionsFromIni(CSimpleIniA & ini);
+	void processImageRegions(CSimpleIniA & ini, Dib & dib);
+	vector<DecodeRegion *> & getDecodeRegions() {
+		return decodeRegions;
+	}
 
 protected:
 
@@ -49,6 +51,7 @@ protected:
 	vector<DecodeRegion *> decodeRegions;
 
 	void clearResults();
+	void getRegionsFromIni(CSimpleIniA & ini);
 	void messageAdd(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
 	DmtxImage * createDmtxImageFromDib(Dib & dib);
 	void showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
