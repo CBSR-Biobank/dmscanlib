@@ -19,6 +19,7 @@
 using namespace std;
 
 class Dib;
+struct RgbQuad;
 class BarcodeInfo;
 
 struct DecodeRegion {
@@ -42,6 +43,7 @@ public:
 	vector<DecodeRegion *> & getDecodeRegions() {
 		return decodeRegions;
 	}
+	void imageShowRegions(Dib & dib, RgbQuad & quad);
 
 protected:
 

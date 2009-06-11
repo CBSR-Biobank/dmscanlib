@@ -46,37 +46,38 @@ typedef struct sScFrame {
 
 } ScFrame;
 
-const unsigned short SC_SUCCESS      = 0;
-const unsigned short SC_FAIL         = 1;
-const unsigned short SC_TWAIN_UAVAIL = 2;
+const short SC_SUCCESS      = 0;
+const short SC_FAIL         = -1;
+const short SC_TWAIN_UAVAIL = -2;
+const short SC_CALIBRATOR_NO_REGIONS = -3;
 
-EXPORT unsigned short slIsTwainAvailable();
+EXPORT short slIsTwainAvailable();
 
-typedef unsigned short (FAR PASCAL *SL_ISTWAINAVAILABLE) ();
+typedef short (FAR PASCAL *SL_ISTWAINAVAILABLE) ();
 
-EXPORT unsigned short slSelectSourceAsDefault();
+EXPORT short slSelectSourceAsDefault();
 
-typedef unsigned short (FAR PASCAL *SL_SELECTSOURCEASDEFAULT) ();
+typedef short (FAR PASCAL *SL_SELECTSOURCEASDEFAULT) ();
 
-EXPORT unsigned short slConfigPlateFrame(unsigned short plateNum, double left,
+EXPORT short slConfigPlateFrame(unsigned short plateNum, double left,
 		double top,	double right, double bottom);
 
-typedef unsigned short (FAR PASCAL *SL_CONFIGPLATEFRAME) (unsigned short, double x0,
+typedef short (FAR PASCAL *SL_CONFIGPLATEFRAME) (unsigned short, double x0,
 		double y0,	double x1, double y1);
 
-EXPORT unsigned short slScanImage(char * filename, double left,	double top,
+EXPORT short slScanImage(char * filename, double left,	double top,
 		double right, double bottom);
 
-typedef unsigned short (FAR PASCAL *SL_SCANIMAGE) (char * filename, double x0,
+typedef short (FAR PASCAL *SL_SCANIMAGE) (char * filename, double x0,
 		double y0,	double x1, double y1);
 
-EXPORT unsigned short slCalibrateToPlate(unsigned short plateNum);
+EXPORT short slCalibrateToPlate(unsigned short plateNum);
 
-typedef unsigned short (FAR PASCAL *SL_CALIBRATETOPLATE) (unsigned int plateNum);
+typedef short (FAR PASCAL *SL_CALIBRATETOPLATE) (unsigned short plateNum);
 
-EXPORT unsigned short slDecodePlate(unsigned short plateNum);
+EXPORT short slDecodePlate(unsigned short plateNum);
 
-typedef unsigned short (FAR PASCAL *SL_DECODEPLATE) (unsigned int plateNum);
+typedef short (FAR PASCAL *SL_DECODEPLATE) (unsigned short plateNum);
 
 #ifdef __cplusplus
 }

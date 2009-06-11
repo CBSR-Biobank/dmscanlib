@@ -51,7 +51,7 @@ void Decoder::processImage(DmtxImage & image, vector<BarcodeInfo *>  & msgInfos)
 	unsigned width = dmtxImageGetProp(&image, DmtxPropWidth);
 	unsigned height = dmtxImageGetProp(&image, DmtxPropHeight);
 
-	UA_DOUT(1, 3, "processImage: image width/" << width
+	UA_DOUT(3, 3, "processImage: image width/" << width
 			<< " image height/" << height
 			<< " row padding/" << dmtxImageGetProp(&image, DmtxPropRowPadBytes)
 			<< " image bits per pixel/"
@@ -85,7 +85,7 @@ void Decoder::processImage(DmtxImage & image, vector<BarcodeInfo *>  & msgInfos)
 		reg = dmtxRegionFindNext(dec, NULL);
 		if (reg == NULL) break;
 
-		UA_DOUT(1, 5, "retrieving message from region " << regionCount++);
+		UA_DOUT(3, 5, "retrieving message from region " << regionCount++);
 		msg = dmtxDecodeMatrixRegion(dec, reg, DmtxUndefined);
 		if (msg != NULL) {
 			BarcodeInfo * info = new BarcodeInfo(dec, reg, msg);
@@ -93,7 +93,7 @@ void Decoder::processImage(DmtxImage & image, vector<BarcodeInfo *>  & msgInfos)
 
 			//showStats(dec, reg, msg);
 			msgInfos.push_back(info);
-			UA_DOUT(1, 5, "message " << msgInfos.size() - 1
+			UA_DOUT(3, 5, "message " << msgInfos.size() - 1
 					<< ": "	<< msgInfos.back()->getMsg());
 			//showStats(dec, reg, msg);
 			dmtxMessageDestroy(&msg);
@@ -176,13 +176,13 @@ bool Decoder::getRegionsFromIni(unsigned plateNum, CSimpleIniA & ini) {
 
 	const CSimpleIniA::TKeyVal * values = ini.GetSection(secName.c_str());
 	if (values == NULL) {
-		UA_DOUT(1, 3, "INI file error: section [" << secName
+		UA_DOUT(3, 3, "INI file error: section [" << secName
 			     << "] not defined in ini file." << endl
 			 << "Please run calibration first.");
 		exit(1);
 	}
 	if (values->size() == 0) {
-		UA_DOUT(1, 3, "INI file error: section [" << secName
+		UA_DOUT(3, 3, "INI file error: section [" << secName
 			     << "] does not define any regions." << endl
 		     << "Please run calibration again.");
 		return false;
@@ -202,7 +202,7 @@ bool Decoder::getRegionsFromIni(unsigned plateNum, CSimpleIniA & ini) {
 
 		pos =  key.find(label);
 		if (pos == string::npos) {
-			UA_DOUT(1, 3, "INI file error: section [" << secName
+			UA_DOUT(3, 3, "INI file error: section [" << secName
 			     << "], key name \"" << key << "\" is invalid."  << endl
 			     << "Please run calibration again.");
 			return false;
@@ -210,7 +210,7 @@ bool Decoder::getRegionsFromIni(unsigned plateNum, CSimpleIniA & ini) {
 
 		pos = key.find_first_of('_');
 		if (pos == string::npos) {
-			UA_DOUT(1, 3, "INI file error: section [" << secName
+			UA_DOUT(3, 3, "INI file error: section [" << secName
 			     << "], key name \"" << key << "\" is invalid."  << endl
 			     << "Please run calibration again.");
 			return false;
@@ -218,7 +218,7 @@ bool Decoder::getRegionsFromIni(unsigned plateNum, CSimpleIniA & ini) {
 
 		string numStr = key.substr(labelSize, pos - labelSize);
 		if (!Util::strToNum(numStr, region->row, 10)) {
-			UA_DOUT(1, 3, "INI file error: section " << secName
+			UA_DOUT(3, 3, "INI file error: section " << secName
 			     << "], key name \"" << key << "\" is invalid."  << endl
 			     << "Please run calibration again.");
 			return false;
@@ -226,7 +226,7 @@ bool Decoder::getRegionsFromIni(unsigned plateNum, CSimpleIniA & ini) {
 
 		numStr = key.substr(pos + 1);
 		if (!Util::strToNum(numStr, region->col, 10)) {
-			UA_DOUT(1, 3, "INI file error: section [" << secName
+			UA_DOUT(3, 3, "INI file error: section [" << secName
 			     << "], key name \"" << key << "\" is invalid."  << endl
 			     << "Please run calibration again.");
 			return false;
@@ -235,7 +235,7 @@ bool Decoder::getRegionsFromIni(unsigned plateNum, CSimpleIniA & ini) {
 		pos = value.find_first_of(',');
 		numStr = value.substr(0, pos);
 		if (!Util::strToNum(numStr, region->topLeft.X, 10)) {
-			UA_DOUT(1, 3, "INI file error: section [" << secName
+			UA_DOUT(3, 3, "INI file error: section [" << secName
 			     << "], first value for key \""
 				 << key << "\" is invalid:" << numStr << endl
 			     << "Please run calibration again.");
@@ -246,7 +246,7 @@ bool Decoder::getRegionsFromIni(unsigned plateNum, CSimpleIniA & ini) {
 		pos = value.find_first_of(',', prevPos);
 		numStr = value.substr(prevPos, pos - prevPos);
 		if (!Util::strToNum(numStr, region->topLeft.Y, 10)) {
-			UA_DOUT(1, 3, "INI file error: section [" << secName
+			UA_DOUT(3, 3, "INI file error: section [" << secName
 			     << "], second value for key \""
 				 << key << "\" is invalid:" << numStr << endl
 			     << "Please run calibration again.");
@@ -257,7 +257,7 @@ bool Decoder::getRegionsFromIni(unsigned plateNum, CSimpleIniA & ini) {
 		pos = value.find_first_of(',', prevPos);
 		numStr = value.substr(prevPos, pos - prevPos);
 		if (!Util::strToNum(numStr, region->botRight.X, 10)) {
-			UA_DOUT(1, 3, "INI file error: section [" << secName
+			UA_DOUT(3, 3, "INI file error: section [" << secName
 			     << "], third value for key \""
 				 << key << "\" is invalid:" << numStr << endl
 			     << "Please run calibration again.");
@@ -266,7 +266,7 @@ bool Decoder::getRegionsFromIni(unsigned plateNum, CSimpleIniA & ini) {
 
 		numStr = value.substr(pos + 1);
 		if (!Util::strToNum(numStr, region->botRight.Y, 10)) {
-			UA_DOUT(1, 3, "INI file error: section [" << secName
+			UA_DOUT(3, 3, "INI file error: section [" << secName
 			     << "], fourth value for key \""
 				 << key << "\" is invalid:" << numStr << endl
 			     << "Please run calibration again.");
@@ -274,7 +274,7 @@ bool Decoder::getRegionsFromIni(unsigned plateNum, CSimpleIniA & ini) {
 		}
 
 		decodeRegions.push_back(region);
-		UA_DOUT(1, 3, "getRegionsFromIni: " << *region);
+		UA_DOUT(3, 3, "getRegionsFromIni: " << *region);
 	}
 	return true;
 }
@@ -296,15 +296,46 @@ void Decoder::processImageRegions(unsigned plateNum, CSimpleIniA & ini, Dib & di
 		croppedDib.crop(dib, region.topLeft.X, region.topLeft.Y,
 				region.botRight.X, region.botRight.Y);
 		msgInfos.clear();
-		UA_DOUT(1, 3, "processing region at row/" << region.row << " col/" << region.col);
+		UA_DOUT(3, 3, "processing region at row/" << region.row << " col/" << region.col);
 		processImage(croppedDib, msgInfos);
 		unsigned size = msgInfos.size();
 		UA_ASSERT(size <= 1);
 		if (size == 1) {
 			region.msgInfo = msgInfos[0];
-			UA_DOUT(1, 3, "barcode found at row/" << region.row
+			UA_DOUT(3, 3, "barcode found at row/" << region.row
 					<< " col/" << region.col << " barcode/" << region.msgInfo->getMsg());
 		}
+	}
+}
+
+void Decoder::imageShowRegions(Dib & dib, RgbQuad & quad) {
+	UA_DOUT(4, 3, "marking tags ");
+
+	RgbQuad quadRed(255, 0, 0);
+	RgbQuad quadGreen(0, 255, 0);
+
+	for (unsigned i = 0, n = decodeRegions.size(); i < n; ++i) {
+		DecodeRegion & region = *decodeRegions[i];
+
+		if (region.msgInfo == NULL)  {
+			quad = quadRed;
+		}
+		else {
+			quad = quadGreen;
+		}
+
+		dib.line(region.topLeft.X, region.topLeft.Y,
+				region.topLeft.X, region.botRight.Y, quad);
+
+		dib.line(region.topLeft.X, region.botRight.Y,
+				region.botRight.X, region.botRight.Y, quad);
+
+		dib.line(region.botRight.X, region.botRight.Y,
+				region.botRight.X, region.topLeft.Y, quad);
+
+		dib.line(region.botRight.X, region.topLeft.Y,
+				region.topLeft.X, region.topLeft.Y, quad);
+
 	}
 }
 

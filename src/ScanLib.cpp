@@ -53,13 +53,13 @@ void configLogging(unsigned level) {
 	ua::logstream.sink(ua::LoggerSinkStdout::Instance());
 	ua::LoggerSinkStdout::Instance().showHeader(true);
 	ua::Logger::Instance().levelSet(ua::LoggerImpl::allSubSys_m, level);
-	ua::Logger::Instance().subSysHeaderSet(2, "ImageGrabber");
+	ua::Logger::Instance().subSysHeaderSet(1, "ScanLib");
 }
 
 /*
  * Loads the INI file if it is present.
  */
-unsigned short slIsTwainAvailable() {
+short slIsTwainAvailable() {
 	ImageGrabber ig;
 	if (ig.twainAvailable()) {
 		return SC_SUCCESS;
@@ -67,7 +67,7 @@ unsigned short slIsTwainAvailable() {
 	return SC_TWAIN_UAVAIL;
 }
 
-unsigned short slSelectSourceAsDefault() {
+short slSelectSourceAsDefault() {
 	ImageGrabber ig;
 	if (ig.selectSourceAsDefault()) {
 		return SC_SUCCESS;
@@ -75,7 +75,7 @@ unsigned short slSelectSourceAsDefault() {
 	return SC_FAIL;
 }
 
-unsigned short slScanImage(char * filename, double left, double top, double right,
+short slScanImage(char * filename, double left, double top, double right,
 		double bottom) {
 	string err;
 	ImageGrabber ig;
@@ -96,7 +96,7 @@ unsigned short slScanImage(char * filename, double left, double top, double righ
 	return SC_SUCCESS;
 }
 
-unsigned short slConfigPlateFrame(unsigned short plateNum, double left,
+short slConfigPlateFrame(unsigned short plateNum, double left,
 		double top,	double right, double bottom) {
 	CSimpleIniA ini(true, false, true);
 	SI_Error rc;
@@ -120,7 +120,7 @@ unsigned short slConfigPlateFrame(unsigned short plateNum, double left,
 	return SC_SUCCESS;
 }
 
-unsigned short slCalibrateToPlate(unsigned short plateNum) {
+short slCalibrateToPlate(unsigned short plateNum) {
 	if (plateNum > 4) {
 		UA_DOUT(1, 1, "plate number is invalid: " << plateNum);
 		return SC_FAIL;
@@ -143,7 +143,9 @@ unsigned short slCalibrateToPlate(unsigned short plateNum) {
 	}
 	dib.readFromHandle(h);
 	dib.writeToFile("out.bmp");
-	calibrator.processImage(dib);
+	if (!calibrator.processImage(dib)) {
+		return SC_CALIBRATOR_NO_REGIONS;
+	}
 	calibrator.saveRegionsToIni(plateNum, ini);
 	ini.SaveFile(INI_FILE_NAME);
 
@@ -174,7 +176,7 @@ void saveDecodeResults(unsigned plateNum, vector<DecodeRegion *> & decodeRegions
 	file.close();
 }
 
-unsigned short slDecodePlate(unsigned short plateNum) {
+short slDecodePlate(unsigned short plateNum) {
 	if (plateNum > 4) {
 		UA_DOUT(1, 1, "plate number is invalid: " << plateNum);
 		return SC_FAIL;
@@ -197,5 +199,12 @@ unsigned short slDecodePlate(unsigned short plateNum) {
 	dib.readFromHandle(h);
 	decoder.processImageRegions(plateNum, ini, dib);
 	saveDecodeResults(plateNum, decoder.getDecodeRegions());
+
+	Dib markedDib(dib);
+	RgbQuad quad(0, 255, 0);
+
+	decoder.imageShowRegions(markedDib, quad);
+	markedDib.writeToFile("marked.bmp");
+	ig.freeImage(h);
 	return SC_SUCCESS;
 }

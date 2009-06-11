@@ -14,6 +14,7 @@
 #include "Util.h"
 
 Calibrator::Calibrator() {
+	ua::Logger::Instance().subSysHeaderSet(4, "Calibrator");
 }
 
 Calibrator::~Calibrator() {
@@ -31,18 +32,28 @@ Calibrator::~Calibrator() {
 	}
 }
 
-void Calibrator::processImage(Dib & dib) {
-	Decoder::processImage(dib, msgInfos);
+bool Calibrator::processImage(Dib & dib) {
+	Decoder::processImage(dib, barcodeInfos);
+	if (barcodeInfos.size() == 0) {
+		UA_DOUT(4, 1, "processImage: no barcodes found");
+		return false;
+	}
 	width = dib.getWidth();
 	height = dib.getHeight();
 	sortRegions();
+	return true;
 }
 
-void Calibrator::processImage(DmtxImage & image) {
-	Decoder::processImage(image, msgInfos);
+bool Calibrator::processImage(DmtxImage & image) {
+	Decoder::processImage(image, barcodeInfos);
+	if (barcodeInfos.size() == 0) {
+		UA_DOUT(4, 1, "processImage: no barcodes found");
+		return false;
+	}
 	width = dmtxImageGetProp(&image, DmtxPropWidth);
 	height = dmtxImageGetProp(&image, DmtxPropHeight);
 	sortRegions();
+	return true;
 }
 
 /* Finds rows and columns by examining each decode region's top left corner.
@@ -55,14 +66,14 @@ void Calibrator::sortRegions() {
 	bool insideRowBin;
 	bool insideColBin;
 
-	for (unsigned i = 0, n = msgInfos.size(); i < n; ++i) {
+	for (unsigned i = 0, n = barcodeInfos.size(); i < n; ++i) {
 		insideRowBin = false;
 		insideColBin = false;
 
-		DmtxPixelLoc & tlCorner = msgInfos[i]->getTopLeftCorner();
-		DmtxPixelLoc & brCorner = msgInfos[i]->getBotRightCorner();
+		DmtxPixelLoc & tlCorner = barcodeInfos[i]->getTopLeftCorner();
+		DmtxPixelLoc & brCorner = barcodeInfos[i]->getBotRightCorner();
 
-		UA_DOUT(1, 9, "tag " << i << " : tlCorner/" << tlCorner.X << "," << tlCorner.Y
+		UA_DOUT(4, 9, "tag " << i << " : tlCorner/" << tlCorner.X << "," << tlCorner.Y
 				<< "  brCorner/" << brCorner.X << "," << brCorner.Y);
 
 		for (unsigned c = 0, cn = colBinRegions.size(); c < cn; ++c) {
@@ -71,23 +82,23 @@ void Calibrator::sortRegions() {
 			int lDiff = tlCorner.X - bin.getMin();
 			int rDiff = brCorner.X - bin.getMax();
 
-			UA_DOUT(1, 9, "col " << c << ": left_diff/" << lDiff << ": right_diff/" << rDiff);
+			UA_DOUT(4, 9, "col " << c << ": left_diff/" << lDiff << ": right_diff/" << rDiff);
 
 			if ((lDiff >= 0) && (rDiff <= 0)) {
 				insideColBin = true;
-				msgInfos[i]->setColBinRegion(&bin);
+				barcodeInfos[i]->setColBinRegion(&bin);
 			}
-			else if ((lDiff < 0) && (lDiff > -BIN_THRESH)) {
+			else if ((lDiff < 0) && (lDiff > static_cast<int>(-BIN_THRESH))) {
 				insideColBin = true;
-				msgInfos[i]->setColBinRegion(&bin);
+				barcodeInfos[i]->setColBinRegion(&bin);
 				bin.setMin(tlCorner.X);
-				UA_DOUT(1, 9, "col update min " << bin.getMin());
+				UA_DOUT(4, 9, "col update min " << bin.getMin());
 			}
-			else if ((rDiff > 0) && (rDiff < BIN_THRESH)) {
+			else if ((rDiff > 0) && (rDiff < static_cast<int>(BIN_THRESH))) {
 				insideColBin = true;
-				msgInfos[i]->setColBinRegion(&bin);
+				barcodeInfos[i]->setColBinRegion(&bin);
 				bin.setMax(brCorner.X);
-				UA_DOUT(1, 9, "col update max " << bin.getMax());
+				UA_DOUT(4, 9, "col update max " << bin.getMax());
 			}
 		}
 
@@ -97,23 +108,23 @@ void Calibrator::sortRegions() {
 			int tDiff = tlCorner.Y - bin.getMin();
 			int bDiff = brCorner.Y - bin.getMax();
 
-			UA_DOUT(1, 9, "row " << r << ": top_diff/" << tDiff << ": bot_diff/" << bDiff);
+			UA_DOUT(4, 9, "row " << r << ": top_diff/" << tDiff << ": bot_diff/" << bDiff);
 
 			if ((tDiff >= 0) && (bDiff <= 0)) {
 				insideRowBin = true;
-				msgInfos[i]->setRowBinRegion(&bin);
+				barcodeInfos[i]->setRowBinRegion(&bin);
 			}
-			else if ((tDiff < 0) && (tDiff > -BIN_THRESH)) {
+			else if ((tDiff < 0) && (tDiff > static_cast<int>(-BIN_THRESH))) {
 				insideRowBin = true;
-				msgInfos[i]->setRowBinRegion(&bin);
+				barcodeInfos[i]->setRowBinRegion(&bin);
 				bin.setMin(tlCorner.Y);
-				UA_DOUT(1, 9, "row update min " << bin.getMin());
+				UA_DOUT(4, 9, "row update min " << bin.getMin());
 			}
-			else if ((bDiff > 0) && (bDiff < BIN_THRESH)) {
+			else if ((bDiff > 0) && (bDiff < static_cast<int>(BIN_THRESH))) {
 				insideRowBin = true;
-				msgInfos[i]->setRowBinRegion(&bin);
+				barcodeInfos[i]->setRowBinRegion(&bin);
 				bin.setMax(brCorner.Y);
-				UA_DOUT(1, 9, "row update max " << bin.getMax());
+				UA_DOUT(4, 9, "row update max " << bin.getMax());
 			}
 		}
 
@@ -121,18 +132,18 @@ void Calibrator::sortRegions() {
 			BinRegion * newBinRegion = new BinRegion(BinRegion::ORIENTATION_VER,
 					(unsigned) tlCorner.X, (unsigned) brCorner.X);
 			UA_ASSERT_NOT_NULL(newBinRegion);
-			UA_DOUT(1, 9, "new col " << colBinRegions.size() << ": " << *newBinRegion);
+			UA_DOUT(4, 9, "new col " << colBinRegions.size() << ": " << *newBinRegion);
 			colBinRegions.push_back(newBinRegion);
-			msgInfos[i]->setColBinRegion(newBinRegion);
+			barcodeInfos[i]->setColBinRegion(newBinRegion);
 		}
 
 		if (!insideRowBin) {
 			BinRegion * newBinRegion = new BinRegion(BinRegion::ORIENTATION_HOR,
 					(unsigned) tlCorner.Y, (unsigned) brCorner.Y);
 			UA_ASSERT_NOT_NULL(newBinRegion);
-			UA_DOUT(1, 9, "new row " << rowBinRegions.size() << ": " << *newBinRegion);
+			UA_DOUT(4, 9, "new row " << rowBinRegions.size() << ": " << *newBinRegion);
 			rowBinRegions.push_back(newBinRegion);
-			msgInfos[i]->setRowBinRegion(newBinRegion);
+			barcodeInfos[i]->setRowBinRegion(newBinRegion);
 		}
 	}
 
@@ -144,40 +155,43 @@ void Calibrator::sortRegions() {
 		BinRegion & c = *colBinRegions[i];
 
 		unsigned min = c.getMin();
-		c.setMin(min > 15 ? min - 15 : 0);
+		c.setMin(min > BIN_MARGIN ? min - BIN_MARGIN : 0);
 
 		unsigned max = c.getMax();
-		c.setMax(max < width - 15 ? max + 15 : width);
+		c.setMax(max < width - BIN_MARGIN ? max + BIN_MARGIN : width);
 
 		c.setRank(i);
-		UA_DOUT(1, 5, "col BinRegion " << i << ": " << c);
+		UA_DOUT(4, 5, "col BinRegion " << i << ": " << c);
 	}
 	for (unsigned i = 0, n = rowBinRegions.size(); i < n; ++ i) {
 		BinRegion & c = *rowBinRegions[i];
 
 		unsigned min = c.getMin();
-		c.setMin(min > 15 ? min - 15 : 0);
+		c.setMin(min > BIN_MARGIN ? min - BIN_MARGIN : 0);
 
 		unsigned max = c.getMax();
-		c.setMax(max < height - 15 ? max + 15 : height);
+		c.setMax(max < height - BIN_MARGIN ? max + BIN_MARGIN : height);
 
 		c.setRank(i);
-		UA_DOUT(1, 5, "row BinRegion " << i << ": " << c);
+		UA_DOUT(4, 5, "row BinRegion " << i << ": " << c);
 	}
 
-	UA_DOUT(1, 3, "number of columns: " << colBinRegions.size());
-	UA_DOUT(1, 3, "number of rows: " << rowBinRegions.size());
+	UA_DOUT(4, 3, "number of columns: " << colBinRegions.size());
+	UA_DOUT(4, 3, "number of rows: " << rowBinRegions.size());
 
-	sort(msgInfos.begin(), msgInfos.end(), BarcodeInfoSort());
+	sort(barcodeInfos.begin(), barcodeInfos.end(), BarcodeInfoSort());
 }
 
 void Calibrator::saveRegionsToIni(unsigned plateNum, CSimpleIniA & ini) {
-	UA_ASSERT(msgInfos.size() > 0);
+	if (barcodeInfos.size() == 0) {
+		UA_DOUT(4, 3, "saveRegionsToIni: no regions found");
+		return;
+	}
 
 	SI_Error rc;
 	string secName = "plate-" + to_string(plateNum) + "-" + INI_SECTION_NAME;
 
-	unsigned maxCol = msgInfos[0]->getColBinRegion().getRank();
+	unsigned maxCol = barcodeInfos[0]->getColBinRegion().getRank();
 	ostringstream key, value;
 	for (int r = rowBinRegions.size() - 1; r >= 0; --r) {
 		for (unsigned c = 0, cn = colBinRegions.size(); c < cn; ++c) {
@@ -198,28 +212,14 @@ void Calibrator::saveRegionsToIni(unsigned plateNum, CSimpleIniA & ini) {
 }
 
 void Calibrator::imageShowBins(Dib & dib, RgbQuad & quad) {
-	UA_DOUT(1, 3, "marking tags ");
+	UA_DOUT(4, 3, "marking tags ");
 	for (unsigned c = 0, cn = colBinRegions.size(); c < cn; ++c) {
-		UA_DOUT(1, 3, "line (" << colBinRegions[c]->getMin() << ", 0) ("
-				 << colBinRegions[c]->getMin() << ", "
-				 << dib.getHeight()-1 << ")");
-		UA_DOUT(1, 3, "line (" << colBinRegions[c]->getMax() << ", 0) ("
-				 << colBinRegions[c]->getMax() << ", "
-				 << dib.getHeight()-1 << ")");
-
 		dib.line(colBinRegions[c]->getMin(), 0,
 				 colBinRegions[c]->getMin(), dib.getHeight()-1, quad);
 		dib.line(colBinRegions[c]->getMax(), 0,
 				 colBinRegions[c]->getMax(), dib.getHeight()-1, quad);
 	}
 	for (unsigned r = 0, rn = rowBinRegions.size(); r < rn; ++r) {
-		UA_DOUT(1, 3, "line (0, " << rowBinRegions[r]->getMin() << ") ("
-				 << dib.getWidth()-1 << ", "
-				 << ", " << rowBinRegions[r]->getMin() << ")");
-		UA_DOUT(1, 3, "line (0, " << rowBinRegions[r]->getMax() << ") ("
-				 << dib.getWidth()-1 << ", "
-				 << ", " << rowBinRegions[r]->getMax() << ")");
-
 		dib.line(0, rowBinRegions[r]->getMin(),
 				 dib.getWidth()-1, rowBinRegions[r]->getMin(), quad);
 		dib.line(0, rowBinRegions[r]->getMax(),

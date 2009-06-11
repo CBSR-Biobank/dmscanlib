@@ -18,18 +18,19 @@ class Calibrator : public Decoder {
 public:
 	Calibrator();
 	virtual ~Calibrator();
-	void processImage(Dib & dib);
-	void processImage(DmtxImage & image);
+	bool processImage(Dib & dib);
+	bool processImage(DmtxImage & image);
 	void saveRegionsToIni(unsigned plateNum, CSimpleIniA & ini);
 	void imageShowBins(Dib & dib, RgbQuad & quad);
 
 private:
-	static const int BIN_THRESH = 15;
+	static const unsigned BIN_THRESH = 15;
+	static const unsigned BIN_MARGIN = 15;
 
 	unsigned width;
 	unsigned height;
 
-	vector<BarcodeInfo *>  msgInfos;
+	vector<BarcodeInfo *>  barcodeInfos;
 	vector<BinRegion *> rowBinRegions;
 	vector<BinRegion *> colBinRegions;
 
