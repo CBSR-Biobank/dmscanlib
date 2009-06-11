@@ -6,7 +6,7 @@
  */
 
 #include "Calibrator.h"
-#include "MessageInfo.h"
+#include "BarcodeInfo.h"
 #include "BinRegion.h"
 #include "Dib.h"
 #include "UaLogger.h"
@@ -168,7 +168,7 @@ void Calibrator::sortRegions() {
 	UA_DOUT(1, 3, "number of columns: " << colBinRegions.size());
 	UA_DOUT(1, 3, "number of rows: " << rowBinRegions.size());
 
-	sort(msgInfos.begin(), msgInfos.end(), MessageInfoSort());
+	sort(msgInfos.begin(), msgInfos.end(), BarcodeInfoSort());
 }
 
 void Calibrator::saveRegionsToIni(unsigned plateNum, CSimpleIniA & ini) {

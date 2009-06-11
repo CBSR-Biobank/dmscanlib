@@ -14,7 +14,7 @@
 #include "Calibrator.h"
 #include "Dib.h"
 #include "Util.h"
-#include "MessageInfo.h"
+#include "BarcodeInfo.h"
 
 #ifdef WIN32
 #include "ImageGrabber.h"
@@ -77,7 +77,6 @@ unsigned short slSelectSourceAsDefault() {
 
 unsigned short slScanImage(char * filename, double left, double top, double right,
 		double bottom) {
-#ifdef WIN32
 	string err;
 	ImageGrabber ig;
 
@@ -95,9 +94,6 @@ unsigned short slScanImage(char * filename, double left, double top, double righ
 	dib.writeToFile(filename);
 	ig.freeImage(h);
 	return SC_SUCCESS;
-#else
-	cerr << "this option not allowed on your operating system." << endl;
-#endif
 }
 
 unsigned short slConfigPlateFrame(unsigned short plateNum, double left,
@@ -159,7 +155,6 @@ unsigned short slCalibrateToPlate(unsigned short plateNum) {
 	return SC_SUCCESS;
 }
 
-
 void saveDecodeResults(unsigned plateNum, vector<DecodeRegion *> & decodeRegions) {
 	ofstream file;
 	file.open("scanlib.txt", ios::out);
@@ -200,7 +195,7 @@ unsigned short slDecodePlate(unsigned short plateNum) {
 		return SC_FAIL;
 	}
 	dib.readFromHandle(h);
-	decoder.processImageRegions(ini, dib);
+	decoder.processImageRegions(plateNum, ini, dib);
 	saveDecodeResults(plateNum, decoder.getDecodeRegions());
 	return SC_SUCCESS;
 }

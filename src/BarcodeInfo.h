@@ -21,10 +21,10 @@ using namespace std;
 class Dib;
 class BinRegion;
 
-class MessageInfo {
+class BarcodeInfo {
 public:
-	MessageInfo(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
-	~MessageInfo();
+	BarcodeInfo(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
+	~BarcodeInfo();
 
 	string & getMsg() {
 		return str;
@@ -55,8 +55,8 @@ public:
 		return *rowBinRegion;
 	}
 
-	static void removeItems(vector<MessageInfo *>  & msgInfos);
-	static void debugShowItems(vector<MessageInfo *>  & msgInfos);
+	static void removeItems(vector<BarcodeInfo *>  & msgInfos);
+	static void debugShowItems(vector<BarcodeInfo *>  & msgInfos);
 
 private:
 	string str;
@@ -68,16 +68,16 @@ private:
 
 	void getBoundingBox() ;
 
-	friend ostream & operator<<(ostream & os, MessageInfo & m);
-	friend struct MessageInfoSort;
+	friend ostream & operator<<(ostream & os, BarcodeInfo & m);
+	friend struct BarcodeInfoSort;
 };
 
-ostream & operator<<(ostream &os, MessageInfo & m);
+ostream & operator<<(ostream &os, BarcodeInfo & m);
 
 
 
-struct MessageInfoSort {
-	bool operator()(MessageInfo* const& a, MessageInfo* const& b);
+struct BarcodeInfoSort {
+	bool operator()(BarcodeInfo* const& a, BarcodeInfo* const& b);
 };
 
 #endif /* MESSABE_INFO_H_ */

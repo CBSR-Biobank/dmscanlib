@@ -10,7 +10,7 @@
 #include "UaAssert.h"
 #include "Dib.h"
 #include "Util.h"
-#include "MessageInfo.h"
+#include "BarcodeInfo.h"
 #include "BinRegion.h"
 
 #include <iostream>
@@ -38,13 +38,13 @@ Decoder::Decoder() {
 Decoder::~Decoder() {
 }
 
-void Decoder::processImage(Dib & dib, vector<MessageInfo *>  & msgInfos){
+void Decoder::processImage(Dib & dib, vector<BarcodeInfo *>  & msgInfos){
 	DmtxImage * image = createDmtxImageFromDib(dib);
 	processImage(*image, msgInfos);
 	dmtxImageDestroy(&image);
 }
 
-void Decoder::processImage(DmtxImage & image, vector<MessageInfo *>  & msgInfos) {
+void Decoder::processImage(DmtxImage & image, vector<BarcodeInfo *>  & msgInfos) {
 	DmtxDecode * dec = NULL;
 	DmtxRegion * reg = NULL;
 	DmtxMessage * msg = NULL;
@@ -88,7 +88,7 @@ void Decoder::processImage(DmtxImage & image, vector<MessageInfo *>  & msgInfos)
 		UA_DOUT(1, 5, "retrieving message from region " << regionCount++);
 		msg = dmtxDecodeMatrixRegion(dec, reg, DmtxUndefined);
 		if (msg != NULL) {
-			MessageInfo * info = new MessageInfo(dec, reg, msg);
+			BarcodeInfo * info = new BarcodeInfo(dec, reg, msg);
 			UA_ASSERT_NOT_NULL(info);
 
 			//showStats(dec, reg, msg);
@@ -171,19 +171,21 @@ DmtxImage * Decoder::createDmtxImageFromDib(Dib & dib) {
 	return image;
 }
 
-void Decoder::getRegionsFromIni(CSimpleIniA & ini) {
-	const CSimpleIniA::TKeyVal * values = ini.GetSection(INI_SECTION_NAME);
+bool Decoder::getRegionsFromIni(unsigned plateNum, CSimpleIniA & ini) {
+	string secName = "plate-" + to_string(plateNum) + "-" + INI_SECTION_NAME;
+
+	const CSimpleIniA::TKeyVal * values = ini.GetSection(secName.c_str());
 	if (values == NULL) {
-		cerr << "INI file error: section [" << INI_SECTION_NAME
+		UA_DOUT(1, 3, "INI file error: section [" << secName
 			     << "] not defined in ini file." << endl
-			 << "Please run calibration first." << endl;
+			 << "Please run calibration first.");
 		exit(1);
 	}
 	if (values->size() == 0) {
-		cerr << "INI file error: section [" << INI_SECTION_NAME
+		UA_DOUT(1, 3, "INI file error: section [" << secName
 			     << "] does not define any regions." << endl
-		     << "Please run calibration again." << endl;
-		exit(1);
+		     << "Please run calibration again.");
+		return false;
 	}
 
 	string label(INI_REGION_LABEL);
@@ -200,93 +202,93 @@ void Decoder::getRegionsFromIni(CSimpleIniA & ini) {
 
 		pos =  key.find(label);
 		if (pos == string::npos) {
-			cerr << "INI file error: section [" << INI_SECTION_NAME
+			UA_DOUT(1, 3, "INI file error: section [" << secName
 			     << "], key name \"" << key << "\" is invalid."  << endl
-			     << "Please run calibration again." << endl;
-			exit(1);
+			     << "Please run calibration again.");
+			return false;
 		}
 
 		pos = key.find_first_of('_');
 		if (pos == string::npos) {
-			cerr << "INI file error: section [" << INI_SECTION_NAME
+			UA_DOUT(1, 3, "INI file error: section [" << secName
 			     << "], key name \"" << key << "\" is invalid."  << endl
-			     << "Please run calibration again." << endl;
-			exit(1);
+			     << "Please run calibration again.");
+			return false;
 		}
 
 		string numStr = key.substr(labelSize, pos - labelSize);
 		if (!Util::strToNum(numStr, region->row, 10)) {
-			cerr << "INI file error: section " << INI_SECTION_NAME
+			UA_DOUT(1, 3, "INI file error: section " << secName
 			     << "], key name \"" << key << "\" is invalid."  << endl
-			     << "Please run calibration again." << endl;
-			exit(1);
+			     << "Please run calibration again.");
+			return false;
 		}
 
 		numStr = key.substr(pos + 1);
 		if (!Util::strToNum(numStr, region->col, 10)) {
-			cerr << "INI file error: section [" << INI_SECTION_NAME
+			UA_DOUT(1, 3, "INI file error: section [" << secName
 			     << "], key name \"" << key << "\" is invalid."  << endl
-			     << "Please run calibration again." << endl;
-			exit(1);
+			     << "Please run calibration again.");
+			return false;
 		}
 
 		pos = value.find_first_of(',');
 		numStr = value.substr(0, pos);
 		if (!Util::strToNum(numStr, region->topLeft.X, 10)) {
-			cerr << "INI file error: section [" << INI_SECTION_NAME
+			UA_DOUT(1, 3, "INI file error: section [" << secName
 			     << "], first value for key \""
 				 << key << "\" is invalid:" << numStr << endl
-			     << "Please run calibration again." << endl;
-			exit(1);
+			     << "Please run calibration again.");
+			return false;
 		}
 
 		prevPos = pos + 1;
 		pos = value.find_first_of(',', prevPos);
 		numStr = value.substr(prevPos, pos - prevPos);
 		if (!Util::strToNum(numStr, region->topLeft.Y, 10)) {
-			cerr << "INI file error: section [" << INI_SECTION_NAME
+			UA_DOUT(1, 3, "INI file error: section [" << secName
 			     << "], second value for key \""
 				 << key << "\" is invalid:" << numStr << endl
-			     << "Please run calibration again." << endl;
-			exit(1);
+			     << "Please run calibration again.");
+			return false;
 		}
 
 		prevPos = pos + 1;
 		pos = value.find_first_of(',', prevPos);
 		numStr = value.substr(prevPos, pos - prevPos);
 		if (!Util::strToNum(numStr, region->botRight.X, 10)) {
-			cerr << "INI file error: section [" << INI_SECTION_NAME
+			UA_DOUT(1, 3, "INI file error: section [" << secName
 			     << "], third value for key \""
 				 << key << "\" is invalid:" << numStr << endl
-			     << "Please run calibration again." << endl;
-			exit(1);
+			     << "Please run calibration again.");
+			return false;
 		}
 
 		numStr = value.substr(pos + 1);
 		if (!Util::strToNum(numStr, region->botRight.Y, 10)) {
-			cerr << "INI file error: section [" << INI_SECTION_NAME
+			UA_DOUT(1, 3, "INI file error: section [" << secName
 			     << "], fourth value for key \""
 				 << key << "\" is invalid:" << numStr << endl
-			     << "Please run calibration again." << endl;
-			exit(1);
+			     << "Please run calibration again.");
+			return false;
 		}
 
 		decodeRegions.push_back(region);
 		UA_DOUT(1, 3, "getRegionsFromIni: " << *region);
 	}
+	return true;
 }
 
 /*
  * Should only be called after regions are loaded from INI file.
  */
-void Decoder::processImageRegions(CSimpleIniA & ini, Dib & dib) {
-	getRegionsFromIni(ini);
-	if (decodeRegions.size() == 0) {
+void Decoder::processImageRegions(unsigned plateNum, CSimpleIniA & ini, Dib & dib) {
+	if (!getRegionsFromIni(plateNum, ini) || (decodeRegions.size() == 0)) {
 		UA_WARN("no decoded regions; exiting.");
 		return;
 	}
 
-	vector<MessageInfo *> msgInfos;
+	vector<BarcodeInfo *> msgInfos;
 
 	for (unsigned i = 0, n = decodeRegions.size(); i < n; ++i) {
 		DecodeRegion & region = *decodeRegions[i];

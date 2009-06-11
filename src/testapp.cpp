@@ -1,0 +1,251 @@
+/*******************************************************************************
+ * Canadian Biosample Repository
+ *
+ * ScanLib project
+ *
+ * Multi-platform application for scanning and decoding datamatrix 2D barcodes.
+ *
+ ******************************************************************************/
+
+#include "UaAssert.h"
+#include "UaLogger.h"
+#include "Decoder.h"
+#include "Calibrator.h"
+#include "Dib.h"
+#include "Util.h"
+#include "BarcodeInfo.h"
+
+#define SI_SUPPORT_IOSTREAMS
+#include "SimpleIni.h"
+
+#ifdef WIN32
+#include "getopt.h"
+#include "ImageGrabber.h"
+#else
+#include <getopt.h>
+#endif
+
+#include <iostream>
+#include <fstream>
+
+using namespace std;
+
+const char * USAGE_FMT =
+	"Usage: %s [OPTIONS]\n"
+	"Test tool for scanlib library."
+	"\n"
+	"  -c, --calibrate FILE  Calibrates decode regions to those found in bitmap FILE.\n"
+	"  -d, --decode FILE     Decodes the 2D barcode in the specified DIB image file.\n"
+	"  -v, --verbose NUM     Sets debugging level. Debugging messages are output "
+	"                        to stdout. Only when built UA_HAVE_DEBUG on.\n";
+
+/* Allowed command line arguments.  */
+static struct option long_options[] = {
+		{ "acquire",   no_argument,       NULL, 'a' },
+		{ "calibrate", required_argument, NULL, 'c' },
+		{ "decode",    required_argument, NULL, 'd' },
+		{ "verbose",   required_argument, NULL, 'v' },
+		{ 0, 0, 0, 0 }
+};
+
+#ifdef WIN32
+#define DIR_SEP_CHR '\\'
+#else
+#define DIR_SEP_CHR '/'
+#endif
+
+struct Options {
+	bool aquireAndProcessImage;
+	bool calibrate;
+	bool decodeImage;
+	bool scanImage;
+	char * filename;
+	int plateNum;
+
+	Options() {
+		aquireAndProcessImage = false;
+		calibrate = false;
+		decodeImage = false;
+		scanImage = false;
+		filename = NULL;
+	}
+};
+
+class Application {
+public:
+	Application(int argc, char ** argv);
+	~Application();
+
+private:
+	void usage();
+	void acquireAndProcesImage(unsigned plateNum);
+	void calibrateToImage(char * filename);
+	void decodeImage(char * filename);
+	void scanImage(char * filename);
+
+	static const char * INI_FILE_NAME;
+
+	const char * progname;
+	CSimpleIniA ini;
+};
+
+const char * Application::INI_FILE_NAME = "scanlib.ini";
+
+Application::Application(int argc, char ** argv) :
+	ini(true, false, true) {
+	Options options;
+	int ch;
+
+	progname = strrchr(argv[0], DIR_SEP_CHR) + 1;
+
+	ua::LoggerSinkStdout::Instance().showHeader(true);
+	ua::logstream.sink(ua::LoggerSinkStdout::Instance());
+
+	while (1) {
+		int option_index = 0;
+
+		ch = getopt_long (argc, argv, "c:d:hp:tv:", long_options, &option_index);
+
+		if (ch == -1) break;
+		switch (ch) {
+		case 'c':
+			options.calibrate = true;
+			options.filename = optarg;
+			break;
+
+		case 'd':
+			options.decodeImage = true;
+			options.filename = optarg;
+			break;
+
+		case 's':
+			options.scanImage = true;
+			options.filename = optarg;
+			break;
+
+		case 't': {
+			Dib * dib = new Dib(100, 100, 24);
+			UA_ASSERT_NOT_NULL(dib);
+			RgbQuad quad(0, 255, 0);
+			dib->line(10, 0, 80, 99, quad);
+			dib->writeToFile("out.bmp");
+			delete dib;
+			break;
+		}
+
+		case 'v': {
+			int level;
+			if (!Util::strToNum(optarg, level)) {
+				cerr << "not a valid number for verbose option: " << optarg << endl;
+				exit(1);
+			}
+			ua::Logger::Instance().levelSet(ua::LoggerImpl::allSubSys_m, level);
+			break;
+		}
+
+		case '?':
+		case 'h':
+			usage();
+			exit(0);
+			break;
+
+		default:
+			cout <<  "?? getopt returned character code " << ch << " ??" << endl;
+		}
+	}
+
+	if (optind < argc) {
+		// too many command line arguments, print usage message
+		usage();
+		exit(-1);
+	}
+
+
+	/*
+	 * Loads the file if it is present.
+	 */
+	fstream inifile;
+	inifile.open(INI_FILE_NAME, fstream::in);
+	if (inifile.is_open()) {
+		SI_Error rc = ini.Load(inifile);
+		UA_ASSERTS(rc >= 0, "attempt to load ini file returned: " << rc);
+		inifile.close();
+	}
+
+	if (options.calibrate) {
+		calibrateToImage(options.filename);
+		return;
+	}
+	else if (options.decodeImage) {
+		decodeImage(options.filename);
+		return;
+	}
+	else if (options.aquireAndProcessImage && options.scanImage) {
+		cerr << "Error: invalid options selected." << endl;
+		exit(0);
+	}
+}
+
+Application::~Application() {
+
+}
+
+void Application::usage() {
+	printf(USAGE_FMT, progname);
+}
+
+void Application::calibrateToImage(char * filename) {
+	UA_ASSERT_NOT_NULL(filename);
+
+	Dib dib;
+	RgbQuad quad(255, 0, 0);
+
+	dib.readFromFile(filename);
+	Dib markedDib(dib);
+	Calibrator calibrator;
+	calibrator.processImage(dib);
+	calibrator.saveRegionsToIni(1, ini);
+	ini.SaveFile(INI_FILE_NAME);
+
+	calibrator.imageShowBins(markedDib, quad);
+	markedDib.writeToFile("out.bmp");
+}
+
+void saveDecodeResults(unsigned plateNum, vector<DecodeRegion *> & decodeRegions) {
+	ofstream file;
+	file.open("scanlib.txt", ios::out);
+
+	file << "#Plate,Row,Col,Barcode" << endl;
+
+	for (unsigned i = 0, n = decodeRegions.size(); i < n; ++i) {
+		DecodeRegion & region = *decodeRegions[i];
+
+		if (region.msgInfo == NULL) continue;
+
+		file << to_string(plateNum) << ","
+		     << to_string(region.row) << ","
+		     << to_string(region.col) << ","
+		     << region.msgInfo->getMsg() << endl;
+	}
+	file.close();
+}
+
+void Application::decodeImage(char * filename) {
+	UA_ASSERT_NOT_NULL(filename);
+
+	Dib dib;
+	RgbQuad quad(255, 0, 0);
+	//DmtxVector2 p00, p10, p11, p01;
+
+	dib.readFromFile(filename);
+	Dib markedDib(dib);
+	Decoder decoder;
+	decoder.processImageRegions(1, ini, dib);
+	markedDib.writeToFile("out.bmp");
+	saveDecodeResults(1, decoder.getDecodeRegions());
+}
+
+int main(int argc, char ** argv) {
+	Application app(argc, argv);
+}
+

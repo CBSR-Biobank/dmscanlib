@@ -29,7 +29,7 @@ private:
 	unsigned width;
 	unsigned height;
 
-	vector<MessageInfo *>  msgInfos;
+	vector<BarcodeInfo *>  msgInfos;
 	vector<BinRegion *> rowBinRegions;
 	vector<BinRegion *> colBinRegions;
 

@@ -5,13 +5,13 @@
  *      Author: loyola
  */
 
-#include "MessageInfo.h"
+#include "BarcodeInfo.h"
 #include "UaLogger.h"
 #include "UaAssert.h"
 #include "BinRegion.h"
 
 
-MessageInfo::MessageInfo(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg) :
+BarcodeInfo::BarcodeInfo(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg) :
 	colBinRegion(NULL), rowBinRegion(NULL) {
 	str.append((char *) msg->output, msg->outputIdx);
 
@@ -30,11 +30,11 @@ MessageInfo::MessageInfo(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg) :
 	getBoundingBox();
 }
 
-MessageInfo::~MessageInfo() {
+BarcodeInfo::~BarcodeInfo() {
 }
 
 
-void MessageInfo::getCorners(DmtxVector2 & rp00, DmtxVector2 & rp10,
+void BarcodeInfo::getCorners(DmtxVector2 & rp00, DmtxVector2 & rp10,
 		DmtxVector2 & rp11, DmtxVector2 & rp01) {
 	rp00 = p00;
 	rp10 = p10;
@@ -42,7 +42,7 @@ void MessageInfo::getCorners(DmtxVector2 & rp00, DmtxVector2 & rp10,
 	rp01 = p01;
 }
 
-void MessageInfo::getBoundingBox() {
+void BarcodeInfo::getBoundingBox() {
 	topLeft.X = (int) p00.X;
 	topLeft.Y = (int) p00.Y;
 	botRight.X = (int) p00.X;
@@ -89,34 +89,34 @@ void MessageInfo::getBoundingBox() {
 	}
 }
 
-DmtxPixelLoc & MessageInfo::getTopLeftCorner() {
+DmtxPixelLoc & BarcodeInfo::getTopLeftCorner() {
 	return topLeft;
 }
 
-DmtxPixelLoc & MessageInfo::getBotRightCorner() {
+DmtxPixelLoc & BarcodeInfo::getBotRightCorner() {
 	return botRight;
 }
 
 
 
-void MessageInfo::removeItems(vector<MessageInfo *>  & msgInfos) {
+void BarcodeInfo::removeItems(vector<BarcodeInfo *>  & msgInfos) {
 	while (msgInfos.size() > 0) {
-		MessageInfo * info = msgInfos.back();
+		BarcodeInfo * info = msgInfos.back();
 		msgInfos.pop_back();
 		delete info;
 	}
 }
 
-void MessageInfo::debugShowItems(vector<MessageInfo *>  & msgInfos) {
+void BarcodeInfo::debugShowItems(vector<BarcodeInfo *>  & msgInfos) {
 	unsigned numTags = msgInfos.size();
 	UA_DOUT(1, 1, "debugTags: tags found: " << numTags);
 	for (unsigned i = 0; i < numTags; ++i) {
-		MessageInfo & info = *msgInfos[i];
+		BarcodeInfo & info = *msgInfos[i];
 		UA_DOUT(1, 1, "debugTags: tag " << i << ": " << info);
 	}
 }
 
-ostream & operator<<(ostream &os, MessageInfo & m) {
+ostream & operator<<(ostream &os, BarcodeInfo & m) {
 	os << "\"" << m.str	<< "\" (" << m.p00.X << ", " << m.p00.Y << "), "
 	<< "(" << m.p10.X << ", " << m.p10.Y << "), "
 	<< "(" << m.p11.X << ", " << m.p11.Y << "), "
@@ -129,7 +129,7 @@ ostream & operator<<(ostream &os, MessageInfo & m) {
  * Need to sort right to left, then top to bottom. That is how Biobank
  * numbers the tubes.
  */
-bool MessageInfoSort::operator()(MessageInfo* const& a, MessageInfo* const& b) {
+bool BarcodeInfoSort::operator()(BarcodeInfo* const& a, BarcodeInfo* const& b) {
 	UA_ASSERT_NOT_NULL(a->colBinRegion);
 	UA_ASSERT_NOT_NULL(a->rowBinRegion);
 	UA_ASSERT_NOT_NULL(b->colBinRegion);

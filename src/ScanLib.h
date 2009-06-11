@@ -5,6 +5,7 @@
 extern "C" {
 #endif
 
+#ifdef WIN32
 #include <windows.h>
 
 #ifdef BUILD_DLL
@@ -13,6 +14,11 @@ extern "C" {
 #else
 /* EXE import */
 #define EXPORT __declspec(dllimport)
+#endif
+#else
+#define EXPORT
+#define FAR
+#define PASCAL
 #endif
 
 

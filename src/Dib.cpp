@@ -84,6 +84,7 @@ void Dib::copyInternals(Dib & src) {
 	}
 
 	bytesPerPixel = src.bytesPerPixel;
+	rowBytes = src.rowBytes;
 	rowPaddingBytes = src.rowPaddingBytes;
 }
 

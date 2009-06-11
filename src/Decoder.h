@@ -19,12 +19,12 @@
 using namespace std;
 
 class Dib;
-class MessageInfo;
+class BarcodeInfo;
 
 struct DecodeRegion {
 	int row, col;
 	DmtxPixelLoc topLeft, botRight;
-	MessageInfo * msgInfo;
+	BarcodeInfo * msgInfo;
 
 	DecodeRegion() {
 		msgInfo = NULL;
@@ -38,7 +38,7 @@ public:
 	Decoder();
 	virtual ~Decoder();
 
-	void processImageRegions(CSimpleIniA & ini, Dib & dib);
+	void processImageRegions(unsigned plateNum, CSimpleIniA & ini, Dib & dib);
 	vector<DecodeRegion *> & getDecodeRegions() {
 		return decodeRegions;
 	}
@@ -51,12 +51,12 @@ protected:
 	vector<DecodeRegion *> decodeRegions;
 
 	void clearResults();
-	void getRegionsFromIni(CSimpleIniA & ini);
+	bool getRegionsFromIni(unsigned plateNum, CSimpleIniA & ini);
 	void messageAdd(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
 	DmtxImage * createDmtxImageFromDib(Dib & dib);
 	void showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
-	void processImage(Dib & dib, vector<MessageInfo *>  & msgInfos);
-	void processImage(DmtxImage & image, vector<MessageInfo *>  & msgInfos);
+	void processImage(Dib & dib, vector<BarcodeInfo *>  & msgInfos);
+	void processImage(DmtxImage & image, vector<BarcodeInfo *>  & msgInfos);
 };
 
 #endif /* DECODER_H_ */
