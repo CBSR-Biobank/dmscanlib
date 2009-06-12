@@ -39,10 +39,8 @@ public:
 	Decoder();
 	virtual ~Decoder();
 
-	void processImageRegions(unsigned plateNum, CSimpleIniA & ini, Dib & dib);
-	vector<DecodeRegion *> & getDecodeRegions() {
-		return decodeRegions;
-	}
+	void processImageRegions(unsigned plateNum, Dib & dib,
+			vector<DecodeRegion *> & decodeRegions);
 	void imageShowRegions(Dib & dib, RgbQuad & quad);
 
 protected:

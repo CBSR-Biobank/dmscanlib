@@ -43,13 +43,13 @@ typedef struct sScFrame {
 	double y0; // left
 	double x1; // bottom
 	double y1; // right
-
 } ScFrame;
 
 const short SC_SUCCESS      = 0;
 const short SC_FAIL         = -1;
 const short SC_TWAIN_UAVAIL = -2;
 const short SC_CALIBRATOR_NO_REGIONS = -3;
+const short SC_INI_FILE_ERROR = -4;
 
 EXPORT short slIsTwainAvailable();
 

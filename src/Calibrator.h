@@ -23,16 +23,31 @@ public:
 	void saveRegionsToIni(unsigned plateNum, CSimpleIniA & ini);
 	void imageShowBins(Dib & dib, RgbQuad & quad);
 
+    const vector<BarcodeInfo*> & getBarcodeInfos() const {
+        return barcodeInfos;
+    }
+
+    const vector<BinRegion*> & getRowBinRegions() const {
+        return rowBinRegions;
+    }
+
+    const vector<BinRegion*> & getColBinRegions() const {
+        return colBinRegions;
+    }
+
+    unsigned getMaxCol();
+
+
 private:
 	static const unsigned BIN_THRESH = 15;
-	static const unsigned BIN_MARGIN = 15;
+	static const unsigned BIN_MARGIN = 12;
 
 	unsigned width;
 	unsigned height;
 
-	vector<BarcodeInfo *>  barcodeInfos;
-	vector<BinRegion *> rowBinRegions;
-	vector<BinRegion *> colBinRegions;
+	vector<BarcodeInfo *> barcodeInfos;
+	vector<BinRegion *>   rowBinRegions;
+	vector<BinRegion *>   colBinRegions;
 
 	void sortRegions();
 };

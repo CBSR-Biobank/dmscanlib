@@ -182,35 +182,6 @@ void Calibrator::sortRegions() {
 	sort(barcodeInfos.begin(), barcodeInfos.end(), BarcodeInfoSort());
 }
 
-void Calibrator::saveRegionsToIni(unsigned plateNum, CSimpleIniA & ini) {
-	if (barcodeInfos.size() == 0) {
-		UA_DOUT(4, 3, "saveRegionsToIni: no regions found");
-		return;
-	}
-
-	SI_Error rc;
-	string secName = "plate-" + to_string(plateNum) + "-" + INI_SECTION_NAME;
-
-	unsigned maxCol = barcodeInfos[0]->getColBinRegion().getRank();
-	ostringstream key, value;
-	for (int r = rowBinRegions.size() - 1; r >= 0; --r) {
-		for (unsigned c = 0, cn = colBinRegions.size(); c < cn; ++c) {
-			key.str("");
-			value.str("");
-
-			key << INI_REGION_LABEL << rowBinRegions[r]->getRank() << "_"
-				<< maxCol - colBinRegions[c]->getRank();
-			value << colBinRegions[c]->getMin() << ","
-			      << rowBinRegions[r]->getMin() << ","
-			      << colBinRegions[c]->getMax() << ","
-			      << rowBinRegions[r]->getMax();
-
-			rc = ini.SetValue(secName.c_str(), key.str().c_str(), value.str().c_str());
-			UA_ASSERT(rc >= 0);
-		}
-	}
-}
-
 void Calibrator::imageShowBins(Dib & dib, RgbQuad & quad) {
 	UA_DOUT(4, 3, "marking tags ");
 	for (unsigned c = 0, cn = colBinRegions.size(); c < cn; ++c) {
@@ -226,4 +197,8 @@ void Calibrator::imageShowBins(Dib & dib, RgbQuad & quad) {
 				 dib.getWidth()-1, rowBinRegions[r]->getMax(), quad);
 
 	}
+}
+
+unsigned Calibrator::getMaxCol() {
+	return barcodeInfos[0]->getColBinRegion().getRank();
 }

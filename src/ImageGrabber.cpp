@@ -28,8 +28,6 @@ TW_IDENTITY ImageGrabber::g_AppID = {
 
 const char * ImageGrabber::TWAIN_DLL_FILENAME = "TWAIN_32.DLL";
 
-const char * ImageGrabber::INI_SECTION_NAME = "plate";
-
 /*	initGrabber() should be called prior to calling any other associated functionality,
  *	as libraries such as Twain_32.dll need to be loaded before acquire or
  *	selectDefaultAsSource work.
@@ -366,91 +364,4 @@ void ImageGrabber::unloadTwain(){
 	UA_ASSERT_NOT_NULL(g_hLib);
 	FreeLibrary(g_hLib);
 	g_hLib = NULL;
-}
-
-void ImageGrabber::getConfigFromIni(CSimpleIniA & ini) {
-	for (unsigned i = 1; i < MAX_PLATES; ++i) {
-		getConfigFromIni(ini, i);
-
-		UA_DOUT(2, 3, "plate " << i << ": top/" << plateFrames[i].y0
-				<< " left/" << plateFrames[i].x0
-				<< " bottom/" << plateFrames[i].y1
-				<< " right/" << plateFrames[i].x0);
-	}
-}
-
-bool ImageGrabber::getConfigFromIni(CSimpleIniA & ini, unsigned plateNum) {
-	stringstream errStrm;
-	stringstream secName;
-
-	secName << INI_SECTION_NAME << "-" << plateNum;
-
-	const CSimpleIniA::TKeyVal * values = ini.GetSection(secName.str().c_str());
-	if (values == NULL) return false;
-
-	if (values->size() == 0) {
-		errStrm << "INI file error: section [" << INI_SECTION_NAME
-		        << "], has no values" << endl;
-		return false;
-	}
-
-	ScFrame frame;
-	frame.frameId = plateNum;
-
-	for(CSimpleIniA::TKeyVal::const_iterator it = values->begin();
-		it != values->end(); it++) {
-		string key(it->first.pItem);
-		string value(it->second);
-
-		if (key == "top") {
-			if (!Util::strToNum(value, frame.y0)) {
-				errStrm << "INI file error: section [" << INI_SECTION_NAME
-				        << "], value for key \""
-					    << key << "\" is invalid:" << value << endl;
-				return false;
-			}
-		}
-		else if (key == "left") {
-			if (!Util::strToNum(value, frame.x0)) {
-				errStrm << "INI file error: section [" << INI_SECTION_NAME
-				        << "], value for key \""
-					    << key << "\" is invalid:" << value << endl;
-				return false;
-			}
-		}
-		else if (key == "bottom") {
-			if (!Util::strToNum(value, frame.y1)) {
-				errStrm << "INI file error: section [" << INI_SECTION_NAME
-				        << "], value for key \""
-					    << key << "\" is invalid:" << value << endl;
-				return false;
-			}
-		}
-		else if (key == "right") {
-			if (!Util::strToNum(value, frame.x1)) {
-				errStrm << "INI file error: section [" << INI_SECTION_NAME
-				        << "], value for key \""
-					    << key << "\" is invalid:" << value << endl;
-				return false;
-			}
-		}
-		else {
-			errStrm << "INI file error: section [" << INI_SECTION_NAME
-			        << "], key is invalid:" << key << endl;
-			return false;
-		}
-	}
-	plateFrames[plateNum] = frame;
-	return true;
-}
-
-HANDLE ImageGrabber::acquirePlateImage(unsigned plate) {
-	stringstream errStrm;
-	map<unsigned, ScFrame>::iterator it = plateFrames.find(plate);
-	if (it == plateFrames.end()) {
-		UA_DOUT(2, 1,  "plate number " << plate << " is not defined in INI file.");
-		return NULL;
-	}
-	ScFrame & f = it->second;
-	return acquireImage(f.x0, f.y0, f.x1, f.y1);
 }

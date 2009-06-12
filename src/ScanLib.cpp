@@ -8,6 +8,7 @@
  ******************************************************************************/
 
 #include "ScanLib.h"
+#include "Config.h"
 #include "UaLogger.h"
 #include "UaAssert.h"
 #include "Decoder.h"
@@ -29,25 +30,6 @@
 using namespace std;
 
 const char * INI_FILE_NAME = "scanlib.ini";
-
-CSimpleIniA ini(true, false, true);
-
-/*
- * Loads the INI file if it is present.
- */
-bool iniLoad(CSimpleIniA & ini) {
-	fstream inifile;
-	inifile.open(INI_FILE_NAME, fstream::in);
-	if (!inifile.is_open()) return false;
-
-	SI_Error rc = ini.Load(inifile);
-	if (rc >= 0) {
-		// attempt to load ini file failed
-		return false;
-	}
-	inifile.close();
-	return true;
-}
 
 void configLogging(unsigned level) {
 	ua::logstream.sink(ua::LoggerSinkStdout::Instance());
@@ -98,25 +80,10 @@ short slScanImage(char * filename, double left, double top, double right,
 
 short slConfigPlateFrame(unsigned short plateNum, double left,
 		double top,	double right, double bottom) {
-	CSimpleIniA ini(true, false, true);
-	SI_Error rc;
-
-	iniLoad(ini);
-	string secname = "plate-" + to_string(plateNum);
-
-	rc = ini.SetValue(secname.c_str(), "left", to_string(left).c_str());
-	if (rc < 0) return SC_FAIL;
-
-	rc = ini.SetValue(secname.c_str(), "top", to_string(top).c_str());
-	if (rc < 0) return SC_FAIL;
-
-	rc = ini.SetValue(secname.c_str(), "right", to_string(right).c_str());
-	if (rc < 0) return SC_FAIL;
-
-	rc = ini.SetValue(secname.c_str(), "bottom", to_string(bottom).c_str());
-	if (rc < 0) return SC_FAIL;
-
-	ini.SaveFile(INI_FILE_NAME);
+	Config config(INI_FILE_NAME);
+	if (!config.savePlateFrame(plateNum, left, top, right, bottom)) {
+		return SC_INI_FILE_ERROR;
+	}
 	return SC_SUCCESS;
 }
 
@@ -126,17 +93,22 @@ short slCalibrateToPlate(unsigned short plateNum) {
 		return SC_FAIL;
 	}
 
-	CSimpleIniA ini(true, false, true);
+	configLogging(5);
+
+	Config config(INI_FILE_NAME);
+	ScFrame * f = NULL;
+
+	config.parseFrames();
+	if (!config.getPlateFrame(plateNum, &f)) {
+		return SC_INI_FILE_ERROR;
+	}
+
 	Calibrator calibrator;
 	Dib dib;
 	RgbQuad quad(255, 0, 0);
 
-	iniLoad(ini);
-	configLogging(5);
-
 	ImageGrabber ig;
-	ig.getConfigFromIni(ini);
-	HANDLE h = ig.acquirePlateImage(plateNum);
+	HANDLE h = ig.acquireImage(f->x0, f->y0, f->x1, f->y1);
 	if (h == NULL) {
 		UA_DOUT(1, 1, "could not aquire plate image: " << plateNum);
 		return SC_FAIL;
@@ -146,8 +118,11 @@ short slCalibrateToPlate(unsigned short plateNum) {
 	if (!calibrator.processImage(dib)) {
 		return SC_CALIBRATOR_NO_REGIONS;
 	}
-	calibrator.saveRegionsToIni(plateNum, ini);
-	ini.SaveFile(INI_FILE_NAME);
+
+	if (!config.setRegions(plateNum, calibrator.getRowBinRegions(),
+			calibrator.getColBinRegions(), calibrator.getMaxCol())) {
+		return SC_INI_FILE_ERROR;
+	}
 
 	Dib markedDib(dib);
 
@@ -182,23 +157,31 @@ short slDecodePlate(unsigned short plateNum) {
 		return SC_FAIL;
 	}
 
-	CSimpleIniA ini(true, false, true);
+	configLogging(5);
+
+	Config config(INI_FILE_NAME);
+	ScFrame * f;
+
+	config.parseFrames();
+	if (config.getPlateFrame(plateNum, &f)) {
+		return SC_INI_FILE_ERROR;
+	}
+	if (!config.parseRegions(plateNum)) {
+		return SC_INI_FILE_ERROR;
+	}
+
 	Decoder decoder;
 	Dib dib;
 
-	iniLoad(ini);
-	configLogging(5);
-
 	ImageGrabber ig;
-	ig.getConfigFromIni(ini);
-	HANDLE h = ig.acquirePlateImage(plateNum);
+	HANDLE h = ig.acquireImage(f->x0, f->y0, f->x1, f->y1);
 	if (h == NULL) {
 		UA_DOUT(1, 1, "could not acquire plate image: " << plateNum);
 		return SC_FAIL;
 	}
 	dib.readFromHandle(h);
-	decoder.processImageRegions(plateNum, ini, dib);
-	saveDecodeResults(plateNum, decoder.getDecodeRegions());
+	decoder.processImageRegions(plateNum, dib, config.getRegions());
+	saveDecodeResults(plateNum, config.getRegions());
 
 	Dib markedDib(dib);
 	RgbQuad quad(0, 255, 0);

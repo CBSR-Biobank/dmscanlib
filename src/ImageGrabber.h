@@ -49,6 +49,8 @@ public:
 
 	void getConfigFromIni(CSimpleIniA & ini);
 
+	static const unsigned MAX_PLATES = 4;
+
 
 private:
 	unsigned invokeTwain(TW_IDENTITY * srcId, unsigned long dg, unsigned dat,
@@ -65,8 +67,6 @@ private:
 
 
 	static const char * TWAIN_DLL_FILENAME;
-
-	static const char * INI_SECTION_NAME;
 
 	// g_hinstDLL holds this DLL's instance handle. It is initialized in response
 	// to the DLL_PROCESS_ATTACH message. This handle is passed to CreateWindow()
@@ -92,10 +92,6 @@ private:
 	static const int DPI = 300;
 	static const int SCAN_CONTRAST = 500;
 	static const int SCAN_BRIGHTNESS = 500;
-
-	static const unsigned MAX_PLATES = 4;
-
-	map<unsigned, ScFrame> plateFrames;
 };
 
 #endif /* __INCLUDE_IMAGE_GRABBER_H */
