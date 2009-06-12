@@ -41,14 +41,12 @@ public:
 
 	void processImageRegions(unsigned plateNum, Dib & dib,
 			vector<DecodeRegion *> & decodeRegions);
-	void imageShowRegions(Dib & dib, RgbQuad & quad);
+	void imageShowRegions(Dib & dib, vector<DecodeRegion *> & decodeRegions);
 
 protected:
 
 	static const char * INI_SECTION_NAME;
 	static const char * INI_REGION_LABEL;
-
-	vector<DecodeRegion *> decodeRegions;
 
 	void clearResults();
 	bool getRegionsFromIni(unsigned plateNum, CSimpleIniA & ini);

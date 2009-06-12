@@ -93,6 +93,10 @@ short slCalibrateToPlate(unsigned short plateNum) {
 		return SC_FAIL;
 	}
 
+	slTime starttime, endtime, difftime;
+
+    Util::getTime(starttime);
+
 	configLogging(5);
 
 	Config config(INI_FILE_NAME);
@@ -127,8 +131,13 @@ short slCalibrateToPlate(unsigned short plateNum) {
 	Dib markedDib(dib);
 
 	calibrator.imageShowBins(markedDib, quad);
-	markedDib.writeToFile("marked.bmp");
+	markedDib.writeToFile("calibrated.bmp");
 	ig.freeImage(h);
+
+    Util::getTime(endtime);
+    Util::difftiime(starttime, endtime, difftime);
+
+	UA_DOUT(1, 1, "slDecodePlate: time taken: " << difftime);
 	return SC_SUCCESS;
 }
 
@@ -152,6 +161,10 @@ void saveDecodeResults(unsigned plateNum, vector<DecodeRegion *> & decodeRegions
 }
 
 short slDecodePlate(unsigned short plateNum) {
+	slTime starttime, endtime, difftime;
+
+    Util::getTime(starttime);
+
 	if (plateNum > 4) {
 		UA_DOUT(1, 1, "plate number is invalid: " << plateNum);
 		return SC_FAIL;
@@ -163,7 +176,7 @@ short slDecodePlate(unsigned short plateNum) {
 	ScFrame * f;
 
 	config.parseFrames();
-	if (config.getPlateFrame(plateNum, &f)) {
+	if (!config.getPlateFrame(plateNum, &f)) {
 		return SC_INI_FILE_ERROR;
 	}
 	if (!config.parseRegions(plateNum)) {
@@ -180,14 +193,19 @@ short slDecodePlate(unsigned short plateNum) {
 		return SC_FAIL;
 	}
 	dib.readFromHandle(h);
+	dib.writeToFile("out.bmp");
 	decoder.processImageRegions(plateNum, dib, config.getRegions());
 	saveDecodeResults(plateNum, config.getRegions());
 
 	Dib markedDib(dib);
-	RgbQuad quad(0, 255, 0);
 
-	decoder.imageShowRegions(markedDib, quad);
-	markedDib.writeToFile("marked.bmp");
+	decoder.imageShowRegions(markedDib, config.getRegions());
+	markedDib.writeToFile("decoded.bmp");
 	ig.freeImage(h);
+
+    Util::getTime(endtime);
+    Util::difftiime(starttime, endtime, difftime);
+
+	UA_DOUT(1, 1, "slDecodePlate: time taken: " << difftime);
 	return SC_SUCCESS;
 }

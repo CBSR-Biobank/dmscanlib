@@ -32,8 +32,8 @@ Config::Config(const char * filename) :
 	}
 
 	SI_Error rc = ini.Load(inifile);
-	if (rc >= 0) {
-		// attempt to load ini file failed
+	if (rc < 0) {
+		UA_DOUT(5, 3, "attempt to load ini file failed");
 		state = STATE_ERROR_LOAD;
 		return;
 	}
@@ -45,11 +45,20 @@ Config::~Config() {
 }
 
 void Config::save() {
+	if (state != STATE_OK) {
+		UA_DOUT(5, 3, "save: invalid ini state: " << state);
+		return;
+	}
 	ini.SaveFile(inifilename);
 }
 
 
 void Config::parseFrames() {
+	if (state != STATE_OK) {
+		UA_DOUT(5, 3, "parseFrames: invalid ini state: " << state);
+		return;
+	}
+
 	for (unsigned i = 1; i <= ImageGrabber::MAX_PLATES; ++i) {
 		if (!parseFrame(i)) continue;
 
@@ -61,17 +70,15 @@ void Config::parseFrames() {
 }
 
 bool Config::parseFrame(unsigned frameNum) {
-	stringstream errStrm;
-	stringstream secName;
+	string secName(INI_PLATE_SECTION_NAME);
+	secName += "-" + to_string(frameNum);
 
-	secName << INI_PLATE_SECTION_NAME << "-" << frameNum;
-
-	const CSimpleIniA::TKeyVal * values = ini.GetSection(secName.str().c_str());
+	const CSimpleIniA::TKeyVal * values = ini.GetSection(secName.c_str());
 	if (values == NULL) return false;
 
 	if (values->size() == 0) {
-		errStrm << "INI file error: section [" << INI_SECTION_NAME
-		        << "], has no values" << endl;
+		UA_DOUT(5, 3, "INI file error: section [" << secName
+		        << "], has no values");
 		return false;
 	}
 
@@ -85,39 +92,39 @@ bool Config::parseFrame(unsigned frameNum) {
 
 		if (key == "top") {
 			if (!Util::strToNum(value, frame.y0)) {
-				errStrm << "INI file error: section [" << INI_SECTION_NAME
+				UA_DOUT(5, 3, "INI file error: section [" << secName
 				        << "], value for key \""
-					    << key << "\" is invalid:" << value << endl;
+					    << key << "\" is invalid: " << value);
 				return false;
 			}
 		}
 		else if (key == "left") {
 			if (!Util::strToNum(value, frame.x0)) {
-				errStrm << "INI file error: section [" << INI_SECTION_NAME
+				UA_DOUT(5, 3, "INI file error: section [" << secName
 				        << "], value for key \""
-					    << key << "\" is invalid:" << value << endl;
+					    << key << "\" is invalid: " << value);
 				return false;
 			}
 		}
 		else if (key == "bottom") {
 			if (!Util::strToNum(value, frame.y1)) {
-				errStrm << "INI file error: section [" << INI_SECTION_NAME
+				UA_DOUT(5, 3, "INI file error: section [" << secName
 				        << "], value for key \""
-					    << key << "\" is invalid:" << value << endl;
+					    << key << "\" is invalid: " << value);
 				return false;
 			}
 		}
 		else if (key == "right") {
 			if (!Util::strToNum(value, frame.x1)) {
-				errStrm << "INI file error: section [" << INI_SECTION_NAME
+				UA_DOUT(5, 3, "INI file error: section [" << secName
 				        << "], value for key \""
-					    << key << "\" is invalid:" << value << endl;
+					    << key << "\" is invalid: " << value);
 				return false;
 			}
 		}
 		else {
-			errStrm << "INI file error: section [" << INI_SECTION_NAME
-			        << "], key is invalid:" << key << endl;
+			UA_DOUT(5, 3, "INI file error: section [" << secName
+			        << "], key is invalid: " << key);
 			return false;
 		}
 	}
@@ -127,7 +134,11 @@ bool Config::parseFrame(unsigned frameNum) {
 
 
 bool Config::getPlateFrame(unsigned plate, ScFrame ** frame) {
-	stringstream errStrm;
+	if (state != STATE_OK) {
+		UA_DOUT(5, 3, "getPlateFrame: invalid ini state: " << state);
+		return false;
+	}
+
 	map<unsigned, ScFrame>::iterator it = plateFrames.find(plate);
 	if (it == plateFrames.end()) {
 		*frame = NULL;
@@ -141,38 +152,47 @@ bool Config::getPlateFrame(unsigned plate, ScFrame ** frame) {
 
 bool Config::setRegions(unsigned plateNum, const vector<BinRegion *> & rowBinRegions,
 		const vector<BinRegion *> & colBinRegions, unsigned maxCol) {
-	if (state != STATE_OK) return false;
+	if (state != STATE_OK) {
+		UA_DOUT(5, 3, "setRegions: invalid ini state: " << state);
+		return false;
+	}
 
 	if ((rowBinRegions.size() == 0) || (colBinRegions.size() == 0)) {
 		UA_DOUT(5, 3, "setRegions: no regions found");
 		return false;
 	}
 
-	SI_Error rc;
-	string secName = "plate-" + to_string(plateNum) + "-" + INI_SECTION_NAME;
+	UA_DOUT(5, 3, "setRegions: rows/" << rowBinRegions.size() << " cols/"
+			<< colBinRegions.size());
 
-	ostringstream key, value;
+	SI_Error rc;
+	string key, value;
+	string secName("plate-" + to_string(plateNum) + "-" + INI_SECTION_NAME);
+
 	for (int r = rowBinRegions.size() - 1; r >= 0; --r) {
 		for (unsigned c = 0, cn = colBinRegions.size(); c < cn; ++c) {
-			key.str("");
-			value.str("");
+			key = INI_REGION_LABEL + to_string(rowBinRegions[r]->getRank())
+				+ "_" + to_string(maxCol - colBinRegions[c]->getRank());
+			value = to_string(colBinRegions[c]->getMin()) + ","
+				+ to_string(rowBinRegions[r]->getMin()) + ","
+				+ to_string(colBinRegions[c]->getMax()) + ","
+				+ to_string(rowBinRegions[r]->getMax());
 
-			key << INI_REGION_LABEL << rowBinRegions[r]->getRank() << "_"
-				<< maxCol - colBinRegions[c]->getRank();
-			value << colBinRegions[c]->getMin() << ","
-			      << rowBinRegions[r]->getMin() << ","
-			      << colBinRegions[c]->getMax() << ","
-			      << rowBinRegions[r]->getMax();
-
-			rc = ini.SetValue(secName.c_str(), key.str().c_str(), value.str().c_str());
-			UA_ASSERT(rc >= 0);
+			rc = ini.SetValue(secName.c_str(), key.c_str(), value.c_str());
+			if (rc < 0) {
+				UA_DOUT(5, 3, "setRegions: ini SetValue() returned: " << rc);
+				return false;
+			}
 		}
 	}
 	return true;
 }
 
 bool Config::parseRegions(unsigned plateNum) {
-	if (state != STATE_OK) return false;
+	if (state != STATE_OK) {
+		UA_DOUT(5, 3, "parseRegions: invalid ini state: " << state);
+		return false;
+	}
 
 	string secName = "plate-" + to_string(plateNum) + "-" + INI_SECTION_NAME;
 
@@ -283,7 +303,10 @@ bool Config::parseRegions(unsigned plateNum) {
 
 bool Config::savePlateFrame(unsigned short plateNum, double left,
 		double top,	double right, double bottom) {
-	if (state != STATE_OK) return false;
+	if (state != STATE_OK) {
+		UA_DOUT(5, 3, "savePlateFrame: invalid ini state: " << state);
+		return false;
+	}
 
 	SI_Error rc;
 

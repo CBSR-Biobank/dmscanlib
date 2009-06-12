@@ -74,8 +74,6 @@ private:
 
 ostream & operator<<(ostream &os, BarcodeInfo & m);
 
-
-
 struct BarcodeInfoSort {
 	bool operator()(BarcodeInfo* const& a, BarcodeInfo* const& b);
 };

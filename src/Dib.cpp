@@ -44,7 +44,7 @@ Dib::Dib(unsigned rows, unsigned cols, unsigned colorBits)  :
 	infoHeader->numColors       = 0;
 	infoHeader->numColorsImp    = 0;
 
-	rowBytes = (infoHeader->width * infoHeader->bitCount + 31) >> 3;
+	rowBytes = ((infoHeader->width * infoHeader->bitCount + 31) >> 5) << 2;
 	rowPaddingBytes = rowBytes - (infoHeader->width * bytesPerPixel);
 	infoHeader->imageSize       = infoHeader->height * rowBytes;
 
@@ -109,7 +109,7 @@ void Dib::readFromHandle(HANDLE handle) {
 	pixels = (unsigned char *) dibHeaderPtr + sizeof(BITMAPINFOHEADER);
 
 	bytesPerPixel = infoHeader->bitCount >> 3;
-	rowBytes = (infoHeader->width * infoHeader->bitCount + 31) >> 3;
+	rowBytes = ((infoHeader->width * infoHeader->bitCount + 31) >> 5) << 2;
 	rowPaddingBytes = rowBytes - (infoHeader->width * bytesPerPixel);
 }
 #endif
@@ -155,7 +155,7 @@ void Dib::readFromFile(const char * filename) {
 	infoHeader->numColorsImp    = *(unsigned *)&infoHeaderRaw[0x32 - 0xE];
 
 	bytesPerPixel = infoHeader->bitCount >> 3;
-	rowBytes = (infoHeader->width * infoHeader->bitCount + 31) >> 3;
+	rowBytes = ((infoHeader->width * infoHeader->bitCount + 31) >> 5) << 2;
 	rowPaddingBytes = rowBytes - (infoHeader->width * bytesPerPixel);
 
 
@@ -318,7 +318,7 @@ void Dib::crop(Dib &src, unsigned x0, unsigned y0, unsigned x1, unsigned y1) {
 	infoHeader->width  = x1 - x0;
 	infoHeader->height = y1 - y0;
 
-	rowBytes = (infoHeader->width * infoHeader->bitCount + 31) >> 3;
+	rowBytes = ((infoHeader->width * infoHeader->bitCount + 31) >> 5) << 2;
 	rowPaddingBytes = rowBytes - (infoHeader->width * bytesPerPixel);
 
 	infoHeader->imageSize = infoHeader->height * rowBytes;

@@ -195,7 +195,7 @@ void Decoder::processImageRegions(unsigned plateNum, Dib & dib,
 	}
 }
 
-void Decoder::imageShowRegions(Dib & dib, RgbQuad & quad) {
+void Decoder::imageShowRegions(Dib & dib, vector<DecodeRegion *> & decodeRegions) {
 	UA_DOUT(4, 3, "marking tags ");
 
 	RgbQuad quadRed(255, 0, 0);
@@ -204,12 +204,7 @@ void Decoder::imageShowRegions(Dib & dib, RgbQuad & quad) {
 	for (unsigned i = 0, n = decodeRegions.size(); i < n; ++i) {
 		DecodeRegion & region = *decodeRegions[i];
 
-		if (region.msgInfo == NULL)  {
-			quad = quadRed;
-		}
-		else {
-			quad = quadGreen;
-		}
+		RgbQuad & quad = (region.msgInfo == NULL) ? quadRed : quadGreen;
 
 		dib.line(region.topLeft.X, region.topLeft.Y,
 				region.topLeft.X, region.botRight.Y, quad);
