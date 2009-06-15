@@ -14,9 +14,7 @@
 #include "Dib.h"
 #include "Util.h"
 #include "BarcodeInfo.h"
-
-#define SI_SUPPORT_IOSTREAMS
-#include "SimpleIni.h"
+#include "Config.h"
 
 #ifdef WIN32
 #include "getopt.h"
@@ -86,13 +84,11 @@ private:
 	static const char * INI_FILE_NAME;
 
 	const char * progname;
-	CSimpleIniA ini;
 };
 
 const char * Application::INI_FILE_NAME = "scanlib.ini";
 
-Application::Application(int argc, char ** argv) :
-	ini(true, false, true) {
+Application::Application(int argc, char ** argv) {
 	Options options;
 	int ch;
 
@@ -164,14 +160,6 @@ Application::Application(int argc, char ** argv) :
 	/*
 	 * Loads the file if it is present.
 	 */
-	fstream inifile;
-	inifile.open(INI_FILE_NAME, fstream::in);
-	if (inifile.is_open()) {
-		SI_Error rc = ini.Load(inifile);
-		UA_ASSERTS(rc >= 0, "attempt to load ini file returned: " << rc);
-		inifile.close();
-	}
-
 	if (options.calibrate) {
 		calibrateToImage(options.filename);
 		return;
@@ -199,16 +187,24 @@ void Application::calibrateToImage(char * filename) {
 
 	Dib dib;
 	RgbQuad quad(255, 0, 0);
+	Config config(INI_FILE_NAME);
 
 	dib.readFromFile(filename);
 	Dib markedDib(dib);
 	Calibrator calibrator;
-	calibrator.processImage(dib);
-	calibrator.saveRegionsToIni(1, ini);
-	ini.SaveFile(INI_FILE_NAME);
+	if (!calibrator.processImage(dib)) {
+		cout << "bad result from calibrator" << endl;
+		return;
+	}
+
+	if (!config.setRegions(1, calibrator.getRowBinRegions(),
+			calibrator.getColBinRegions(), calibrator.getMaxCol())) {
+		cout << "bad result from config" << endl;
+		return;
+	}
 
 	calibrator.imageShowBins(markedDib, quad);
-	markedDib.writeToFile("out.bmp");
+	markedDib.writeToFile("calibrated.bmp");
 }
 
 void saveDecodeResults(unsigned plateNum, vector<DecodeRegion *> & decodeRegions) {
@@ -234,15 +230,19 @@ void Application::decodeImage(char * filename) {
 	UA_ASSERT_NOT_NULL(filename);
 
 	Dib dib;
-	RgbQuad quad(255, 0, 0);
-	//DmtxVector2 p00, p10, p11, p01;
+	Config config(INI_FILE_NAME);
 
 	dib.readFromFile(filename);
 	Dib markedDib(dib);
 	Decoder decoder;
-	decoder.processImageRegions(1, ini, dib);
-	markedDib.writeToFile("out.bmp");
-	saveDecodeResults(1, decoder.getDecodeRegions());
+	if (!config.parseRegions(1)) {
+		cout << "bad result from config" << endl;
+		return;
+	}
+	decoder.processImageRegions(1, dib, config.getRegions());
+	decoder.imageShowRegions(markedDib, config.getRegions());
+	markedDib.writeToFile("decoded.bmp");
+	saveDecodeResults(1, config.getRegions());
 }
 
 int main(int argc, char ** argv) {

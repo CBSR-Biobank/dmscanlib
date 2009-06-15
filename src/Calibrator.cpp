@@ -204,7 +204,7 @@ void Calibrator::sortRegions() {
 		c.setMin(min > BIN_MARGIN ? min - BIN_MARGIN : 0);
 
 		unsigned max = c.getMax();
-		c.setMax(max < width - BIN_MARGIN ? max + BIN_MARGIN : width);
+		c.setMax(max < width - BIN_MARGIN - 1 ? max + BIN_MARGIN : width - 1);
 
 		c.setRank(i);
 		UA_DOUT(4, 5, "col BinRegion " << i << ": " << c);
@@ -216,7 +216,7 @@ void Calibrator::sortRegions() {
 		c.setMin(min > BIN_MARGIN ? min - BIN_MARGIN : 0);
 
 		unsigned max = c.getMax();
-		c.setMax(max < height - BIN_MARGIN ? max + BIN_MARGIN : height);
+		c.setMax(max < height - BIN_MARGIN - 1 ? max + BIN_MARGIN : height - 1);
 
 		c.setRank(i);
 		UA_DOUT(4, 5, "row BinRegion " << i << ": " << c);

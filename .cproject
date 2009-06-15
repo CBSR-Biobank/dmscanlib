@@ -1645,7 +1645,7 @@
 </toolChain>
 </folderInfo>
 <sourceEntries>
-<entry excluding="src/ScanLib.cpp|src/ImageGrabber.cpp|libdmtx/dmtxvector2.c|libdmtx/dmtxtime.c|libdmtx/dmtxsymbol.c|libdmtx/dmtxstatic.h|libdmtx/dmtxscangrid.c|libdmtx/dmtxregion.c|libdmtx/dmtxreedsol.c|libdmtx/dmtxplacemod.c|libdmtx/dmtxmessage.c|libdmtx/dmtxmatrix3.c|libdmtx/dmtximage.c|libdmtx/dmtxfec.c|libdmtx/dmtxencode.c|libdmtx/dmtxdecode.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+<entry excluding="src/ImageGrabber.h|src/ScanLib.cpp|src/ImageGrabber.cpp|libdmtx/dmtxvector2.c|libdmtx/dmtxtime.c|libdmtx/dmtxsymbol.c|libdmtx/dmtxstatic.h|libdmtx/dmtxscangrid.c|libdmtx/dmtxregion.c|libdmtx/dmtxreedsol.c|libdmtx/dmtxplacemod.c|libdmtx/dmtxmessage.c|libdmtx/dmtxmatrix3.c|libdmtx/dmtximage.c|libdmtx/dmtxfec.c|libdmtx/dmtxencode.c|libdmtx/dmtxdecode.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 </sourceEntries>
 </configuration>
 </storageModule>

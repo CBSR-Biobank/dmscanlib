@@ -9,7 +9,11 @@
 #include "BarcodeInfo.h"
 #include "BinRegion.h"
 #include "Util.h"
+
+
+#ifdef WIN32
 #include "ImageGrabber.h"
+#endif
 
 #include <iostream>
 #include <fstream>
@@ -59,7 +63,7 @@ void Config::parseFrames() {
 		return;
 	}
 
-	for (unsigned i = 1; i <= ImageGrabber::MAX_PLATES; ++i) {
+	for (unsigned i = 1; i <= MAX_PLATES; ++i) {
 		if (!parseFrame(i)) continue;
 
 		UA_DOUT(5, 3, "plate " << i << ": top/" << plateFrames[i].y0

@@ -49,8 +49,6 @@ public:
 
 	void getConfigFromIni(CSimpleIniA & ini);
 
-	static const unsigned MAX_PLATES = 4;
-
 
 private:
 	unsigned invokeTwain(TW_IDENTITY * srcId, unsigned long dg, unsigned dat,

@@ -41,6 +41,8 @@ public:
 		return regions;
 	}
 
+	static const unsigned MAX_PLATES = 4;
+
 private:
 	bool parseFrame(unsigned frameNum);
 
