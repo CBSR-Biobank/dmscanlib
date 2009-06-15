@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
+#include <math.h>
 
 #ifdef _VISUALC_
 // disable fopen warnings
@@ -17,6 +18,10 @@
 #else
 #include <strings.h>
 #endif
+
+
+const double Dib::UNSHARP_RAD  = 8.0;
+const double Dib::UNSHARP_DEPTH = 1.1;
 
 Dib::Dib() :
 	fileHeader(NULL), infoHeader(NULL), pixels(NULL), isAllocated(false) {
@@ -202,7 +207,7 @@ void Dib::writeToFile(const char * filename) {
 
 	FILE * fh = fopen(filename, "wb"); // C4996
 	UA_ASSERTS(fh != NULL,
-		"could not open file for writing" << filename);
+			"could not open file for writing" << filename);
 
 	fwrite(fileHeaderRaw, 1, sizeof(fileHeaderRaw), fh);
 	fwrite(infoHeaderRaw, 1, sizeof(infoHeaderRaw), fh);
@@ -331,7 +336,7 @@ void Dib::crop(Dib &src, unsigned x0, unsigned y0, unsigned x1, unsigned y1) {
 	unsigned char * destRowPtr = pixels;
 
 	for (unsigned row = 0; row < infoHeader->height;
-		++row, srcRowPtr += src.rowBytes, destRowPtr += rowBytes) {
+	++row, srcRowPtr += src.rowBytes, destRowPtr += rowBytes) {
 		memcpy(destRowPtr, srcRowPtr, infoHeader->width * bytesPerPixel);
 	}
 }
@@ -575,3 +580,252 @@ void Dib::line(unsigned x0, unsigned y0, unsigned x1, unsigned y1, RgbQuad & qua
 		}
 	}
 }
+
+void Dib::blur(Dib & src) {
+	double radius = UNSHARP_RAD;
+	int *m_FilterVector;
+	int m_Denominator;
+	unsigned m_Dim;
+	unsigned d = (int) (5.0f * radius + 1.0f);
+	int i2, v;
+	int k;
+
+	copyInternals(src);
+
+	// SetRadius
+	d |= 1;		// must be odd
+	m_Dim = d;
+
+	m_FilterVector = new int[m_Dim];
+	d /= 2;
+
+	double num = 2 * radius * radius;
+	double f = expf(d * d / num);
+	m_Denominator = (int) f;
+
+	m_FilterVector[d] = m_Denominator;
+
+	for (unsigned i = 1; i <= d; i++) {
+		i2 = - (int)(i * i);
+		v = (int) (f * expf(i2 / num));
+		m_FilterVector[d - i] = v;
+		m_FilterVector[d + i] = v;
+		m_Denominator += 2 * v;
+	}
+
+	d = m_Dim / 2;
+	bool bHorizontal;
+	unsigned line;
+	unsigned pxl;
+
+	unsigned char * pStartSrc = (unsigned char *) src.pixels;
+	unsigned char * pStartDest = (unsigned char *) pixels;
+	unsigned char * pLineSrc;
+	unsigned char * pLineDest;
+	unsigned char * pPixelDest;
+	int * pFactors;
+	unsigned xBegin;
+	unsigned xEnd;
+	int denom;
+	int sum;
+	unsigned char * pPixelSrc;
+	unsigned x;
+
+	unsigned nLines;		// number of lines (horizontal or vertical)
+	unsigned nPixels;		// number of pixels per line
+	unsigned dPixelSrc;		// pixel step in source
+	unsigned dPixelDest;	// pixel step in destination
+	unsigned dLineSrc;		// line step in source
+	unsigned dLineDest;		// line step in destination
+
+
+	for (k = 0; k < 2; k++) {
+		if (k == 0) bHorizontal = true;
+		else bHorizontal = false;
+
+		if (bHorizontal) {
+			nLines = infoHeader->height - 1;
+			nPixels = infoHeader->width;
+			dLineSrc = src.infoHeader->width * 3;
+			dLineDest = infoHeader->width * 3;
+		}
+		else {
+			nLines = infoHeader->height;
+			nPixels = infoHeader->height - 1;
+			dPixelSrc = src.infoHeader->width * 3;
+			dPixelDest = infoHeader->width * 3;
+		}
+
+		if (d > nPixels / 2) {
+			d = nPixels / 2;
+		}
+
+		pLineSrc = pStartSrc;
+		pLineDest = pStartDest;
+
+		for (line = 0; line < nLines; line++) {
+			// loop through lines
+			pPixelDest = pLineDest;
+
+			for (pxl = 0; pxl < d; pxl++) {
+				// loop through pixels in left/top margin
+				pFactors = m_FilterVector + d - pxl;
+
+				xEnd = pxl + d;
+				if (xEnd > nPixels) xEnd = nPixels;
+
+				denom = 0;
+				sum = 0;
+
+				pPixelSrc = pLineSrc;
+
+				for (x = 0; x < xEnd; x++) {
+					denom += *pFactors;
+					sum += *pFactors++ * *pPixelSrc;
+					pPixelSrc += dPixelSrc;
+				}
+
+				if (denom) sum /= denom;
+				*pPixelDest = (unsigned char) sum;
+
+				pPixelDest += dPixelDest;
+			}
+
+			for (pxl = d; pxl < nPixels - d; pxl++) {
+				// loop through pixels in main area
+				pFactors = m_FilterVector;
+				sum = 0;
+
+				xBegin = pxl - d;
+				pPixelSrc = & pLineSrc[xBegin * dPixelSrc];
+
+				for (x = xBegin; x <= pxl + d; x++) {
+					sum += *pFactors++ * *pPixelSrc;
+					pPixelSrc += dPixelSrc;
+				}
+
+				sum /= m_Denominator;
+				*pPixelDest = (unsigned char) sum;
+
+				pPixelDest += dPixelDest;
+			}
+
+			for (pxl = nPixels - d; pxl < nPixels; pxl++) {
+				// loop through pixels in right/bottom margin
+				pFactors = m_FilterVector;
+				denom = 0;
+				sum = 0;
+
+				xBegin = pxl - d;
+				if (xBegin < 0) xBegin = 0;
+				pPixelSrc = & pLineSrc[xBegin * dPixelSrc];
+
+				for (x = xBegin; x < nPixels; x++)
+				{
+					denom += *pFactors;
+					sum += *pFactors++ * *pPixelSrc;
+					pPixelSrc += dPixelSrc;
+				}
+
+				if (denom) sum /= denom;
+
+				*pPixelDest = (unsigned char) sum;
+
+				pPixelDest += dPixelDest;
+			}
+
+			pLineSrc += dLineSrc;
+			pLineDest += dLineDest;
+		}	// next line
+
+		pStartSrc++;
+		pStartDest++;
+	}
+
+	delete[] m_FilterVector;
+}
+
+void Dib::unsharp(Dib & src) {
+	double depth = UNSHARP_DEPTH;
+	int denom;
+
+	denom = 10000;	// use an arbitrary denominator, not too small
+	int dpt = (int) ((double) denom * depth);
+	int v, dptplus = dpt + denom;
+
+	copyInternals(src);
+
+	unsigned width = src.infoHeader->width;
+	unsigned height = src.infoHeader->height;
+	unsigned Y, X;
+	unsigned char * srcRowPtr = src.pixels, * destRowPtr = pixels;
+	unsigned char * srcPixel, * destPixel, srcPixelValue, destPixelValue;
+
+	for (Y = 0; Y <= height - 1; ++Y, srcRowPtr += rowBytes, destRowPtr += rowBytes)  {
+		srcPixel = srcRowPtr;
+		destPixel = destRowPtr;
+
+		for (X = 0; X <= width - 1 ; ++X, srcPixel += bytesPerPixel, destPixel += bytesPerPixel)  {
+			if ((infoHeader->bitCount == 24) || (infoHeader->bitCount == 32)) {
+				srcPixelValue = (unsigned char)(
+						0.3 * srcPixel[0] + 0.59 * srcPixel[1] + + 0.11 * srcPixel[2]);
+				destPixelValue = (unsigned char)(
+						0.3 * destPixel[0] + 0.59 * destPixel[1] + + 0.11 * destPixel[2]);
+			}
+			else {
+				srcPixelValue = srcPixel[0];
+				destPixelValue = destPixel[0];
+			}
+
+			v = dptplus * srcPixelValue - dpt * destPixelValue;
+			v /= denom;
+
+			// Clipping is very essential here. for large values of depth
+			// (> 5.0f) more than half of the pixel values are clipped.
+			if (v > 255) v = 255;
+			if (v < 0) v = 0;
+			destPixel[0] = (unsigned char) v;
+			if ((infoHeader->bitCount == 24) || (infoHeader->bitCount == 32)) {
+				destPixel[1] = destPixel[2] = destPixel[0];
+			}
+		}
+	}
+}
+
+void Dib::expandColours(Dib & src, int start, int end) {
+	unsigned width = src.infoHeader->width;
+	unsigned height = src.infoHeader->height;
+	double cDoubleWidth = end - start;
+	int nval;
+
+	copyInternals(src);
+
+	unsigned Y, X;
+	unsigned char * srcRowPtr = src.pixels, * destRowPtr = pixels;
+	unsigned char * pixel, pixelValue;
+
+	for (Y = 0; Y <= height - 1; ++Y, srcRowPtr += rowBytes, destRowPtr += rowBytes)  {
+		pixel = srcRowPtr;
+		for (X = 0; X <= width - 1 ; ++X, pixel += bytesPerPixel)  {
+			if ((infoHeader->bitCount == 24) || (infoHeader->bitCount == 32)) {
+				pixelValue = (unsigned char)(
+						0.3 * pixel[0] + 0.59 * pixel[1] + + 0.11 * pixel[2]);
+			}
+			else {
+				pixelValue = pixel[0];
+			}
+			nval = static_cast<int>((pixelValue - start) * 255.0 / cDoubleWidth);
+			if (nval > 255) nval = 255;
+			if (nval < 0) nval = 0;
+
+			pixel = destRowPtr + X * bytesPerPixel;
+
+			pixel[0] = nval;
+			if ((infoHeader->bitCount == 24) || (infoHeader->bitCount == 32)) {
+				pixel[1] = pixel[2] = pixel[0];
+			}
+		}
+	}
+
+}
+

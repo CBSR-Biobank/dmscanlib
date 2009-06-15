@@ -81,8 +81,14 @@ public:
 	void laplaceEdgeDetection(Dib & src);
 	void histEqualization(Dib & src);
 	void line(unsigned x0, unsigned y0, unsigned x1, unsigned y1, RgbQuad & quad);
+	void blur(Dib & src);
+	void unsharp(Dib & src);
+	void expandColours(Dib & src, int start, int end);
 
 private:
+	static const double UNSHARP_RAD;
+    static const double UNSHARP_DEPTH;
+
 	BitmapFileHeader * fileHeader;
 	BitmapInfoHeader * infoHeader;
 	unsigned bytesPerPixel;

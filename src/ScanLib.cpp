@@ -141,25 +141,6 @@ short slCalibrateToPlate(unsigned short plateNum) {
 	return SC_SUCCESS;
 }
 
-void saveDecodeResults(unsigned plateNum, vector<DecodeRegion *> & decodeRegions) {
-	ofstream file;
-	file.open("scanlib.txt", ios::out);
-
-	file << "#Plate,Row,Col,Barcode" << endl;
-
-	for (unsigned i = 0, n = decodeRegions.size(); i < n; ++i) {
-		DecodeRegion & region = *decodeRegions[i];
-
-		if (region.msgInfo == NULL) continue;
-
-		file << to_string(plateNum) << ","
-		     << to_string(region.row) << ","
-		     << to_string(region.col) << ","
-		     << region.msgInfo->getMsg() << endl;
-	}
-	file.close();
-}
-
 short slDecodePlate(unsigned short plateNum) {
 	slTime starttime, endtime, difftime;
 
@@ -195,7 +176,7 @@ short slDecodePlate(unsigned short plateNum) {
 	dib.readFromHandle(h);
 	dib.writeToFile("out.bmp");
 	decoder.processImageRegions(plateNum, dib, config.getRegions());
-	saveDecodeResults(plateNum, config.getRegions());
+	config.saveDecodeResults(plateNum);
 
 	Dib markedDib(dib);
 

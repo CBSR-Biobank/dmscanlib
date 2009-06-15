@@ -16,15 +16,11 @@
 #include "BarcodeInfo.h"
 #include "Config.h"
 
-#ifdef WIN32
-#include "getopt.h"
+#if defined (WIN32) && ! defined(__MINGW32__)
 #include "ImageGrabber.h"
 #else
 #include <getopt.h>
 #endif
-
-#include <iostream>
-#include <fstream>
 
 using namespace std;
 
@@ -207,25 +203,6 @@ void Application::calibrateToImage(char * filename) {
 	markedDib.writeToFile("calibrated.bmp");
 }
 
-void saveDecodeResults(unsigned plateNum, vector<DecodeRegion *> & decodeRegions) {
-	ofstream file;
-	file.open("scanlib.txt", ios::out);
-
-	file << "#Plate,Row,Col,Barcode" << endl;
-
-	for (unsigned i = 0, n = decodeRegions.size(); i < n; ++i) {
-		DecodeRegion & region = *decodeRegions[i];
-
-		if (region.msgInfo == NULL) continue;
-
-		file << to_string(plateNum) << ","
-		     << to_string(region.row) << ","
-		     << to_string(region.col) << ","
-		     << region.msgInfo->getMsg() << endl;
-	}
-	file.close();
-}
-
 void Application::decodeImage(char * filename) {
 	UA_ASSERT_NOT_NULL(filename);
 
@@ -233,6 +210,11 @@ void Application::decodeImage(char * filename) {
 	Config config(INI_FILE_NAME);
 
 	dib.readFromFile(filename);
+	Dib processedDib;
+	processedDib.expandColours(dib, 100, 200);
+	processedDib.writeToFile("blurred.bmp");
+	exit(0);
+
 	Dib markedDib(dib);
 	Decoder decoder;
 	if (!config.parseRegions(1)) {
@@ -242,7 +224,7 @@ void Application::decodeImage(char * filename) {
 	decoder.processImageRegions(1, dib, config.getRegions());
 	decoder.imageShowRegions(markedDib, config.getRegions());
 	markedDib.writeToFile("decoded.bmp");
-	saveDecodeResults(1, config.getRegions());
+	config.saveDecodeResults(1);
 }
 
 int main(int argc, char ** argv) {

@@ -41,6 +41,8 @@ public:
 		return regions;
 	}
 
+	void saveDecodeResults(unsigned plateNum);
+
 	static const unsigned MAX_PLATES = 4;
 
 private:

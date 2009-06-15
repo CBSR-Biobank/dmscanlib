@@ -73,33 +73,46 @@ void Decoder::findSingleBarcode(DmtxImage & image, vector<BarcodeInfo *>  & barc
 	dmtxDecodeSetProp(dec, DmtxPropScanGap, 0);
 	dmtxDecodeSetProp(dec, DmtxPropSquareDevn, 10);
 	dmtxDecodeSetProp(dec, DmtxPropEdgeThresh, 37);
+	UA_DOUT(3, 5, "decode 1st attempt ");
 
-	if (!decode(dec, barcodeInfos)) {
+	if (!decode(dec, 4, barcodeInfos)) {
+		DmtxDecode * dec2 = dmtxDecodeCreate(&image, 1);
+
+		dmtxDecodeSetProp(dec2, DmtxPropScanGap, 0);
+		dmtxDecodeSetProp(dec2, DmtxPropSquareDevn, 10);
+		dmtxDecodeSetProp(dec2, DmtxPropEdgeThresh, 10);
+
 		UA_DOUT(3, 5, "could not retrieve message from region, 2nd attempt ");
-		dmtxDecodeSetProp(dec, DmtxPropEdgeThresh, 37);
-		decode(dec, barcodeInfos);
+		decode(dec2, 4, barcodeInfos);
 	}
 
 	dmtxDecodeDestroy(&dec);
 }
 
-bool Decoder::decode(DmtxDecode *& dec, vector<BarcodeInfo *> & barcodeInfos) {
-	DmtxRegion * reg = dmtxRegionFindNext(dec, NULL);
-	if (reg == NULL) return false;
+bool Decoder::decode(DmtxDecode *& dec, unsigned attempts,
+		vector<BarcodeInfo *> & barcodeInfos) {
+	DmtxRegion * reg = NULL;
+	BarcodeInfo * info = NULL;
 
-	DmtxMessage * msg = dmtxDecodeMatrixRegion(dec, reg, DmtxUndefined);
-	if (msg != NULL) {
-		BarcodeInfo * info = new BarcodeInfo(dec, reg, msg);
-		UA_ASSERT_NOT_NULL(info);
+	for (unsigned i = 0; i < attempts; ++i) {
+		reg = dmtxRegionFindNext(dec, NULL);
+		if (reg == NULL) return false;
 
-		//showStats(dec, reg, msg);
-		barcodeInfos.push_back(info);
-		UA_DOUT(3, 5, "message " << barcodeInfos.size() - 1
-				<< ": "	<< barcodeInfos.back()->getMsg());
-		//showStats(dec, reg, msg);
-		dmtxMessageDestroy(&msg);
+		DmtxMessage * msg = dmtxDecodeMatrixRegion(dec, reg, DmtxUndefined);
+		if (msg != NULL) {
+			info = new BarcodeInfo(dec, reg, msg);
+			UA_ASSERT_NOT_NULL(info);
+
+			barcodeInfos.push_back(info);
+			UA_DOUT(3, 5, "message " << barcodeInfos.size() - 1
+					<< ": "	<< barcodeInfos.back()->getMsg());
+			//showStats(dec, reg, msg);
+			dmtxMessageDestroy(&msg);
+			dmtxRegionDestroy(&reg);
+			return true;
+		}
+		dmtxRegionDestroy(&reg);
 	}
-	dmtxRegionDestroy(&reg);
 	return true;
 }
 

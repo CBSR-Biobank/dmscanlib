@@ -330,3 +330,22 @@ bool Config::savePlateFrame(unsigned short plateNum, double left,
 
 	return true;
 }
+
+void Config::saveDecodeResults(unsigned plateNum) {
+	ofstream file;
+	file.open("scanlib.txt", ios::out);
+
+	file << "#Plate,Row,Col,Barcode" << endl;
+
+	for (unsigned i = 0, n = regions.size(); i < n; ++i) {
+		DecodeRegion & region = *regions[i];
+
+		if (region.msgInfo == NULL) continue;
+
+		file << to_string(plateNum) << ","
+		     << to_string(region.row) << ","
+		     << to_string(region.col) << ","
+		     << region.msgInfo->getMsg() << endl;
+	}
+	file.close();
+}

@@ -83,7 +83,7 @@ bool Calibrator::processImage(DmtxImage & image) {
 
 	unsigned regionCount = 0;
 	while (1) {
-		if (!decode(dec, barcodeInfos)) {
+		if (!decode(dec, 1, barcodeInfos)) {
 			break;
 		}
 

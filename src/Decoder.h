@@ -44,7 +44,8 @@ public:
 	void imageShowRegions(Dib & dib, vector<DecodeRegion *> & decodeRegions);
 
 protected:
-	bool decode(DmtxDecode *& dec, vector<BarcodeInfo *> & barcodeInfos);
+	bool decode(DmtxDecode *& dec, unsigned attempts,
+			vector<BarcodeInfo *> & barcodeInfos);
 
 	static const char * INI_SECTION_NAME;
 	static const char * INI_REGION_LABEL;
