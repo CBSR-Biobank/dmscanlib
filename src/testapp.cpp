@@ -186,9 +186,14 @@ void Application::calibrateToImage(char * filename) {
 	Config config(INI_FILE_NAME);
 
 	dib.readFromFile(filename);
-	Dib markedDib(dib);
+	Dib processedDib;
+	processedDib.blur(dib);
+	processedDib.unsharp(dib);
+	processedDib.expandColours(dib, 150, 220);
+	processedDib.writeToFile("blurred.bmp");
+
 	Calibrator calibrator;
-	if (!calibrator.processImage(dib)) {
+	if (!calibrator.processImage(processedDib)) {
 		cout << "bad result from calibrator" << endl;
 		return;
 	}
@@ -199,6 +204,7 @@ void Application::calibrateToImage(char * filename) {
 		return;
 	}
 
+	Dib markedDib(dib);
 	calibrator.imageShowBins(markedDib, quad);
 	markedDib.writeToFile("calibrated.bmp");
 }
@@ -211,9 +217,11 @@ void Application::decodeImage(char * filename) {
 
 	dib.readFromFile(filename);
 	Dib processedDib;
-	processedDib.expandColours(dib, 100, 200);
-	processedDib.writeToFile("blurred.bmp");
-	exit(0);
+	processedDib.blur(dib);
+	processedDib.unsharp(dib);
+	processedDib.expandColours(dib, 150, 220);
+	processedDib.writeToFile("processed.bmp");
+	//exit(0);
 
 	Dib markedDib(dib);
 	Decoder decoder;
@@ -221,7 +229,7 @@ void Application::decodeImage(char * filename) {
 		cout << "bad result from config" << endl;
 		return;
 	}
-	decoder.processImageRegions(1, dib, config.getRegions());
+	decoder.processImageRegions(1, processedDib, config.getRegions());
 	decoder.imageShowRegions(markedDib, config.getRegions());
 	markedDib.writeToFile("decoded.bmp");
 	config.saveDecodeResults(1);
