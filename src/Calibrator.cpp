@@ -33,7 +33,9 @@ Calibrator::~Calibrator() {
 }
 
 bool Calibrator::processImage(Dib & dib) {
-	Decoder::processImage(dib, barcodeInfos);
+	DmtxImage * image = createDmtxImageFromDib(dib);
+
+	processImage(*image);
 	if (barcodeInfos.size() == 0) {
 		UA_DOUT(4, 1, "processImage: no barcodes found");
 		return false;
@@ -41,11 +43,55 @@ bool Calibrator::processImage(Dib & dib) {
 	width = dib.getWidth();
 	height = dib.getHeight();
 	sortRegions();
+	dmtxImageDestroy(&image);
 	return true;
 }
 
 bool Calibrator::processImage(DmtxImage & image) {
-	Decoder::processImage(image, barcodeInfos);
+	DmtxDecode * dec = NULL;
+	unsigned width = dmtxImageGetProp(&image, DmtxPropWidth);
+	unsigned height = dmtxImageGetProp(&image, DmtxPropHeight);
+
+	UA_DOUT(4, 3, "processImage: image width/" << width
+			<< " image height/" << height
+			<< " row padding/" << dmtxImageGetProp(&image, DmtxPropRowPadBytes)
+			<< " image bits per pixel/"
+			<< dmtxImageGetProp(&image, DmtxPropBitsPerPixel)
+			<< " image row size bytes/"
+			<< dmtxImageGetProp(&image, DmtxPropRowSizeBytes));
+
+	dec = dmtxDecodeCreate(&image, 1);
+	assert(dec != NULL);
+
+	// save image to a PNM file
+	UA_DEBUG(
+			FILE * fh;
+			unsigned char *pnm;
+			int totalBytes;
+			int headerBytes;
+
+			pnm = dmtxDecodeCreateDiagnostic(dec, &totalBytes, &headerBytes, 0);
+			fh = fopen("out.pnm", "w");
+			fwrite(pnm, sizeof(unsigned char), totalBytes, fh);
+			fclose(fh);
+			free(pnm);
+	);
+
+	dmtxDecodeSetProp(dec, DmtxPropScanGap, 0);
+	dmtxDecodeSetProp(dec, DmtxPropSquareDevn, 10);
+	dmtxDecodeSetProp(dec, DmtxPropEdgeThresh, 37);
+
+	unsigned regionCount = 0;
+	while (1) {
+		if (!decode(dec, barcodeInfos)) {
+			break;
+		}
+
+		UA_DOUT(4, 5, "retrieved message from region " << regionCount++);
+	}
+
+	dmtxDecodeDestroy(&dec);
+
 	if (barcodeInfos.size() == 0) {
 		UA_DOUT(4, 1, "processImage: no barcodes found");
 		return false;

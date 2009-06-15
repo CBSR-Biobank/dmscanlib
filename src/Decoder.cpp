@@ -34,16 +34,14 @@ Decoder::Decoder() {
 Decoder::~Decoder() {
 }
 
-void Decoder::processImage(Dib & dib, vector<BarcodeInfo *>  & msgInfos){
+void Decoder::processImage(Dib & dib, vector<BarcodeInfo *>  & barcodeInfos){
 	DmtxImage * image = createDmtxImageFromDib(dib);
-	processImage(*image, msgInfos);
+	findSingleBarcode(*image, barcodeInfos);
 	dmtxImageDestroy(&image);
 }
 
-void Decoder::processImage(DmtxImage & image, vector<BarcodeInfo *>  & msgInfos) {
+void Decoder::findSingleBarcode(DmtxImage & image, vector<BarcodeInfo *>  & barcodeInfos) {
 	DmtxDecode * dec = NULL;
-	DmtxRegion * reg = NULL;
-	DmtxMessage * msg = NULL;
 	unsigned width = dmtxImageGetProp(&image, DmtxPropWidth);
 	unsigned height = dmtxImageGetProp(&image, DmtxPropHeight);
 
@@ -76,28 +74,33 @@ void Decoder::processImage(DmtxImage & image, vector<BarcodeInfo *>  & msgInfos)
 	dmtxDecodeSetProp(dec, DmtxPropSquareDevn, 10);
 	dmtxDecodeSetProp(dec, DmtxPropEdgeThresh, 37);
 
-	unsigned regionCount = 0;
-	while (1) {
-		reg = dmtxRegionFindNext(dec, NULL);
-		if (reg == NULL) break;
-
-		UA_DOUT(3, 5, "retrieving message from region " << regionCount++);
-		msg = dmtxDecodeMatrixRegion(dec, reg, DmtxUndefined);
-		if (msg != NULL) {
-			BarcodeInfo * info = new BarcodeInfo(dec, reg, msg);
-			UA_ASSERT_NOT_NULL(info);
-
-			//showStats(dec, reg, msg);
-			msgInfos.push_back(info);
-			UA_DOUT(3, 5, "message " << msgInfos.size() - 1
-					<< ": "	<< msgInfos.back()->getMsg());
-			//showStats(dec, reg, msg);
-			dmtxMessageDestroy(&msg);
-		}
-		dmtxRegionDestroy(&reg);
+	if (!decode(dec, barcodeInfos)) {
+		UA_DOUT(3, 5, "could not retrieve message from region, 2nd attempt ");
+		dmtxDecodeSetProp(dec, DmtxPropEdgeThresh, 37);
+		decode(dec, barcodeInfos);
 	}
 
 	dmtxDecodeDestroy(&dec);
+}
+
+bool Decoder::decode(DmtxDecode *& dec, vector<BarcodeInfo *> & barcodeInfos) {
+	DmtxRegion * reg = dmtxRegionFindNext(dec, NULL);
+	if (reg == NULL) return false;
+
+	DmtxMessage * msg = dmtxDecodeMatrixRegion(dec, reg, DmtxUndefined);
+	if (msg != NULL) {
+		BarcodeInfo * info = new BarcodeInfo(dec, reg, msg);
+		UA_ASSERT_NOT_NULL(info);
+
+		//showStats(dec, reg, msg);
+		barcodeInfos.push_back(info);
+		UA_DOUT(3, 5, "message " << barcodeInfos.size() - 1
+				<< ": "	<< barcodeInfos.back()->getMsg());
+		//showStats(dec, reg, msg);
+		dmtxMessageDestroy(&msg);
+	}
+	dmtxRegionDestroy(&reg);
+	return true;
 }
 
 void Decoder::showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg) {
@@ -175,20 +178,20 @@ void Decoder::processImageRegions(unsigned plateNum, Dib & dib,
 		return;
 	}
 
-	vector<BarcodeInfo *> msgInfos;
+	vector<BarcodeInfo *> barcodeInfos;
 
 	for (unsigned i = 0, n = decodeRegions.size(); i < n; ++i) {
 		DecodeRegion & region = *decodeRegions[i];
 		Dib croppedDib;
 		croppedDib.crop(dib, region.topLeft.X, region.topLeft.Y,
 				region.botRight.X, region.botRight.Y);
-		msgInfos.clear();
+		barcodeInfos.clear();
 		UA_DOUT(3, 3, "processing region at row/" << region.row << " col/" << region.col);
-		processImage(croppedDib, msgInfos);
-		unsigned size = msgInfos.size();
+		processImage(croppedDib, barcodeInfos);
+		unsigned size = barcodeInfos.size();
 		UA_ASSERT(size <= 1);
 		if (size == 1) {
-			region.msgInfo = msgInfos[0];
+			region.msgInfo = barcodeInfos[0];
 			UA_DOUT(3, 3, "barcode found at row/" << region.row
 					<< " col/" << region.col << " barcode/" << region.msgInfo->getMsg());
 		}

@@ -44,6 +44,7 @@ public:
 	void imageShowRegions(Dib & dib, vector<DecodeRegion *> & decodeRegions);
 
 protected:
+	bool decode(DmtxDecode *& dec, vector<BarcodeInfo *> & barcodeInfos);
 
 	static const char * INI_SECTION_NAME;
 	static const char * INI_REGION_LABEL;
@@ -53,8 +54,8 @@ protected:
 	void messageAdd(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
 	DmtxImage * createDmtxImageFromDib(Dib & dib);
 	void showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
-	void processImage(Dib & dib, vector<BarcodeInfo *>  & msgInfos);
-	void processImage(DmtxImage & image, vector<BarcodeInfo *>  & msgInfos);
+	void processImage(Dib & dib, vector<BarcodeInfo *>  & barcodeInfos);
+	void findSingleBarcode(DmtxImage & image, vector<BarcodeInfo *>  & barcodeInfos);
 };
 
 #endif /* DECODER_H_ */

@@ -89,7 +89,7 @@ private:
 	static TW_IDENTITY g_AppID;
 
 	// properties used by the scanner
-	static const int DPI = 400;
+	static const int DPI = 300;
 	static const int SCAN_CONTRAST = 500;
 	static const int SCAN_BRIGHTNESS = 500;
 };

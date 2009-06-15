@@ -19,7 +19,6 @@ public:
 	Calibrator();
 	virtual ~Calibrator();
 	bool processImage(Dib & dib);
-	bool processImage(DmtxImage & image);
 	void saveRegionsToIni(unsigned plateNum, CSimpleIniA & ini);
 	void imageShowBins(Dib & dib, RgbQuad & quad);
 
@@ -39,8 +38,10 @@ public:
 
 
 private:
+	bool processImage(DmtxImage & image);
+
 	static const unsigned BIN_THRESH = 15;
-	static const unsigned BIN_MARGIN = 20;
+	static const unsigned BIN_MARGIN = 18;
 
 	unsigned width;
 	unsigned height;

@@ -56,7 +56,7 @@ unsigned ImageGrabber::invokeTwain(TW_IDENTITY * srcId, unsigned long dg,
 		unsigned dat, unsigned msg, void * ptr) {
 	UA_ASSERT_NOT_NULL(g_pDSM_Entry);
 	unsigned r = (*g_pDSM_Entry) (&g_AppID, srcId, dg, dat, msg, ptr);
-	UA_DOUT(2, 3, "ImageGrabber::invokeTwain: srcId/\""
+	UA_DOUT(2, 3, "invokeTwain: srcId/\""
 			<< ((srcId != NULL) ? srcId->ProductName : "NULL")
 			<< "\" dg/" << dg << " dat/" << dat << " msg/" << msg
 			<< " ptr/" << ptr << " returnCode/" << r);
