@@ -11,6 +11,10 @@
 #include "UaAssert.h"
 #include "Util.h"
 
+#ifndef __MINGW32__
+#include <tchar.h>
+#endif
+
 using namespace std;
 
 // Initialize g_AppID. This structure is passed to DSM_Entry() in each
@@ -34,7 +38,12 @@ const char * ImageGrabber::TWAIN_DLL_FILENAME = "TWAIN_32.DLL";
  */
 ImageGrabber::ImageGrabber() : g_hLib(NULL), g_pDSM_Entry(NULL) {
 	ua::Logger::Instance().subSysHeaderSet(2, "ImageGrabber");
+
+#ifndef __MINGW32__
+	g_hLib = LoadLibrary(_T("TWAIN_32.DLL"));
+#else
 	g_hLib = LoadLibrary(TWAIN_DLL_FILENAME);
+#endif
 
 	if (g_hLib != NULL) {
 		g_pDSM_Entry = (DSMENTRYPROC) GetProcAddress(g_hLib, "DSM_Entry");
@@ -55,7 +64,7 @@ bool ImageGrabber::twainAvailable() {
 unsigned ImageGrabber::invokeTwain(TW_IDENTITY * srcId, unsigned long dg,
 		unsigned dat, unsigned msg, void * ptr) {
 	UA_ASSERT_NOT_NULL(g_pDSM_Entry);
-	unsigned r = (*g_pDSM_Entry) (&g_AppID, srcId, dg, dat, msg, ptr);
+	unsigned r = g_pDSM_Entry(&g_AppID, srcId, dg, dat, msg, ptr);
 	UA_DOUT(2, 3, "invokeTwain: srcId/\""
 			<< ((srcId != NULL) ? srcId->ProductName : "NULL")
 			<< "\" dg/" << dg << " dat/" << dat << " msg/" << msg
@@ -81,7 +90,7 @@ bool ImageGrabber::selectSourceAsDefault() {
 
 	// Create a static window whose handle is passed to DSM_Entry() when we
 	// open the data source manager.
-	HWND hwnd = CreateWindow ("STATIC",	"",	WS_POPUPWINDOW,	CW_USEDEFAULT,
+	HWND hwnd = CreateWindow (_T("STATIC"),	_T(""),	WS_POPUPWINDOW,	CW_USEDEFAULT,
 			CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, HWND_DESKTOP, 0,
 			0 /* g_hinstDLL */, 0);
 
@@ -114,7 +123,7 @@ bool ImageGrabber::selectSourceAsDefault() {
 	return true;
 }
 
-void ImageGrabber::setFloatToIntPair(const float f, short & whole,
+void ImageGrabber::setFloatToIntPair(const double f, short & whole,
 		unsigned short & frac) {
 	const unsigned tmp = static_cast<unsigned>(f * 65536.0 + 0.5);
 	whole = static_cast<short>(tmp >> 16);
@@ -134,7 +143,7 @@ HANDLE ImageGrabber::acquireImage(double left, double top,
 	TW_UINT32 handle = 0;
 	TW_IDENTITY srcID;
 
-	HWND hwnd = CreateWindow ("STATIC", "",	WS_POPUPWINDOW, CW_USEDEFAULT,
+	HWND hwnd = CreateWindow (_T("STATIC"), _T(""),	WS_POPUPWINDOW, CW_USEDEFAULT,
 			CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, HWND_DESKTOP,
 			0, 0 /* g_hinstDLL */, 0);
 

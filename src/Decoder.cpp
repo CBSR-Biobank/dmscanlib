@@ -57,6 +57,7 @@ void Decoder::findSingleBarcode(DmtxImage & image, vector<BarcodeInfo *>  & barc
 	assert(dec != NULL);
 
 	// save image to a PNM file
+#if 0
 	UA_DEBUG(
 			FILE * fh;
 			unsigned char *pnm;
@@ -69,6 +70,7 @@ void Decoder::findSingleBarcode(DmtxImage & image, vector<BarcodeInfo *>  & barc
 			fclose(fh);
 			free(pnm);
 	);
+#endif
 
 	dmtxDecodeSetProp(dec, DmtxPropScanGap, 0);
 	dmtxDecodeSetProp(dec, DmtxPropSquareDevn, 10);
@@ -77,6 +79,7 @@ void Decoder::findSingleBarcode(DmtxImage & image, vector<BarcodeInfo *>  & barc
 
 	if (!decode(dec, 4, barcodeInfos)) {
 		DmtxDecode * dec2 = dmtxDecodeCreate(&image, 1);
+		assert(dec2 != NULL);
 
 		dmtxDecodeSetProp(dec2, DmtxPropScanGap, 0);
 		dmtxDecodeSetProp(dec2, DmtxPropSquareDevn, 10);
@@ -113,7 +116,7 @@ bool Decoder::decode(DmtxDecode *& dec, unsigned attempts,
 		}
 		dmtxRegionDestroy(&reg);
 	}
-	return true;
+	return false;
 }
 
 void Decoder::showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg) {

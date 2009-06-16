@@ -17,8 +17,6 @@ extern "C" {
 #endif
 #else
 #define EXPORT
-#define FAR
-#define PASCAL
 #endif
 
 
@@ -53,31 +51,31 @@ const short SC_INI_FILE_ERROR = -4;
 
 EXPORT short slIsTwainAvailable();
 
-typedef short (FAR PASCAL *SL_ISTWAINAVAILABLE) ();
+typedef short (*SL_ISTWAINAVAILABLE) ();
 
 EXPORT short slSelectSourceAsDefault();
 
-typedef short (FAR PASCAL *SL_SELECTSOURCEASDEFAULT) ();
+typedef short (*SL_SELECTSOURCEASDEFAULT) ();
 
 EXPORT short slConfigPlateFrame(unsigned short plateNum, double left,
 		double top,	double right, double bottom);
 
-typedef short (FAR PASCAL *SL_CONFIGPLATEFRAME) (unsigned short, double x0,
+typedef short (*SL_CONFIGPLATEFRAME) (unsigned short, double x0,
 		double y0,	double x1, double y1);
 
 EXPORT short slScanImage(char * filename, double left,	double top,
 		double right, double bottom);
 
-typedef short (FAR PASCAL *SL_SCANIMAGE) (char * filename, double x0,
+typedef short (*SL_SCANIMAGE) (char * filename, double x0,
 		double y0,	double x1, double y1);
 
 EXPORT short slCalibrateToPlate(unsigned short plateNum);
 
-typedef short (FAR PASCAL *SL_CALIBRATETOPLATE) (unsigned short plateNum);
+typedef short (*SL_CALIBRATETOPLATE) (unsigned short plateNum);
 
 EXPORT short slDecodePlate(unsigned short plateNum);
 
-typedef short (FAR PASCAL *SL_DECODEPLATE) (unsigned short plateNum);
+typedef short (*SL_DECODEPLATE) (unsigned short plateNum);
 
 #ifdef __cplusplus
 }

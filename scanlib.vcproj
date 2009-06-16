@@ -3,7 +3,7 @@
 	ProjectType="Visual C++"
 	Version="9.00"
 	Name="scanlib"
-	ProjectGUID="{42AF1F79-0CD1-43C5-8EC0-8C85057CB1D9}"
+	ProjectGUID="{B30F7604-048B-4651-8E23-BC0E3068C8F8}"
 	RootNamespace="scanlib"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="196613"
@@ -21,7 +21,7 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="1"
-			CharacterSet="2"
+			CharacterSet="1"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -41,8 +41,8 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="src\utils;src\windows;src\loki;libdmtx"
-				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;_VISUALC_;UA_HAVE_DEBUG"
+				AdditionalIncludeDirectories="libdmtx;simpleini;simpleopt;src;src/loki;src/utils"
+				PreprocessorDefinitions="_VISUALC_;WIN32;_DEBUG;_CONSOLE;UA_LOGGER"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -172,6 +172,26 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath=".\src\BarcodeInfo.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\BinRegion.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\Calibrator.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\Config.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\simpleini\ConvertUTF.c"
+				>
+			</File>
+			<File
 				RelativePath=".\src\Decoder.cpp"
 				>
 			</File>
@@ -180,43 +200,51 @@
 				>
 			</File>
 			<File
+				RelativePath=".\libdmtx\dmtx.c"
+				>
+			</File>
+			<File
 				RelativePath=".\src\ImageGrabber.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\src\windows\my_getopt.c"
+				RelativePath=".\src\testapp.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\src\ScanLib.cpp"
+				RelativePath=".\src\utils\UaLogger.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\src\TwainException.cpp"
+				RelativePath=".\src\utils\Util.cpp"
 				>
 			</File>
-			<File
-				RelativePath=".\src\utils\UaDebug.cpp"
-				>
-			</File>
-			<Filter
-				Name="libdmtx"
-				>
-				<File
-					RelativePath=".\libdmtx\dmtx.c"
-					>
-				</File>
-				<File
-					RelativePath=".\libdmtx\dmtx.h"
-					>
-				</File>
-			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
+			<File
+				RelativePath=".\src\BarcodeInfo.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\BinRegion.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\Calibrator.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\Config.h"
+				>
+			</File>
+			<File
+				RelativePath=".\simpleini\ConvertUTF.h"
+				>
+			</File>
 			<File
 				RelativePath=".\src\Decoder.h"
 				>
@@ -226,7 +254,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\windows\getopt.h"
+				RelativePath=".\libdmtx\dmtx.h"
 				>
 			</File>
 			<File
@@ -234,11 +262,15 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\loki\LokiExport.h"
+				RelativePath=".\src\ScanLib.h"
 				>
 			</File>
 			<File
-				RelativePath=".\src\windows\my_getopt.h"
+				RelativePath=".\simpleini\SimpleIni.h"
+				>
+			</File>
+			<File
+				RelativePath=".\simpleopt\SimpleOpt.h"
 				>
 			</File>
 			<File
@@ -246,19 +278,19 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\loki\Threads.h"
+				RelativePath=".\src\twain.h"
 				>
 			</File>
 			<File
-				RelativePath=".\includes\twain.h"
+				RelativePath=".\src\utils\UaAssert.h"
 				>
 			</File>
 			<File
-				RelativePath=".\src\TwainException.h"
+				RelativePath=".\src\utils\UaLogger.h"
 				>
 			</File>
 			<File
-				RelativePath=".\src\utils\UaDebug.h"
+				RelativePath=".\src\utils\Util.h"
 				>
 			</File>
 		</Filter>

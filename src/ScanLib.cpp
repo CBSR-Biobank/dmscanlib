@@ -175,7 +175,12 @@ short slDecodePlate(unsigned short plateNum) {
 	}
 	dib.readFromHandle(h);
 	dib.writeToFile("out.bmp");
-	decoder.processImageRegions(plateNum, dib, config.getRegions());
+	Dib processedDib;
+	processedDib.blur(dib);
+	processedDib.unsharp(dib);
+	processedDib.expandColours(dib, 150, 220);
+	processedDib.writeToFile("processed.bmp");
+	decoder.processImageRegions(plateNum, processedDib, config.getRegions());
 	config.saveDecodeResults(plateNum);
 
 	Dib markedDib(dib);

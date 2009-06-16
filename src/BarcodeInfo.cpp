@@ -140,10 +140,12 @@ bool BarcodeInfoSort::operator()(BarcodeInfo* const& a, BarcodeInfo* const& b) {
 	unsigned bColRank = b->getColBinRegion().getRank();
 	unsigned bRowRank = b->getRowBinRegion().getRank();
 
-	UA_ASSERT(aColRank != numeric_limits<unsigned>::max());
-	UA_ASSERT(aRowRank != numeric_limits<unsigned>::max());
-	UA_ASSERT(bColRank != numeric_limits<unsigned>::max());
-	UA_ASSERT(bRowRank != numeric_limits<unsigned>::max());
+#ifndef _VISUALC_
+	UA_ASSERT(aColRank != numeric_limits<unsigned int>::max());
+	UA_ASSERT(aRowRank != numeric_limits<unsigned int>::max());
+	UA_ASSERT(bColRank != numeric_limits<unsigned int>::max());
+	UA_ASSERT(bRowRank != numeric_limits<unsigned int>::max());
+#endif
 
 	int diff = aRowRank - bRowRank;
 	if (diff == 0) {

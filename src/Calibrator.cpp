@@ -13,6 +13,10 @@
 #include "UaAssert.h"
 #include "Util.h"
 
+#ifdef _VISUALC_
+#pragma warning(disable : 4996)
+#endif
+
 Calibrator::Calibrator() {
 	ua::Logger::Instance().subSysHeaderSet(4, "Calibrator");
 }
@@ -134,7 +138,7 @@ void Calibrator::sortRegions() {
 				insideColBin = true;
 				barcodeInfos[i]->setColBinRegion(&bin);
 			}
-			else if ((lDiff < 0) && (lDiff > static_cast<int>(-BIN_THRESH))) {
+			else if ((lDiff < 0) && (lDiff > -static_cast<int>(BIN_THRESH))) {
 				insideColBin = true;
 				barcodeInfos[i]->setColBinRegion(&bin);
 				bin.setMin(tlCorner.X);
@@ -160,7 +164,7 @@ void Calibrator::sortRegions() {
 				insideRowBin = true;
 				barcodeInfos[i]->setRowBinRegion(&bin);
 			}
-			else if ((tDiff < 0) && (tDiff > static_cast<int>(-BIN_THRESH))) {
+			else if ((tDiff < 0) && (tDiff > -static_cast<int>(BIN_THRESH))) {
 				insideRowBin = true;
 				barcodeInfos[i]->setRowBinRegion(&bin);
 				bin.setMin(tlCorner.Y);

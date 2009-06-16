@@ -56,7 +56,7 @@ private:
 
 	void unloadTwain();
 
-	void setFloatToIntPair(const float f, short & whole, unsigned short & frac);
+	void setFloatToIntPair(const double f, short & whole, unsigned short & frac);
 	int GetPaletteSize(BITMAPINFOHEADER& bmInfo);
 
 	BOOL setCapability(TW_UINT16 cap,TW_UINT16 value,BOOL sign);
