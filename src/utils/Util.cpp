@@ -8,6 +8,7 @@
 #include "Util.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 
 #if defined (WIN32) && ! defined(__MINGW32__)
 #include <time.h>

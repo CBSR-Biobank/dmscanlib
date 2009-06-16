@@ -179,29 +179,34 @@ void Application::usage() {
 }
 
 void Application::calibrateToImage(char * filename) {
-	UA_ASSERT_NOT_NULL(filename);
+        UA_ASSERT_NOT_NULL(filename);
 
-	Config config(INI_FILE_NAME);
+        Dib dib;
+        RgbQuad quad(255, 0, 0);
+        Config config(INI_FILE_NAME);
 
-	Calibrator calibrator;
-	Dib dib;
-	dib.readFromFile(filename);
+        dib.readFromFile(filename);
+        Dib processedDib;
+        processedDib.blur(dib);
+        processedDib.unsharp(dib);
+        processedDib.expandColours(dib, 150, 220);
+        processedDib.writeToFile("processed.bmp");
 
-	if (!calibrator.processImage(dib)) {
-		cout << "bad result from calibrator" << endl;
-		return;
-	}
+        Calibrator calibrator;
+        if (!calibrator.processImage(processedDib)) {
+                cout << "bad result from calibrator" << endl;
+                return;
+        }
 
-	if (!config.setRegions(1, calibrator.getRowBinRegions(),
-			calibrator.getColBinRegions(), calibrator.getMaxCol())) {
-		cout << "bad result from config" << endl;
-		return;
-	}
+        if (!config.setRegions(1, calibrator.getRowBinRegions(),
+                        calibrator.getColBinRegions(), calibrator.getMaxCol())) {
+                cout << "bad result from config" << endl;
+                return;
+        }
 
-	RgbQuad quad(255, 0, 0);
-	Dib markedDib(dib);
-	calibrator.imageShowBins(markedDib, quad);
-	markedDib.writeToFile("calibrated.bmp");
+        Dib markedDib(dib);
+        calibrator.imageShowBins(markedDib, quad);
+        markedDib.writeToFile("calibrated.bmp");
 }
 
 void Application::decodeImage(char * filename) {
