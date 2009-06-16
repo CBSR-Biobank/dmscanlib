@@ -681,7 +681,6 @@ void Dib::blur(Dib & src) {
 
 				denom = 0;
 				sum = 0;
-
 				pPixelSrc = pLineSrc;
 
 				for (x = 0; x < xEnd; x++) {
@@ -698,9 +697,9 @@ void Dib::blur(Dib & src) {
 				}
 
 				if (denom) sum /= denom;
-				pPixelDest[0] = (unsigned char) sum;
+				pPixelDest[0] = static_cast<unsigned char>(sum);
 				if ((infoHeader->bitCount == 24) || (infoHeader->bitCount == 32)) {
-					pPixelDest[1] = pPixelDest[2] = sum;
+					pPixelDest[1] = pPixelDest[2] = pPixelDest[0];
 				}
 
 				pPixelDest += dPixelDest;
@@ -727,9 +726,9 @@ void Dib::blur(Dib & src) {
 				}
 
 				sum /= m_Denominator;
-				pPixelDest[0] = (unsigned char) sum;
+				pPixelDest[0] = static_cast<unsigned char>(sum);
 				if ((infoHeader->bitCount == 24) || (infoHeader->bitCount == 32)) {
-					pPixelDest[1] = pPixelDest[2] = sum;
+					pPixelDest[1] = pPixelDest[2] = pPixelDest[0];
 				}
 
 				pPixelDest += dPixelDest;
@@ -760,9 +759,9 @@ void Dib::blur(Dib & src) {
 				}
 
 				if (denom) sum /= denom;
-				pPixelDest[0] = (unsigned char) sum;
+				pPixelDest[0] = static_cast<unsigned char>(sum);
 				if ((infoHeader->bitCount == 24) || (infoHeader->bitCount == 32)) {
-					pPixelDest[1] = pPixelDest[2] = sum;
+					pPixelDest[1] = pPixelDest[2] = pPixelDest[0];
 				}
 
 				pPixelDest += dPixelDest;

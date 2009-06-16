@@ -181,19 +181,13 @@ void Application::usage() {
 void Application::calibrateToImage(char * filename) {
 	UA_ASSERT_NOT_NULL(filename);
 
-	Dib dib;
-	RgbQuad quad(255, 0, 0);
 	Config config(INI_FILE_NAME);
 
-	dib.readFromFile(filename);
-	Dib processedDib;
-	processedDib.blur(dib);
-	processedDib.unsharp(dib);
-	processedDib.expandColours(dib, 150, 220);
-	processedDib.writeToFile("blurred.bmp");
-
 	Calibrator calibrator;
-	if (!calibrator.processImage(processedDib)) {
+	Dib dib;
+	dib.readFromFile(filename);
+
+	if (!calibrator.processImage(dib)) {
 		cout << "bad result from calibrator" << endl;
 		return;
 	}
@@ -204,6 +198,7 @@ void Application::calibrateToImage(char * filename) {
 		return;
 	}
 
+	RgbQuad quad(255, 0, 0);
 	Dib markedDib(dib);
 	calibrator.imageShowBins(markedDib, quad);
 	markedDib.writeToFile("calibrated.bmp");
