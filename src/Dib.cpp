@@ -22,6 +22,11 @@
 
 const double Dib::UNSHARP_RAD  = 8.0;
 const double Dib::UNSHARP_DEPTH = 1.1;
+const unsigned Dib::GAUSS_WIDTH = 12;
+const unsigned Dib::GAUSS_FACTORS[GAUSS_WIDTH] = {
+		1, 11, 55, 165, 330, 462, 462, 330, 165, 55, 11, 1
+};
+const unsigned Dib::GAUSS_SUM = 2048;
 
 Dib::Dib() :
 	fileHeader(NULL), infoHeader(NULL), pixels(NULL), isAllocated(false) {
@@ -167,7 +172,7 @@ void Dib::readFromFile(const char * filename) {
 	isAllocated = true;
 	pixels = new unsigned char[infoHeader->imageSize];
 	unsigned r = fread(pixels, sizeof(unsigned char), infoHeader->imageSize, fh);
-   UA_ASSERT(r = infoHeader->imageSize);
+	UA_ASSERT(r = infoHeader->imageSize);
 	fclose(fh);
 }
 
@@ -211,11 +216,11 @@ void Dib::writeToFile(const char * filename) {
 			"could not open file for writing" << filename);
 
 	unsigned r = fwrite(fileHeaderRaw, sizeof(unsigned char), sizeof(fileHeaderRaw), fh);
-   UA_ASSERT(r == sizeof(fileHeaderRaw));
+	UA_ASSERT(r == sizeof(fileHeaderRaw));
 	r = fwrite(infoHeaderRaw, sizeof(unsigned char), sizeof(infoHeaderRaw), fh);
-   UA_ASSERT(r == sizeof(infoHeaderRaw));
+	UA_ASSERT(r == sizeof(infoHeaderRaw));
 	r = fwrite(pixels, sizeof(unsigned char), infoHeader->imageSize, fh);
-   UA_ASSERT(r == infoHeader->imageSize);
+	UA_ASSERT(r == infoHeader->imageSize);
 	fclose(fh);
 }
 
@@ -588,6 +593,76 @@ void Dib::line(unsigned x0, unsigned y0, unsigned x1, unsigned y1, RgbQuad & qua
 	}
 }
 
+void Dib::gaussianBlur(Dib & src) {
+	copyInternals(src);
+
+	unsigned char * tmpPixels = new unsigned char[infoHeader->imageSize];
+	UA_ASSERT_NOT_NULL(tmpPixels);
+
+	unsigned char * srcRowPtr = src.pixels, * destRowPtr = pixels;
+	unsigned i, j, k, x, y, sumr, sumg, sumb;
+	unsigned char * pixel;
+
+	for (i = 0; i < infoHeader->width - 1; ++i) {
+		for (j = 0; j < infoHeader->height - 1; ++j,
+			srcRowPtr += src.rowBytes, destRowPtr += rowBytes) {
+			sumr = 0;
+			sumg = 0;
+			sumb = 0;
+			for (k = 0; k < GAUSS_WIDTH; ++k) {
+				x = i - ((GAUSS_WIDTH - 1) >> 1) + k;
+
+				if ((x >= 0) && (x < infoHeader->width)) {
+					pixel = &src.pixels[j * rowBytes + x * bytesPerPixel];
+					sumr += pixel[0] * GAUSS_FACTORS[k];
+					if ((infoHeader->bitCount == 24) || (infoHeader->bitCount == 32)) {
+						sumg += pixel[1] * GAUSS_FACTORS[k];
+						sumb += pixel[2] * GAUSS_FACTORS[k];
+					}
+				}
+			}
+
+			pixel = &tmpPixels[j * rowBytes + i * bytesPerPixel];
+			pixel[0] = sumr / GAUSS_SUM;
+			if ((infoHeader->bitCount == 24) || (infoHeader->bitCount == 32)) {
+				pixel[1] = sumg / GAUSS_SUM;
+				pixel[2] = sumb / GAUSS_SUM;
+			}
+		}
+	}
+
+	for (i = 0; i < infoHeader->width - 1; ++i) {
+		for (j = 0; j < infoHeader->height - 1; ++j) {
+			sumr = 0;
+			sumg = 0;
+			sumb = 0;
+
+			for (k = 0; k < GAUSS_WIDTH; ++k) {
+				y = j - ((GAUSS_WIDTH - 1) >> 1) + k;
+
+				if ((y >= 0) && (y < infoHeader->height)) {
+					pixel = &tmpPixels[y * rowBytes + i * bytesPerPixel];
+					sumr += pixel[0] * GAUSS_FACTORS[k];
+					if ((infoHeader->bitCount == 24) || (infoHeader->bitCount == 32)) {
+						sumg += pixel[1] * GAUSS_FACTORS[k];
+						sumb += pixel[2] * GAUSS_FACTORS[k];
+					}
+				}
+			}
+
+			pixel = &pixels[j * rowBytes + i * bytesPerPixel];
+			pixel[0] = sumr / GAUSS_SUM;
+			if ((infoHeader->bitCount == 24) || (infoHeader->bitCount == 32)) {
+				pixel[1] = sumg / GAUSS_SUM;
+				pixel[2] = sumb / GAUSS_SUM;
+			}
+		}
+	}
+}
+
+/*
+ * Based on Adam Milstein's code
+ */
 void Dib::blur(Dib & src) {
 	double radius = 5.0; //UNSHARP_RAD;
 	int *m_FilterVector;

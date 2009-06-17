@@ -207,12 +207,12 @@ void Application::decodeImage(char * filename) {
 	Config config(INI_FILE_NAME);
 
 	dib.readFromFile(filename);
-	Dib processedDib(dib);
-	processedDib.blur(dib);
-	//processedDib.unsharp(dib);
+	Dib processedDib;
+	processedDib.gaussianBlur(dib);
+	processedDib.unsharp(dib);
 	//processedDib.expandColours(dib, 150, 220);
 	processedDib.writeToFile("processed.bmp");
-	exit(0);
+	//exit(0);
 
 	Dib markedDib(dib);
 	Decoder decoder;

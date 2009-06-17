@@ -13,6 +13,10 @@
 
 #ifndef __MINGW32__
 #include <tchar.h>
+#else
+#define char   char
+#define _T(x)   x
+#define _tmain  main
 #endif
 
 using namespace std;
