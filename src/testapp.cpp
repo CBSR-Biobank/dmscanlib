@@ -208,11 +208,11 @@ void Application::decodeImage(char * filename) {
 
 	dib.readFromFile(filename);
 	Dib processedDib(dib);
-	//processedDib.blur(dib);
+	processedDib.blur(dib);
 	//processedDib.unsharp(dib);
 	//processedDib.expandColours(dib, 150, 220);
 	processedDib.writeToFile("processed.bmp");
-	//exit(0);
+	exit(0);
 
 	Dib markedDib(dib);
 	Decoder decoder;

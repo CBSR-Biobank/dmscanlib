@@ -87,6 +87,7 @@ void Decoder::findSingleBarcode(DmtxImage & image, vector<BarcodeInfo *>  & barc
 
 		UA_DOUT(3, 5, "could not retrieve message from region, 2nd attempt ");
 		decode(dec2, 4, barcodeInfos);
+      dmtxDecodeDestroy(&dec2);
 	}
 
 	dmtxDecodeDestroy(&dec);

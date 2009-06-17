@@ -126,7 +126,7 @@ void Dib::readFromHandle(HANDLE handle) {
 void Dib::readFromFile(const char * filename) {
 	UA_ASSERT_NOT_NULL(filename);
 
-	FILE * fh = fopen(filename, "r"); // C4996
+	FILE * fh = fopen(filename, "rb"); // C4996
 	if (fh == NULL) {
 		UA_ERROR("could not open file " << filename);
 	}
@@ -166,7 +166,8 @@ void Dib::readFromFile(const char * filename) {
 
 	isAllocated = true;
 	pixels = new unsigned char[infoHeader->imageSize];
-	fread(pixels, sizeof(unsigned char), infoHeader->imageSize, fh);
+	unsigned r = fread(pixels, sizeof(unsigned char), infoHeader->imageSize, fh);
+   UA_ASSERT(r = infoHeader->imageSize);
 	fclose(fh);
 }
 
@@ -209,9 +210,12 @@ void Dib::writeToFile(const char * filename) {
 	UA_ASSERTS(fh != NULL,
 			"could not open file for writing" << filename);
 
-	fwrite(fileHeaderRaw, sizeof(unsigned char), sizeof(fileHeaderRaw), fh);
-	fwrite(infoHeaderRaw, sizeof(unsigned char), sizeof(infoHeaderRaw), fh);
-	fwrite(pixels, sizeof(unsigned char), infoHeader->imageSize, fh);
+	unsigned r = fwrite(fileHeaderRaw, sizeof(unsigned char), sizeof(fileHeaderRaw), fh);
+   UA_ASSERT(r == sizeof(fileHeaderRaw));
+	r = fwrite(infoHeaderRaw, sizeof(unsigned char), sizeof(infoHeaderRaw), fh);
+   UA_ASSERT(r == sizeof(infoHeaderRaw));
+	r = fwrite(pixels, sizeof(unsigned char), infoHeader->imageSize, fh);
+   UA_ASSERT(r == infoHeader->imageSize);
 	fclose(fh);
 }
 
@@ -386,7 +390,7 @@ void Dib::sobelEdgeDetectionWithMask(Dib & src, int mask1[3][3],
 						if ((infoHeader->bitCount == 24) || (infoHeader->bitCount == 32)) {
 							// convert to grayscale
 							pixelValue = (unsigned char)(
-									0.3 * pixel[0] + 0.59 * pixel[1] + + 0.11 * pixel[2]);
+									0.3 * pixel[0] + 0.59 * pixel[1] + 0.11 * pixel[2]);
 						}
 						else {
 							pixelValue = pixel[0];
@@ -585,7 +589,7 @@ void Dib::line(unsigned x0, unsigned y0, unsigned x1, unsigned y1, RgbQuad & qua
 }
 
 void Dib::blur(Dib & src) {
-	double radius = UNSHARP_RAD;
+	double radius = 5.0; //UNSHARP_RAD;
 	int *m_FilterVector;
 	int m_Denominator;
 	unsigned m_Dim;
@@ -651,7 +655,7 @@ void Dib::blur(Dib & src) {
 			nPixels = infoHeader->width;
 			dPixelSrc = 3;
 			dPixelDest = 3;
-			dLineSrc = rowBytes;
+			dLineSrc = src.rowBytes;
 			dLineDest = rowBytes;
 		}
 		else {
@@ -670,11 +674,11 @@ void Dib::blur(Dib & src) {
 		pLineSrc = pStartSrc;
 		pLineDest = pStartDest;
 
-		for (line = 0; line < nLines; line++) {
+		for (line = 0; line < nLines; line++, pLineSrc += dLineSrc, pLineDest += dLineDest) {
 			// loop through lines
 			pPixelDest = pLineDest;
 
-			for (pxl = 0; pxl < d; pxl++) {
+			for (pxl = 0, pPixelSrc = pLineSrc; pxl < d; pxl++, pPixelDest += dPixelDest) {
 				// loop through pixels in left/top margin
 				pFactors = m_FilterVector + d - pxl;
 
@@ -683,70 +687,50 @@ void Dib::blur(Dib & src) {
 
 				denom = 0;
 				sum = 0;
-				pPixelSrc = pLineSrc;
 
-				for (x = 0; x < xEnd; x++) {
+				for (x = 0; x < xEnd; x++, pPixelSrc += dPixelSrc) {
 					denom += *pFactors;
-#if 0
 					if ((infoHeader->bitCount == 24) || (infoHeader->bitCount == 32)) {
-						srcPixelValue = (unsigned char)(
-							0.3 * pPixelSrc[0] + 0.59 * pPixelSrc[1] + + 0.11 * pPixelSrc[2]);
+						srcPixelValue = static_cast<unsigned char>(
+							0.3 * pPixelSrc[0] + 0.59 * pPixelSrc[1] + 0.11 * pPixelSrc[2]);
 					}
 					else {
 						srcPixelValue = pPixelSrc[0];
 					}
-#else
-					srcPixelValue = pPixelSrc[0];
-#endif
 					sum += *pFactors++ * srcPixelValue;
-					pPixelSrc += dPixelSrc;
 				}
 
 				if (denom) sum /= denom;
 				pPixelDest[0] = static_cast<unsigned char>(sum);
-#if 0
 				if ((infoHeader->bitCount == 24) || (infoHeader->bitCount == 32)) {
 					pPixelDest[1] = pPixelDest[2] = pPixelDest[0];
 				}
-#endif
-				pPixelDest += dPixelDest;
 			}
 
-			for (pxl = d; pxl < nPixels - d; pxl++) {
+			for (pxl = d; pxl < nPixels - d; pxl++, pPixelDest += dPixelDest) {
 				// loop through pixels in main area
 				pFactors = m_FilterVector;
 				sum = 0;
 
-				xBegin = pxl - d;
-				pPixelSrc = & pLineSrc[xBegin * dPixelSrc];
-
-				for (x = xBegin; x <= pxl + d; x++) {
-#if 0
+				for (x = pxl - d, pPixelSrc = &pLineSrc[x * dPixelSrc]; x <= pxl + d; x++, pPixelSrc += dPixelSrc) {
 					if ((infoHeader->bitCount == 24) || (infoHeader->bitCount == 32)) {
-						srcPixelValue = (unsigned char)(
-							0.3 * pPixelSrc[0] + 0.59 * pPixelSrc[1] + + 0.11 * pPixelSrc[2]);
+						srcPixelValue = static_cast<unsigned char>(
+							0.3 * pPixelSrc[0] + 0.59 * pPixelSrc[1] + 0.11 * pPixelSrc[2]);
 					}
 					else {
 						srcPixelValue = pPixelSrc[0];
 					}
-#else
-					srcPixelValue = pPixelSrc[0];
-#endif
 					sum += *pFactors++ * srcPixelValue;
-					pPixelSrc += dPixelSrc;
 				}
 
 				sum /= m_Denominator;
 				pPixelDest[0] = static_cast<unsigned char>(sum);
-#if 0
 				if ((infoHeader->bitCount == 24) || (infoHeader->bitCount == 32)) {
 					pPixelDest[1] = pPixelDest[2] = pPixelDest[0];
 				}
-#endif
-				pPixelDest += dPixelDest;
 			}
 
-			for (pxl = nPixels - d; pxl < nPixels; pxl++) {
+			for (pxl = nPixels - d; pxl < nPixels; pxl++, pPixelDest += dPixelDest) {
 				// loop through pixels in right/bottom margin
 				pFactors = m_FilterVector;
 				denom = 0;
@@ -754,38 +738,26 @@ void Dib::blur(Dib & src) {
 
 				xBegin = pxl - d;
 				if (xBegin < 0) xBegin = 0;
-				pPixelSrc = & pLineSrc[xBegin * dPixelSrc];
 
-				for (x = xBegin; x < nPixels; x++)
-				{
+				for (x = xBegin, pPixelSrc = & pLineSrc[x * dPixelSrc]; x < nPixels; x++, pPixelSrc += dPixelSrc) {
 					denom += *pFactors;
-#if 0
 					if ((infoHeader->bitCount == 24) || (infoHeader->bitCount == 32)) {
-						srcPixelValue = (unsigned char)(
-							0.3 * pPixelSrc[0] + 0.59 * pPixelSrc[1] + + 0.11 * pPixelSrc[2]);
+						srcPixelValue = static_cast<unsigned char>(
+							0.3 * pPixelSrc[0] + 0.59 * pPixelSrc[1] + 0.11 * pPixelSrc[2]);
 					}
 					else {
 						srcPixelValue = pPixelSrc[0];
 					}
-#else
 					srcPixelValue = pPixelSrc[0];
-#endif
 					sum += *pFactors++ * srcPixelValue;
-					pPixelSrc += dPixelSrc;
 				}
 
 				if (denom) sum /= denom;
 				pPixelDest[0] = static_cast<unsigned char>(sum);
-#if 0
 				if ((infoHeader->bitCount == 24) || (infoHeader->bitCount == 32)) {
 					pPixelDest[1] = pPixelDest[2] = pPixelDest[0];
 				}
-#endif
-				pPixelDest += dPixelDest;
 			}
-
-			pLineSrc += dLineSrc;
-			pLineDest += dLineDest;
 		}	// next line
 
 		pStartSrc++;
@@ -818,9 +790,9 @@ void Dib::unsharp(Dib & src) {
 		for (X = 0; X <= width - 1 ; ++X, srcPixel += bytesPerPixel, destPixel += bytesPerPixel)  {
 			if ((infoHeader->bitCount == 24) || (infoHeader->bitCount == 32)) {
 				srcPixelValue = (unsigned char)(
-						0.3 * srcPixel[0] + 0.59 * srcPixel[1] + + 0.11 * srcPixel[2]);
+						0.3 * srcPixel[0] + 0.59 * srcPixel[1] + 0.11 * srcPixel[2]);
 				destPixelValue = (unsigned char)(
-						0.3 * destPixel[0] + 0.59 * destPixel[1] + + 0.11 * destPixel[2]);
+						0.3 * destPixel[0] + 0.59 * destPixel[1] + 0.11 * destPixel[2]);
 			}
 			else {
 				srcPixelValue = srcPixel[0];
@@ -859,7 +831,7 @@ void Dib::expandColours(Dib & src, int start, int end) {
 		for (X = 0; X <= width - 1 ; ++X, pixel += bytesPerPixel)  {
 			if ((infoHeader->bitCount == 24) || (infoHeader->bitCount == 32)) {
 				pixelValue = (unsigned char)(
-						0.3 * pixel[0] + 0.59 * pixel[1] + + 0.11 * pixel[2]);
+						0.3 * pixel[0] + 0.59 * pixel[1] + 0.11 * pixel[2]);
 			}
 			else {
 				pixelValue = pixel[0];
