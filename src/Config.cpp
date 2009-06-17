@@ -175,8 +175,9 @@ bool Config::setRegions(unsigned plateNum, const vector<BinRegion *> & rowBinReg
 
 	for (int r = rowBinRegions.size() - 1; r >= 0; --r) {
 		for (unsigned c = 0, cn = colBinRegions.size(); c < cn; ++c) {
-			key = INI_REGION_LABEL + to_string(rowBinRegions[r]->getRank())
-				+ "_" + to_string(maxCol - colBinRegions[c]->getRank());
+			key = INI_REGION_LABEL;
+			key += static_cast<char>('A' + rowBinRegions[r]->getRank());
+			key += "_" + to_string(maxCol - colBinRegions[c]->getRank() + 1);
 			value = to_string(colBinRegions[c]->getMin()) + ","
 				+ to_string(rowBinRegions[r]->getMin()) + ","
 				+ to_string(colBinRegions[c]->getMax()) + ","
@@ -242,24 +243,26 @@ bool Config::parseRegions(unsigned plateNum) {
 			return false;
 		}
 
-		string numStr = key.substr(labelSize, pos - labelSize);
-		if (!Util::strToNum(numStr, region->row, 10)) {
+		string rowStr = key.substr(labelSize, pos - labelSize);
+		if (rowStr.size() != 1) {
 			UA_DOUT(5, 3, "INI file error: section " << secName
 			     << "], key name \"" << key << "\" is invalid."  << endl
 			     << "Please run calibration again.");
 			return false;
 		}
+		region->row = static_cast<unsigned>(rowStr[0] - 'A');
 
-		numStr = key.substr(pos + 1);
-		if (!Util::strToNum(numStr, region->col, 10)) {
+		string colStr = key.substr(pos + 1);
+		if (!Util::strToNum(colStr, region->col, 10)) {
 			UA_DOUT(5, 3, "INI file error: section [" << secName
 			     << "], key name \"" << key << "\" is invalid."  << endl
 			     << "Please run calibration again.");
 			return false;
 		}
+		--region->col;
 
 		pos = value.find_first_of(',');
-		numStr = value.substr(0, pos);
+		string numStr = value.substr(0, pos);
 		if (!Util::strToNum(numStr, region->topLeft.X, 10)) {
 			UA_DOUT(5, 3, "INI file error: section [" << secName
 			     << "], first value for key \""
@@ -343,8 +346,8 @@ void Config::saveDecodeResults(unsigned plateNum) {
 		if (region.msgInfo == NULL) continue;
 
 		file << to_string(plateNum) << ","
-		     << to_string(region.row) << ","
-		     << to_string(region.col) << ","
+		     << static_cast<char>('A' + region.row) << ","
+		     << to_string(region.col + 1) << ","
 		     << region.msgInfo->getMsg() << endl;
 	}
 	file.close();

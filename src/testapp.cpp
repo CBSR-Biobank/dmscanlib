@@ -7,6 +7,7 @@
  *
  ******************************************************************************/
 
+#include "ScanLib.h"
 #include "UaAssert.h"
 #include "UaLogger.h"
 #include "Decoder.h"
@@ -23,25 +24,17 @@
 #include "ImageGrabber.h"
 #endif
 
-#ifdef WIN32
-#include <windows.h>
-#include <tchar.h>
-#else
-#define char   char
-#define _T(x)   x
-#define _tmain  main
-#endif
-
 using namespace std;
 
 const char * USAGE_FMT =
 	"Usage: %s [OPTIONS]\n"
 	"Test tool for scanlib library."
 	"\n"
-	"  -c, --calibrate FILE  Calibrates decode regions to those found in bitmap FILE.\n"
-	"  -d, --decode FILE     Decodes the 2D barcode in the specified DIB image file.\n"
-	"  -v, --verbose NUM     Sets debugging level. Debugging messages are output "
-	"                        to stdout. Only when built UA_HAVE_DEBUG on.\n";
+	"  -c, --calibrate NUM  Calibrates decode regions for plate NUM.\n"
+	"  -d, --decode NUM     Decodes the 2D barcode for plate NUM.\n"
+	"  -i, --input FILE     Use the specified DIB image file instead of scanner.\n"
+	"  --debug NUM          Sets debugging level. Debugging messages are output "
+	"                       to stdout. Only when built UA_HAVE_DEBUG on.\n";
 
 /* Allowed command line arguments.  */
 CSimpleOptA::SOption longOptions[] = {
@@ -50,6 +43,8 @@ CSimpleOptA::SOption longOptions[] = {
 		{ 'd', "--decode",    SO_REQ_SEP },
 		{ 'd', "-d",          SO_REQ_SEP },
 		{ 200, "--debug",     SO_REQ_SEP },
+		{ 'i', "--input",     SO_REQ_SEP },
+		{ 'i', "-i",          SO_REQ_SEP },
 		SO_END_OF_OPTIONS
 };
 
@@ -59,12 +54,14 @@ CSimpleOptA::SOption longOptions[] = {
 #define DIR_SEP_CHR '/'
 #endif
 
+
 struct Options {
 	bool calibrate;
 	bool decode;
+	int  debugLevel;
 	char * filename;
 	bool help;
-	int  debugLevel;
+	unsigned plateNum;
 
 	Options() {
 		calibrate = false;
@@ -72,6 +69,7 @@ struct Options {
 		filename = NULL;
 		help = false;
 		debugLevel = 0;
+		plateNum = 0;
 	}
 };
 
@@ -108,12 +106,20 @@ Application::Application(int argc, char ** argv) {
 	 * Loads the file if it is present.
 	 */
 	if (options.calibrate) {
-		calibrateToImage(options.filename);
-		return;
+		if (options.filename != NULL) {
+			calibrateToImage(options.filename);
+		}
+		else {
+			slCalibrateToPlate(options.plateNum);
+		}
 	}
 	else if (options.decode) {
-		decodeImage(options.filename);
-		return;
+		if (options.filename != NULL) {
+			decodeImage(options.filename);
+		}
+		else {
+			slDecodePlate(options.plateNum);
+		}
 	}
 }
 
@@ -135,16 +141,30 @@ bool Application::getCmdOptions(int argc, char ** argv) {
 			switch (args.OptionId()) {
 			case 'c':
 				options.calibrate = true;
-				options.filename = args.OptionArg();
+				options.plateNum = strtoul((const char *)args.OptionArg(), &end, 10);
+				if (*end != 0) {
+					cerr << "invalid value for plate number: "
+						 << args.OptionArg() << endl;
+					exit(1);
+				}
 				break;
 
 			case 'd':
 				options.decode = true;
-				options.filename = args.OptionArg();
+				options.plateNum = strtoul((const char *)args.OptionArg(), &end, 10);
+				if (*end != 0) {
+					cerr << "invalid value for plate number: "
+						 << args.OptionArg() << endl;
+					exit(1);
+				}
 				break;
 
 			case 'h':
 				options.help = true;
+				break;
+
+			case 'i':
+				options.filename = args.OptionArg();
 				break;
 
 			case 200:
@@ -172,15 +192,14 @@ bool Application::getCmdOptions(int argc, char ** argv) {
 void Application::calibrateToImage(char * filename) {
 	UA_ASSERT_NOT_NULL(filename);
 
-	Dib dib;
+	Dib dib, processedDib;
 	RgbQuad quad(255, 0, 0);
 	Config config(INI_FILE_NAME);
 
 	dib.readFromFile(filename);
-	Dib processedDib;
-	processedDib.blur(dib);
+	processedDib.gaussianBlur(dib);
 	processedDib.unsharp(dib);
-	processedDib.expandColours(dib, 150, 220);
+	//processedDib.expandColours(dib, 150, 220);
 	processedDib.writeToFile("processed.bmp");
 
 	Calibrator calibrator;
@@ -203,11 +222,10 @@ void Application::calibrateToImage(char * filename) {
 void Application::decodeImage(char * filename) {
 	UA_ASSERT_NOT_NULL(filename);
 
-	Dib dib;
+	Dib dib, processedDib;
 	Config config(INI_FILE_NAME);
 
 	dib.readFromFile(filename);
-	Dib processedDib;
 	processedDib.gaussianBlur(dib);
 	processedDib.unsharp(dib);
 	//processedDib.expandColours(dib, 150, 220);

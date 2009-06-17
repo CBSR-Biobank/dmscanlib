@@ -5,20 +5,28 @@
 extern "C" {
 #endif
 
+#if defined(WIN32) && ! defined(STANDALONE)
+#   include <windows.h>
+#   ifdef BUILD_DLL
+        /* DLL export */
+#       define EXPORT __declspec(dllexport)
+#   else
+        /* EXE import */
+#       define EXPORT __declspec(dllimport)
+#   endif
+#else
+#   define EXPORT
+#endif
+
+
 #ifdef WIN32
-#include <windows.h>
-
-#ifdef BUILD_DLL
-/* DLL export */
-#define EXPORT __declspec(dllexport)
+#   include <windows.h>
+#   include <tchar.h>
 #else
-/* EXE import */
-#define EXPORT __declspec(dllimport)
+#   define char   char
+#   define _T(x)   x
+#   define _tmain  main
 #endif
-#else
-#define EXPORT
-#endif
-
 
 typedef struct sScPixelLoc {
 	int x;
@@ -43,11 +51,12 @@ typedef struct sScFrame {
 	double y1; // right
 } ScFrame;
 
-const short SC_SUCCESS      = 0;
-const short SC_FAIL         = -1;
-const short SC_TWAIN_UAVAIL = -2;
+const short SC_SUCCESS               = 0;
+const short SC_FAIL                  = -1;
+const short SC_TWAIN_UAVAIL          = -2;
 const short SC_CALIBRATOR_NO_REGIONS = -3;
-const short SC_INI_FILE_ERROR = -4;
+const short SC_CALIBRATOR_ERROR      = -4;
+const short SC_INI_FILE_ERROR        = -5;
 
 EXPORT short slIsTwainAvailable();
 

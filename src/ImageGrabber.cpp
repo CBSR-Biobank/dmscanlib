@@ -7,17 +7,10 @@
 
 
 #include "ImageGrabber.h"
+#include "ScanLib.h"
 #include "UaLogger.h"
 #include "UaAssert.h"
 #include "Util.h"
-
-#ifndef __MINGW32__
-#include <tchar.h>
-#else
-#define char   char
-#define _T(x)   x
-#define _tmain  main
-#endif
 
 using namespace std;
 
@@ -87,7 +80,6 @@ unsigned ImageGrabber::invokeTwain(TW_IDENTITY * srcId, unsigned long dg,
  *
  *	Select the source to use as default for Twain, so the source does not
  *	have to be specified every time.
- *	TODO: change return type to void?
  */
 bool ImageGrabber::selectSourceAsDefault() {
 	UA_ASSERT_NOT_NULL(g_hLib);
@@ -220,9 +212,6 @@ HANDLE ImageGrabber::acquireImage(double left, double top,
 
 		if (event.TWMessage == MSG_XFERREADY) {
 			TW_IMAGEINFO ii;
-			/*		TODO: these are the properties Adam set, should do something
-				with them.
-			 */
 			setCapability(ICAP_XRESOLUTION, DPI, FALSE);
 			setCapability(ICAP_YRESOLUTION, DPI, FALSE);
 			setCapability(ICAP_PIXELTYPE, TWPT_RGB, FALSE);

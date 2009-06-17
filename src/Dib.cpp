@@ -497,10 +497,6 @@ void Dib::laplaceEdgeDetection(Dib & src) {
 void Dib::histEqualization(Dib & src) {
 	UA_ASSERT_NOT_NULL(src.infoHeader);
 
-	unsigned width = src.infoHeader->width;
-	unsigned height = src.infoHeader->height;
-
-	unsigned imgSize = width * height;
 	unsigned histogram[256];
 	double sum[256], runningSum;
 	unsigned row, col, i;
@@ -510,22 +506,22 @@ void Dib::histEqualization(Dib & src) {
 	memset(&histogram, 0, sizeof(histogram));
 	memset(&sum, 0, sizeof(sum));
 
-	for (row = 0; row < height; ++row) {
-		for (col = 0; col < width; ++col) {
+	for (row = 0; row < infoHeader->height; ++row) {
+		for (col = 0; col < infoHeader->width; ++col) {
 			histogram[src.getPixelGrayscale(row, col)]++;
 		}
 	}
 
 	for (i = 0, runningSum = 0; i <= 255; ++i) {
-		runningSum += (histogram[i] / (double) imgSize);
+		runningSum += histogram[i] / static_cast<double>(infoHeader->imageSize);
 		sum[i] = runningSum;
 	}
 
-	for (row = 0; row < height; ++row) {
-		for (col = 0; col < width; ++col) {
+	for (row = 0; row < infoHeader->height; ++row) {
+		for (col = 0; col < infoHeader->width; ++col) {
 			setPixelGrayscale(
 					row, col,
-					(unsigned char) (256 * sum[src.getPixelGrayscale(row, col)]));
+					static_cast<unsigned char>(256 * sum[src.getPixelGrayscale(row, col)]));
 		}
 	}
 }
@@ -613,7 +609,7 @@ void Dib::gaussianBlur(Dib & src) {
 				x = i - ((GAUSS_WIDTH - 1) >> 1) + k;
 
 				if ((x >= 0) && (x < infoHeader->width)) {
-					pixel = &src.pixels[j * rowBytes + x * bytesPerPixel];
+					pixel = &src.pixels[srcRowPtr + x * bytesPerPixel];
 					sumr += pixel[0] * GAUSS_FACTORS[k];
 					if ((infoHeader->bitCount == 24) || (infoHeader->bitCount == 32)) {
 						sumg += pixel[1] * GAUSS_FACTORS[k];
@@ -622,7 +618,7 @@ void Dib::gaussianBlur(Dib & src) {
 				}
 			}
 
-			pixel = &tmpPixels[j * rowBytes + i * bytesPerPixel];
+			pixel = &tmpPixels[destRowPtr + i * bytesPerPixel];
 			pixel[0] = sumr / GAUSS_SUM;
 			if ((infoHeader->bitCount == 24) || (infoHeader->bitCount == 32)) {
 				pixel[1] = sumg / GAUSS_SUM;
@@ -632,7 +628,8 @@ void Dib::gaussianBlur(Dib & src) {
 	}
 
 	for (i = 0; i < infoHeader->width - 1; ++i) {
-		for (j = 0; j < infoHeader->height - 1; ++j) {
+		for (j = 0; j < infoHeader->height - 1; ++j
+			srcRowPtr += src.rowBytes, destRowPtr += rowBytes) {
 			sumr = 0;
 			sumg = 0;
 			sumb = 0;
@@ -650,7 +647,7 @@ void Dib::gaussianBlur(Dib & src) {
 				}
 			}
 
-			pixel = &pixels[j * rowBytes + i * bytesPerPixel];
+			pixel = &pixels[destRowPtr + i * bytesPerPixel];
 			pixel[0] = sumr / GAUSS_SUM;
 			if ((infoHeader->bitCount == 24) || (infoHeader->bitCount == 32)) {
 				pixel[1] = sumg / GAUSS_SUM;

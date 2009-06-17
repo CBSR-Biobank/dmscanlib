@@ -79,6 +79,7 @@ void Util::getTimestamp(std::string & str_r) {
 
 void Util::difftiime(slTime & start, slTime & end, slTime & diff) {
 #if defined (WIN32) && ! defined(__MINGW32__)
+	diff = end - start;
 #else
 	diff.tv_sec = end.tv_sec - start.tv_sec;
 	diff.tv_usec = end.tv_usec - start.tv_usec;
@@ -88,6 +89,7 @@ void Util::difftiime(slTime & start, slTime & end, slTime & diff) {
 #endif
 }
 
+#ifndef _VISUALC_
 ostream & operator<<(ostream &os, slTime & tm) {
 #if defined (WIN32) && ! defined(__MINGW32__)
 #else
@@ -95,3 +97,4 @@ ostream & operator<<(ostream &os, slTime & tm) {
 #endif
 	return os;
 }
+#endif

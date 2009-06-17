@@ -42,7 +42,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="libdmtx;simpleini;simpleopt;src;src/loki;src/utils"
-				PreprocessorDefinitions="_VISUALC_;WIN32;_DEBUG;_CONSOLE;UA_LOGGER"
+				PreprocessorDefinitions="_VISUALC_;WIN32;_DEBUG;_CONSOLE;UA_LOGGER;STANDALONE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -205,6 +205,10 @@
 			</File>
 			<File
 				RelativePath=".\src\ImageGrabber.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\ScanLib.cpp"
 				>
 			</File>
 			<File

@@ -119,12 +119,23 @@ short slCalibrateToPlate(unsigned short plateNum) {
 	}
 	dib.readFromHandle(h);
 	dib.writeToFile("out.bmp");
-	if (!calibrator.processImage(dib)) {
+	Dib processedDib;
+	processedDib.gaussianBlur(dib);
+	processedDib.unsharp(dib);
+	//processedDib.expandColours(dib, 150, 220);
+	processedDib.writeToFile("processed.bmp");
+	if (!calibrator.processImage(processedDib)) {
 		return SC_CALIBRATOR_NO_REGIONS;
 	}
 
-	if (!config.setRegions(plateNum, calibrator.getRowBinRegions(),
-			calibrator.getColBinRegions(), calibrator.getMaxCol())) {
+	const vector<BinRegion*> & rowBins = calibrator.getRowBinRegions();
+	const vector<BinRegion*> & colBins = calibrator.getColBinRegions();
+
+	if ((rowBins.size() != 8) || (colBins.size() != 12)) {
+		return SC_CALIBRATOR_ERROR;
+	}
+
+	if (!config.setRegions(plateNum, rowBins, colBins, calibrator.getMaxCol())) {
 		return SC_INI_FILE_ERROR;
 	}
 
@@ -165,7 +176,7 @@ short slDecodePlate(unsigned short plateNum) {
 	}
 
 	Decoder decoder;
-	Dib dib;
+	Dib dib, hdib;
 
 	ImageGrabber ig;
 	HANDLE h = ig.acquireImage(f->x0, f->y0, f->x1, f->y1);
@@ -175,10 +186,12 @@ short slDecodePlate(unsigned short plateNum) {
 	}
 	dib.readFromHandle(h);
 	dib.writeToFile("out.bmp");
+	hdib.histEqualization(dib);
+	hdib.writeToFile("histogram.bmp");
 	Dib processedDib;
-	processedDib.blur(dib);
+	processedDib.gaussianBlur(dib);
 	processedDib.unsharp(dib);
-	processedDib.expandColours(dib, 150, 220);
+	processedDib.expandColours(dib, 130, 220);
 	processedDib.writeToFile("processed.bmp");
 	decoder.processImageRegions(plateNum, processedDib, config.getRegions());
 	config.saveDecodeResults(plateNum);

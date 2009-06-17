@@ -38,6 +38,8 @@ string to_string(T const& value) {
     return sstr.str();
 }
 
+#ifndef _VISUALC_
 ostream & operator<<(ostream &os, slTime & tm);
+#endif
 
 #endif /* UTIL_H_ */
