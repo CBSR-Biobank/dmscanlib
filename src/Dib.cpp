@@ -494,34 +494,60 @@ void Dib::laplaceEdgeDetection(Dib & src) {
 	}
 }
 
+/*
+ *
+ */
 void Dib::histEqualization(Dib & src) {
 	UA_ASSERT_NOT_NULL(src.infoHeader);
 
+	unsigned char * srcRowPtr, * destRowPtr, * srcPixel, * destPixel, pixelValue;
 	unsigned histogram[256];
+	double totPixels = static_cast<double>(src.infoHeader->height *  src.infoHeader->width);
 	double sum[256], runningSum;
 	unsigned row, col, i;
+	bool isRgb = (src.infoHeader->bitCount == 24) || (src.infoHeader->bitCount == 32);
 
 	copyInternals(src);
 
 	memset(&histogram, 0, sizeof(histogram));
 	memset(&sum, 0, sizeof(sum));
 
-	for (row = 0; row < infoHeader->height; ++row) {
-		for (col = 0; col < infoHeader->width; ++col) {
-			histogram[src.getPixelGrayscale(row, col)]++;
+	srcRowPtr = src.pixels;
+	destRowPtr = pixels;
+	for (row = 0; row < infoHeader->height; ++row,
+		srcRowPtr += src.rowBytes, destRowPtr += rowBytes) {
+		srcPixel = srcRowPtr;
+		destPixel = destRowPtr;
+		for (col = 0; col < infoHeader->width; ++col,
+			srcPixel += src.bytesPerPixel, destPixel += bytesPerPixel) {
+			if (isRgb) {
+				// convert to grayscale
+				pixelValue = static_cast<unsigned char>(
+						0.3 * srcPixel[0] + 0.59 * srcPixel[1] + 0.11 * srcPixel[2]);
+			}
+			else {
+				pixelValue = srcPixel[0];
+			}
+			histogram[pixelValue]++;
+
+			// save grayscale value to be used in loop below
+			destPixel[0] = pixelValue;
 		}
 	}
 
 	for (i = 0, runningSum = 0; i <= 255; ++i) {
-		runningSum += histogram[i] / static_cast<double>(infoHeader->imageSize);
+		runningSum += (histogram[i] / totPixels);
 		sum[i] = runningSum;
 	}
 
-	for (row = 0; row < infoHeader->height; ++row) {
-		for (col = 0; col < infoHeader->width; ++col) {
-			setPixelGrayscale(
-					row, col,
-					static_cast<unsigned char>(256 * sum[src.getPixelGrayscale(row, col)]));
+	destRowPtr = pixels;
+	for (row = 0; row < infoHeader->height; ++row, destRowPtr += rowBytes) {
+		destPixel = destRowPtr;
+		for (col = 0; col < infoHeader->width; ++col, destPixel += bytesPerPixel) {
+			destPixel[0] = static_cast<unsigned char>(256 * sum[destPixel[0]]);
+			if (isRgb) {
+				destPixel[1] = destPixel[2] = destPixel[0];
+			}
 		}
 	}
 }
@@ -595,11 +621,13 @@ void Dib::gaussianBlur(Dib & src) {
 	unsigned char * tmpPixels = new unsigned char[infoHeader->imageSize];
 	UA_ASSERT_NOT_NULL(tmpPixels);
 
-	unsigned char * srcRowPtr = src.pixels, * destRowPtr = pixels;
+	unsigned char * srcRowPtr, * destRowPtr;
 	unsigned i, j, k, x, y, sumr, sumg, sumb;
 	unsigned char * pixel;
 
 	for (i = 0; i < infoHeader->width - 1; ++i) {
+		srcRowPtr = src.pixels;
+		destRowPtr = tmpPixels;
 		for (j = 0; j < infoHeader->height - 1; ++j,
 			srcRowPtr += src.rowBytes, destRowPtr += rowBytes) {
 			sumr = 0;
@@ -609,7 +637,7 @@ void Dib::gaussianBlur(Dib & src) {
 				x = i - ((GAUSS_WIDTH - 1) >> 1) + k;
 
 				if ((x >= 0) && (x < infoHeader->width)) {
-					pixel = &src.pixels[srcRowPtr + x * bytesPerPixel];
+					pixel = &srcRowPtr[x * bytesPerPixel];
 					sumr += pixel[0] * GAUSS_FACTORS[k];
 					if ((infoHeader->bitCount == 24) || (infoHeader->bitCount == 32)) {
 						sumg += pixel[1] * GAUSS_FACTORS[k];
@@ -618,7 +646,7 @@ void Dib::gaussianBlur(Dib & src) {
 				}
 			}
 
-			pixel = &tmpPixels[destRowPtr + i * bytesPerPixel];
+			pixel = &destRowPtr[i * bytesPerPixel];
 			pixel[0] = sumr / GAUSS_SUM;
 			if ((infoHeader->bitCount == 24) || (infoHeader->bitCount == 32)) {
 				pixel[1] = sumg / GAUSS_SUM;
@@ -628,8 +656,8 @@ void Dib::gaussianBlur(Dib & src) {
 	}
 
 	for (i = 0; i < infoHeader->width - 1; ++i) {
-		for (j = 0; j < infoHeader->height - 1; ++j
-			srcRowPtr += src.rowBytes, destRowPtr += rowBytes) {
+		destRowPtr = pixels;
+		for (j = 0; j < infoHeader->height - 1; ++j, destRowPtr += rowBytes) {
 			sumr = 0;
 			sumg = 0;
 			sumb = 0;
@@ -647,7 +675,7 @@ void Dib::gaussianBlur(Dib & src) {
 				}
 			}
 
-			pixel = &pixels[destRowPtr + i * bytesPerPixel];
+			pixel = &destRowPtr[i * bytesPerPixel];
 			pixel[0] = sumr / GAUSS_SUM;
 			if ((infoHeader->bitCount == 24) || (infoHeader->bitCount == 32)) {
 				pixel[1] = sumg / GAUSS_SUM;
@@ -890,6 +918,7 @@ void Dib::expandColours(Dib & src, int start, int end) {
 	unsigned width = src.infoHeader->width;
 	unsigned height = src.infoHeader->height;
 	double cDoubleWidth = end - start;
+	bool isRgb = (src.infoHeader->bitCount == 24) || (src.infoHeader->bitCount == 32);
 	int nval;
 
 	copyInternals(src);
@@ -901,8 +930,8 @@ void Dib::expandColours(Dib & src, int start, int end) {
 	for (Y = 0; Y <= height - 1; ++Y, srcRowPtr += rowBytes, destRowPtr += rowBytes)  {
 		pixel = srcRowPtr;
 		for (X = 0; X <= width - 1 ; ++X, pixel += bytesPerPixel)  {
-			if ((infoHeader->bitCount == 24) || (infoHeader->bitCount == 32)) {
-				pixelValue = (unsigned char)(
+			if (isRgb) {
+				pixelValue = static_cast<unsigned char>(
 						0.3 * pixel[0] + 0.59 * pixel[1] + 0.11 * pixel[2]);
 			}
 			else {

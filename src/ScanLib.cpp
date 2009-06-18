@@ -185,13 +185,13 @@ short slDecodePlate(unsigned short plateNum) {
 		return SC_FAIL;
 	}
 	dib.readFromHandle(h);
-	dib.writeToFile("out.bmp");
+	dib.writeToFile("scanned.bmp");
 	hdib.histEqualization(dib);
-	hdib.writeToFile("histogram.bmp");
+	hdib.writeToFile("histeq.bmp");
 	Dib processedDib;
 	processedDib.gaussianBlur(dib);
 	processedDib.unsharp(dib);
-	processedDib.expandColours(dib, 130, 220);
+	processedDib.expandColours(dib, 150, 230);
 	processedDib.writeToFile("processed.bmp");
 	decoder.processImageRegions(plateNum, processedDib, config.getRegions());
 	config.saveDecodeResults(plateNum);

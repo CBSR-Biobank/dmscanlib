@@ -222,12 +222,16 @@ void Application::calibrateToImage(char * filename) {
 void Application::decodeImage(char * filename) {
 	UA_ASSERT_NOT_NULL(filename);
 
-	Dib dib, processedDib;
+	Dib dib, processedDib, hdib;
 	Config config(INI_FILE_NAME);
 
 	dib.readFromFile(filename);
-	processedDib.gaussianBlur(dib);
-	processedDib.unsharp(dib);
+
+	hdib.histEqualization(dib);
+	hdib.writeToFile("histeq.bmp");
+
+	processedDib.gaussianBlur(hdib);
+	processedDib.unsharp(hdib);
 	//processedDib.expandColours(dib, 150, 220);
 	processedDib.writeToFile("processed.bmp");
 	//exit(0);

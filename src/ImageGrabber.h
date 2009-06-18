@@ -88,8 +88,8 @@ private:
 
 	// properties used by the scanner
 	static const int DPI = 300;
-	static const int SCAN_CONTRAST = 100;
-	static const int SCAN_BRIGHTNESS = 100;
+	static const int SCAN_CONTRAST = 1000;
+	static const int SCAN_BRIGHTNESS = 1000;
 };
 
 #endif /* __INCLUDE_IMAGE_GRABBER_H */
