@@ -110,7 +110,9 @@ Application::Application(int argc, char ** argv) {
 			calibrateToImage(options.filename);
 		}
 		else {
+#ifdef WIN32
 			slCalibrateToPlate(options.plateNum);
+#endif
 		}
 	}
 	else if (options.decode) {
@@ -118,7 +120,9 @@ Application::Application(int argc, char ** argv) {
 			decodeImage(options.filename);
 		}
 		else {
+#ifdef WIN32
 			slDecodePlate(options.plateNum);
+#endif
 		}
 	}
 }
