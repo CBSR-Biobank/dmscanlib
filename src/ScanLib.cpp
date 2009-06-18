@@ -96,9 +96,10 @@ int slCalibrateToPlate(unsigned dpi, unsigned plateNum) {
 		return SC_INVALID_PLATE_NUM;
 	}
 
-	slTime starttime, endtime, difftime;
-
-    Util::getTime(starttime);
+	slTime starttime; // for debugging
+	UA_DEBUG(
+		Util::getTime(starttime);
+	);
 
 	configLogging(5);
 
@@ -149,10 +150,14 @@ int slCalibrateToPlate(unsigned dpi, unsigned plateNum) {
 	markedDib.writeToFile("calibrated.bmp");
 	ig.freeImage(h);
 
-    Util::getTime(endtime);
-    Util::difftiime(starttime, endtime, difftime);
+	UA_DEBUG(
+		slTime endtime;
+		slTime difftime;
+		Util::getTime(endtime);
+		Util::difftiime(starttime, endtime, difftime);
+		UA_DOUT(1, 1, "slDecodePlate: time taken: " << difftime);
+	);
 
-	UA_DOUT(1, 1, "slDecodePlate: time taken: " << difftime);
 	return SC_SUCCESS;
 }
 
@@ -165,14 +170,10 @@ int slDecodePlate(unsigned dpi, unsigned plateNum) {
 		return SC_INVALID_PLATE_NUM;
 	}
 
-	slTime starttime, endtime, difftime;
-
-    Util::getTime(starttime);
-
-	if (plateNum > 4) {
-		UA_DOUT(1, 1, "plate number is invalid: " << plateNum);
-		return SC_FAIL;
-	}
+	slTime starttime; // for debugging
+	UA_DEBUG(
+		Util::getTime(starttime);
+	);
 
 	configLogging(5);
 
@@ -218,9 +219,13 @@ int slDecodePlate(unsigned dpi, unsigned plateNum) {
 	markedDib.writeToFile("decoded.bmp");
 	ig.freeImage(h);
 
-    Util::getTime(endtime);
-    Util::difftiime(starttime, endtime, difftime);
+	UA_DEBUG(
+		slTime endtime;
+		slTime difftime;
+		Util::getTime(endtime);
+		Util::difftiime(starttime, endtime, difftime);
+		UA_DOUT(1, 1, "slDecodePlate: time taken: " << difftime);
+	);
 
-	UA_DOUT(1, 1, "slDecodePlate: time taken: " << difftime);
 	return SC_SUCCESS;
 }
