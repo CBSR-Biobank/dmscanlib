@@ -41,14 +41,10 @@ public:
 	 */
 	bool selectSourceAsDefault();
 
-	HANDLE acquireImage(double top, double left,
+	HANDLE acquireImage(unsigned dpi, double top, double left,
 			double bottom, double right);
-	HANDLE acquirePlateImage(unsigned plate);
-	DmtxImage* acquireDmtxImage();
+	DmtxImage* acquireDmtxImage(unsigned dpi);
 	void freeImage(HANDLE handle);
-
-	void getConfigFromIni(CSimpleIniA & ini);
-
 
 private:
 	unsigned invokeTwain(TW_IDENTITY * srcId, unsigned long dg, unsigned dat,
@@ -87,9 +83,8 @@ private:
 	static TW_IDENTITY g_AppID;
 
 	// properties used by the scanner
-	static const int DPI = 300;
-	static const int SCAN_CONTRAST = 1000;
-	static const int SCAN_BRIGHTNESS = 1000;
+	static const int SCAN_CONTRAST = 500;
+	static const int SCAN_BRIGHTNESS = 0;
 };
 
 #endif /* __INCLUDE_IMAGE_GRABBER_H */

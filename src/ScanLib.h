@@ -51,40 +51,41 @@ typedef struct sScFrame {
 	double y1; // right
 } ScFrame;
 
-const short SC_SUCCESS               = 0;
-const short SC_FAIL                  = -1;
-const short SC_TWAIN_UAVAIL          = -2;
-const short SC_CALIBRATOR_NO_REGIONS = -3;
-const short SC_CALIBRATOR_ERROR      = -4;
-const short SC_INI_FILE_ERROR        = -5;
+const int SC_SUCCESS               = 0;
+const int SC_FAIL                  = -1;
+const int SC_TWAIN_UAVAIL          = -2;
+const int SC_CALIBRATOR_NO_REGIONS = -3;
+const int SC_CALIBRATOR_ERROR      = -4;
+const int SC_INI_FILE_ERROR        = -5;
+const int SC_INVALID_DPI           = -6;
 
-EXPORT short slIsTwainAvailable();
+EXPORT int slIsTwainAvailable();
 
-typedef short (*SL_ISTWAINAVAILABLE) ();
+typedef int (*SL_ISTWAINAVAILABLE) ();
 
-EXPORT short slSelectSourceAsDefault();
+EXPORT int slSelectSourceAsDefault();
 
-typedef short (*SL_SELECTSOURCEASDEFAULT) ();
+typedef int (*SL_SELECTSOURCEASDEFAULT) ();
 
-EXPORT short slConfigPlateFrame(unsigned short plateNum, double left,
-		double top,	double right, double bottom);
-
-typedef short (*SL_CONFIGPLATEFRAME) (unsigned short, double x0,
-		double y0,	double x1, double y1);
-
-EXPORT short slScanImage(char * filename, double left,	double top,
+EXPORT int slConfigPlateFrame(unsigned plateNum, double left, double top,
 		double right, double bottom);
 
-typedef short (*SL_SCANIMAGE) (char * filename, double x0,
-		double y0,	double x1, double y1);
+typedef int (*SL_CONFIGPLATEFRAME) (unsigned, double x0, double y0, double x1,
+		double y1);
 
-EXPORT short slCalibrateToPlate(unsigned short plateNum);
+EXPORT int slScanImage(unsigned dpi, double left, double top,
+		double right, double bottom, char * filename);
 
-typedef short (*SL_CALIBRATETOPLATE) (unsigned short plateNum);
+typedef int (*SL_SCANIMAGE) (char * filename, double x0, double y0,
+		double x1, double y1);
 
-EXPORT short slDecodePlate(unsigned short plateNum);
+EXPORT int slCalibrateToPlate(unsigned dpi, unsigned plateNum);
 
-typedef short (*SL_DECODEPLATE) (unsigned short plateNum);
+typedef int (*SL_CALIBRATETOPLATE) (unsigned plateNum);
+
+EXPORT int slDecodePlate(unsigned dpi, unsigned plateNum);
+
+typedef int (*SL_DECODEPLATE) (unsigned plateNum);
 
 #ifdef __cplusplus
 }

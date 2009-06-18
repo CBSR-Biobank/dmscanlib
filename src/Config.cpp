@@ -18,7 +18,6 @@
 #include <iostream>
 #include <fstream>
 
-
 const char * Config::INI_PLATE_SECTION_NAME = "plate";
 const char * Config::INI_SECTION_NAME = "barcode-regions";
 const char * Config::INI_REGION_LABEL = "region";
@@ -46,6 +45,12 @@ Config::Config(const char * filename) :
 
 Config::~Config() {
 	save();
+
+	for (unsigned i = 0; i < MAX_PLATES; ++ i) {
+		for (unsigned j = 0, n = regionInfos[i].regions.size(); j < n; ++j) {
+			delete regionInfos[i].regions[j];
+		}
+	}
 }
 
 void Config::save() {
@@ -154,8 +159,12 @@ bool Config::getPlateFrame(unsigned plate, ScFrame ** frame) {
 }
 
 
-bool Config::setRegions(unsigned plateNum, const vector<BinRegion *> & rowBinRegions,
-		const vector<BinRegion *> & colBinRegions, unsigned maxCol) {
+bool Config::setRegions(unsigned plateNum, unsigned dpi,
+		const vector<BinRegion *> & rowBinRegions,
+		const vector<BinRegion *> & colBinRegions) {
+	UA_ASSERTS((plateNum >0) && (plateNum >= MAX_PLATES),
+			"parseRegions: invalid plate number: " << plateNum);
+
 	if (state != STATE_OK) {
 		UA_DOUT(5, 3, "setRegions: invalid ini state: " << state);
 		return false;
@@ -173,11 +182,21 @@ bool Config::setRegions(unsigned plateNum, const vector<BinRegion *> & rowBinReg
 	string key, value;
 	string secName("plate-" + to_string(plateNum) + "-" + INI_SECTION_NAME);
 
-	for (int r = rowBinRegions.size() - 1; r >= 0; --r) {
+	key = INI_REGION_LABEL;
+	key += "_DPI";
+	value = to_string(dpi);
+	rc = ini.SetValue(secName.c_str(), key.c_str(), value.c_str());
+	if (rc < 0) {
+		UA_DOUT(5, 3, "setRegions: ini SetValue() returned: " << rc);
+		return false;
+	}
+
+	for (unsigned r = 0, rn = rowBinRegions.size(); r < rn; ++r) {
 		for (unsigned c = 0, cn = colBinRegions.size(); c < cn; ++c) {
 			key = INI_REGION_LABEL;
+			key += '_';
 			key += static_cast<char>('A' + rowBinRegions[r]->getRank());
-			key += "_" + to_string(maxCol - colBinRegions[c]->getRank() + 1);
+			key += "_" + to_string(cn - colBinRegions[c]->getRank());
 			value = to_string(colBinRegions[c]->getMin()) + ","
 				+ to_string(rowBinRegions[r]->getMin()) + ","
 				+ to_string(colBinRegions[c]->getMax()) + ","
@@ -194,8 +213,16 @@ bool Config::setRegions(unsigned plateNum, const vector<BinRegion *> & rowBinReg
 }
 
 bool Config::parseRegions(unsigned plateNum) {
+	UA_ASSERTS((plateNum >0) && (plateNum <= MAX_PLATES),
+			"parseRegions: invalid plate number: " << plateNum);
+
 	if (state != STATE_OK) {
 		UA_DOUT(5, 3, "parseRegions: invalid ini state: " << state);
+		return false;
+	}
+
+	if ((plateNum <= 0) && (plateNum >= MAX_PLATES)) {
+		UA_DOUT(5, 3, "parseRegions: invalid plate number: " << plateNum);
 		return false;
 	}
 
@@ -215,10 +242,15 @@ bool Config::parseRegions(unsigned plateNum) {
 		return false;
 	}
 
-	string label(INI_REGION_LABEL);
-	unsigned labelSize = label.size(), pos, prevPos;
 	DecodeRegion * region;
+	string label(INI_REGION_LABEL);
+	string dpiLabel(INI_REGION_LABEL);
 
+	label += '_';
+	dpiLabel += "_DPI";
+	unsigned labelSize = label.size(), pos, prevPos;
+
+	--plateNum;
 	for(CSimpleIniA::TKeyVal::const_iterator it = values->begin();
 		it != values->end(); it++) {
 		string key(it->first.pItem);
@@ -226,6 +258,18 @@ bool Config::parseRegions(unsigned plateNum) {
 
 		region = new DecodeRegion;
 		UA_ASSERT_NOT_NULL(region);
+
+		if (key.find(dpiLabel) == 0) {
+			int num;
+			if (!Util::strToNum(value, num, 10)) {
+				UA_DOUT(5, 3, "INI file error: section [" << secName
+				     << "], key name \"" << key << "\" is invalid."  << endl
+				     << "Please run calibration again.");
+				return false;
+			}
+			regionInfos[plateNum].dpi = static_cast<unsigned>(num);
+			continue;
+		}
 
 		pos =  key.find(label);
 		if (pos == string::npos) {
@@ -235,7 +279,7 @@ bool Config::parseRegions(unsigned plateNum) {
 			return false;
 		}
 
-		pos = key.find_first_of('_');
+		pos = key.find_first_of('_', labelSize);
 		if (pos == string::npos) {
 			UA_DOUT(5, 3, "INI file error: section [" << secName
 			     << "], key name \"" << key << "\" is invalid."  << endl
@@ -302,14 +346,17 @@ bool Config::parseRegions(unsigned plateNum) {
 			return false;
 		}
 
-		regions.push_back(region);
+		regionInfos[plateNum].regions.push_back(region);
 		UA_DOUT(5, 3, "getRegionsFromIni: " << *region);
 	}
 	return true;
 }
 
-bool Config::savePlateFrame(unsigned short plateNum, double left,
+bool Config::savePlateFrame(unsigned plateNum, double left,
 		double top,	double right, double bottom) {
+	UA_ASSERTS((plateNum >0) && (plateNum <= MAX_PLATES),
+			"parseRegions: invalid plate number: " << plateNum);
+
 	if (state != STATE_OK) {
 		UA_DOUT(5, 3, "savePlateFrame: invalid ini state: " << state);
 		return false;
@@ -335,13 +382,15 @@ bool Config::savePlateFrame(unsigned short plateNum, double left,
 }
 
 void Config::saveDecodeResults(unsigned plateNum) {
+	UA_ASSERTS((plateNum >0) && (plateNum <= MAX_PLATES),
+			"parseRegions: invalid plate number: " << plateNum);
 	ofstream file;
 	file.open("scanlib.txt", ios::out);
 
 	file << "#Plate,Row,Col,Barcode" << endl;
 
-	for (unsigned i = 0, n = regions.size(); i < n; ++i) {
-		DecodeRegion & region = *regions[i];
+	for (unsigned i = 0, n = regionInfos[plateNum].regions.size(); i < n; ++i) {
+		DecodeRegion & region = *regionInfos[plateNum].regions[i];
 
 		if (region.msgInfo == NULL) continue;
 
@@ -352,3 +401,27 @@ void Config::saveDecodeResults(unsigned plateNum) {
 	}
 	file.close();
 }
+
+const vector<DecodeRegion *> & Config::getRegions(unsigned plateNum, unsigned dpi) const {
+	UA_ASSERTS((plateNum >0) && (plateNum <= MAX_PLATES),
+			"parseRegions: invalid plate number: " << plateNum);
+
+	--plateNum;
+	if (regionInfos[plateNum].dpi != dpi) {
+		// convert regions to new dpi
+		double factor = static_cast<double>(dpi)
+		/ static_cast<double>( regionInfos[plateNum].dpi);
+
+		const vector<DecodeRegion *> & regions = regionInfos[plateNum].regions;
+
+		for (unsigned i = 0, n = regions.size(); i < n; ++i) {
+			DecodeRegion & region = *regions[i];
+			region.topLeft.X = static_cast<unsigned>(region.topLeft.X * factor);
+			region.topLeft.Y = static_cast<unsigned>(region.topLeft.Y * factor);
+			region.botRight.X = static_cast<unsigned>(region.botRight.X * factor);
+			region.botRight.Y = static_cast<unsigned>(region.botRight.Y * factor);
+		}
+	}
+	return regionInfos[plateNum].regions;
+}
+

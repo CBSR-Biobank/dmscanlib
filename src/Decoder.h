@@ -40,8 +40,8 @@ public:
 	virtual ~Decoder();
 
 	void processImageRegions(unsigned plateNum, Dib & dib,
-			vector<DecodeRegion *> & decodeRegions);
-	void imageShowRegions(Dib & dib, vector<DecodeRegion *> & decodeRegions);
+			const vector<DecodeRegion *> & decodeRegions);
+	void imageShowRegions(Dib & dib, const vector<DecodeRegion *> & decodeRegions);
 
 protected:
 	bool decode(DmtxDecode *& dec, unsigned attempts,

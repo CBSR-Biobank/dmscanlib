@@ -41,7 +41,7 @@ void configLogging(unsigned level) {
 /*
  * Loads the INI file if it is present.
  */
-short slIsTwainAvailable() {
+int slIsTwainAvailable() {
 	ImageGrabber ig;
 	if (ig.twainAvailable()) {
 		return SC_SUCCESS;
@@ -49,7 +49,7 @@ short slIsTwainAvailable() {
 	return SC_TWAIN_UAVAIL;
 }
 
-short slSelectSourceAsDefault() {
+int slSelectSourceAsDefault() {
 	ImageGrabber ig;
 	if (ig.selectSourceAsDefault()) {
 		return SC_SUCCESS;
@@ -57,8 +57,8 @@ short slSelectSourceAsDefault() {
 	return SC_FAIL;
 }
 
-short slScanImage(char * filename, double left, double top, double right,
-		double bottom) {
+int slScanImage(unsigned dpi, double left, double top, double right,
+		double bottom, char * filename) {
 	string err;
 	ImageGrabber ig;
 
@@ -67,7 +67,7 @@ short slScanImage(char * filename, double left, double top, double right,
 	}
 
 	configLogging(5);
-	HANDLE h = ig.acquireImage(left, top, right, bottom);
+	HANDLE h = ig.acquireImage(dpi, left, top, right, bottom);
 	if (h == NULL) {
 		return SC_FAIL;
 	}
@@ -78,7 +78,7 @@ short slScanImage(char * filename, double left, double top, double right,
 	return SC_SUCCESS;
 }
 
-short slConfigPlateFrame(unsigned short plateNum, double left,
+int slConfigPlateFrame(unsigned plateNum, double left,
 		double top,	double right, double bottom) {
 	Config config(INI_FILE_NAME);
 	if (!config.savePlateFrame(plateNum, left, top, right, bottom)) {
@@ -87,7 +87,11 @@ short slConfigPlateFrame(unsigned short plateNum, double left,
 	return SC_SUCCESS;
 }
 
-short slCalibrateToPlate(unsigned short plateNum) {
+int slCalibrateToPlate(unsigned dpi, unsigned plateNum) {
+	if ((dpi != 300) && (dpi != 400) && (dpi != 600)) {
+		return SC_INVALID_DPI;
+	}
+
 	if (plateNum > 4) {
 		UA_DOUT(1, 1, "plate number is invalid: " << plateNum);
 		return SC_FAIL;
@@ -112,18 +116,19 @@ short slCalibrateToPlate(unsigned short plateNum) {
 	RgbQuad quad(255, 0, 0);
 
 	ImageGrabber ig;
-	HANDLE h = ig.acquireImage(f->x0, f->y0, f->x1, f->y1);
+	HANDLE h = ig.acquireImage(dpi, f->x0, f->y0, f->x1, f->y1);
 	if (h == NULL) {
 		UA_DOUT(1, 1, "could not aquire plate image: " << plateNum);
 		return SC_FAIL;
 	}
 	dib.readFromHandle(h);
-	dib.writeToFile("out.bmp");
+	dib.writeToFile("scanned.bmp");
 	Dib processedDib;
 	processedDib.gaussianBlur(dib);
 	processedDib.unsharp(dib);
-	//processedDib.expandColours(dib, 150, 220);
+	processedDib.expandColours(150, 220);
 	processedDib.writeToFile("processed.bmp");
+
 	if (!calibrator.processImage(processedDib)) {
 		return SC_CALIBRATOR_NO_REGIONS;
 	}
@@ -135,7 +140,7 @@ short slCalibrateToPlate(unsigned short plateNum) {
 		return SC_CALIBRATOR_ERROR;
 	}
 
-	if (!config.setRegions(plateNum, rowBins, colBins, calibrator.getMaxCol())) {
+	if (!config.setRegions(plateNum, dpi, rowBins, colBins)) {
 		return SC_INI_FILE_ERROR;
 	}
 
@@ -152,7 +157,11 @@ short slCalibrateToPlate(unsigned short plateNum) {
 	return SC_SUCCESS;
 }
 
-short slDecodePlate(unsigned short plateNum) {
+int slDecodePlate(unsigned dpi, unsigned plateNum) {
+	if ((dpi != 300) && (dpi != 400) && (dpi != 600)) {
+		return SC_INVALID_DPI;
+	}
+
 	slTime starttime, endtime, difftime;
 
     Util::getTime(starttime);
@@ -179,26 +188,30 @@ short slDecodePlate(unsigned short plateNum) {
 	Dib dib, hdib;
 
 	ImageGrabber ig;
-	HANDLE h = ig.acquireImage(f->x0, f->y0, f->x1, f->y1);
+	HANDLE h = ig.acquireImage(dpi, f->x0, f->y0, f->x1, f->y1);
 	if (h == NULL) {
 		UA_DOUT(1, 1, "could not acquire plate image: " << plateNum);
 		return SC_FAIL;
 	}
 	dib.readFromHandle(h);
-	dib.writeToFile("scanned.bmp");
 	hdib.histEqualization(dib);
 	hdib.writeToFile("histeq.bmp");
 	Dib processedDib;
 	processedDib.gaussianBlur(dib);
 	processedDib.unsharp(dib);
-	processedDib.expandColours(dib, 150, 230);
+	processedDib.expandColours(150, 230);
 	processedDib.writeToFile("processed.bmp");
-	decoder.processImageRegions(plateNum, processedDib, config.getRegions());
+	dib.writeToFile("scanned.bmp");
+
+	const vector<DecodeRegion *> & regions = config.getRegions(plateNum, dpi);
+
+	decoder.processImageRegions(plateNum, processedDib, regions);
+	//decoder.processImageRegions(plateNum, dib, config.getRegions());
 	config.saveDecodeResults(plateNum);
 
 	Dib markedDib(dib);
 
-	decoder.imageShowRegions(markedDib, config.getRegions());
+	decoder.imageShowRegions(markedDib, regions);
 	markedDib.writeToFile("decoded.bmp");
 	ig.freeImage(h);
 

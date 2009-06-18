@@ -87,7 +87,8 @@ public:
 	void gaussianBlur(Dib & src);
 	void blur(Dib & src);
 	void unsharp(Dib & src);
-	void expandColours(Dib & src, int start, int end);
+	void expandColours(int start, int end);
+	unsigned getDpi();
 
 private:
 	static const double UNSHARP_RAD;

@@ -18,8 +18,6 @@
 #include <sys/time.h>
 #endif
 
-
-
 bool Util::strToNum(const char * str, int & number, unsigned base) {
 	char  * end = 0;
 	number = strtoul(str, &end, base);

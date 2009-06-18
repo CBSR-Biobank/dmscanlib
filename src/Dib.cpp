@@ -686,6 +686,7 @@ void Dib::line(unsigned x0, unsigned y0, unsigned x1, unsigned y1, RgbQuad & qua
 }
 
 void Dib::gaussianBlur(Dib & src) {
+	UA_ASSERT_NOT_NULL(src.infoHeader);
 	copyInternals(src);
 
 	unsigned char * tmpPixels = new unsigned char[infoHeader->imageSize];
@@ -759,6 +760,7 @@ void Dib::gaussianBlur(Dib & src) {
  * Based on Adam Milstein's code
  */
 void Dib::blur(Dib & src) {
+	UA_ASSERT_NOT_NULL(src.infoHeader);
 	double radius = 5.0; //UNSHARP_RAD;
 	int *m_FilterVector;
 	int m_Denominator;
@@ -938,6 +940,7 @@ void Dib::blur(Dib & src) {
 }
 
 void Dib::unsharp(Dib & src) {
+	UA_ASSERT_NOT_NULL(src.infoHeader);
 	double depth = UNSHARP_DEPTH;
 	int denom;
 
@@ -984,22 +987,20 @@ void Dib::unsharp(Dib & src) {
 	}
 }
 
-void Dib::expandColours(Dib & src, int start, int end) {
-	unsigned width = src.infoHeader->width;
-	unsigned height = src.infoHeader->height;
+void Dib::expandColours(int start, int end) {
+	UA_ASSERT_NOT_NULL(infoHeader);
+
 	double cDoubleWidth = end - start;
-	bool isRgb = (src.infoHeader->bitCount == 24) || (src.infoHeader->bitCount == 32);
+	bool isRgb = (infoHeader->bitCount == 24) || (infoHeader->bitCount == 32);
 	int nval;
 
-	copyInternals(src);
-
 	unsigned Y, X;
-	unsigned char * srcRowPtr = src.pixels, * destRowPtr = pixels;
+	unsigned char * rowPtr = pixels;
 	unsigned char * pixel, pixelValue;
 
-	for (Y = 0; Y <= height - 1; ++Y, srcRowPtr += rowBytes, destRowPtr += rowBytes)  {
-		pixel = srcRowPtr;
-		for (X = 0; X <= width - 1 ; ++X, pixel += bytesPerPixel)  {
+	for (Y = 0; Y <= infoHeader->height - 1; ++Y, rowPtr += rowBytes)  {
+		pixel = rowPtr;
+		for (X = 0; X <= infoHeader->width - 1 ; ++X, pixel += bytesPerPixel)  {
 			if (isRgb) {
 				pixelValue = static_cast<unsigned char>(
 						0.3 * pixel[0] + 0.59 * pixel[1] + 0.11 * pixel[2]);
@@ -1011,8 +1012,6 @@ void Dib::expandColours(Dib & src, int start, int end) {
 			if (nval > 255) nval = 255;
 			if (nval < 0) nval = 0;
 
-			pixel = destRowPtr + X * bytesPerPixel;
-
 			pixel[0] = nval;
 			if ((infoHeader->bitCount == 24) || (infoHeader->bitCount == 32)) {
 				pixel[1] = pixel[2] = pixel[0];
@@ -1022,3 +1021,7 @@ void Dib::expandColours(Dib & src, int start, int end) {
 
 }
 
+unsigned Dib::getDpi() {
+	// 1 inch = 0.0254 meters
+	return static_cast<unsigned>(infoHeader->hPixelsPerMeter * 0.0254 + 0.5);
+}

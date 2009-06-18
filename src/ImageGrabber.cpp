@@ -132,7 +132,7 @@ void ImageGrabber::setFloatToIntPair(const double f, short & whole,
  *
  *	Grab an image from the twain source and convert it to the dmtxImage format
  */
-HANDLE ImageGrabber::acquireImage(double left, double top,
+HANDLE ImageGrabber::acquireImage(unsigned dpi, double left, double top,
 		double right, double bottom) {
 	UA_ASSERT_NOT_NULL(g_hLib);
 
@@ -212,8 +212,8 @@ HANDLE ImageGrabber::acquireImage(double left, double top,
 
 		if (event.TWMessage == MSG_XFERREADY) {
 			TW_IMAGEINFO ii;
-			setCapability(ICAP_XRESOLUTION, DPI, FALSE);
-			setCapability(ICAP_YRESOLUTION, DPI, FALSE);
+			setCapability(ICAP_XRESOLUTION, dpi, FALSE);
+			setCapability(ICAP_YRESOLUTION, dpi, FALSE);
 			setCapability(ICAP_PIXELTYPE, /* TWPT_GRAY */ TWPT_RGB, FALSE);
 			setCapability(ICAP_BITDEPTH, 8, FALSE);
 			setCapability(ICAP_CONTRAST, SCAN_CONTRAST, FALSE);
@@ -273,10 +273,10 @@ HANDLE ImageGrabber::acquireImage(double left, double top,
 	return (HANDLE) handle;
 }
 
-DmtxImage* ImageGrabber::acquireDmtxImage(){
+DmtxImage* ImageGrabber::acquireDmtxImage(unsigned dpi){
 	UA_ASSERT_NOT_NULL(g_hLib);
 
-	HANDLE h = acquireImage(0, 0, 0, 0);
+	HANDLE h = acquireImage(dpi, 0, 0, 0, 0);
 	if (h == NULL) {
 		return NULL;
 	}

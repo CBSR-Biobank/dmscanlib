@@ -54,7 +54,7 @@ void Decoder::findSingleBarcode(DmtxImage & image, vector<BarcodeInfo *>  & barc
 			<< dmtxImageGetProp(&image, DmtxPropRowSizeBytes));
 
 	dec = dmtxDecodeCreate(&image, 1);
-	assert(dec != NULL);
+	UA_ASSERT_NOT_NULL(dec);
 
 	// save image to a PNM file
 #if 0
@@ -78,16 +78,16 @@ void Decoder::findSingleBarcode(DmtxImage & image, vector<BarcodeInfo *>  & barc
 	UA_DOUT(3, 5, "decode 1st attempt ");
 
 	if (!decode(dec, 4, barcodeInfos)) {
-		DmtxDecode * dec2 = dmtxDecodeCreate(&image, 1);
-		assert(dec2 != NULL);
+		dmtxDecodeDestroy(&dec);
+		dec = dmtxDecodeCreate(&image, 1);
+		UA_ASSERT_NOT_NULL(dec);
 
-		dmtxDecodeSetProp(dec2, DmtxPropScanGap, 0);
-		dmtxDecodeSetProp(dec2, DmtxPropSquareDevn, 10);
-		dmtxDecodeSetProp(dec2, DmtxPropEdgeThresh, 10);
+		dmtxDecodeSetProp(dec, DmtxPropScanGap, 0);
+		dmtxDecodeSetProp(dec, DmtxPropSquareDevn, 10);
+		dmtxDecodeSetProp(dec, DmtxPropEdgeThresh, 10);
 
 		UA_DOUT(3, 5, "could not retrieve message from region, 2nd attempt ");
-		decode(dec2, 4, barcodeInfos);
-		dmtxDecodeDestroy(&dec2);
+		decode(dec, 4, barcodeInfos);
 	}
 
 	dmtxDecodeDestroy(&dec);
@@ -191,7 +191,7 @@ DmtxImage * Decoder::createDmtxImageFromDib(Dib & dib) {
  * Should only be called after regions are loaded from INI file.
  */
 void Decoder::processImageRegions(unsigned plateNum, Dib & dib,
-		vector<DecodeRegion *> & decodeRegions) {
+		const vector<DecodeRegion *> & decodeRegions) {
 	if (decodeRegions.size() == 0) {
 		UA_WARN("no decoded regions; exiting.");
 		return;
@@ -217,7 +217,7 @@ void Decoder::processImageRegions(unsigned plateNum, Dib & dib,
 	}
 }
 
-void Decoder::imageShowRegions(Dib & dib, vector<DecodeRegion *> & decodeRegions) {
+void Decoder::imageShowRegions(Dib & dib, const vector<DecodeRegion *> & decodeRegions) {
 	UA_DOUT(4, 3, "marking tags ");
 
 	RgbQuad quadRed(255, 0, 0);

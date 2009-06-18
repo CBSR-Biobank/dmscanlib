@@ -32,6 +32,7 @@ const char * USAGE_FMT =
 	"\n"
 	"  -c, --calibrate NUM  Calibrates decode regions for plate NUM.\n"
 	"  -d, --decode NUM     Decodes the 2D barcode for plate NUM.\n"
+	"  --dpi NUM            Dots per inch to use with scanner.\n"
 	"  -i, --input FILE     Use the specified DIB image file instead of scanner.\n"
 	"  --debug NUM          Sets debugging level. Debugging messages are output "
 	"                       to stdout. Only when built UA_HAVE_DEBUG on.\n";
@@ -43,6 +44,7 @@ CSimpleOptA::SOption longOptions[] = {
 		{ 'd', "--decode",    SO_REQ_SEP },
 		{ 'd', "-d",          SO_REQ_SEP },
 		{ 200, "--debug",     SO_REQ_SEP },
+		{ 201, "--dpi",       SO_REQ_SEP },
 		{ 'i', "--input",     SO_REQ_SEP },
 		{ 'i', "-i",          SO_REQ_SEP },
 		SO_END_OF_OPTIONS
@@ -58,7 +60,8 @@ CSimpleOptA::SOption longOptions[] = {
 struct Options {
 	bool calibrate;
 	bool decode;
-	int  debugLevel;
+	unsigned debugLevel;
+	unsigned dpi;
 	char * filename;
 	bool help;
 	unsigned plateNum;
@@ -69,6 +72,7 @@ struct Options {
 		filename = NULL;
 		help = false;
 		debugLevel = 0;
+		dpi = 300;
 		plateNum = 0;
 	}
 };
@@ -111,7 +115,7 @@ Application::Application(int argc, char ** argv) {
 		}
 		else {
 #ifdef WIN32
-			slCalibrateToPlate(options.plateNum);
+			slCalibrateToPlate(options.dpi, options.plateNum);
 #endif
 		}
 	}
@@ -121,7 +125,7 @@ Application::Application(int argc, char ** argv) {
 		}
 		else {
 #ifdef WIN32
-			slDecodePlate(options.plateNum);
+			slDecodePlate(options.dpi, options.plateNum);
 #endif
 		}
 	}
@@ -174,11 +178,20 @@ bool Application::getCmdOptions(int argc, char ** argv) {
 			case 200:
 				options.debugLevel = strtoul((const char *)args.OptionArg(), &end, 10);
 				if (*end != 0) {
-					cerr << "invalid value for plate number: "
+					cerr << "invalid value for debug level: "
 						 << args.OptionArg() << endl;
 					exit(1);
 				}
 				ua::Logger::Instance().levelSet(ua::LoggerImpl::allSubSys_m, options.debugLevel);
+				break;
+
+			case 201:
+				options.dpi = strtoul((const char *)args.OptionArg(), &end, 10);
+				if (*end != 0) {
+					cerr << "invalid value for dpi: "
+						 << args.OptionArg() << endl;
+					exit(1);
+				}
 				break;
 
 			default:
@@ -212,8 +225,8 @@ void Application::calibrateToImage(char * filename) {
 		return;
 	}
 
-	if (!config.setRegions(1, calibrator.getRowBinRegions(),
-			calibrator.getColBinRegions(), calibrator.getMaxCol())) {
+	if (!config.setRegions(1, dib.getDpi(), calibrator.getRowBinRegions(),
+			calibrator.getColBinRegions())) {
 		cout << "bad result from config" << endl;
 		return;
 	}
@@ -236,7 +249,7 @@ void Application::decodeImage(char * filename) {
 
 	processedDib.gaussianBlur(hdib);
 	processedDib.unsharp(hdib);
-	//processedDib.expandColours(dib, 150, 220);
+	//processedDib.expandColours(150, 220);
 	processedDib.writeToFile("processed.bmp");
 	//exit(0);
 
@@ -246,8 +259,8 @@ void Application::decodeImage(char * filename) {
 		cout << "bad result from config" << endl;
 		return;
 	}
-	decoder.processImageRegions(1, processedDib, config.getRegions());
-	decoder.imageShowRegions(markedDib, config.getRegions());
+
+	decoder.imageShowRegions(markedDib, config.getRegions(1, dib.getDpi()));
 	markedDib.writeToFile("decoded.bmp");
 	config.saveDecodeResults(1);
 }
