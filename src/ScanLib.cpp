@@ -105,25 +105,25 @@ int slCalibrateToPlate(unsigned dpi, unsigned plateNum) {
 
 	Config config(INI_FILE_NAME);
 	ScFrame * f = NULL;
+	Calibrator calibrator;
+	Dib dib;
+	Dib processedDib;
+	RgbQuad quad(255, 0, 0);
+	ImageGrabber ig;
+	HANDLE h;
 
 	config.parseFrames();
 	if (!config.getPlateFrame(plateNum, &f)) {
 		return SC_INI_FILE_ERROR;
 	}
 
-	Calibrator calibrator;
-	Dib dib;
-	RgbQuad quad(255, 0, 0);
-
-	ImageGrabber ig;
-	HANDLE h = ig.acquireImage(dpi, f->x0, f->y0, f->x1, f->y1);
+	h = ig.acquireImage(dpi, f->x0, f->y0, f->x1, f->y1);
 	if (h == NULL) {
 		UA_DOUT(1, 1, "could not aquire plate image: " << plateNum);
 		return SC_FAIL;
 	}
 	dib.readFromHandle(h);
 	dib.writeToFile("scanned.bmp");
-	Dib processedDib;
 	processedDib.gaussianBlur(dib);
 	processedDib.unsharp(dib);
 	processedDib.expandColours(150, 220);
@@ -179,6 +179,11 @@ int slDecodePlate(unsigned dpi, unsigned plateNum) {
 
 	Config config(INI_FILE_NAME);
 	ScFrame * f;
+	Decoder decoder;
+	Dib dib, hdib;
+	Dib processedDib;
+	ImageGrabber ig;
+	HANDLE h;
 
 	config.parseFrames();
 	if (!config.getPlateFrame(plateNum, &f)) {
@@ -188,11 +193,7 @@ int slDecodePlate(unsigned dpi, unsigned plateNum) {
 		return SC_INI_FILE_ERROR;
 	}
 
-	Decoder decoder;
-	Dib dib, hdib;
-
-	ImageGrabber ig;
-	HANDLE h = ig.acquireImage(dpi, f->x0, f->y0, f->x1, f->y1);
+	h = ig.acquireImage(dpi, f->x0, f->y0, f->x1, f->y1);
 	if (h == NULL) {
 		UA_DOUT(1, 1, "could not acquire plate image: " << plateNum);
 		return SC_FAIL;
@@ -200,7 +201,6 @@ int slDecodePlate(unsigned dpi, unsigned plateNum) {
 	dib.readFromHandle(h);
 	hdib.histEqualization(dib);
 	hdib.writeToFile("histeq.bmp");
-	Dib processedDib;
 	processedDib.gaussianBlur(dib);
 	processedDib.unsharp(dib);
 	processedDib.expandColours(150, 230);
