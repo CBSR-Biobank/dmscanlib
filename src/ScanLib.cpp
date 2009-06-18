@@ -92,9 +92,8 @@ int slCalibrateToPlate(unsigned dpi, unsigned plateNum) {
 		return SC_INVALID_DPI;
 	}
 
-	if (plateNum > 4) {
-		UA_DOUT(1, 1, "plate number is invalid: " << plateNum);
-		return SC_FAIL;
+	if ((plateNum == 0) || (plateNum > 4)) {
+		return SC_INVALID_PLATE_NUM;
 	}
 
 	slTime starttime, endtime, difftime;
@@ -160,6 +159,10 @@ int slCalibrateToPlate(unsigned dpi, unsigned plateNum) {
 int slDecodePlate(unsigned dpi, unsigned plateNum) {
 	if ((dpi != 300) && (dpi != 400) && (dpi != 600)) {
 		return SC_INVALID_DPI;
+	}
+
+	if ((plateNum == 0) || (plateNum > 4)) {
+		return SC_INVALID_PLATE_NUM;
 	}
 
 	slTime starttime, endtime, difftime;

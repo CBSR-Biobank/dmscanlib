@@ -58,6 +58,7 @@ const int SC_CALIBRATOR_NO_REGIONS = -3;
 const int SC_CALIBRATOR_ERROR      = -4;
 const int SC_INI_FILE_ERROR        = -5;
 const int SC_INVALID_DPI           = -6;
+const int SC_INVALID_PLATE_NUM     = -7;
 
 EXPORT int slIsTwainAvailable();
 
