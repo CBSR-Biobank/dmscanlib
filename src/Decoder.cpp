@@ -171,10 +171,12 @@ void Decoder::showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg) {
  *
  */
 DmtxImage * Decoder::createDmtxImageFromDib(Dib & dib) {
-	int pack = DmtxPack24bppRGB;
+	int pack = DmtxPackCustom;
 
-	if (dib.getBitsPerPixel() == 32) {
-		pack = DmtxPack32bppXRGB;
+	switch(dib.getBitsPerPixel()) {
+		case  8: pack = DmtxPack8bppK;     break;
+		case 24: pack = DmtxPack24bppRGB;  break;
+		case 32: pack = DmtxPack32bppXRGB; break;
 	}
 
 	// create dmtxImage from the dib

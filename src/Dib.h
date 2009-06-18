@@ -38,6 +38,9 @@ struct BitmapInfoHeader{
 /* Colour palette
  */
 struct RgbQuad {
+	RgbQuad() {
+		rgbRed = rgbGreen = rgbBlue = 0;
+	}
 	RgbQuad(unsigned char r, unsigned char g, unsigned char b) {
 		rgbRed = r; rgbGreen = g; rgbBlue = b;
 	}
@@ -95,15 +98,19 @@ private:
 
 	BitmapFileHeader * fileHeader;
 	BitmapInfoHeader * infoHeader;
+	RgbQuad * colorPalette;
 	unsigned bytesPerPixel;
 	unsigned rowBytes;
 	unsigned rowPaddingBytes;
 	unsigned char * pixels;
 	bool isAllocated;
 
-	void copyInternals(Dib & src);
-
 	unsigned idx, dupe; // used by line drawing
+
+	void copyInternals(Dib & src);
+	unsigned getPaletteSize();
+	void setPalette();
+	void setPalette(RgbQuad * palette);
 
 };
 

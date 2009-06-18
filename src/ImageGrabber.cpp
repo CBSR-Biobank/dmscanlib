@@ -214,7 +214,7 @@ HANDLE ImageGrabber::acquireImage(double left, double top,
 			TW_IMAGEINFO ii;
 			setCapability(ICAP_XRESOLUTION, DPI, FALSE);
 			setCapability(ICAP_YRESOLUTION, DPI, FALSE);
-			setCapability(ICAP_PIXELTYPE, TWPT_GRAY /* TWPT_RGB */, FALSE);
+			setCapability(ICAP_PIXELTYPE, /* TWPT_GRAY */ TWPT_RGB, FALSE);
 			setCapability(ICAP_BITDEPTH, 8, FALSE);
 			setCapability(ICAP_CONTRAST, SCAN_CONTRAST, FALSE);
 			setCapability(ICAP_BRIGHTNESS, SCAN_BRIGHTNESS, FALSE);

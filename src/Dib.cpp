@@ -29,11 +29,13 @@ const unsigned Dib::GAUSS_FACTORS[GAUSS_WIDTH] = {
 const unsigned Dib::GAUSS_SUM = 2048;
 
 Dib::Dib() :
-	fileHeader(NULL), infoHeader(NULL), pixels(NULL), isAllocated(false) {
+	fileHeader(NULL), infoHeader(NULL), colorPalette(NULL), pixels(NULL),
+	isAllocated(false) {
 }
 
 Dib::Dib(Dib & src) :
-	fileHeader(NULL), infoHeader(NULL), pixels(NULL), isAllocated(false) {
+	fileHeader(NULL), infoHeader(NULL), colorPalette(NULL), pixels(NULL),
+	isAllocated(false) {
 	copyInternals(src);
 	memcpy(pixels, src.pixels, infoHeader->imageSize);
 }
@@ -41,6 +43,8 @@ Dib::Dib(Dib & src) :
 Dib::Dib(unsigned rows, unsigned cols, unsigned colorBits)  :
 	fileHeader(NULL) {
 	bytesPerPixel = colorBits >> 3;
+
+	unsigned paletteSize = getPaletteSize();
 
 	infoHeader = new BitmapInfoHeader;
 	infoHeader->size            = 40;
@@ -51,8 +55,13 @@ Dib::Dib(unsigned rows, unsigned cols, unsigned colorBits)  :
 	infoHeader->compression     = 0;
 	infoHeader->hPixelsPerMeter = 0;
 	infoHeader->vPixelsPerMeter = 0;
-	infoHeader->numColors       = 0;
+	infoHeader->numColors       = paletteSize;
 	infoHeader->numColorsImp    = 0;
+
+	if (paletteSize > 0) {
+		colorPalette = new RgbQuad[paletteSize];
+		setPalette();
+	}
 
 	rowBytes = ((infoHeader->width * infoHeader->bitCount + 31) >> 5) << 2;
 	rowPaddingBytes = rowBytes - (infoHeader->width * bytesPerPixel);
@@ -80,6 +89,25 @@ Dib::~Dib() {
 	}
 }
 
+void Dib::setPalette() {
+	unsigned paletteSize = getPaletteSize();
+	if (paletteSize == 0) return;
+
+	UA_ASSERT_NOT_NULL(colorPalette);
+	for (unsigned i = 0; i < paletteSize; ++i) {
+		colorPalette[i].rgbRed = i;
+		colorPalette[i].rgbGreen = i;
+		colorPalette[i].rgbBlue = i;
+	}
+}
+
+void Dib::setPalette(RgbQuad * palette) {
+	unsigned paletteSize = getPaletteSize();
+	if (paletteSize == 0) return;
+	UA_ASSERT_NOT_NULL(colorPalette);
+	memcpy(colorPalette, palette, paletteSize * sizeof(RgbQuad));
+}
+
 void Dib::copyInternals(Dib & src) {
 	if ((fileHeader != NULL) && (src.fileHeader != NULL)) {
 		*fileHeader = *src.fileHeader;
@@ -88,15 +116,32 @@ void Dib::copyInternals(Dib & src) {
 		infoHeader = new BitmapInfoHeader;
 	}
 	*infoHeader = *src.infoHeader;
+
+	unsigned paletteSize = getPaletteSize();
+	if (paletteSize > 0) {
+		colorPalette = new RgbQuad[paletteSize];
+		setPalette(src.colorPalette);
+	}
+
 	if (pixels == NULL) {
 		isAllocated = true;
 		pixels = new unsigned char[infoHeader->imageSize];
 		memset(pixels, 255, infoHeader->imageSize);
 	}
-
 	bytesPerPixel = src.bytesPerPixel;
 	rowBytes = src.rowBytes;
 	rowPaddingBytes = src.rowPaddingBytes;
+}
+
+unsigned Dib::getPaletteSize() {
+	UA_ASSERT_NOT_NULL(infoHeader);
+	switch (infoHeader->bitCount) {
+	case 1: return 2;
+	case 4: return 16;
+	case 8: return 256;
+	default: return 0;
+	}
+
 }
 
 #ifdef WIN32
@@ -117,7 +162,15 @@ void Dib::readFromHandle(HANDLE handle) {
 	infoHeader->numColors       = dibHeaderPtr->biClrUsed;
 	infoHeader->numColorsImp    = dibHeaderPtr->biClrImportant;
 
-	pixels = (unsigned char *) dibHeaderPtr + sizeof(BITMAPINFOHEADER);
+	unsigned paletteSize = getPaletteSize();
+	if (paletteSize > 0) {
+		colorPalette = reinterpret_cast<RgbQuad *>(
+				reinterpret_cast<unsigned char *>(dibHeaderPtr)
+				+ sizeof(BITMAPINFOHEADER));
+	}
+
+	pixels = reinterpret_cast<unsigned char *>(dibHeaderPtr) + sizeof(BITMAPINFOHEADER)
+		+ paletteSize * sizeof(RgbQuad);
 
 	bytesPerPixel = infoHeader->bitCount >> 3;
 	rowBytes = ((infoHeader->width * infoHeader->bitCount + 31) >> 5) << 2;
@@ -143,9 +196,12 @@ void Dib::readFromFile(const char * filename) {
 
 	unsigned char fileHeaderRaw[0xE];
 	unsigned char infoHeaderRaw[0x28];
+	unsigned r;
 
-	fread(fileHeaderRaw, sizeof(unsigned char), sizeof(fileHeaderRaw), fh);
-	fread(infoHeaderRaw, sizeof(unsigned char), sizeof(infoHeaderRaw), fh);
+	r = fread(fileHeaderRaw, sizeof(unsigned char), sizeof(fileHeaderRaw), fh);
+	UA_ASSERT(r = sizeof(fileHeaderRaw));
+	r = fread(infoHeaderRaw, sizeof(unsigned char), sizeof(infoHeaderRaw), fh);
+	UA_ASSERT(r = sizeof(infoHeaderRaw));
 
 	fileHeader->type      = *(unsigned short *)&fileHeaderRaw[0];
 	fileHeader->size      = *(unsigned *)&fileHeaderRaw[2];
@@ -165,13 +221,21 @@ void Dib::readFromFile(const char * filename) {
 	infoHeader->numColors       = *(unsigned *)&infoHeaderRaw[0x2E - 0xE];
 	infoHeader->numColorsImp    = *(unsigned *)&infoHeaderRaw[0x32 - 0xE];
 
+	unsigned paletteSize = getPaletteSize();
+	if (paletteSize > 0) {
+		colorPalette = new RgbQuad[paletteSize];
+		unsigned paletteBytes = paletteSize * sizeof(RgbQuad);
+		r = fread(colorPalette, sizeof(unsigned char), paletteBytes, fh);
+		UA_ASSERT(r == paletteBytes);
+	}
+
 	bytesPerPixel = infoHeader->bitCount >> 3;
 	rowBytes = ((infoHeader->width * infoHeader->bitCount + 31) >> 5) << 2;
 	rowPaddingBytes = rowBytes - (infoHeader->width * bytesPerPixel);
 
 	isAllocated = true;
 	pixels = new unsigned char[infoHeader->imageSize];
-	unsigned r = fread(pixels, sizeof(unsigned char), infoHeader->imageSize, fh);
+	r = fread(pixels, sizeof(unsigned char), infoHeader->imageSize, fh);
 	UA_ASSERT(r = infoHeader->imageSize);
 	fclose(fh);
 }
@@ -182,6 +246,8 @@ void Dib::writeToFile(const char * filename) {
 
 	unsigned char fileHeaderRaw[0xE];
 	unsigned char infoHeaderRaw[0x28];
+	unsigned paletteSize = getPaletteSize();
+	unsigned paletteBytes = paletteSize * sizeof(RgbQuad);
 
 	if (fileHeader != NULL) {
 		*(unsigned short *)&fileHeaderRaw[0] = fileHeader->type;
@@ -193,10 +259,10 @@ void Dib::writeToFile(const char * filename) {
 	else {
 		*(unsigned short *)&fileHeaderRaw[0] = 0x4D42;
 		*(unsigned *)&fileHeaderRaw[2]       =
-			infoHeader->imageSize + sizeof(fileHeaderRaw) + sizeof(infoHeaderRaw);
+			infoHeader->imageSize + sizeof(fileHeaderRaw) + sizeof(infoHeaderRaw) + paletteBytes;
 		*(unsigned short *)&fileHeaderRaw[6] = 0;
 		*(unsigned short *)&fileHeaderRaw[8] = 0;
-		*(unsigned *)&fileHeaderRaw[0xA]     = 54;
+		*(unsigned *)&fileHeaderRaw[0xA]     = sizeof(fileHeaderRaw) + sizeof(infoHeaderRaw) + paletteBytes;
 	}
 
 	*(unsigned *)&infoHeaderRaw[0]                = infoHeader->size;
@@ -219,6 +285,10 @@ void Dib::writeToFile(const char * filename) {
 	UA_ASSERT(r == sizeof(fileHeaderRaw));
 	r = fwrite(infoHeaderRaw, sizeof(unsigned char), sizeof(infoHeaderRaw), fh);
 	UA_ASSERT(r == sizeof(infoHeaderRaw));
+	if (paletteSize > 0) {
+		r = fwrite(colorPalette, sizeof(unsigned char), paletteBytes, fh);
+		UA_ASSERT(r == paletteBytes);
+	}
 	r = fwrite(pixels, sizeof(unsigned char), infoHeader->imageSize, fh);
 	UA_ASSERT(r == infoHeader->imageSize);
 	fclose(fh);
