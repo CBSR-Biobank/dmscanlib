@@ -8,6 +8,7 @@
 #include "Util.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <iostream>
 
 #if defined (WIN32) && ! defined(__MINGW32__)
