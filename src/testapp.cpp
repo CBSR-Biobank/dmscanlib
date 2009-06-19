@@ -30,11 +30,14 @@ const char * USAGE_FMT =
 	"Usage: %s [OPTIONS]\n"
 	"Test tool for scanlib library."
 	"\n"
-	"  -c, --calibrate NUM  Calibrates decode regions for plate NUM.\n"
-	"  -d, --decode NUM     Decodes the 2D barcode for plate NUM.\n"
+	"  -c, --calibrate NUM  Acquires an image from the scanner for plate NUM\n"
+	"                       and calibrates decode regions.\n"
+	"  -d, --decode NUM     Acquires an image from the scanner for plate NUM\n"
+	"                       and Decodes the 2D barcode.\n"
 	"  --dpi NUM            Dots per inch to use with scanner.\n"
+	"  -h, --help           Displays this text.\n"
 	"  -i, --input FILE     Use the specified DIB image file instead of scanner.\n"
-	"  --debug NUM          Sets debugging level. Debugging messages are output "
+	"  --debug NUM          Sets debugging level. Debugging messages are output\n"
 	"                       to stdout. Only when built UA_HAVE_DEBUG on.\n";
 
 /* Allowed command line arguments.  */
@@ -45,6 +48,8 @@ CSimpleOptA::SOption longOptions[] = {
 		{ 'd', "-d",          SO_REQ_SEP },
 		{ 200, "--debug",     SO_REQ_SEP },
 		{ 201, "--dpi",       SO_REQ_SEP },
+		{ 'h', "--help",      SO_NONE    },
+		{ 'h', "--h",         SO_NONE    },
 		{ 'i', "--input",     SO_REQ_SEP },
 		{ 'i', "-i",          SO_REQ_SEP },
 		SO_END_OF_OPTIONS
@@ -106,9 +111,10 @@ Application::Application(int argc, char ** argv) {
 
 	getCmdOptions(argc, argv);
 
-	/*
-	 * Loads the file if it is present.
-	 */
+	if (options.help) {
+		usage();
+		return;
+	}
 	if (options.calibrate) {
 		if (options.filename != NULL) {
 			calibrateToImage(options.filename);
