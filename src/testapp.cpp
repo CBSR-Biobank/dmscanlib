@@ -259,12 +259,18 @@ void Application::decodeImage(char * filename) {
 	processedDib.writeToFile("processed.bmp");
 	//exit(0);
 
-	Dib markedDib(dib);
-	Decoder decoder;
-	if (!config.parseRegions(1)) {
-		cout << "bad result from config" << endl;
-		return;
+ 	if (!config.parseRegions(1)) {
+           cerr << "could not parse regions for plate " << plateNum << endl;
+           return;
 	}
+	const vector<DecodeRegion *> & regions = config.getRegions(1, dib.getDpi());
+
+	Decoder decoder;
+	//decoder.processImageRegions(1, processedDib, regions);
+	decoder.processImageRegions(1, dib, regions);
+	config.saveDecodeResults(1);
+
+	Dib markedDib(dib);
 
 	decoder.imageShowRegions(markedDib, config.getRegions(1, dib.getDpi()));
 	markedDib.writeToFile("decoded.bmp");

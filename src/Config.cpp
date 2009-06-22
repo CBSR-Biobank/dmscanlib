@@ -162,7 +162,7 @@ bool Config::getPlateFrame(unsigned plate, ScFrame ** frame) {
 bool Config::setRegions(unsigned plateNum, unsigned dpi,
 		const vector<BinRegion *> & rowBinRegions,
 		const vector<BinRegion *> & colBinRegions) {
-	UA_ASSERTS((plateNum >0) && (plateNum >= MAX_PLATES),
+	UA_ASSERTS((plateNum >0) && (plateNum <= MAX_PLATES),
 			"parseRegions: invalid plate number: " << plateNum);
 
 	if (state != STATE_OK) {
@@ -213,16 +213,11 @@ bool Config::setRegions(unsigned plateNum, unsigned dpi,
 }
 
 bool Config::parseRegions(unsigned plateNum) {
-	UA_ASSERTS((plateNum >0) && (plateNum <= MAX_PLATES),
+	UA_ASSERTS((plateNum > 0) && (plateNum <= MAX_PLATES),
 			"parseRegions: invalid plate number: " << plateNum);
 
 	if (state != STATE_OK) {
 		UA_DOUT(5, 3, "parseRegions: invalid ini state: " << state);
-		return false;
-	}
-
-	if ((plateNum <= 0) && (plateNum >= MAX_PLATES)) {
-		UA_DOUT(5, 3, "parseRegions: invalid plate number: " << plateNum);
 		return false;
 	}
 

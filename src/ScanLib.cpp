@@ -189,7 +189,7 @@ int slDecodePlate(unsigned dpi, unsigned plateNum) {
 	if (!config.getPlateFrame(plateNum, &f)) {
 		return SC_INI_FILE_ERROR;
 	}
-	if (!config.parseRegions(plateNum)) {
+ 	if (!config.parseRegions(plateNum)) {
 		return SC_INI_FILE_ERROR;
 	}
 
