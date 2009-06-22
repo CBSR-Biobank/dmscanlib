@@ -260,7 +260,7 @@ void Application::decodeImage(char * filename) {
 	//exit(0);
 
  	if (!config.parseRegions(1)) {
-           cerr << "could not parse regions for plate " << plateNum << endl;
+           cerr << "could not parse regions for plate 1" << endl;
            return;
 	}
 	const vector<DecodeRegion *> & regions = config.getRegions(1, dib.getDpi());
