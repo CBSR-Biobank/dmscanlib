@@ -59,6 +59,7 @@ const int SC_CALIBRATOR_ERROR      = -4;
 const int SC_INI_FILE_ERROR        = -5;
 const int SC_INVALID_DPI           = -6;
 const int SC_INVALID_PLATE_NUM     = -7;
+const int SC_FILE_SAVE_ERROR       = -8;
 
 EXPORT int slIsTwainAvailable();
 
@@ -80,6 +81,10 @@ EXPORT int slScanImage(unsigned dpi, double left, double top,
 typedef int (*SL_SCANIMAGE) (char * filename, double x0, double y0,
 		double x1, double y1);
 
+EXPORT int slScanPlate(unsigned dpi, unsigned plateNum, char * filename);
+
+typedef int (*SL_SCANPLATE) (unsigned dpi, unsigned plateNum, char * filename);
+
 EXPORT int slCalibrateToPlate(unsigned dpi, unsigned plateNum);
 
 typedef int (*SL_CALIBRATETOPLATE) (unsigned plateNum);
@@ -87,6 +92,10 @@ typedef int (*SL_CALIBRATETOPLATE) (unsigned plateNum);
 EXPORT int slDecodePlate(unsigned dpi, unsigned plateNum);
 
 typedef int (*SL_DECODEPLATE) (unsigned plateNum);
+
+EXPORT int slDecodeImage(unsigned plateNum, char * filename);
+
+typedef int (*SL_DECODEIMAGE)(unsigned plateNum, char * filename);
 
 #ifdef __cplusplus
 }

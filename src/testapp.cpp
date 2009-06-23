@@ -52,6 +52,10 @@ CSimpleOptA::SOption longOptions[] = {
 		{ 'h', "--h",         SO_NONE    },
 		{ 'i', "--input",     SO_REQ_SEP },
 		{ 'i', "-i",          SO_REQ_SEP },
+		{ 'o', "--output",    SO_REQ_SEP },
+		{ 'o', "-o",          SO_REQ_SEP },
+		{ 's', "--scan",      SO_REQ_SEP },
+		{ 's', "-s",          SO_REQ_SEP },
 		SO_END_OF_OPTIONS
 };
 
@@ -67,18 +71,22 @@ struct Options {
 	bool decode;
 	unsigned debugLevel;
 	unsigned dpi;
-	char * filename;
+	char * infile;
 	bool help;
 	unsigned plateNum;
+	char * outfile;
+	bool scan;
 
 	Options() {
 		calibrate = false;
 		decode = false;
-		filename = NULL;
+		infile = NULL;
 		help = false;
 		debugLevel = 0;
 		dpi = 300;
 		plateNum = 0;
+		outfile = NULL;
+		scan = false;
 	}
 };
 
@@ -116,8 +124,8 @@ Application::Application(int argc, char ** argv) {
 		return;
 	}
 	if (options.calibrate) {
-		if (options.filename != NULL) {
-			calibrateToImage(options.filename);
+		if (options.infile != NULL) {
+			calibrateToImage(options.infile);
 		}
 		else {
 #ifdef WIN32
@@ -126,14 +134,19 @@ Application::Application(int argc, char ** argv) {
 		}
 	}
 	else if (options.decode) {
-		if (options.filename != NULL) {
-			decodeImage(options.filename);
+		if (options.infile != NULL) {
+			decodeImage(options.infile);
 		}
 		else {
 #ifdef WIN32
 			slDecodePlate(options.dpi, options.plateNum);
 #endif
 		}
+	}
+	else if (options.scan) {
+#ifdef WIN32
+		slScanPlate(options.dpi, options.plateNum, options.outfile);
+#endif
 	}
 }
 
@@ -178,7 +191,21 @@ bool Application::getCmdOptions(int argc, char ** argv) {
 				break;
 
 			case 'i':
-				options.filename = args.OptionArg();
+				options.infile = args.OptionArg();
+				break;
+
+			case 'o':
+				options.outfile = args.OptionArg();
+				break;
+
+			case 's':
+				options.scan = true;
+				options.plateNum = strtoul((const char *)args.OptionArg(), &end, 10);
+				if (*end != 0) {
+					cerr << "invalid value for plate number: "
+						 << args.OptionArg() << endl;
+					exit(1);
+				}
 				break;
 
 			case 200:
@@ -243,38 +270,7 @@ void Application::calibrateToImage(char * filename) {
 }
 
 void Application::decodeImage(char * filename) {
-	UA_ASSERT_NOT_NULL(filename);
-
-	Dib dib, processedDib, hdib;
-	Config config(INI_FILE_NAME);
-
-	dib.readFromFile(filename);
-
-	hdib.histEqualization(dib);
-	hdib.writeToFile("histeq.bmp");
-
-	processedDib.gaussianBlur(hdib);
-	processedDib.unsharp(hdib);
-	//processedDib.expandColours(150, 220);
-	processedDib.writeToFile("processed.bmp");
-	//exit(0);
-
- 	if (!config.parseRegions(1)) {
-           cerr << "could not parse regions for plate 1" << endl;
-           return;
-	}
-	const vector<DecodeRegion *> & regions = config.getRegions(1, dib.getDpi());
-
-	Decoder decoder;
-	//decoder.processImageRegions(1, processedDib, regions);
-	decoder.processImageRegions(1, dib, regions);
-	config.saveDecodeResults(1);
-
-	Dib markedDib(dib);
-
-	decoder.imageShowRegions(markedDib, config.getRegions(1, dib.getDpi()));
-	markedDib.writeToFile("decoded.bmp");
-	config.saveDecodeResults(1);
+	slDecodeImage(1, filename);
 }
 
 int main(int argc, char ** argv) {

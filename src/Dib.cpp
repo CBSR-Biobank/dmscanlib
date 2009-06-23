@@ -240,7 +240,7 @@ void Dib::readFromFile(const char * filename) {
 	fclose(fh);
 }
 
-void Dib::writeToFile(const char * filename) {
+bool Dib::writeToFile(const char * filename) {
 	UA_ASSERT_NOT_NULL(filename);
 	UA_ASSERT_NOT_NULL(pixels);
 
@@ -278,8 +278,10 @@ void Dib::writeToFile(const char * filename) {
 	*(unsigned *)&infoHeaderRaw[0x32 - 0xE]       = infoHeader->numColorsImp;
 
 	FILE * fh = fopen(filename, "wb"); // C4996
-	UA_ASSERTS(fh != NULL,
-			"could not open file for writing" << filename);
+	if (fh == NULL) {
+		// could not open file for writing
+		return false;
+	}
 
 	unsigned r = fwrite(fileHeaderRaw, sizeof(unsigned char), sizeof(fileHeaderRaw), fh);
 	UA_ASSERT(r == sizeof(fileHeaderRaw));
@@ -292,6 +294,7 @@ void Dib::writeToFile(const char * filename) {
 	r = fwrite(pixels, sizeof(unsigned char), infoHeader->imageSize, fh);
 	UA_ASSERT(r == infoHeader->imageSize);
 	fclose(fh);
+	return true;
 }
 
 unsigned Dib::getHeight() {
@@ -990,10 +993,9 @@ void Dib::unsharp(Dib & src) {
 void Dib::expandColours(int start, int end) {
 	UA_ASSERT_NOT_NULL(infoHeader);
 
-	double cDoubleWidth = end - start;
 	bool isRgb = (infoHeader->bitCount == 24) || (infoHeader->bitCount == 32);
+	double cDoubleWidth = end - start;
 	int nval;
-
 	unsigned Y, X;
 	unsigned char * rowPtr = pixels;
 	unsigned char * pixel, pixelValue;
@@ -1013,7 +1015,7 @@ void Dib::expandColours(int start, int end) {
 			if (nval < 0) nval = 0;
 
 			pixel[0] = nval;
-			if ((infoHeader->bitCount == 24) || (infoHeader->bitCount == 32)) {
+			if (isRgb) {
 				pixel[1] = pixel[2] = pixel[0];
 			}
 		}

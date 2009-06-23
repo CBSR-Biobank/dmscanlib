@@ -74,8 +74,8 @@ void Decoder::findSingleBarcode(DmtxImage & image, vector<BarcodeInfo *>  & barc
 
 	dmtxDecodeSetProp(dec, DmtxPropSymbolSize, DmtxSymbolSquareAuto);
 	dmtxDecodeSetProp(dec, DmtxPropScanGap, 0);
-	dmtxDecodeSetProp(dec, DmtxPropSquareDevn, 10);
-	dmtxDecodeSetProp(dec, DmtxPropEdgeThresh, 37);
+	dmtxDecodeSetProp(dec, DmtxPropSquareDevn, 5);
+	dmtxDecodeSetProp(dec, DmtxPropEdgeThresh, 50);
 	UA_DOUT(3, 5, "decode 1st attempt ");
 
 	if (!decode(dec, 4, barcodeInfos)) {
@@ -85,7 +85,7 @@ void Decoder::findSingleBarcode(DmtxImage & image, vector<BarcodeInfo *>  & barc
 
 		dmtxDecodeSetProp(dec, DmtxPropSymbolSize, DmtxSymbolSquareAuto);
 		dmtxDecodeSetProp(dec, DmtxPropScanGap, 0);
-		dmtxDecodeSetProp(dec, DmtxPropSquareDevn, 10);
+		dmtxDecodeSetProp(dec, DmtxPropSquareDevn, 5);
 		dmtxDecodeSetProp(dec, DmtxPropEdgeThresh, 10);
 
 		UA_DOUT(3, 5, "could not retrieve message from region, 2nd attempt ");

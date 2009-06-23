@@ -419,4 +419,3 @@ const vector<DecodeRegion *> & Config::getRegions(unsigned plateNum, unsigned dp
 	}
 	return regionInfos[plateNum].regions;
 }
-

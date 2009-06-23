@@ -31,6 +31,12 @@ using namespace std;
 
 const char * INI_FILE_NAME = "scanlib.ini";
 
+slTime starttime; // for debugging
+slTime endtime;
+slTime timediff;
+
+Config config(INI_FILE_NAME);
+
 void configLogging(unsigned level) {
 	ua::logstream.sink(ua::LoggerSinkStdout::Instance());
 	ua::LoggerSinkStdout::Instance().showHeader(true);
@@ -78,6 +84,44 @@ int slScanImage(unsigned dpi, double left, double top, double right,
 	return SC_SUCCESS;
 }
 
+int slScanPlate(unsigned dpi, unsigned plateNum, char * filename) {
+	if ((dpi != 300) && (dpi != 400) && (dpi != 600)) {
+		return SC_INVALID_DPI;
+	}
+
+	if ((plateNum == 0) || (plateNum > 4)) {
+		return SC_INVALID_PLATE_NUM;
+	}
+
+	ScFrame * f;
+	ImageGrabber ig;
+	HANDLE h;
+	Dib dib;
+
+	UA_DEBUG(
+		Util::getTime(starttime);
+	);
+
+	configLogging(5);
+
+	config.parseFrames();
+	if (!config.getPlateFrame(plateNum, &f)) {
+		return SC_INI_FILE_ERROR;
+	}
+
+	h = ig.acquireImage(dpi, f->x0, f->y0, f->x1, f->y1);
+	if (h == NULL) {
+		UA_DOUT(1, 1, "could not acquire plate image: " << plateNum);
+		return SC_FAIL;
+	}
+
+	dib.readFromHandle(h);
+	if (!dib.writeToFile(filename)) {
+		return SC_FILE_SAVE_ERROR;
+	}
+	return SC_SUCCESS;
+}
+
 int slConfigPlateFrame(unsigned plateNum, double left,
 		double top,	double right, double bottom) {
 	Config config(INI_FILE_NAME);
@@ -96,13 +140,6 @@ int slCalibrateToPlate(unsigned dpi, unsigned plateNum) {
 		return SC_INVALID_PLATE_NUM;
 	}
 
-	slTime starttime; // for debugging
-	UA_DEBUG(
-		Util::getTime(starttime);
-	);
-
-	configLogging(5);
-
 	Config config(INI_FILE_NAME);
 	ScFrame * f = NULL;
 	Calibrator calibrator;
@@ -111,6 +148,12 @@ int slCalibrateToPlate(unsigned dpi, unsigned plateNum) {
 	RgbQuad quad(255, 0, 0);
 	ImageGrabber ig;
 	HANDLE h;
+
+	UA_DEBUG(
+		Util::getTime(starttime);
+	);
+
+	configLogging(5);
 
 	config.parseFrames();
 	if (!config.getPlateFrame(plateNum, &f)) {
@@ -151,11 +194,43 @@ int slCalibrateToPlate(unsigned dpi, unsigned plateNum) {
 	ig.freeImage(h);
 
 	UA_DEBUG(
-		slTime endtime;
-		slTime difftime;
 		Util::getTime(endtime);
-		Util::difftiime(starttime, endtime, difftime);
-		UA_DOUT(1, 1, "slDecodePlate: time taken: " << difftime);
+		Util::difftiime(starttime, endtime, timediff);
+		UA_DOUT(1, 1, "slDecodePlate: time taken: " << timediff);
+	);
+
+	return SC_SUCCESS;
+}
+
+int slDecodeCommon(unsigned plateNum, Dib & dib) {
+	Decoder decoder;
+
+ 	if (!config.parseRegions(plateNum)) {
+		return SC_INI_FILE_ERROR;
+	}
+
+	//processedDib.gaussianBlur(dib);
+	//processedDib.unsharp(dib);
+	Dib processedDib(dib);
+	processedDib.expandColours(130, 230);
+	processedDib.writeToFile("processed.bmp");
+	dib.writeToFile("scanned.bmp");
+
+	const vector<DecodeRegion *> & regions = config.getRegions(plateNum, dib.getDpi());
+
+	decoder.processImageRegions(plateNum, processedDib, regions);
+	//decoder.processImageRegions(plateNum, dib, regions);
+	config.saveDecodeResults(plateNum);
+
+	Dib markedDib(dib);
+
+	decoder.imageShowRegions(markedDib, regions);
+	markedDib.writeToFile("decoded.bmp");
+
+	UA_DEBUG(
+		Util::getTime(endtime);
+		Util::difftiime(starttime, endtime, timediff);
+		UA_DOUT(1, 1, "slDecodePlate: time taken: " << timediff);
 	);
 
 	return SC_SUCCESS;
@@ -170,26 +245,20 @@ int slDecodePlate(unsigned dpi, unsigned plateNum) {
 		return SC_INVALID_PLATE_NUM;
 	}
 
-	slTime starttime; // for debugging
+	ScFrame * f;
+	ImageGrabber ig;
+	HANDLE h;
+	int result;
+	Dib dib;
+
 	UA_DEBUG(
 		Util::getTime(starttime);
 	);
 
 	configLogging(5);
 
-	Config config(INI_FILE_NAME);
-	ScFrame * f;
-	Decoder decoder;
-	Dib dib, hdib;
-	Dib processedDib;
-	ImageGrabber ig;
-	HANDLE h;
-
 	config.parseFrames();
 	if (!config.getPlateFrame(plateNum, &f)) {
-		return SC_INI_FILE_ERROR;
-	}
- 	if (!config.parseRegions(plateNum)) {
 		return SC_INI_FILE_ERROR;
 	}
 
@@ -198,34 +267,26 @@ int slDecodePlate(unsigned dpi, unsigned plateNum) {
 		UA_DOUT(1, 1, "could not acquire plate image: " << plateNum);
 		return SC_FAIL;
 	}
+
 	dib.readFromHandle(h);
-	hdib.histEqualization(dib);
-	hdib.writeToFile("histeq.bmp");
-	processedDib.gaussianBlur(dib);
-	processedDib.unsharp(dib);
-	processedDib.expandColours(150, 230);
-	processedDib.writeToFile("processed.bmp");
-	dib.writeToFile("scanned.bmp");
-
-	const vector<DecodeRegion *> & regions = config.getRegions(plateNum, dpi);
-
-	decoder.processImageRegions(plateNum, processedDib, regions);
-	//decoder.processImageRegions(plateNum, dib, config.getRegions());
-	config.saveDecodeResults(plateNum);
-
-	Dib markedDib(dib);
-
-	decoder.imageShowRegions(markedDib, regions);
-	markedDib.writeToFile("decoded.bmp");
+	result = slDecodeCommon(plateNum, dib);
 	ig.freeImage(h);
+	return result;
+}
+
+int slDecodeImage(unsigned plateNum, char * filename) {
+	if ((plateNum == 0) || (plateNum > 4)) {
+		return SC_INVALID_PLATE_NUM;
+	}
 
 	UA_DEBUG(
-		slTime endtime;
-		slTime difftime;
-		Util::getTime(endtime);
-		Util::difftiime(starttime, endtime, difftime);
-		UA_DOUT(1, 1, "slDecodePlate: time taken: " << difftime);
+		Util::getTime(starttime);
 	);
 
-	return SC_SUCCESS;
+	Dib dib;
+
+	configLogging(5);
+
+	dib.readFromFile(filename);
+	return slDecodeCommon(plateNum, dib);
 }

@@ -58,7 +58,7 @@ public:
 	Dib(char * filename);
 	~Dib();
 	void readFromFile(const char * filename) ;
-	void writeToFile(const char * filename);
+	bool writeToFile(const char * filename);
 
 #ifdef WIN32
 	void readFromHandle(HANDLE handle);
