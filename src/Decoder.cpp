@@ -72,6 +72,7 @@ void Decoder::findSingleBarcode(DmtxImage & image, vector<BarcodeInfo *>  & barc
 	);
 #endif
 
+	dmtxDecodeSetProp(dec, DmtxPropSymbolSize, DmtxSymbolSquareAuto);
 	dmtxDecodeSetProp(dec, DmtxPropScanGap, 0);
 	dmtxDecodeSetProp(dec, DmtxPropSquareDevn, 10);
 	dmtxDecodeSetProp(dec, DmtxPropEdgeThresh, 37);
@@ -82,6 +83,7 @@ void Decoder::findSingleBarcode(DmtxImage & image, vector<BarcodeInfo *>  & barc
 		dec = dmtxDecodeCreate(&image, 1);
 		UA_ASSERT_NOT_NULL(dec);
 
+		dmtxDecodeSetProp(dec, DmtxPropSymbolSize, DmtxSymbolSquareAuto);
 		dmtxDecodeSetProp(dec, DmtxPropScanGap, 0);
 		dmtxDecodeSetProp(dec, DmtxPropSquareDevn, 10);
 		dmtxDecodeSetProp(dec, DmtxPropEdgeThresh, 10);
