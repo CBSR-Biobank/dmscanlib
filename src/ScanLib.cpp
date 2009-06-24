@@ -35,8 +35,6 @@ slTime starttime; // for debugging
 slTime endtime;
 slTime timediff;
 
-Config config(INI_FILE_NAME);
-
 void configLogging(unsigned level) {
 	ua::logstream.sink(ua::LoggerSinkStdout::Instance());
 	ua::LoggerSinkStdout::Instance().showHeader(true);
@@ -63,17 +61,53 @@ int slSelectSourceAsDefault() {
 	return SC_FAIL;
 }
 
+int slConfigPlateFrame(unsigned plateNum, double left,
+		double top,	double right, double bottom) {
+	Config config(INI_FILE_NAME);
+	if (!config.setPlateFrame(plateNum, left, top, right, bottom)) {
+		return SC_INI_FILE_ERROR;
+	}
+	return SC_SUCCESS;
+}
+
+int slConfigScannerBrightness(int brightness) {
+	if ((brightness < -1000) || (brightness > 1000)) {
+		return SC_INVALID_VALUE;
+	}
+
+	Config config(INI_FILE_NAME);
+	if (!config.setScannerBrightness(brightness)) {
+		return SC_INI_FILE_ERROR;
+	}
+	return SC_SUCCESS;
+}
+
+int slConfigScannerContrast(int contrast) {
+	if ((contrast < -1000) || (contrast > 1000)) {
+		return SC_INVALID_VALUE;
+	}
+
+	Config config(INI_FILE_NAME);
+	if (!config.setScannerContrast(contrast)) {
+		return SC_INI_FILE_ERROR;
+	}
+	return SC_SUCCESS;
+}
+
 int slScanImage(unsigned dpi, double left, double top, double right,
 		double bottom, char * filename) {
-	string err;
-	ImageGrabber ig;
 
 	if (filename == NULL) {
 		return SC_FAIL;
 	}
 
 	configLogging(5);
-	HANDLE h = ig.acquireImage(dpi, left, top, right, bottom);
+
+	Config config(INI_FILE_NAME);
+	ImageGrabber ig;
+
+	HANDLE h = ig.acquireImage(dpi, config.getScannerBrightness(),
+		config.getScannerContrast(), left, top, right, bottom);
 	if (h == NULL) {
 		return SC_FAIL;
 	}
@@ -93,6 +127,10 @@ int slScanPlate(unsigned dpi, unsigned plateNum, char * filename) {
 		return SC_INVALID_PLATE_NUM;
 	}
 
+	if (filename == NULL) {
+		return SC_FAIL;
+	}
+
 	ScFrame * f;
 	ImageGrabber ig;
 	HANDLE h;
@@ -103,13 +141,15 @@ int slScanPlate(unsigned dpi, unsigned plateNum, char * filename) {
 	);
 
 	configLogging(5);
+	Config config(INI_FILE_NAME);
 
 	config.parseFrames();
 	if (!config.getPlateFrame(plateNum, &f)) {
 		return SC_INI_FILE_ERROR;
 	}
 
-	h = ig.acquireImage(dpi, f->x0, f->y0, f->x1, f->y1);
+	h = ig.acquireImage(dpi, config.getScannerBrightness(),
+		config.getScannerContrast(), f->x0, f->y0, f->x1, f->y1);
 	if (h == NULL) {
 		UA_DOUT(1, 1, "could not acquire plate image: " << plateNum);
 		return SC_FAIL;
@@ -118,15 +158,6 @@ int slScanPlate(unsigned dpi, unsigned plateNum, char * filename) {
 	dib.readFromHandle(h);
 	if (!dib.writeToFile(filename)) {
 		return SC_FILE_SAVE_ERROR;
-	}
-	return SC_SUCCESS;
-}
-
-int slConfigPlateFrame(unsigned plateNum, double left,
-		double top,	double right, double bottom) {
-	Config config(INI_FILE_NAME);
-	if (!config.savePlateFrame(plateNum, left, top, right, bottom)) {
-		return SC_INI_FILE_ERROR;
 	}
 	return SC_SUCCESS;
 }
@@ -140,7 +171,6 @@ int slCalibrateToPlate(unsigned dpi, unsigned plateNum) {
 		return SC_INVALID_PLATE_NUM;
 	}
 
-	Config config(INI_FILE_NAME);
 	ScFrame * f = NULL;
 	Calibrator calibrator;
 	Dib dib;
@@ -148,6 +178,7 @@ int slCalibrateToPlate(unsigned dpi, unsigned plateNum) {
 	RgbQuad quad(255, 0, 0);
 	ImageGrabber ig;
 	HANDLE h;
+	Config config(INI_FILE_NAME);
 
 	UA_DEBUG(
 		Util::getTime(starttime);
@@ -160,7 +191,8 @@ int slCalibrateToPlate(unsigned dpi, unsigned plateNum) {
 		return SC_INI_FILE_ERROR;
 	}
 
-	h = ig.acquireImage(dpi, f->x0, f->y0, f->x1, f->y1);
+	h = ig.acquireImage(dpi, config.getScannerBrightness(),
+		config.getScannerContrast(), f->x0, f->y0, f->x1, f->y1);
 	if (h == NULL) {
 		UA_DOUT(1, 1, "could not aquire plate image: " << plateNum);
 		return SC_FAIL;
@@ -204,6 +236,7 @@ int slCalibrateToPlate(unsigned dpi, unsigned plateNum) {
 
 int slDecodeCommon(unsigned plateNum, Dib & dib) {
 	Decoder decoder;
+	Config config(INI_FILE_NAME);
 
  	if (!config.parseRegions(plateNum)) {
 		return SC_INI_FILE_ERROR;
@@ -220,7 +253,7 @@ int slDecodeCommon(unsigned plateNum, Dib & dib) {
 
 	decoder.processImageRegions(plateNum, processedDib, regions);
 	//decoder.processImageRegions(plateNum, dib, regions);
-	config.saveDecodeResults(plateNum);
+	config.setDecodeResults(plateNum);
 
 	Dib markedDib(dib);
 
@@ -255,6 +288,7 @@ int slDecodePlate(unsigned dpi, unsigned plateNum) {
 		Util::getTime(starttime);
 	);
 
+	Config config(INI_FILE_NAME);
 	configLogging(5);
 
 	config.parseFrames();
@@ -262,7 +296,8 @@ int slDecodePlate(unsigned dpi, unsigned plateNum) {
 		return SC_INI_FILE_ERROR;
 	}
 
-	h = ig.acquireImage(dpi, f->x0, f->y0, f->x1, f->y1);
+	h = ig.acquireImage(dpi, config.getScannerBrightness(),
+		config.getScannerContrast(), f->x0, f->y0, f->x1, f->y1);
 	if (h == NULL) {
 		UA_DOUT(1, 1, "could not acquire plate image: " << plateNum);
 		return SC_FAIL;
@@ -277,6 +312,10 @@ int slDecodePlate(unsigned dpi, unsigned plateNum) {
 int slDecodeImage(unsigned plateNum, char * filename) {
 	if ((plateNum == 0) || (plateNum > 4)) {
 		return SC_INVALID_PLATE_NUM;
+	}
+
+	if (filename == NULL) {
+		return SC_FAIL;
 	}
 
 	UA_DEBUG(

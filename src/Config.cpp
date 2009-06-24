@@ -141,6 +141,72 @@ bool Config::parseFrame(unsigned frameNum) {
 	return true;
 }
 
+bool Config::setPlateFrame(unsigned plateNum, double left,
+		double top,	double right, double bottom) {
+	UA_ASSERTS((plateNum >0) && (plateNum <= MAX_PLATES),
+			"parseRegions: invalid plate number: " << plateNum);
+
+	if (state != STATE_OK) {
+		UA_DOUT(5, 3, "setPlateFrame: invalid ini state: " << state);
+		return false;
+	}
+
+	SI_Error rc;
+
+	string secname = "plate-" + to_string(plateNum);
+
+	rc = ini.SetValue(secname.c_str(), "left", to_string(left).c_str());
+	if (rc < 0) return false;
+
+	rc = ini.SetValue(secname.c_str(), "top", to_string(top).c_str());
+	if (rc < 0) return false;
+
+	rc = ini.SetValue(secname.c_str(), "right", to_string(right).c_str());
+	if (rc < 0) return false;
+
+	rc = ini.SetValue(secname.c_str(), "bottom", to_string(bottom).c_str());
+	if (rc < 0) return false;
+
+	return true;
+}
+
+bool Config::setScannerBrightness(int brightness) {
+	UA_ASSERTS((brightness >= -1000) && (brightness <= 1000),
+			"setScannerBrightness: invalid brightness: " << brightness);
+
+	if (state != STATE_OK) {
+		UA_DOUT(5, 3, "setPlateFrame: invalid ini state: " << state);
+		return false;
+	}
+
+	SI_Error rc;
+
+	rc = ini.SetValue("scanner", "brightness", to_string(brightness).c_str());
+	return (rc >= 0);
+}
+
+int Config::getScannerBrightness() {
+	return static_cast<int>(ini.GetLongValue("scanner", "brightness", 0));
+}
+
+bool Config::setScannerContrast(int contrast) {
+	UA_ASSERTS((contrast >= -1000) && (contrast <= 1000),
+			"setScannerContrast: invalid contrast: " << contrast);
+
+	if (state != STATE_OK) {
+		UA_DOUT(5, 3, "setPlateFrame: invalid ini state: " << state);
+		return false;
+	}
+
+	SI_Error rc;
+
+	rc = ini.SetValue("scanner", "contrast", to_string(contrast).c_str());
+	return (rc >= 0);
+}
+
+int Config::getScannerContrast() {
+	return static_cast<int>(ini.GetLongValue("scanner", "contrast", 0));
+}
 
 bool Config::getPlateFrame(unsigned plate, ScFrame ** frame) {
 	if (state != STATE_OK) {
@@ -347,36 +413,7 @@ bool Config::parseRegions(unsigned plateNum) {
 	return true;
 }
 
-bool Config::savePlateFrame(unsigned plateNum, double left,
-		double top,	double right, double bottom) {
-	UA_ASSERTS((plateNum >0) && (plateNum <= MAX_PLATES),
-			"parseRegions: invalid plate number: " << plateNum);
-
-	if (state != STATE_OK) {
-		UA_DOUT(5, 3, "savePlateFrame: invalid ini state: " << state);
-		return false;
-	}
-
-	SI_Error rc;
-
-	string secname = "plate-" + to_string(plateNum);
-
-	rc = ini.SetValue(secname.c_str(), "left", to_string(left).c_str());
-	if (rc < 0) return false;
-
-	rc = ini.SetValue(secname.c_str(), "top", to_string(top).c_str());
-	if (rc < 0) return false;
-
-	rc = ini.SetValue(secname.c_str(), "right", to_string(right).c_str());
-	if (rc < 0) return false;
-
-	rc = ini.SetValue(secname.c_str(), "bottom", to_string(bottom).c_str());
-	if (rc < 0) return false;
-
-	return true;
-}
-
-void Config::saveDecodeResults(unsigned plateNum) {
+void Config::setDecodeResults(unsigned plateNum) {
 	UA_ASSERTS((plateNum >0) && (plateNum <= MAX_PLATES),
 			"parseRegions: invalid plate number: " << plateNum);
 	ofstream file;

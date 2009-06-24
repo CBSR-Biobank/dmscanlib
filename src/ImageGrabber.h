@@ -41,9 +41,9 @@ public:
 	 */
 	bool selectSourceAsDefault();
 
-	HANDLE acquireImage(unsigned dpi, double top, double left,
-			double bottom, double right);
-	DmtxImage* acquireDmtxImage(unsigned dpi);
+	HANDLE acquireImage(unsigned dpi, int brightness, int contrast,
+		double top, double left, double bottom, double right);
+	DmtxImage* acquireDmtxImage(unsigned dpi, int brightness, int contrast);
 	void freeImage(HANDLE handle);
 
 private:
@@ -82,9 +82,8 @@ private:
 	// application process responsible for making calls to function DSM_Entry().
 	static TW_IDENTITY g_AppID;
 
-	// properties used by the scanner
-	static const int SCAN_CONTRAST = 500;
-	static const int SCAN_BRIGHTNESS = 0;
+	int brightness;
+	int contrast;
 };
 
 #endif /* __INCLUDE_IMAGE_GRABBER_H */

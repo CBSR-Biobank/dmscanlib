@@ -33,7 +33,8 @@ const char * ImageGrabber::TWAIN_DLL_FILENAME = "TWAIN_32.DLL";
  *	as libraries such as Twain_32.dll need to be loaded before acquire or
  *	selectDefaultAsSource work.
  */
-ImageGrabber::ImageGrabber() : g_hLib(NULL), g_pDSM_Entry(NULL) {
+ImageGrabber::ImageGrabber() :
+	g_hLib(NULL), g_pDSM_Entry(NULL) {
 	ua::Logger::Instance().subSysHeaderSet(2, "ImageGrabber");
 
 #ifndef __MINGW32__
@@ -132,8 +133,8 @@ void ImageGrabber::setFloatToIntPair(const double f, short & whole,
  *
  *	Grab an image from the twain source and convert it to the dmtxImage format
  */
-HANDLE ImageGrabber::acquireImage(unsigned dpi, double left, double top,
-		double right, double bottom) {
+HANDLE ImageGrabber::acquireImage(unsigned dpi, int brightness, int contrast,
+	double left, double top, double right, double bottom) {
 	UA_ASSERT_NOT_NULL(g_hLib);
 
 	TW_UINT32 handle = 0;
@@ -166,10 +167,12 @@ HANDLE ImageGrabber::acquireImage(unsigned dpi, double left, double top,
 	UA_ASSERTS(rc == TWRC_SUCCESS, "Unable to open default data source");
 
 	UA_DOUT(2, 3, "acquireImage: source/\"" << srcID.ProductName << "\""
-			<< " left/" << left
-			<< " top/" << top
-			<< " right/" << right
-			<< " bottom/" << bottom);
+		<< " brightness/" << brightness
+		<< " constrast/" << contrast
+		<< " left/" << left
+		<< " top/" << top
+		<< " right/" << right
+		<< " bottom/" << bottom);
 
 	setCapability(ICAP_UNITS, TWUN_INCHES, FALSE);
 	TW_IMAGELAYOUT layout;
@@ -216,8 +219,8 @@ HANDLE ImageGrabber::acquireImage(unsigned dpi, double left, double top,
 			setCapability(ICAP_YRESOLUTION, dpi, FALSE);
 			setCapability(ICAP_PIXELTYPE, /* TWPT_GRAY */ TWPT_RGB, FALSE);
 			setCapability(ICAP_BITDEPTH, 8, FALSE);
-			setCapability(ICAP_CONTRAST, SCAN_CONTRAST, FALSE);
-			setCapability(ICAP_BRIGHTNESS, SCAN_BRIGHTNESS, FALSE);
+			setCapability(ICAP_BRIGHTNESS, brightness, FALSE);
+			setCapability(ICAP_CONTRAST, contrast, FALSE);
 
 			rc = invokeTwain(&srcID, DG_IMAGE, DAT_IMAGEINFO, MSG_GET, &ii);
 
@@ -273,10 +276,11 @@ HANDLE ImageGrabber::acquireImage(unsigned dpi, double left, double top,
 	return (HANDLE) handle;
 }
 
-DmtxImage* ImageGrabber::acquireDmtxImage(unsigned dpi){
+DmtxImage* ImageGrabber::acquireDmtxImage(unsigned dpi, int brightness,
+	int contrast){
 	UA_ASSERT_NOT_NULL(g_hLib);
 
-	HANDLE h = acquireImage(dpi, 0, 0, 0, 0);
+	HANDLE h = acquireImage(dpi, brightness, contrast, 0, 0, 0, 0);
 	if (h == NULL) {
 		return NULL;
 	}

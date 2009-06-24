@@ -1,2 +1,10 @@
 scanlib
 obj/
+scanlib.a
+scanlib.ini
+scanlib.ncb
+scanlib.suo
+scanlib.txt
+scanlib.vcproj*
+*.bmp
+

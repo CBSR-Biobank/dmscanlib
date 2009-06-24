@@ -35,19 +35,23 @@ public:
 
 	void save();
 	void parseFrames();
+	bool setPlateFrame(unsigned plateNum, double left,
+			double top,	double right, double bottom);
+	bool setScannerBrightness(int brightness);
+	int getScannerBrightness();
+	bool setScannerContrast(int contrast);
+	int getScannerContrast();
 	bool getPlateFrame(unsigned plate, ScFrame ** fame);
 	bool setRegions(unsigned plateNum, unsigned dpi,
 			const vector<BinRegion *> & rowBinRegions,
 			const vector<BinRegion *> & colBinRegions);
 	bool parseRegions(unsigned plateNum);
-	bool savePlateFrame(unsigned plateNum, double left,
-			double top,	double right, double bottom);
 
 	const vector<DecodeRegion *> & getRegions(unsigned plateNum, unsigned dpi) const;
 
 	unsigned getPlateRegionDpi(unsigned plateNum);
 
-	void saveDecodeResults(unsigned plateNum);
+	void setDecodeResults(unsigned plateNum);
 
 	static const unsigned MAX_PLATES = 4;
 
