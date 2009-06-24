@@ -215,10 +215,20 @@ HANDLE ImageGrabber::acquireImage(unsigned dpi, int brightness, int contrast,
 
 		if (event.TWMessage == MSG_XFERREADY) {
 			TW_IMAGEINFO ii;
+
+			TW_CAPABILITY twCap;
+			pTW_RANGE r;
+			twCap.Cap = ICAP_BRIGHTNESS;
+			rc = invokeTwain(&srcID, DG_CONTROL, DAT_CAPABILITY, MSG_GET, &twCap);
+			if ((rc == 0) && (twCap.ConType == TWON_RANGE)) {
+				r = (pTW_RANGE) GlobalLock(twCap.hContainer);
+			}
+
 			setCapability(ICAP_XRESOLUTION, dpi, FALSE);
 			setCapability(ICAP_YRESOLUTION, dpi, FALSE);
 			setCapability(ICAP_PIXELTYPE, /* TWPT_GRAY */ TWPT_RGB, FALSE);
 			setCapability(ICAP_BITDEPTH, 8, FALSE);
+			UA_DOUT(2, 1, "acquire: setting brightness");
 			setCapability(ICAP_BRIGHTNESS, brightness, FALSE);
 			setCapability(ICAP_CONTRAST, contrast, FALSE);
 
