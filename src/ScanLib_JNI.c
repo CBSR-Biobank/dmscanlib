@@ -5,6 +5,7 @@
 
 #include <assert.h>
 
+#define BUILD_DLL
  #include "ScanLib.h"
 
 /*   Java->C glue code:
@@ -12,7 +13,7 @@
  *    Java method: int slCalibrateToPlate(int dpi, int plateNum)
  *     C function: int slCalibrateToPlate(unsigned int dpi, unsigned int plateNum);
  */
-JNIEXPORT jint JNICALL 
+JNIEXPORT jint JNICALL
 Java_edu_ualberta_med_biobank_scanlib_ScanLib_slCalibrateToPlate__II(JNIEnv *env, jclass _unused, jint dpi, jint plateNum) {
   int _res;
   _res = slCalibrateToPlate((int) dpi, (int) plateNum);
@@ -25,7 +26,7 @@ Java_edu_ualberta_med_biobank_scanlib_ScanLib_slCalibrateToPlate__II(JNIEnv *env
  *    Java method: int slConfigPlateFrame(int plateNum, double left, double top, double right, double bottom)
  *     C function: int slConfigPlateFrame(unsigned int plateNum, double left, double top, double right, double bottom);
  */
-JNIEXPORT jint JNICALL 
+JNIEXPORT jint JNICALL
 Java_edu_ualberta_med_biobank_scanlib_ScanLib_slConfigPlateFrame__IDDDD(JNIEnv *env, jclass _unused, jint plateNum, jdouble left, jdouble top, jdouble right, jdouble bottom) {
   int _res;
   _res = slConfigPlateFrame((int) plateNum, (double) left, (double) top, (double) right, (double) bottom);
@@ -38,7 +39,7 @@ Java_edu_ualberta_med_biobank_scanlib_ScanLib_slConfigPlateFrame__IDDDD(JNIEnv *
  *    Java method: int slConfigScannerBrightness(int brightness)
  *     C function: int slConfigScannerBrightness(int brightness);
  */
-JNIEXPORT jint JNICALL 
+JNIEXPORT jint JNICALL
 Java_edu_ualberta_med_biobank_scanlib_ScanLib_slConfigScannerBrightness__I(JNIEnv *env, jclass _unused, jint brightness) {
   int _res;
   _res = slConfigScannerBrightness((int) brightness);
@@ -51,7 +52,7 @@ Java_edu_ualberta_med_biobank_scanlib_ScanLib_slConfigScannerBrightness__I(JNIEn
  *    Java method: int slConfigScannerContrast(int contrast)
  *     C function: int slConfigScannerContrast(int contrast);
  */
-JNIEXPORT jint JNICALL 
+JNIEXPORT jint JNICALL
 Java_edu_ualberta_med_biobank_scanlib_ScanLib_slConfigScannerContrast__I(JNIEnv *env, jclass _unused, jint contrast) {
   int _res;
   _res = slConfigScannerContrast((int) contrast);
@@ -64,7 +65,7 @@ Java_edu_ualberta_med_biobank_scanlib_ScanLib_slConfigScannerContrast__I(JNIEnv 
  *    Java method: int slDecodeImage(int plateNum, java.nio.ByteBuffer filename)
  *     C function: int slDecodeImage(unsigned int plateNum, char *  filename);
  */
-JNIEXPORT jint JNICALL 
+JNIEXPORT jint JNICALL
 Java_edu_ualberta_med_biobank_scanlib_ScanLib_slDecodeImage0__ILjava_lang_Object_2I(JNIEnv *env, jclass _unused, jint plateNum, jobject filename, jint filename_byte_offset) {
   char * _ptr1 = NULL;
   int _res;
@@ -81,7 +82,7 @@ Java_edu_ualberta_med_biobank_scanlib_ScanLib_slDecodeImage0__ILjava_lang_Object
  *    Java method: int slDecodeImage(int plateNum, java.nio.ByteBuffer filename)
  *     C function: int slDecodeImage(unsigned int plateNum, char *  filename);
  */
-JNIEXPORT jint JNICALL 
+JNIEXPORT jint JNICALL
 Java_edu_ualberta_med_biobank_scanlib_ScanLib_slDecodeImage1__ILjava_lang_Object_2I(JNIEnv *env, jclass _unused, jint plateNum, jobject filename, jint filename_byte_offset) {
   char * _ptr1 = NULL;
   int _res;
@@ -101,7 +102,7 @@ Java_edu_ualberta_med_biobank_scanlib_ScanLib_slDecodeImage1__ILjava_lang_Object
  *    Java method: int slDecodePlate(int dpi, int plateNum)
  *     C function: int slDecodePlate(unsigned int dpi, unsigned int plateNum);
  */
-JNIEXPORT jint JNICALL 
+JNIEXPORT jint JNICALL
 Java_edu_ualberta_med_biobank_scanlib_ScanLib_slDecodePlate__II(JNIEnv *env, jclass _unused, jint dpi, jint plateNum) {
   int _res;
   _res = slDecodePlate((int) dpi, (int) plateNum);
@@ -114,7 +115,7 @@ Java_edu_ualberta_med_biobank_scanlib_ScanLib_slDecodePlate__II(JNIEnv *env, jcl
  *    Java method: int slIsTwainAvailable()
  *     C function: int slIsTwainAvailable();
  */
-JNIEXPORT jint JNICALL 
+JNIEXPORT jint JNICALL
 Java_edu_ualberta_med_biobank_scanlib_ScanLib_slIsTwainAvailable__(JNIEnv *env, jclass _unused) {
   int _res;
   _res = slIsTwainAvailable();
@@ -127,7 +128,7 @@ Java_edu_ualberta_med_biobank_scanlib_ScanLib_slIsTwainAvailable__(JNIEnv *env, 
  *    Java method: int slScanImage(int dpi, double left, double top, double right, double bottom, java.nio.ByteBuffer filename)
  *     C function: int slScanImage(unsigned int dpi, double left, double top, double right, double bottom, char *  filename);
  */
-JNIEXPORT jint JNICALL 
+JNIEXPORT jint JNICALL
 Java_edu_ualberta_med_biobank_scanlib_ScanLib_slScanImage0__IDDDDLjava_lang_Object_2I(JNIEnv *env, jclass _unused, jint dpi, jdouble left, jdouble top, jdouble right, jdouble bottom, jobject filename, jint filename_byte_offset) {
   char * _ptr5 = NULL;
   int _res;
@@ -144,7 +145,7 @@ Java_edu_ualberta_med_biobank_scanlib_ScanLib_slScanImage0__IDDDDLjava_lang_Obje
  *    Java method: int slScanImage(int dpi, double left, double top, double right, double bottom, java.nio.ByteBuffer filename)
  *     C function: int slScanImage(unsigned int dpi, double left, double top, double right, double bottom, char *  filename);
  */
-JNIEXPORT jint JNICALL 
+JNIEXPORT jint JNICALL
 Java_edu_ualberta_med_biobank_scanlib_ScanLib_slScanImage1__IDDDDLjava_lang_Object_2I(JNIEnv *env, jclass _unused, jint dpi, jdouble left, jdouble top, jdouble right, jdouble bottom, jobject filename, jint filename_byte_offset) {
   char * _ptr5 = NULL;
   int _res;
@@ -164,7 +165,7 @@ Java_edu_ualberta_med_biobank_scanlib_ScanLib_slScanImage1__IDDDDLjava_lang_Obje
  *    Java method: int slScanPlate(int dpi, int plateNum, java.nio.ByteBuffer filename)
  *     C function: int slScanPlate(unsigned int dpi, unsigned int plateNum, char *  filename);
  */
-JNIEXPORT jint JNICALL 
+JNIEXPORT jint JNICALL
 Java_edu_ualberta_med_biobank_scanlib_ScanLib_slScanPlate0__IILjava_lang_Object_2I(JNIEnv *env, jclass _unused, jint dpi, jint plateNum, jobject filename, jint filename_byte_offset) {
   char * _ptr2 = NULL;
   int _res;
@@ -181,7 +182,7 @@ Java_edu_ualberta_med_biobank_scanlib_ScanLib_slScanPlate0__IILjava_lang_Object_
  *    Java method: int slScanPlate(int dpi, int plateNum, java.nio.ByteBuffer filename)
  *     C function: int slScanPlate(unsigned int dpi, unsigned int plateNum, char *  filename);
  */
-JNIEXPORT jint JNICALL 
+JNIEXPORT jint JNICALL
 Java_edu_ualberta_med_biobank_scanlib_ScanLib_slScanPlate1__IILjava_lang_Object_2I(JNIEnv *env, jclass _unused, jint dpi, jint plateNum, jobject filename, jint filename_byte_offset) {
   char * _ptr2 = NULL;
   int _res;
@@ -201,7 +202,7 @@ Java_edu_ualberta_med_biobank_scanlib_ScanLib_slScanPlate1__IILjava_lang_Object_
  *    Java method: int slSelectSourceAsDefault()
  *     C function: int slSelectSourceAsDefault();
  */
-JNIEXPORT jint JNICALL 
+JNIEXPORT jint JNICALL
 Java_edu_ualberta_med_biobank_scanlib_ScanLib_slSelectSourceAsDefault__(JNIEnv *env, jclass _unused) {
   int _res;
   _res = slSelectSourceAsDefault();
