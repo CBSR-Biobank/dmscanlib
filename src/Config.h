@@ -9,8 +9,6 @@
  */
 
 #include "ScanLib.h"
-
-#define SI_SUPPORT_IOSTREAMS
 #include "SimpleIni.h"
 
 #include <vector>
@@ -59,7 +57,7 @@ private:
 	bool parseFrame(unsigned frameNum);
 
 	static const int STATE_OK = 0;
-	static const int STATE_FILE_OPEN = -1;
+	static const int STATE_FILE_NOT_OPEN = -1;
 	static const int STATE_ERROR_LOAD = -2;
 
 	static const char * INI_PLATE_SECTION_NAME;

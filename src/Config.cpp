@@ -27,20 +27,12 @@ Config::Config(const char * filename) :
 	inifilename(filename), ini(true, false, true), state(STATE_OK) {
 	ua::Logger::Instance().subSysHeaderSet(5, "CONFIG");
 
-	fstream inifile;
-	inifile.open(inifilename, fstream::in);
-	if (!inifile.is_open()) {
-		state = STATE_FILE_OPEN;
-		return;
-	}
-
-	SI_Error rc = ini.Load(inifile);
+	SI_Error rc = ini.LoadFile(inifilename);
 	if (rc < 0) {
-		UA_DOUT(5, 3, "attempt to load ini file failed");
+		UA_DOUT(5, 1, "attempt to load ini file failed");
 		state = STATE_ERROR_LOAD;
 		return;
 	}
-	inifile.close();
 }
 
 Config::~Config() {

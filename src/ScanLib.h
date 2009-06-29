@@ -21,11 +21,6 @@ extern "C" {
 
 #ifdef WIN32
 #   include <windows.h>
-#   include <tchar.h>
-#else
-#   define char   char
-#   define _T(x)   x
-#   define _tmain  main
 #endif
 
 typedef struct sScPixelLoc {
@@ -101,8 +96,8 @@ typedef int (*SL_CONFIG_PLATE_FRAME) (unsigned, double x0, double y0, double x1,
 EXPORT int slScanImage(unsigned dpi, double left, double top,
 		double right, double bottom, char * filename);
 
-typedef int (*SL_SCAN_IMAGE) (char * filename, double x0, double y0,
-		double x1, double y1);
+typedef int (*SL_SCAN_IMAGE) (unsigned dpi, double x0, double y0,
+		double x1, double y1, char * filename);
 
 EXPORT int slScanPlate(unsigned dpi, unsigned plateNum, char * filename);
 

@@ -75,6 +75,8 @@ int slConfigScannerBrightness(int brightness) {
 		return SC_INVALID_VALUE;
 	}
 
+	configLogging(5);
+
 	Config config(INI_FILE_NAME);
 	if (!config.setScannerBrightness(brightness)) {
 		return SC_INI_FILE_ERROR;
@@ -86,6 +88,8 @@ int slConfigScannerContrast(int contrast) {
 	if ((contrast < -1000) || (contrast > 1000)) {
 		return SC_INVALID_VALUE;
 	}
+
+	configLogging(5);
 
 	Config config(INI_FILE_NAME);
 	if (!config.setScannerContrast(contrast)) {

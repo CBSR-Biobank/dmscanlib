@@ -37,11 +37,7 @@ ImageGrabber::ImageGrabber() :
 	g_hLib(NULL), g_pDSM_Entry(NULL) {
 	ua::Logger::Instance().subSysHeaderSet(2, "ImageGrabber");
 
-#ifndef __MINGW32__
-	g_hLib = LoadLibrary(_T("TWAIN_32.DLL"));
-#else
-	g_hLib = LoadLibrary(TWAIN_DLL_FILENAME);
-#endif
+	g_hLib = LoadLibraryA(TWAIN_DLL_FILENAME);
 
 	if (g_hLib != NULL) {
 		g_pDSM_Entry = (DSMENTRYPROC) GetProcAddress(g_hLib, "DSM_Entry");
@@ -87,7 +83,7 @@ bool ImageGrabber::selectSourceAsDefault() {
 
 	// Create a static window whose handle is passed to DSM_Entry() when we
 	// open the data source manager.
-	HWND hwnd = CreateWindow (_T("STATIC"),	_T(""),	WS_POPUPWINDOW,	CW_USEDEFAULT,
+	HWND hwnd = CreateWindowA("STATIC", "",	WS_POPUPWINDOW,	CW_USEDEFAULT,
 			CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, HWND_DESKTOP, 0,
 			0 /* g_hinstDLL */, 0);
 
@@ -140,7 +136,7 @@ HANDLE ImageGrabber::acquireImage(unsigned dpi, int brightness, int contrast,
 	TW_UINT32 handle = 0;
 	TW_IDENTITY srcID;
 
-	HWND hwnd = CreateWindow (_T("STATIC"), _T(""),	WS_POPUPWINDOW, CW_USEDEFAULT,
+	HWND hwnd = CreateWindowA("STATIC", "",	WS_POPUPWINDOW, CW_USEDEFAULT,
 			CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, HWND_DESKTOP,
 			0, 0 /* g_hinstDLL */, 0);
 
