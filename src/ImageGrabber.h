@@ -57,6 +57,8 @@ private:
 
 	BOOL setCapability(TW_UINT16 cap,TW_UINT16 value,BOOL sign);
 
+	BOOL SetCapOneValue(TW_IDENTITY * srcId, unsigned Cap, unsigned ItemType, long ItemVal);
+
 	bool getConfigFromIni(CSimpleIniA & ini, unsigned plateNum);
 
 

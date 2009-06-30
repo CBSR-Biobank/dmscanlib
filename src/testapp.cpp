@@ -30,32 +30,37 @@ const char * USAGE_FMT =
 	"Usage: %s [OPTIONS]\n"
 	"Test tool for scanlib library."
 	"\n"
-	"  -c, --calibrate NUM  Acquires an image from the scanner for plate NUM\n"
-	"                       and calibrates decode regions.\n"
-	"  -d, --decode NUM     Acquires an image from the scanner for plate NUM\n"
-	"                       and Decodes the 2D barcode.\n"
+	"  -c, --calibrate      Acquires an image from the scanner. Use with --plate option.\n"
+	"  --debug NUM          Sets debugging level. Debugging messages are output\n"
+	"                       to stdout. Only when built UA_HAVE_DEBUG on.\n"
+	"  -d, --decode         Acquires an image from the scanner and Decodes the 2D barcodes.\n"
+	"                       Use with --plate option.\n"
 	"  --dpi NUM            Dots per inch to use with scanner.\n"
 	"  -h, --help           Displays this text.\n"
 	"  -i, --input FILE     Use the specified DIB image file instead of scanner.\n"
-	"  --debug NUM          Sets debugging level. Debugging messages are output\n"
-	"                       to stdout. Only when built UA_HAVE_DEBUG on.\n";
+	"  -p, --plate NUM      The plate number to use.\n"
+	"  -o, --output FILE    Saves the image to the specified file name.\n"
+	"  -s, --scan           Scans an image.\n";
 
 /* Allowed command line arguments.  */
 CSimpleOptA::SOption longOptions[] = {
-		{ 'c', "--calibrate", SO_REQ_SEP },
-		{ 'c', "-c",          SO_REQ_SEP },
-		{ 'd', "--decode",    SO_REQ_SEP },
-		{ 'd', "-d",          SO_REQ_SEP },
+		{ 'c', "--calibrate", SO_NONE },
+		{ 'c', "-c",          SO_NONE },
+		{ 'd', "--decode",    SO_NONE },
+		{ 'd', "-d",          SO_NONE },
 		{ 200, "--debug",     SO_REQ_SEP },
 		{ 201, "--dpi",       SO_REQ_SEP },
 		{ 'h', "--help",      SO_NONE    },
 		{ 'h', "--h",         SO_NONE    },
 		{ 'i', "--input",     SO_REQ_SEP },
 		{ 'i', "-i",          SO_REQ_SEP },
+		{ 'p', "--plate",     SO_REQ_SEP },
+		{ 'p', "-p",          SO_REQ_SEP },
 		{ 'o', "--output",    SO_REQ_SEP },
 		{ 'o', "-o",          SO_REQ_SEP },
-		{ 's', "--scan",      SO_REQ_SEP },
-		{ 's', "-s",          SO_REQ_SEP },
+		{ 's', "--scan",      SO_NONE },
+		{ 's', "-s",          SO_NONE },
+		{ 202, "--select",    SO_NONE },
 		SO_END_OF_OPTIONS
 };
 
@@ -76,6 +81,7 @@ struct Options {
 	unsigned plateNum;
 	char * outfile;
 	bool scan;
+	bool select;
 
 	Options() {
 		calibrate = false;
@@ -87,6 +93,7 @@ struct Options {
 		plateNum = 0;
 		outfile = NULL;
 		scan = false;
+		select = false;
 	}
 };
 
@@ -98,9 +105,8 @@ public:
 private:
 	void usage();
 	bool getCmdOptions(int argc, char ** argv);
-	void acquireAndProcesImage(unsigned plateNum);
-	void calibrateToImage(char * filename);
-	void decodeImage(char * filename);
+	void acquireAndProcesImage();
+	void calibrateToImage();
 
 	static const char * INI_FILE_NAME;
 
@@ -123,31 +129,33 @@ Application::Application(int argc, char ** argv) {
 		usage();
 		return;
 	}
+
+	int result = SC_FAIL;
+
 	if (options.calibrate) {
 		if (options.infile != NULL) {
-			calibrateToImage(options.infile);
+			calibrateToImage();
 		}
 		else {
-#ifdef WIN32
-			slCalibrateToPlate(options.dpi, options.plateNum);
-#endif
+			result = slCalibrateToPlate(options.dpi, options.plateNum);
 		}
 	}
 	else if (options.decode) {
 		if (options.infile != NULL) {
-			decodeImage(options.infile);
+			result = slDecodeImage(options.plateNum, options.infile);
 		}
 		else {
-#ifdef WIN32
-			slDecodePlate(options.dpi, options.plateNum);
-#endif
+			result = slDecodePlate(options.dpi, options.plateNum);
 		}
 	}
 	else if (options.scan) {
-#ifdef WIN32
-		slScanPlate(options.dpi, options.plateNum, options.outfile);
-#endif
+		result = slScanPlate(options.dpi, options.plateNum, options.outfile);
 	}
+	else if (options.select) {
+		result = slSelectSourceAsDefault();
+	}
+
+	cout << "return code is: " << result << endl;
 }
 
 Application::~Application() {
@@ -168,22 +176,10 @@ bool Application::getCmdOptions(int argc, char ** argv) {
 			switch (args.OptionId()) {
 			case 'c':
 				options.calibrate = true;
-				options.plateNum = strtoul((const char *)args.OptionArg(), &end, 10);
-				if (*end != 0) {
-					cerr << "invalid value for plate number: "
-						 << args.OptionArg() << endl;
-					exit(1);
-				}
 				break;
 
 			case 'd':
 				options.decode = true;
-				options.plateNum = strtoul((const char *)args.OptionArg(), &end, 10);
-				if (*end != 0) {
-					cerr << "invalid value for plate number: "
-						 << args.OptionArg() << endl;
-					exit(1);
-				}
 				break;
 
 			case 'h':
@@ -194,18 +190,21 @@ bool Application::getCmdOptions(int argc, char ** argv) {
 				options.infile = args.OptionArg();
 				break;
 
-			case 'o':
-				options.outfile = args.OptionArg();
-				break;
-
-			case 's':
-				options.scan = true;
+			case 'p':
 				options.plateNum = strtoul((const char *)args.OptionArg(), &end, 10);
 				if (*end != 0) {
 					cerr << "invalid value for plate number: "
 						 << args.OptionArg() << endl;
 					exit(1);
 				}
+				break;
+
+			case 'o':
+				options.outfile = args.OptionArg();
+				break;
+
+			case 's':
+				options.scan = true;
 				break;
 
 			case 200:
@@ -227,6 +226,10 @@ bool Application::getCmdOptions(int argc, char ** argv) {
 				}
 				break;
 
+			case 202:
+				options.select = true;
+				break;
+
 			default:
 				return false;
 			}
@@ -239,14 +242,14 @@ bool Application::getCmdOptions(int argc, char ** argv) {
 	return true;
 }
 
-void Application::calibrateToImage(char * filename) {
-	UA_ASSERT_NOT_NULL(filename);
+void Application::calibrateToImage() {
+	UA_ASSERT_NOT_NULL(options.infile);
 
 	Dib dib, processedDib;
 	RgbQuad quad(255, 0, 0);
 	Config config(INI_FILE_NAME);
 
-	dib.readFromFile(filename);
+	dib.readFromFile(options.infile);
 	processedDib.gaussianBlur(dib);
 	processedDib.unsharp(dib);
 	//processedDib.expandColours(dib, 150, 220);
@@ -267,10 +270,6 @@ void Application::calibrateToImage(char * filename) {
 	Dib markedDib(dib);
 	calibrator.imageShowBins(markedDib, quad);
 	markedDib.writeToFile("calibrated.bmp");
-}
-
-void Application::decodeImage(char * filename) {
-	slDecodeImage(1, filename);
 }
 
 int main(int argc, char ** argv) {

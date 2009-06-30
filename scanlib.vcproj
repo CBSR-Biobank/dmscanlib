@@ -189,7 +189,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\simpleini\ConvertUTF.c"
+				RelativePath=".\src\utils\ConvertUTF.c"
 				>
 			</File>
 			<File
@@ -201,7 +201,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\libdmtx\dmtx.c"
+				RelativePath=".\src\libdmtx\dmtx.c"
 				>
 			</File>
 			<File
@@ -247,7 +247,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\simpleini\ConvertUTF.h"
+				RelativePath=".\src\utils\ConvertUTF.h"
 				>
 			</File>
 			<File
@@ -259,7 +259,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\libdmtx\dmtx.h"
+				RelativePath=".\src\libdmtx\dmtx.h"
 				>
 			</File>
 			<File
@@ -271,15 +271,15 @@
 				>
 			</File>
 			<File
-				RelativePath=".\simpleini\SimpleIni.h"
+				RelativePath=".\src\utils\SimpleGlob.h"
 				>
 			</File>
 			<File
-				RelativePath=".\simpleopt\SimpleOpt.h"
+				RelativePath=".\src\utils\SimpleIni.h"
 				>
 			</File>
 			<File
-				RelativePath=".\src\loki\Singleton.h"
+				RelativePath=".\src\utils\SimpleOpt.h"
 				>
 			</File>
 			<File

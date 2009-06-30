@@ -22,6 +22,11 @@
 #include "ImageGrabber.h"
 #endif
 
+#ifdef _VISUALC_
+// disable warnings about fopen
+#pragma warning(disable : 4996)
+#endif
+
 #define SI_SUPPORT_IOSTREAMS
 #include "SimpleIni.h"
 

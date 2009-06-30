@@ -118,7 +118,8 @@ bool ImageGrabber::selectSourceAsDefault() {
 
 void ImageGrabber::setFloatToIntPair(const double f, short & whole,
 		unsigned short & frac) {
-	const unsigned tmp = static_cast<unsigned>(f * 65536.0 + 0.5);
+	double round = (f > 0) ? 0.5 : -0.5;
+	const unsigned tmp = static_cast<unsigned>(f * 65536.0 + round);
 	whole = static_cast<short>(tmp >> 16);
 	frac  = static_cast<unsigned short>(tmp & 0xffff);
 }
@@ -212,21 +213,24 @@ HANDLE ImageGrabber::acquireImage(unsigned dpi, int brightness, int contrast,
 		if (event.TWMessage == MSG_XFERREADY) {
 			TW_IMAGEINFO ii;
 
-			TW_CAPABILITY twCap;
-			pTW_RANGE r;
-			twCap.Cap = ICAP_BRIGHTNESS;
-			rc = invokeTwain(&srcID, DG_CONTROL, DAT_CAPABILITY, MSG_GET, &twCap);
-			if ((rc == 0) && (twCap.ConType == TWON_RANGE)) {
-				r = (pTW_RANGE) GlobalLock(twCap.hContainer);
-			}
-
 			setCapability(ICAP_XRESOLUTION, dpi, FALSE);
 			setCapability(ICAP_YRESOLUTION, dpi, FALSE);
 			setCapability(ICAP_PIXELTYPE, /* TWPT_GRAY */ TWPT_RGB, FALSE);
 			setCapability(ICAP_BITDEPTH, 8, FALSE);
 			UA_DOUT(2, 1, "acquire: setting brightness");
-			setCapability(ICAP_BRIGHTNESS, brightness, FALSE);
-			setCapability(ICAP_CONTRAST, contrast, FALSE);
+
+			
+			setCapability(ICAP_AUTOBRIGHT, FALSE, FALSE);
+
+			TW_FIX32 value;
+			UA_ASSERT(sizeof(TW_FIX32) == sizeof(long));
+
+			value.Frac = 0;
+			value.Whole = brightness;
+			SetCapOneValue(&srcID, ICAP_BRIGHTNESS, TWTY_FIX32, *(long*)&value);
+
+			value.Whole = contrast;
+			SetCapOneValue(&srcID, ICAP_CONTRAST, TWTY_FIX32, *(long*)&value);
 
 			rc = invokeTwain(&srcID, DG_IMAGE, DAT_IMAGEINFO, MSG_GET, &ii);
 
@@ -338,15 +342,38 @@ BOOL ImageGrabber::setCapability(TW_UINT16 cap,TW_UINT16 value, BOOL sign) {
 	twCap.ConType = TWON_ONEVALUE;
 
 	twCap.hContainer = GlobalAlloc(GHND,sizeof(TW_ONEVALUE));
-	if (twCap.hContainer) {
-		pVal = (pTW_ONEVALUE)GlobalLock(twCap.hContainer);
-		pVal->ItemType = sign ? TWTY_INT16 : TWTY_UINT16;
-		pVal->Item = (TW_UINT32)value;
-		GlobalUnlock(twCap.hContainer);
-		// change this?
-		ret_value = invokeTwain(&srcID, DG_CONTROL, DAT_CAPABILITY, MSG_SET, &twCap);
-		GlobalFree(twCap.hContainer);
-	}
+	UA_ASSERT_NOT_NULL(twCap.hContainer);
+
+	pVal = (pTW_ONEVALUE)GlobalLock(twCap.hContainer);
+	UA_ASSERT_NOT_NULL(pVal);
+
+	pVal->ItemType = sign ? TWTY_INT16 : TWTY_UINT16;
+	pVal->Item = value;
+	GlobalUnlock(twCap.hContainer);
+	// change this?
+	ret_value = invokeTwain(&srcID, DG_CONTROL, DAT_CAPABILITY, MSG_SET, &twCap);
+	GlobalFree(twCap.hContainer);
+	return ret_value;
+}
+
+BOOL ImageGrabber::SetCapOneValue(TW_IDENTITY * srcId, unsigned Cap, unsigned ItemType, long ItemVal) {
+	BOOL ret_value = FALSE;
+	TW_CAPABILITY	cap;
+	pTW_ONEVALUE	pv;
+
+	cap.Cap = Cap;			// capability id
+	cap.ConType = TWON_ONEVALUE;		// container type
+	cap.hContainer = GlobalAlloc(GHND, sizeof (TW_ONEVALUE));
+	UA_ASSERT_NOT_NULL(cap.hContainer);
+
+	pv = (pTW_ONEVALUE)GlobalLock(cap.hContainer);
+	UA_ASSERT_NOT_NULL(pv);
+
+	pv->ItemType = ItemType;
+	pv->Item = ItemVal;
+	GlobalUnlock(cap.hContainer);
+	ret_value = invokeTwain(srcId, DG_CONTROL, DAT_CAPABILITY, MSG_SET, &cap);
+	GlobalFree(cap.hContainer);
 	return ret_value;
 }
 
