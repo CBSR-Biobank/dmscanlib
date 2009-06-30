@@ -42,9 +42,29 @@ void configLogging(unsigned level) {
 	ua::Logger::Instance().subSysHeaderSet(1, "ScanLib");
 }
 
+
 /*
- * Loads the INI file if it is present.
+ * Could not use C++ streams for Release version of DLL.
  */
+void saveDecodeResults(unsigned plateNum, const vector<DecodeRegion *> & regions) {
+	UA_ASSERTS((plateNum > 0) && (plateNum <= MAX_PLATES),
+			"parseRegions: invalid plate number: " << plateNum);
+	FILE * fh = fopen("scanlib.txt", "w");
+    UA_ASSERT_NOT_NULL(fh);
+    fprintf(fh, "#Plate,Row,Col,Barcode\n");
+
+	for (unsigned i = 0, n = regions.size(); i < n; ++i) {
+		DecodeRegion & region = *regions[i];
+
+		if (region.barcodeInfo == NULL) continue;
+
+		fprintf(fh, "%d,%c,%d,%s\n",
+				plateNum, static_cast<char>('A' + region.row),
+				region.col + 1, region.barcodeInfo->getMsg().c_str());
+	}
+	fclose(fh);
+}
+
 int slIsTwainAvailable() {
 #ifdef WIN32
 	ImageGrabber ig;
@@ -272,7 +292,7 @@ int slDecodeCommon(unsigned plateNum, Dib & dib) {
 
 	decoder.processImageRegions(plateNum, processedDib, regions);
 	//decoder.processImageRegions(plateNum, dib, regions);
-	config.setDecodeResults(plateNum);
+	saveDecodeResults(plateNum, regions);
 
 	Dib markedDib(dib);
 

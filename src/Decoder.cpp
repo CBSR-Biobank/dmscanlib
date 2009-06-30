@@ -212,9 +212,9 @@ void Decoder::processImageRegions(unsigned plateNum, Dib & dib,
 		unsigned size = barcodeInfos.size();
 		UA_ASSERT(size <= 1);
 		if (size == 1) {
-			region.msgInfo = barcodeInfos[0];
+			region.barcodeInfo = barcodeInfos[0];
 			UA_DOUT(3, 3, "barcode found at row/" << region.row
-					<< " col/" << region.col << " barcode/" << region.msgInfo->getMsg());
+					<< " col/" << region.col << " barcode/" << region.barcodeInfo->getMsg());
 		}
 	}
 }
@@ -228,7 +228,7 @@ void Decoder::imageShowRegions(Dib & dib, const vector<DecodeRegion *> & decodeR
 	for (unsigned i = 0, n = decodeRegions.size(); i < n; ++i) {
 		DecodeRegion & region = *decodeRegions[i];
 
-		RgbQuad & quad = (region.msgInfo == NULL) ? quadRed : quadGreen;
+		RgbQuad & quad = (region.barcodeInfo == NULL) ? quadRed : quadGreen;
 
 		dib.line(region.topLeft.X, region.topLeft.Y,
 				region.topLeft.X, region.botRight.Y, quad);

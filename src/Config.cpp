@@ -40,8 +40,8 @@ Config::~Config() {
 
 	for (unsigned i = 0; i < MAX_PLATES; ++ i) {
 		for (unsigned j = 0, n = regionInfos[i].regions.size(); j < n; ++j) {
-			if (regionInfos[i].regions[j]->msgInfo != NULL) {
-				delete regionInfos[i].regions[j]->msgInfo;
+			if (regionInfos[i].regions[j]->barcodeInfo != NULL) {
+				delete regionInfos[i].regions[j]->barcodeInfo;
 			}
 			delete regionInfos[i].regions[j];
 		}
@@ -406,27 +406,6 @@ bool Config::parseRegions(unsigned plateNum) {
 		UA_DOUT(5, 3, "getRegionsFromIni: " << *region);
 	}
 	return true;
-}
-
-void Config::setDecodeResults(unsigned plateNum) {
-	UA_ASSERTS((plateNum >0) && (plateNum <= MAX_PLATES),
-			"parseRegions: invalid plate number: " << plateNum);
-	ofstream file;
-	file.open("scanlib.txt", ios::out);
-
-	file << "#Plate,Row,Col,Barcode" << endl;
-
-	for (unsigned i = 0, n = regionInfos[plateNum].regions.size(); i < n; ++i) {
-		DecodeRegion & region = *regionInfos[plateNum].regions[i];
-
-		if (region.msgInfo == NULL) continue;
-
-		file << to_string(plateNum) << ","
-		     << static_cast<char>('A' + region.row) << ","
-		     << to_string(region.col + 1) << ","
-		     << region.msgInfo->getMsg() << endl;
-	}
-	file.close();
 }
 
 const vector<DecodeRegion *> & Config::getRegions(unsigned plateNum, unsigned dpi) const {

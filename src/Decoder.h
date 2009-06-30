@@ -25,10 +25,10 @@ class BarcodeInfo;
 struct DecodeRegion {
 	int row, col;
 	DmtxPixelLoc topLeft, botRight;
-	BarcodeInfo * msgInfo;
+	BarcodeInfo * barcodeInfo;
 
 	DecodeRegion() {
-		msgInfo = NULL;
+		barcodeInfo = NULL;
 	}
 };
 
