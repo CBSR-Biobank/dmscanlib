@@ -16,6 +16,7 @@
 #include "Dib.h"
 #include "Util.h"
 #include "BarcodeInfo.h"
+#include "structs.h"
 
 #ifdef WIN32
 #include "ImageGrabber.h"
@@ -47,7 +48,7 @@ void configLogging(unsigned level) {
  * Could not use C++ streams for Release version of DLL.
  */
 void saveDecodeResults(unsigned plateNum, const vector<DecodeRegion *> & regions) {
-	UA_ASSERTS((plateNum > 0) && (plateNum <= MAX_PLATES),
+	UA_ASSERTS((plateNum > 0) && (plateNum <= Config::MAX_PLATES),
 			"parseRegions: invalid plate number: " << plateNum);
 	FILE * fh = fopen("scanlib.txt", "w");
     UA_ASSERT_NOT_NULL(fh);
