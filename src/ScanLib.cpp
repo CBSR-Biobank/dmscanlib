@@ -86,15 +86,6 @@ int slSelectSourceAsDefault() {
 	return SC_FAIL;
 }
 
-int slConfigPlateFrame(unsigned plateNum, double left,
-		double top,	double right, double bottom) {
-	Config config(INI_FILE_NAME);
-	if (!config.setPlateFrame(plateNum, left, top, right, bottom)) {
-		return SC_INI_FILE_ERROR;
-	}
-	return SC_SUCCESS;
-}
-
 int slConfigScannerBrightness(int brightness) {
 	if ((brightness < -1000) || (brightness > 1000)) {
 		return SC_INVALID_VALUE;
@@ -118,6 +109,15 @@ int slConfigScannerContrast(int contrast) {
 
 	Config config(INI_FILE_NAME);
 	if (!config.setScannerContrast(contrast)) {
+		return SC_INI_FILE_ERROR;
+	}
+	return SC_SUCCESS;
+}
+
+int slConfigPlateFrame(unsigned plateNum, double left,
+		double top,	double right, double bottom) {
+	Config config(INI_FILE_NAME);
+	if (!config.setPlateFrame(plateNum, left, top, right, bottom)) {
 		return SC_INI_FILE_ERROR;
 	}
 	return SC_SUCCESS;
@@ -217,9 +217,7 @@ int slCalibrateToPlate(unsigned dpi, unsigned plateNum) {
 	HANDLE h;
 	Config config(INI_FILE_NAME);
 
-	UA_DEBUG(
-		Util::getTime(starttime);
-	);
+	Util::getTime(starttime);
 
 	configLogging(5);
 
@@ -262,11 +260,9 @@ int slCalibrateToPlate(unsigned dpi, unsigned plateNum) {
 	markedDib.writeToFile("calibrated.bmp");
 	ig.freeImage(h);
 
-	UA_DEBUG(
-		Util::getTime(endtime);
-		Util::difftiime(starttime, endtime, timediff);
-		UA_DOUT(1, 1, "slDecodePlate: time taken: " << timediff);
-	);
+	Util::getTime(endtime);
+	Util::difftiime(starttime, endtime, timediff);
+	UA_DOUT(1, 1, "slDecodePlate: time taken: " << timediff);
 
 	return SC_SUCCESS;
 #else
@@ -285,7 +281,7 @@ int slDecodeCommon(unsigned plateNum, Dib & dib) {
 	//processedDib.gaussianBlur(dib);
 	//processedDib.unsharp(dib);
 	Dib processedDib(dib);
-	processedDib.expandColours(130, 230);
+	processedDib.expandColours(100, 200);
 	processedDib.writeToFile("processed.bmp");
 	dib.writeToFile("scanned.bmp");
 
@@ -300,11 +296,9 @@ int slDecodeCommon(unsigned plateNum, Dib & dib) {
 	decoder.imageShowRegions(markedDib, regions);
 	markedDib.writeToFile("decoded.bmp");
 
-	UA_DEBUG(
-		Util::getTime(endtime);
-		Util::difftiime(starttime, endtime, timediff);
-		UA_DOUT(1, 1, "slDecodePlate: time taken: " << timediff);
-	);
+	Util::getTime(endtime);
+	Util::difftiime(starttime, endtime, timediff);
+	UA_DOUT(1, 1, "slDecodePlate: time taken: " << timediff);
 
 	return SC_SUCCESS;
 }
@@ -325,9 +319,7 @@ int slDecodePlate(unsigned dpi, unsigned plateNum) {
 	int result;
 	Dib dib;
 
-	UA_DEBUG(
-		Util::getTime(starttime);
-	);
+	Util::getTime(starttime);
 
 	Config config(INI_FILE_NAME);
 	configLogging(5);
@@ -362,9 +354,7 @@ int slDecodeImage(unsigned plateNum, char * filename) {
 		return SC_FAIL;
 	}
 
-	UA_DEBUG(
-		Util::getTime(starttime);
-	);
+	Util::getTime(starttime);
 
 	Dib dib;
 
