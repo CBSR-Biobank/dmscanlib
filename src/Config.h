@@ -49,8 +49,6 @@ public:
 
 	unsigned getPlateRegionDpi(unsigned plateNum);
 
-	void setDecodeResults(unsigned plateNum);
-
 	static const unsigned MAX_PLATES = 4;
 
 private:
