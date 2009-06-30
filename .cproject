@@ -50,7 +50,7 @@
 <tool id="cdt.managedbuild.tool.gnu.c.compiler.mingw.so.debug.2071455891" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.mingw.so.debug">
 <option defaultValue="gnu.c.optimization.level.none" id="gnu.c.compiler.mingw.so.debug.option.optimization.level.1356538910" name="Optimization Level" superClass="gnu.c.compiler.mingw.so.debug.option.optimization.level" valueType="enumerated"/>
 <option id="gnu.c.compiler.mingw.so.debug.option.debugging.level.417285214" name="Debug Level" superClass="gnu.c.compiler.mingw.so.debug.option.debugging.level" value="gnu.c.debugging.level.max" valueType="enumerated"/>
-<option id="gnu.c.compiler.option.include.paths.2023817480" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath"/>
+<option id="gnu.c.compiler.option.include.paths.2023817480" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths"/>
 <inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.688091711" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 </tool>
 <tool id="cdt.managedbuild.tool.gnu.c.linker.mingw.so.debug.812166086" name="MinGW C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.mingw.so.debug">
@@ -1064,7 +1064,7 @@
 <tool id="cdt.managedbuild.tool.gnu.c.compiler.mingw.so.release.1621842276" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.mingw.so.release">
 <option defaultValue="gnu.c.optimization.level.most" id="gnu.c.compiler.mingw.so.release.option.optimization.level.1672572288" name="Optimization Level" superClass="gnu.c.compiler.mingw.so.release.option.optimization.level" valueType="enumerated"/>
 <option id="gnu.c.compiler.mingw.so.release.option.debugging.level.248989317" name="Debug Level" superClass="gnu.c.compiler.mingw.so.release.option.debugging.level" value="gnu.c.debugging.level.none" valueType="enumerated"/>
-<option id="gnu.c.compiler.option.include.paths.1633522856" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath"/>
+<option id="gnu.c.compiler.option.include.paths.1633522856" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths"/>
 <inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.627605605" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 </tool>
 <tool id="cdt.managedbuild.tool.gnu.c.linker.mingw.so.release.1698236897" name="MinGW C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.mingw.so.release">
@@ -2076,7 +2076,7 @@
 <tool id="cdt.managedbuild.tool.gnu.c.compiler.base.559835875" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.base">
 <option defaultValue="gnu.c.optimization.level.none" id="gnu.c.compiler.option.optimization.level.1996195739" name="Optimization Level" superClass="gnu.c.compiler.option.optimization.level" valueType="enumerated"/>
 <option id="gnu.c.compiler.option.debugging.level.1914966328" name="Debug Level" superClass="gnu.c.compiler.option.debugging.level" value="gnu.c.debugging.level.max" valueType="enumerated"/>
-<option id="gnu.c.compiler.option.include.paths.1040262226" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath"/>
+<option id="gnu.c.compiler.option.include.paths.1040262226" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths"/>
 <inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.1739501641" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 </tool>
 <tool id="cdt.managedbuild.tool.gnu.c.linker.base.1864832702" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.base">
@@ -2095,7 +2095,7 @@
 </toolChain>
 </folderInfo>
 <sourceEntries>
-<entry excluding="src/ScanLib_wrap.c|src/ScanLib.cpp|src/ImageGrabber.h|src/ImageGrabber.cpp|libdmtx/dmtxvector2.c|libdmtx/dmtxtime.c|libdmtx/dmtxsymbol.c|libdmtx/dmtxstatic.h|libdmtx/dmtxscangrid.c|libdmtx/dmtxregion.c|libdmtx/dmtxreedsol.c|libdmtx/dmtxplacemod.c|libdmtx/dmtxmessage.c|libdmtx/dmtxmatrix3.c|libdmtx/dmtximage.c|libdmtx/dmtxfec.c|libdmtx/dmtxencode.c|libdmtx/dmtxdecode.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+<entry excluding="src/ScanLib_wrap.c|src/ImageGrabber.h|src/ImageGrabber.cpp|libdmtx/dmtxvector2.c|libdmtx/dmtxtime.c|libdmtx/dmtxsymbol.c|libdmtx/dmtxstatic.h|libdmtx/dmtxscangrid.c|libdmtx/dmtxregion.c|libdmtx/dmtxreedsol.c|libdmtx/dmtxplacemod.c|libdmtx/dmtxmessage.c|libdmtx/dmtxmatrix3.c|libdmtx/dmtximage.c|libdmtx/dmtxfec.c|libdmtx/dmtxencode.c|libdmtx/dmtxdecode.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 </sourceEntries>
 </configuration>
 </storageModule>
@@ -3096,7 +3096,7 @@
 <tool id="cdt.managedbuild.tool.gnu.c.compiler.mingw.so.debug.2070197088" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.mingw.so.debug">
 <option defaultValue="gnu.c.optimization.level.none" id="gnu.c.compiler.mingw.so.debug.option.optimization.level.1828221140" name="Optimization Level" superClass="gnu.c.compiler.mingw.so.debug.option.optimization.level" valueType="enumerated"/>
 <option id="gnu.c.compiler.mingw.so.debug.option.debugging.level.1509408609" name="Debug Level" superClass="gnu.c.compiler.mingw.so.debug.option.debugging.level" value="gnu.c.debugging.level.max" valueType="enumerated"/>
-<option id="gnu.c.compiler.option.include.paths.1058547818" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath"/>
+<option id="gnu.c.compiler.option.include.paths.1058547818" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths"/>
 <inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.2044811628" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 </tool>
 <tool id="cdt.managedbuild.tool.gnu.c.linker.mingw.so.debug.1156567785" name="MinGW C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.mingw.so.debug">
@@ -6149,7 +6149,7 @@
 <tool id="cdt.managedbuild.tool.gnu.c.compiler.mingw.so.debug.1937020862" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.mingw.so.debug">
 <option defaultValue="gnu.c.optimization.level.none" id="gnu.c.compiler.mingw.so.debug.option.optimization.level.848724043" name="Optimization Level" superClass="gnu.c.compiler.mingw.so.debug.option.optimization.level" valueType="enumerated"/>
 <option id="gnu.c.compiler.mingw.so.debug.option.debugging.level.897470518" name="Debug Level" superClass="gnu.c.compiler.mingw.so.debug.option.debugging.level" value="gnu.c.debugging.level.max" valueType="enumerated"/>
-<option id="gnu.c.compiler.option.include.paths.953028080" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath"/>
+<option id="gnu.c.compiler.option.include.paths.953028080" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths"/>
 <inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.1487362553" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 </tool>
 <tool id="cdt.managedbuild.tool.gnu.c.linker.mingw.so.debug.1026306730" name="MinGW C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.mingw.so.debug">

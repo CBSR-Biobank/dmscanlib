@@ -40,6 +40,9 @@ Config::~Config() {
 
 	for (unsigned i = 0; i < MAX_PLATES; ++ i) {
 		for (unsigned j = 0, n = regionInfos[i].regions.size(); j < n; ++j) {
+			if (regionInfos[i].regions[j]->msgInfo != NULL) {
+				delete regionInfos[i].regions[j]->msgInfo;
+			}
 			delete regionInfos[i].regions[j];
 		}
 	}
@@ -309,9 +312,6 @@ bool Config::parseRegions(unsigned plateNum) {
 		string key(it->first.pItem);
 		string value(it->second);
 
-		region = new DecodeRegion;
-		UA_ASSERT_NOT_NULL(region);
-
 		if (key.find(dpiLabel) == 0) {
 			int num;
 			if (!Util::strToNum(value, num, 10)) {
@@ -323,6 +323,9 @@ bool Config::parseRegions(unsigned plateNum) {
 			regionInfos[plateNum].dpi = static_cast<unsigned>(num);
 			continue;
 		}
+
+		region = new DecodeRegion;
+		UA_ASSERT_NOT_NULL(region);
 
 		pos =  key.find(label);
 		if (pos == string::npos) {

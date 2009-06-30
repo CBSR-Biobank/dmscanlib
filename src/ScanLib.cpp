@@ -46,18 +46,22 @@ void configLogging(unsigned level) {
  * Loads the INI file if it is present.
  */
 int slIsTwainAvailable() {
+#ifdef WIN32
 	ImageGrabber ig;
 	if (ig.twainAvailable()) {
 		return SC_SUCCESS;
 	}
+#endif
 	return SC_TWAIN_UAVAIL;
 }
 
 int slSelectSourceAsDefault() {
+#ifdef WIN32
 	ImageGrabber ig;
 	if (ig.selectSourceAsDefault()) {
 		return SC_SUCCESS;
 	}
+#endif
 	return SC_FAIL;
 }
 
@@ -100,7 +104,7 @@ int slConfigScannerContrast(int contrast) {
 
 int slScanImage(unsigned dpi, double left, double top, double right,
 		double bottom, char * filename) {
-
+#ifdef WIN32
 	if (filename == NULL) {
 		return SC_FAIL;
 	}
@@ -120,9 +124,13 @@ int slScanImage(unsigned dpi, double left, double top, double right,
 	dib.writeToFile(filename);
 	ig.freeImage(h);
 	return SC_SUCCESS;
+#else
+	return SC_FAIL;
+#endif
 }
 
 int slScanPlate(unsigned dpi, unsigned plateNum, char * filename) {
+#ifdef WIN32
 	if ((dpi != 300) && (dpi != 400) && (dpi != 600)) {
 		return SC_INVALID_DPI;
 	}
@@ -164,9 +172,13 @@ int slScanPlate(unsigned dpi, unsigned plateNum, char * filename) {
 		return SC_FILE_SAVE_ERROR;
 	}
 	return SC_SUCCESS;
+#else
+	return SC_FAIL;
+#endif
 }
 
 int slCalibrateToPlate(unsigned dpi, unsigned plateNum) {
+#ifdef WIN32
 	if ((dpi != 300) && (dpi != 400) && (dpi != 600)) {
 		return SC_INVALID_DPI;
 	}
@@ -236,6 +248,9 @@ int slCalibrateToPlate(unsigned dpi, unsigned plateNum) {
 	);
 
 	return SC_SUCCESS;
+#else
+	return SC_FAIL;
+#endif
 }
 
 int slDecodeCommon(unsigned plateNum, Dib & dib) {
@@ -274,6 +289,7 @@ int slDecodeCommon(unsigned plateNum, Dib & dib) {
 }
 
 int slDecodePlate(unsigned dpi, unsigned plateNum) {
+#ifdef WIN32
 	if ((dpi != 300) && (dpi != 400) && (dpi != 600)) {
 		return SC_INVALID_DPI;
 	}
@@ -311,6 +327,9 @@ int slDecodePlate(unsigned dpi, unsigned plateNum) {
 	result = slDecodeCommon(plateNum, dib);
 	ig.freeImage(h);
 	return result;
+#else
+	return SC_FAIL;
+#endif
 }
 
 int slDecodeImage(unsigned plateNum, char * filename) {
