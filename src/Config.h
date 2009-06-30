@@ -8,7 +8,7 @@
  *      Author: loyola
  */
 
-#include "ScanLib.h"
+#include "structs.h"
 #include "SimpleIni.h"
 
 #include <vector>
