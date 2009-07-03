@@ -169,7 +169,7 @@ int slScanPlate(unsigned dpi, unsigned plateNum, char * filename) {
 		return SC_FAIL;
 	}
 
-	ScFrame * f;
+	ScFrame f;
 	ImageGrabber ig;
 	HANDLE h;
 	Dib dib;
@@ -182,12 +182,12 @@ int slScanPlate(unsigned dpi, unsigned plateNum, char * filename) {
 	Config config(INI_FILE_NAME);
 
 	config.parseFrames();
-	if (!config.getPlateFrame(plateNum, &f)) {
+	if (!config.getPlateFrame(plateNum, f)) {
 		return SC_INI_FILE_ERROR;
 	}
 
 	h = ig.acquireImage(dpi, config.getScannerBrightness(),
-		config.getScannerContrast(), f->x0, f->y0, f->x1, f->y1);
+		config.getScannerContrast(), f.x0, f.y0, f.x1, f.y1);
 	if (h == NULL) {
 		UA_DOUT(1, 1, "could not acquire plate image: " << plateNum);
 		return SC_FAIL;
@@ -197,6 +197,7 @@ int slScanPlate(unsigned dpi, unsigned plateNum, char * filename) {
 	if (!dib.writeToFile(filename)) {
 		return SC_FILE_SAVE_ERROR;
 	}
+	ig.freeImage(h);
 	return SC_SUCCESS;
 #else
 	return SC_FAIL;
@@ -213,7 +214,7 @@ int slCalibrateToPlate(unsigned dpi, unsigned plateNum) {
 		return SC_INVALID_PLATE_NUM;
 	}
 
-	ScFrame * f = NULL;
+	ScFrame f;
 	Calibrator calibrator;
 	Dib dib;
 	Dib processedDib;
@@ -227,12 +228,12 @@ int slCalibrateToPlate(unsigned dpi, unsigned plateNum) {
 	configLogging(5);
 
 	config.parseFrames();
-	if (!config.getPlateFrame(plateNum, &f)) {
+	if (!config.getPlateFrame(plateNum, f)) {
 		return SC_INI_FILE_ERROR;
 	}
 
 	h = ig.acquireImage(dpi, config.getScannerBrightness(),
-		config.getScannerContrast(), f->x0, f->y0, f->x1, f->y1);
+		config.getScannerContrast(), f.x0, f.y0, f.x1, f.y1);
 	if (h == NULL) {
 		UA_DOUT(1, 1, "could not aquire plate image: " << plateNum);
 		return SC_FAIL;
@@ -318,24 +319,22 @@ int slDecodePlate(unsigned dpi, unsigned plateNum) {
 		return SC_INVALID_PLATE_NUM;
 	}
 
-	ScFrame * f;
+	ScFrame f;
 	ImageGrabber ig;
 	HANDLE h;
 	int result;
 	Dib dib;
 
 	Util::getTime(starttime);
-
 	Config config(INI_FILE_NAME);
 	configLogging(5);
-
 	config.parseFrames();
-	if (!config.getPlateFrame(plateNum, &f)) {
+	if (!config.getPlateFrame(plateNum, f)) {
 		return SC_INI_FILE_ERROR;
 	}
 
 	h = ig.acquireImage(dpi, config.getScannerBrightness(),
-		config.getScannerContrast(), f->x0, f->y0, f->x1, f->y1);
+		config.getScannerContrast(), f.x0, f.y0, f.x1, f.y1);
 	if (h == NULL) {
 		UA_DOUT(1, 1, "could not acquire plate image: " << plateNum);
 		return SC_FAIL;

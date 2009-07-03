@@ -203,7 +203,7 @@ int Config::getScannerContrast() {
 	return static_cast<int>(ini.GetLongValue("scanner", "contrast", 0));
 }
 
-bool Config::getPlateFrame(unsigned plate, ScFrame ** frame) {
+bool Config::getPlateFrame(unsigned plate, ScFrame & frame) {
 	if (state != STATE_OK) {
 		UA_DOUT(5, 3, "getPlateFrame: invalid ini state: " << state);
 		return false;
@@ -211,11 +211,10 @@ bool Config::getPlateFrame(unsigned plate, ScFrame ** frame) {
 
 	map<unsigned, ScFrame>::iterator it = plateFrames.find(plate);
 	if (it == plateFrames.end()) {
-		*frame = NULL;
 		UA_DOUT(5, 1,  "plate number " << plate << " is not defined in INI file.");
 		return false;
 	}
-	*frame = &it->second;
+	frame = it->second;
 	return true;
 }
 

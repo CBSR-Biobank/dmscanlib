@@ -39,7 +39,7 @@ public:
 	int getScannerBrightness();
 	bool setScannerContrast(int contrast);
 	int getScannerContrast();
-	bool getPlateFrame(unsigned plate, ScFrame ** fame);
+	bool getPlateFrame(unsigned plate, ScFrame & fame);
 	bool setRegions(unsigned plateNum, unsigned dpi,
 			const vector<BinRegion *> & rowBinRegions,
 			const vector<BinRegion *> & colBinRegions);
