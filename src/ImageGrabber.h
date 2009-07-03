@@ -55,12 +55,17 @@ private:
 	void setFloatToIntPair(const double f, short & whole, unsigned short & frac);
 	int GetPaletteSize(BITMAPINFOHEADER& bmInfo);
 
-	BOOL setCapability(TW_UINT16 cap,TW_UINT16 value,BOOL sign);
+	//BOOL setCapability(TW_IDENTITY * srcId, TW_UINT16 cap,TW_UINT16 value,BOOL sign);
 
 	BOOL SetCapOneValue(TW_IDENTITY * srcId, unsigned Cap, unsigned ItemType, long ItemVal);
 
+	void ImageGrabber::GetCapability(TW_IDENTITY * srcId, unsigned Cap);
+
 	bool getConfigFromIni(CSimpleIniA & ini, unsigned plateNum);
 
+	double ImageGrabber::Fix32ToFloat(TW_FIX32 fix32);
+
+	void getCustomDsData(TW_IDENTITY * srcId);
 
 	static const char * TWAIN_DLL_FILENAME;
 

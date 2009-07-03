@@ -1,8 +1,10 @@
 /**
- * Implements the ImageGrabber singleton.
+ * Implements the ImageGrabber.
  *
  * This class performs all interfacing with the TWAIN driver to acquire images
  * from the scanner.
+ *
+ * Some portions of the implementation borrowed from EZTWAIN.
  */
 
 
@@ -136,6 +138,9 @@ HANDLE ImageGrabber::acquireImage(unsigned dpi, int brightness, int contrast,
 
 	TW_UINT32 handle = 0;
 	TW_IDENTITY srcID;
+	TW_FIX32 value;
+	UA_ASSERT(sizeof(TW_FIX32) == sizeof(long));
+	value.Frac = 0;
 
 	HWND hwnd = CreateWindowA("STATIC", "",	WS_POPUPWINDOW, CW_USEDEFAULT,
 			CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, HWND_DESKTOP,
@@ -163,6 +168,20 @@ HANDLE ImageGrabber::acquireImage(unsigned dpi, int brightness, int contrast,
 	rc = invokeTwain(NULL, DG_CONTROL, DAT_IDENTITY, MSG_OPENDS, &srcID);
 	UA_ASSERTS(rc == TWRC_SUCCESS, "Unable to open default data source");
 
+	value.Whole = dpi;
+	SetCapOneValue(&srcID, ICAP_XRESOLUTION, TWTY_FIX32, *(long*)&value);
+	SetCapOneValue(&srcID, ICAP_YRESOLUTION, TWTY_FIX32, *(long*)&value);
+
+	SetCapOneValue(&srcID, ICAP_PIXELTYPE, TWTY_UINT16, TWPT_RGB);
+	//SetCapOneValue(&srcID, ICAP_BITDEPTH, TWTY_UINT16, 8);
+
+	value.Whole = brightness;
+	UA_DOUT(2, 1, "acquire: setting brightness");
+	SetCapOneValue(&srcID, ICAP_BRIGHTNESS, TWTY_FIX32, *(long*)&value);
+
+	value.Whole = contrast;
+	SetCapOneValue(&srcID, ICAP_CONTRAST, TWTY_FIX32, *(long*)&value);
+
 	UA_DOUT(2, 3, "acquireImage: source/\"" << srcID.ProductName << "\""
 		<< " brightness/" << brightness
 		<< " constrast/" << contrast
@@ -171,7 +190,7 @@ HANDLE ImageGrabber::acquireImage(unsigned dpi, int brightness, int contrast,
 		<< " right/" << right
 		<< " bottom/" << bottom);
 
-	setCapability(ICAP_UNITS, TWUN_INCHES, FALSE);
+	SetCapOneValue(&srcID, ICAP_UNITS, TWTY_UINT16, TWUN_INCHES);
 	TW_IMAGELAYOUT layout;
 	setFloatToIntPair(left,   layout.Frame.Left.Whole,   layout.Frame.Left.Frac);
 	setFloatToIntPair(top,    layout.Frame.Top.Whole,    layout.Frame.Top.Frac);
@@ -184,12 +203,11 @@ HANDLE ImageGrabber::acquireImage(unsigned dpi, int brightness, int contrast,
 
 	//Prepare to enable the default data source
 	TW_USERINTERFACE ui;
-	ui.ShowUI = false;
-	ui.ModalUI = false;
+	ui.ShowUI = FALSE;
+	ui.ModalUI = FALSE;
 	ui.hParent = hwnd;
 	// Enable the default data source.
-	rc = invokeTwain(&srcID, DG_CONTROL,	DAT_USERINTERFACE, MSG_ENABLEDS, &ui);
-
+	rc = invokeTwain(&srcID, DG_CONTROL, DAT_USERINTERFACE, MSG_ENABLEDS, &ui);
 	UA_ASSERTS(rc == TWRC_SUCCESS, "Unable to enable default data source");
 
 	MSG msg;
@@ -207,30 +225,13 @@ HANDLE ImageGrabber::acquireImage(unsigned dpi, int brightness, int contrast,
 			continue;
 		}
 
-		if (event.TWMessage == MSG_CLOSEDSREQ)
+		if (event.TWMessage == MSG_CLOSEDSREQ) {
+			rc = invokeTwain(&srcID, DG_CONTROL, DAT_USERINTERFACE, MSG_DISABLEDS, &ui);
 			break;
+		}
 
 		if (event.TWMessage == MSG_XFERREADY) {
 			TW_IMAGEINFO ii;
-
-			setCapability(ICAP_XRESOLUTION, dpi, FALSE);
-			setCapability(ICAP_YRESOLUTION, dpi, FALSE);
-			setCapability(ICAP_PIXELTYPE, /* TWPT_GRAY */ TWPT_RGB, FALSE);
-			setCapability(ICAP_BITDEPTH, 8, FALSE);
-			UA_DOUT(2, 1, "acquire: setting brightness");
-
-			
-			setCapability(ICAP_AUTOBRIGHT, FALSE, FALSE);
-
-			TW_FIX32 value;
-			UA_ASSERT(sizeof(TW_FIX32) == sizeof(long));
-
-			value.Frac = 0;
-			value.Whole = brightness;
-			SetCapOneValue(&srcID, ICAP_BRIGHTNESS, TWTY_FIX32, *(long*)&value);
-
-			value.Whole = contrast;
-			SetCapOneValue(&srcID, ICAP_CONTRAST, TWTY_FIX32, *(long*)&value);
 
 			rc = invokeTwain(&srcID, DG_IMAGE, DAT_IMAGEINFO, MSG_GET, &ii);
 
@@ -267,16 +268,17 @@ HANDLE ImageGrabber::acquireImage(unsigned dpi, int brightness, int contrast,
 				break;
 			}
 
-			// Cancel all remaining transfers.
-			invokeTwain(&srcID, DG_CONTROL, DAT_PENDINGXFERS, MSG_RESET, &pxfers);
-			rc = TWRC_SUCCESS;
-
-			break;
+			// acknowledge end of transfer.
+			rc = invokeTwain(&srcID, DG_CONTROL, DAT_PENDINGXFERS, MSG_ENDXFER, &pxfers);
+			if ((rc == TWRC_SUCCESS) && (pxfers.Count != 0)) {
+				// Cancel all remaining transfers.
+				invokeTwain(&srcID, DG_CONTROL, DAT_PENDINGXFERS, MSG_RESET, &pxfers);
+			}
 		}
 	}
 
 	// Close the data source.
-	invokeTwain(NULL, DG_CONTROL, DAT_IDENTITY,	MSG_CLOSEDS, &srcID);
+	invokeTwain(&srcID, DG_CONTROL, DAT_IDENTITY,	MSG_CLOSEDS, &srcID);
 
 	// Close the data source manager.
 	invokeTwain(NULL, DG_CONTROL, DAT_PARENT, MSG_CLOSEDSM, &hwnd);
@@ -319,43 +321,6 @@ DmtxImage* ImageGrabber::acquireDmtxImage(unsigned dpi, int brightness,
 	return theImage;
 }
 
-/*
- * Sets the capability of the Twain Data Source
- */
-BOOL ImageGrabber::setCapability(TW_UINT16 cap,TW_UINT16 value, BOOL sign) {
-	UA_ASSERT_NOT_NULL(g_hLib);
-
-	TW_CAPABILITY twCap;
-	pTW_ONEVALUE pVal;
-	BOOL ret_value = FALSE;
-	TW_IDENTITY srcID;
-
-	// get the default source
-	TW_UINT16 rc = invokeTwain(NULL, DG_CONTROL, DAT_IDENTITY, MSG_GETDEFAULT, &srcID);
-
-	if (rc != TWRC_SUCCESS) {
-		// Unable to open default data source"
-		return false;
-	}
-
-	twCap.Cap = cap;
-	twCap.ConType = TWON_ONEVALUE;
-
-	twCap.hContainer = GlobalAlloc(GHND,sizeof(TW_ONEVALUE));
-	UA_ASSERT_NOT_NULL(twCap.hContainer);
-
-	pVal = (pTW_ONEVALUE)GlobalLock(twCap.hContainer);
-	UA_ASSERT_NOT_NULL(pVal);
-
-	pVal->ItemType = sign ? TWTY_INT16 : TWTY_UINT16;
-	pVal->Item = value;
-	GlobalUnlock(twCap.hContainer);
-	// change this?
-	ret_value = invokeTwain(&srcID, DG_CONTROL, DAT_CAPABILITY, MSG_SET, &twCap);
-	GlobalFree(twCap.hContainer);
-	return ret_value;
-}
-
 BOOL ImageGrabber::SetCapOneValue(TW_IDENTITY * srcId, unsigned Cap, unsigned ItemType, long ItemVal) {
 	BOOL ret_value = FALSE;
 	TW_CAPABILITY	cap;
@@ -375,6 +340,46 @@ BOOL ImageGrabber::SetCapOneValue(TW_IDENTITY * srcId, unsigned Cap, unsigned It
 	ret_value = invokeTwain(srcId, DG_CONTROL, DAT_CAPABILITY, MSG_SET, &cap);
 	GlobalFree(cap.hContainer);
 	return ret_value;
+}
+
+void ImageGrabber::GetCapability(TW_IDENTITY * srcId, unsigned cap) {
+	TW_UINT16 rc;
+	TW_CAPABILITY twCap;
+	pTW_RANGE r;
+
+	twCap.Cap = cap;
+	rc = invokeTwain(srcId, DG_CONTROL, DAT_CAPABILITY, MSG_GET, &twCap);
+	if ((rc == TWRC_SUCCESS) && (twCap.ConType == TWON_RANGE)) {
+		r = (pTW_RANGE) GlobalLock(twCap.hContainer);
+
+		if (r->ItemType == TWTY_FIX32) {
+			UA_DOUT(2, 5, "GetCapability: TWON_RANGE, ItemType/" << r->ItemType
+				<< " MinValue/" << Fix32ToFloat(*reinterpret_cast<TW_FIX32*>(&r->MinValue))
+				<< " MaxValue/" << Fix32ToFloat(*reinterpret_cast<TW_FIX32*>(&r->MaxValue))
+				<< " StepSize/" << Fix32ToFloat(*reinterpret_cast<TW_FIX32*>(&r->StepSize))
+				<< " DefaultValue/" << Fix32ToFloat(*reinterpret_cast<TW_FIX32*>(&r->DefaultValue))
+				<< " CurrentValue/" << Fix32ToFloat(*reinterpret_cast<TW_FIX32*>(&r->CurrentValue)));
+		}
+		GlobalUnlock(twCap.hContainer);
+		GlobalFree(twCap.hContainer);
+	}
+}
+
+
+void ImageGrabber::getCustomDsData(TW_IDENTITY * srcId) {
+	TW_UINT16 rc;
+	TW_CUSTOMDSDATA cdata;
+	
+	rc = invokeTwain(srcId, DG_CONTROL, DAT_CUSTOMDSDATA, MSG_GET, &cdata);
+	if (rc == TWRC_SUCCESS) {
+		char * o = (char *)GlobalLock(cdata.hData);
+		GlobalUnlock(cdata.hData);
+		GlobalFree(cdata.hData);
+	}
+}
+
+double ImageGrabber::Fix32ToFloat(TW_FIX32 fix32) {
+	return static_cast<double>(fix32.Whole) + static_cast<double>(fix32.Frac) / 65536.0;
 }
 
 /*
