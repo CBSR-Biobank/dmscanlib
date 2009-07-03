@@ -69,7 +69,7 @@ void Config::parseFrames() {
 		UA_DOUT(5, 3, "plate " << i << ": top/" << plateFrames[i].y0
 				<< " left/" << plateFrames[i].x0
 				<< " bottom/" << plateFrames[i].y1
-				<< " right/" << plateFrames[i].x0);
+				<< " right/" << plateFrames[i].x1);
 	}
 }
 
