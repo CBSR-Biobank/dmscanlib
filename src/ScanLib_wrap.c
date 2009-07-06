@@ -204,7 +204,7 @@ extern int slDecodeImage(unsigned plateNum, char * filename);
 extern "C" {
 #endif
 
-SWIGEXPORT jint JNICALL Java_edu_ualberta_med_biobank_scanlib_ScanLibJNI_slIsTwainAvailable(JNIEnv *jenv, jclass jcls) {
+SWIGEXPORT jint JNICALL Java_edu_ualberta_med_biobank_scanlib_ScanLibWin32JNI_slIsTwainAvailable(JNIEnv *jenv, jclass jcls) {
   jint jresult = 0 ;
   int result;
   
@@ -216,7 +216,7 @@ SWIGEXPORT jint JNICALL Java_edu_ualberta_med_biobank_scanlib_ScanLibJNI_slIsTwa
 }
 
 
-SWIGEXPORT jint JNICALL Java_edu_ualberta_med_biobank_scanlib_ScanLibJNI_slSelectSourceAsDefault(JNIEnv *jenv, jclass jcls) {
+SWIGEXPORT jint JNICALL Java_edu_ualberta_med_biobank_scanlib_ScanLibWin32JNI_slSelectSourceAsDefault(JNIEnv *jenv, jclass jcls) {
   jint jresult = 0 ;
   int result;
   
@@ -228,7 +228,7 @@ SWIGEXPORT jint JNICALL Java_edu_ualberta_med_biobank_scanlib_ScanLibJNI_slSelec
 }
 
 
-SWIGEXPORT jint JNICALL Java_edu_ualberta_med_biobank_scanlib_ScanLibJNI_slConfigScannerBrightness(JNIEnv *jenv, jclass jcls, jint jarg1) {
+SWIGEXPORT jint JNICALL Java_edu_ualberta_med_biobank_scanlib_ScanLibWin32JNI_slConfigScannerBrightness(JNIEnv *jenv, jclass jcls, jint jarg1) {
   jint jresult = 0 ;
   int arg1 ;
   int result;
@@ -242,7 +242,7 @@ SWIGEXPORT jint JNICALL Java_edu_ualberta_med_biobank_scanlib_ScanLibJNI_slConfi
 }
 
 
-SWIGEXPORT jint JNICALL Java_edu_ualberta_med_biobank_scanlib_ScanLibJNI_slConfigScannerContrast(JNIEnv *jenv, jclass jcls, jint jarg1) {
+SWIGEXPORT jint JNICALL Java_edu_ualberta_med_biobank_scanlib_ScanLibWin32JNI_slConfigScannerContrast(JNIEnv *jenv, jclass jcls, jint jarg1) {
   jint jresult = 0 ;
   int arg1 ;
   int result;
@@ -256,7 +256,7 @@ SWIGEXPORT jint JNICALL Java_edu_ualberta_med_biobank_scanlib_ScanLibJNI_slConfi
 }
 
 
-SWIGEXPORT jint JNICALL Java_edu_ualberta_med_biobank_scanlib_ScanLibJNI_slConfigPlateFrame(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5) {
+SWIGEXPORT jint JNICALL Java_edu_ualberta_med_biobank_scanlib_ScanLibWin32JNI_slConfigPlateFrame(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5) {
   jint jresult = 0 ;
   unsigned int arg1 ;
   double arg2 ;
@@ -278,7 +278,7 @@ SWIGEXPORT jint JNICALL Java_edu_ualberta_med_biobank_scanlib_ScanLibJNI_slConfi
 }
 
 
-SWIGEXPORT jint JNICALL Java_edu_ualberta_med_biobank_scanlib_ScanLibJNI_slScanImage(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5, jstring jarg6) {
+SWIGEXPORT jint JNICALL Java_edu_ualberta_med_biobank_scanlib_ScanLibWin32JNI_slScanImage(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5, jstring jarg6) {
   jint jresult = 0 ;
   unsigned int arg1 ;
   double arg2 ;
@@ -307,7 +307,7 @@ SWIGEXPORT jint JNICALL Java_edu_ualberta_med_biobank_scanlib_ScanLibJNI_slScanI
 }
 
 
-SWIGEXPORT jint JNICALL Java_edu_ualberta_med_biobank_scanlib_ScanLibJNI_slScanPlate(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2, jstring jarg3) {
+SWIGEXPORT jint JNICALL Java_edu_ualberta_med_biobank_scanlib_ScanLibWin32JNI_slScanPlate(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2, jstring jarg3) {
   jint jresult = 0 ;
   unsigned int arg1 ;
   unsigned int arg2 ;
@@ -330,7 +330,7 @@ SWIGEXPORT jint JNICALL Java_edu_ualberta_med_biobank_scanlib_ScanLibJNI_slScanP
 }
 
 
-SWIGEXPORT jint JNICALL Java_edu_ualberta_med_biobank_scanlib_ScanLibJNI_slCalibrateToPlate(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2) {
+SWIGEXPORT jint JNICALL Java_edu_ualberta_med_biobank_scanlib_ScanLibWin32JNI_slCalibrateToPlate(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2) {
   jint jresult = 0 ;
   unsigned int arg1 ;
   unsigned int arg2 ;
@@ -346,7 +346,7 @@ SWIGEXPORT jint JNICALL Java_edu_ualberta_med_biobank_scanlib_ScanLibJNI_slCalib
 }
 
 
-SWIGEXPORT jint JNICALL Java_edu_ualberta_med_biobank_scanlib_ScanLibJNI_slDecodePlate(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2) {
+SWIGEXPORT jint JNICALL Java_edu_ualberta_med_biobank_scanlib_ScanLibWin32JNI_slDecodePlate(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2) {
   jint jresult = 0 ;
   unsigned int arg1 ;
   unsigned int arg2 ;
@@ -362,7 +362,7 @@ SWIGEXPORT jint JNICALL Java_edu_ualberta_med_biobank_scanlib_ScanLibJNI_slDecod
 }
 
 
-SWIGEXPORT jint JNICALL Java_edu_ualberta_med_biobank_scanlib_ScanLibJNI_slDecodeImage(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2) {
+SWIGEXPORT jint JNICALL Java_edu_ualberta_med_biobank_scanlib_ScanLibWin32JNI_slDecodeImage(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2) {
   jint jresult = 0 ;
   unsigned int arg1 ;
   char *arg2 = (char *) 0 ;

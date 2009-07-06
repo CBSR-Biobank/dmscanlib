@@ -1,4 +1,4 @@
-%module ScanLib
+%module ScanLibWin32
 %{
 extern int slIsTwainAvailable();
 extern int slSelectSourceAsDefault();
