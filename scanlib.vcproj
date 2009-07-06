@@ -115,7 +115,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="libdmtx;simpleini;simpleopt;src;src/loki;src/utils"
+				AdditionalIncludeDirectories="src;src/libdmtx;src/loki;src/utils"
 				PreprocessorDefinitions="_VISUALC_;WIN32;_CONSOLE;UA_LOGGER;STANDALONE"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
