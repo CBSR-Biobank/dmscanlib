@@ -33,6 +33,7 @@ const int SC_INVALID_DPI           = -6;
 const int SC_INVALID_PLATE_NUM     = -7;
 const int SC_FILE_SAVE_ERROR       = -8;
 const int SC_INVALID_VALUE         = -9;
+const int SC_INVALID_IMAGE         = -10;
 
 /**
  * Queries the availability of the TWAIN driver.

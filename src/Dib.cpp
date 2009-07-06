@@ -388,7 +388,7 @@ void Dib::setPixelGrayscale(unsigned row, unsigned col,	unsigned char value) {
 /*
  * DIBs are flipped in Y;
  */
-void Dib::crop(Dib &src, unsigned x0, unsigned y0, unsigned x1, unsigned y1) {
+bool Dib::crop(Dib &src, unsigned x0, unsigned y0, unsigned x1, unsigned y1) {
 	UA_ASSERT_NOT_NULL(src.infoHeader);
 	UA_ASSERT(x1 > x0);
 	UA_ASSERT(y1 > y0);
@@ -397,10 +397,10 @@ void Dib::crop(Dib &src, unsigned x0, unsigned y0, unsigned x1, unsigned y1) {
 	*infoHeader = *src.infoHeader;
 	bytesPerPixel = src.bytesPerPixel;
 
-	UA_ASSERT(y0 < infoHeader->height);
-	UA_ASSERT(y1 < infoHeader->height);
-	UA_ASSERT(x0 < infoHeader->width);
-	UA_ASSERT(x1 < infoHeader->width);
+	if ((y0 >= infoHeader->height) || (y1 >= infoHeader->height)
+		|| (x0 >= infoHeader->width) || (x1 >= infoHeader->width)) {
+			return false;
+	}
 
 	infoHeader->width  = x1 - x0;
 	infoHeader->height = y1 - y0;
@@ -421,6 +421,7 @@ void Dib::crop(Dib &src, unsigned x0, unsigned y0, unsigned x1, unsigned y1) {
 	++row, srcRowPtr += src.rowBytes, destRowPtr += rowBytes) {
 		memcpy(destRowPtr, srcRowPtr, infoHeader->width * bytesPerPixel);
 	}
+	return true;
 }
 
 void Dib::convertGrayscale(Dib & src) {

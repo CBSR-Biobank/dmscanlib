@@ -175,7 +175,7 @@ HANDLE ImageGrabber::acquireImage(unsigned dpi, int brightness, int contrast,
 	SetCapOneValue(&srcID, ICAP_PIXELTYPE, TWTY_UINT16, TWPT_RGB);
 	//SetCapOneValue(&srcID, ICAP_BITDEPTH, TWTY_UINT16, 8);
 
-	value.Whole = brightness
+	value.Whole = brightness;
 	SetCapOneValue(&srcID, ICAP_BRIGHTNESS, TWTY_FIX32, *(long*)&value);
 
 	value.Whole = contrast;

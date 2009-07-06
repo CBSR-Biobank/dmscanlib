@@ -39,7 +39,7 @@ public:
 	Decoder();
 	virtual ~Decoder();
 
-	void processImageRegions(unsigned plateNum, Dib & dib,
+	bool processImageRegions(unsigned plateNum, Dib & dib,
 			const vector<DecodeRegion *> & decodeRegions);
 	void imageShowRegions(Dib & dib, const vector<DecodeRegion *> & decodeRegions);
 

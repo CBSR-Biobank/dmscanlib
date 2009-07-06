@@ -293,8 +293,9 @@ int slDecodeCommon(unsigned plateNum, Dib & dib) {
 
 	const vector<DecodeRegion *> & regions = config.getRegions(plateNum, dib.getDpi());
 
-	decoder.processImageRegions(plateNum, processedDib, regions);
-	//decoder.processImageRegions(plateNum, dib, regions);
+	if (!decoder.processImageRegions(plateNum, processedDib, regions)) {
+		return SC_INVALID_IMAGE;
+	}
 	saveDecodeResults(plateNum, regions);
 
 	Dib markedDib(dib);

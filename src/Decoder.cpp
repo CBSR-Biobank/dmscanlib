@@ -192,20 +192,26 @@ DmtxImage * Decoder::createDmtxImageFromDib(Dib & dib) {
 }/*
  * Should only be called after regions are loaded from INI file.
  */
-void Decoder::processImageRegions(unsigned plateNum, Dib & dib,
+bool Decoder::processImageRegions(unsigned plateNum, Dib & dib,
 		const vector<DecodeRegion *> & decodeRegions) {
 	if (decodeRegions.size() == 0) {
 		UA_WARN("no decoded regions; exiting.");
-		return;
+		return true;
 	}
 
+	boolean cropResult;
 	vector<BarcodeInfo *> barcodeInfos;
 
 	for (unsigned i = 0, n = decodeRegions.size(); i < n; ++i) {
 		DecodeRegion & region = *decodeRegions[i];
 		Dib croppedDib;
-		croppedDib.crop(dib, region.topLeft.X, region.topLeft.Y,
+		cropResult = croppedDib.crop(dib, region.topLeft.X, region.topLeft.Y,
 				region.botRight.X, region.botRight.Y);
+
+		if (!cropResult) {
+			return false;
+		}
+
 		barcodeInfos.clear();
 		UA_DOUT(3, 3, "processing region at row/" << region.row << " col/" << region.col);
 		processImage(croppedDib, barcodeInfos);
@@ -217,6 +223,7 @@ void Decoder::processImageRegions(unsigned plateNum, Dib & dib,
 					<< " col/" << region.col << " barcode/" << region.barcodeInfo->getMsg());
 		}
 	}
+	return true;
 }
 
 void Decoder::imageShowRegions(Dib & dib, const vector<DecodeRegion *> & decodeRegions) {
