@@ -61,13 +61,13 @@ unsigned ImageGrabber::invokeTwain(TW_IDENTITY * srcId, unsigned long dg,
 		unsigned dat, unsigned msg, void * ptr) {
 	UA_ASSERT_NOT_NULL(g_pDSM_Entry);
 	unsigned r = g_pDSM_Entry(&g_AppID, srcId, dg, dat, msg, ptr);
-	UA_DOUT(2, 3, "invokeTwain: srcId/\""
+	UA_DOUT(2, 5, "invokeTwain: srcId/\""
 			<< ((srcId != NULL) ? srcId->ProductName : "NULL")
 			<< "\" dg/" << dg << " dat/" << dat << " msg/" << msg
 			<< " ptr/" << ptr << " returnCode/" << r);
 
 	if ((srcId == NULL) && (r != TWRC_SUCCESS) && (r != TWRC_CHECKSTATUS)) {
-		UA_DOUT(2, 3, "ImageGrabber::invokeTwain: unsuccessful call to twain");
+		UA_DOUT(2, 1, "ImageGrabber::invokeTwain: unsuccessful call to twain");
 	}
 	return r;
 }
@@ -371,7 +371,7 @@ void ImageGrabber::getCustomDsData(TW_IDENTITY * srcId) {
 	
 	rc = invokeTwain(srcId, DG_CONTROL, DAT_CUSTOMDSDATA, MSG_GET, &cdata);
 	if (rc == TWRC_SUCCESS) {
-		char * o = (char *)GlobalLock(cdata.hData);
+		//char * o = (char *)GlobalLock(cdata.hData);
 		GlobalUnlock(cdata.hData);
 		GlobalFree(cdata.hData);
 	}
