@@ -251,11 +251,11 @@ HANDLE ImageGrabber::acquireImage(unsigned dpi, int brightness, int contrast,
 
 			//debug info
 			UA_DOUT(2, 1, "acquire:"
-					<< " Bits per pixel/" << ii.BitsPerPixel
-					<< " Compression/" << ii.Compression
-					<< " ImageLength/" << ii.ImageLength
-					<< " ImageWidth/" << ii.ImageWidth
-					<< " PixelType/" << ii.PixelType);
+					<< " bits per pixel/" << ii.BitsPerPixel
+					<< " compression/" << ii.Compression
+					<< " imageLength/" << ii.ImageLength
+					<< " imageWidth/" << ii.ImageWidth
+					<< " pixelType/" << ii.PixelType);
 
 			// Perform the transfer.
 			rc = invokeTwain(&srcID, DG_IMAGE, DAT_IMAGENATIVEXFER, MSG_GET, &handle);

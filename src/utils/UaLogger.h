@@ -163,7 +163,7 @@ namespace ua {
         if (ua::Logger::Instance().isDebug(subsys, level)) {             \
             ua::cdebug << ua::Logger::Instance().subSysHeaderGet(subsys) \
                        << " "                                           \
-                       << ua::Logger::Instance().levelGet(subsys)        \
+                       << level                                         \
                        << " "                                           \
                        << display << std::endl;                         \
         }                                                               \

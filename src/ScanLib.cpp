@@ -42,12 +42,14 @@ slTime endtime;
 slTime timediff;
 
 void configLogging(unsigned level) {
-	ua::logstream.sink(ua::LoggerSinkStdout::Instance());
-	ua::LoggerSinkStdout::Instance().showHeader(true);
+	//ua::logstream.sink(ua::LoggerSinkStdout::Instance());
+	//ua::LoggerSinkStdout::Instance().showHeader(true);
+	ua::LoggerSinkFile::Instance().setFile("scanlib.log");
+	ua::LoggerSinkFile::Instance().showHeader(true);
+	ua::logstream.sink(ua::LoggerSinkFile::Instance());
 	ua::Logger::Instance().levelSet(ua::LoggerImpl::allSubSys_m, level);
 	ua::Logger::Instance().subSysHeaderSet(1, "ScanLib");
 }
-
 
 /*
  * Could not use C++ streams for Release version of DLL.
@@ -72,6 +74,9 @@ void saveDecodeResults(unsigned plateNum, const vector<DecodeRegion *> & regions
 }
 
 int slIsTwainAvailable() {
+	configLogging(3);
+	UA_DOUT(1, 3, "slIsTwainAvailable:");
+
 #ifdef WIN32
 	ImageGrabber ig;
 	if (ig.twainAvailable()) {
@@ -82,6 +87,9 @@ int slIsTwainAvailable() {
 }
 
 int slSelectSourceAsDefault() {
+	configLogging(3);
+	UA_DOUT(1, 3, "slSelectSourceAsDefault:");
+
 #ifdef WIN32
 	ImageGrabber ig;
 	if (ig.selectSourceAsDefault()) {
@@ -92,11 +100,12 @@ int slSelectSourceAsDefault() {
 }
 
 int slConfigScannerBrightness(int brightness) {
+	configLogging(3);
+	UA_DOUT(1, 3, "slConfigScannerBrightness: brightness/" << brightness);
+
 	if ((brightness < -1000) || (brightness > 1000)) {
 		return SC_INVALID_VALUE;
 	}
-
-	configLogging(5);
 
 	Config config(INI_FILE_NAME);
 	if (!config.setScannerBrightness(brightness)) {
@@ -106,11 +115,12 @@ int slConfigScannerBrightness(int brightness) {
 }
 
 int slConfigScannerContrast(int contrast) {
+	configLogging(3);
+	UA_DOUT(1, 3, "slConfigScannerContrast: contrast/" << contrast);
+
 	if ((contrast < -1000) || (contrast > 1000)) {
 		return SC_INVALID_VALUE;
 	}
-
-	configLogging(5);
 
 	Config config(INI_FILE_NAME);
 	if (!config.setScannerContrast(contrast)) {
@@ -121,6 +131,13 @@ int slConfigScannerContrast(int contrast) {
 
 int slConfigPlateFrame(unsigned plateNum, double left,
 		double top,	double right, double bottom) {
+	configLogging(3);
+	UA_DOUT(1, 3, "slConfigPlateFrame: plateNum/" << plateNum
+		<< " left/" << left
+		<< " top/"<< top
+		<< " right/"<< right
+		<< " bottom/"<< right);
+
 	Config config(INI_FILE_NAME);
 	if (!config.setPlateFrame(plateNum, left, top, right, bottom)) {
 		return SC_INI_FILE_ERROR;
@@ -130,12 +147,17 @@ int slConfigPlateFrame(unsigned plateNum, double left,
 
 int slScanImage(unsigned dpi, double left, double top, double right,
 		double bottom, char * filename) {
+	configLogging(3);
+	UA_DOUT(1, 3, "slScanImage: dpi/" << dpi
+		<< " left/" << left
+		<< " top/"<< top
+		<< " right/"<< right
+		<< " bottom/"<< right);
+
 #ifdef WIN32
 	if (filename == NULL) {
 		return SC_FAIL;
 	}
-
-	configLogging(5);
 
 	Config config(INI_FILE_NAME);
 	ImageGrabber ig;
@@ -156,6 +178,11 @@ int slScanImage(unsigned dpi, double left, double top, double right,
 }
 
 int slScanPlate(unsigned dpi, unsigned plateNum, char * filename) {
+	configLogging(3);
+	UA_DOUT(1, 3, "slScanPlate: dpi/" << dpi
+		<< " plateNum/" << plateNum
+		<< " filename/"<< filename);
+
 #ifdef WIN32
 	if ((dpi != 300) && (dpi != 400) && (dpi != 600)) {
 		return SC_INVALID_DPI;
@@ -178,7 +205,6 @@ int slScanPlate(unsigned dpi, unsigned plateNum, char * filename) {
 		Util::getTime(starttime);
 	);
 
-	configLogging(5);
 	Config config(INI_FILE_NAME);
 
 	config.parseFrames();
@@ -205,6 +231,10 @@ int slScanPlate(unsigned dpi, unsigned plateNum, char * filename) {
 }
 
 int slCalibrateToPlate(unsigned dpi, unsigned plateNum) {
+	configLogging(3);
+	UA_DOUT(1, 3, "slCalibrateToPlate: dpi/" << dpi
+		<< " plateNum/" << plateNum);
+
 #ifdef WIN32
 	if ((dpi != 300) && (dpi != 400) && (dpi != 600)) {
 		return SC_INVALID_DPI;
@@ -224,8 +254,6 @@ int slCalibrateToPlate(unsigned dpi, unsigned plateNum) {
 	Config config(INI_FILE_NAME);
 
 	Util::getTime(starttime);
-
-	configLogging(5);
 
 	config.parseFrames();
 	if (!config.getPlateFrame(plateNum, f)) {
@@ -284,8 +312,6 @@ int slDecodeCommon(unsigned plateNum, Dib & dib) {
 		return SC_INI_FILE_ERROR;
 	}
 
-	//processedDib.gaussianBlur(dib);
-	//processedDib.unsharp(dib);
 	Dib processedDib(dib);
 	processedDib.expandColours(100, 200);
 	processedDib.writeToFile("processed.bmp");
@@ -311,6 +337,10 @@ int slDecodeCommon(unsigned plateNum, Dib & dib) {
 }
 
 int slDecodePlate(unsigned dpi, unsigned plateNum) {
+	configLogging(3);
+	UA_DOUT(1, 3, "slDecodePlate: dpi/" << dpi
+		<< " plateNum/" << plateNum);
+
 #ifdef WIN32
 	if ((dpi != 300) && (dpi != 400) && (dpi != 600)) {
 		return SC_INVALID_DPI;
@@ -328,7 +358,6 @@ int slDecodePlate(unsigned dpi, unsigned plateNum) {
 
 	Util::getTime(starttime);
 	Config config(INI_FILE_NAME);
-	configLogging(5);
 	config.parseFrames();
 	if (!config.getPlateFrame(plateNum, f)) {
 		return SC_INI_FILE_ERROR;
@@ -351,6 +380,10 @@ int slDecodePlate(unsigned dpi, unsigned plateNum) {
 }
 
 int slDecodeImage(unsigned plateNum, char * filename) {
+	configLogging(3);
+	UA_DOUT(1, 3, "slDecodeImage: plateNum/" << plateNum
+		<< " filename/"<< filename);
+
 	if ((plateNum == 0) || (plateNum > 4)) {
 		return SC_INVALID_PLATE_NUM;
 	}
@@ -362,8 +395,6 @@ int slDecodeImage(unsigned plateNum, char * filename) {
 	Util::getTime(starttime);
 
 	Dib dib;
-
-	configLogging(5);
 
 	dib.readFromFile(filename);
 	return slDecodeCommon(plateNum, dib);

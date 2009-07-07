@@ -1,4 +1,4 @@
-%module ScanLibWin32
+%module ScanLibWin32Wrapper
 %{
 extern int slIsTwainAvailable();
 extern int slSelectSourceAsDefault();
@@ -13,7 +13,6 @@ extern int slCalibrateToPlate(unsigned dpi, unsigned plateNum);
 extern int slDecodePlate(unsigned dpi, unsigned plateNum);
 extern int slDecodeImage(unsigned plateNum, char * filename);
 %}
-
 
 extern int slIsTwainAvailable();
 extern int slSelectSourceAsDefault();
