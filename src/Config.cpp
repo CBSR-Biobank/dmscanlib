@@ -33,7 +33,6 @@ Config::Config(const char * filename) :
 		state = STATE_ERROR_LOAD;
 		return;
 	}
-
 }
 
 Config::~Config() {
@@ -50,10 +49,6 @@ Config::~Config() {
 }
 
 void Config::save() {
-	if (state != STATE_OK) {
-		UA_DOUT(5, 3, "save: invalid ini state: " << state);
-		return;
-	}
 	ini.SaveFile(inifilename);
 }
 
@@ -170,11 +165,6 @@ bool Config::setScannerBrightness(int brightness) {
 	UA_ASSERTS((brightness >= -1000) && (brightness <= 1000),
 			"setScannerBrightness: invalid brightness: " << brightness);
 
-	if (state != STATE_OK) {
-		UA_DOUT(5, 3, "setPlateFrame: invalid ini state: " << state);
-		return false;
-	}
-
 	SI_Error rc;
 
 	rc = ini.SetValue("scanner", "brightness", to_string(brightness).c_str());
@@ -188,11 +178,6 @@ int Config::getScannerBrightness() {
 bool Config::setScannerContrast(int contrast) {
 	UA_ASSERTS((contrast >= -1000) && (contrast <= 1000),
 			"setScannerContrast: invalid contrast: " << contrast);
-
-	if (state != STATE_OK) {
-		UA_DOUT(5, 3, "setPlateFrame: invalid ini state: " << state);
-		return false;
-	}
 
 	SI_Error rc;
 

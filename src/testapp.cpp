@@ -30,9 +30,11 @@ const char * USAGE_FMT =
 	"Usage: %s [OPTIONS]\n"
 	"Test tool for scanlib library."
 	"\n"
+	"  --brightness NUM     The brightness setting to be used for scanning.\n"
 	"  -c, --calibrate      Acquires an image from the scanner. Use with --plate option.\n"
 	"  --debug NUM          Sets debugging level. Debugging messages are output\n"
 	"                       to stdout. Only when built UA_HAVE_DEBUG on.\n"
+	"  --contrast NUM       The contrast setting to be used for scanning.\n"
 	"  -d, --decode         Acquires an image from the scanner and Decodes the 2D barcodes.\n"
 	"                       Use with --plate option.\n"
 	"  --dpi NUM            Dots per inch to use with scanner.\n"
@@ -44,8 +46,10 @@ const char * USAGE_FMT =
 
 /* Allowed command line arguments.  */
 CSimpleOptA::SOption longOptions[] = {
+		{ 'b', "--brightness", SO_REQ_SEP },
 		{ 'c', "--calibrate", SO_NONE },
 		{ 'c', "-c",          SO_NONE },
+		{ 203, "--contrast",   SO_REQ_SEP },
 		{ 'd', "--decode",    SO_NONE },
 		{ 'd', "-d",          SO_NONE },
 		{ 200, "--debug",     SO_REQ_SEP },
@@ -72,7 +76,9 @@ CSimpleOptA::SOption longOptions[] = {
 
 
 struct Options {
+	int brightness;
 	bool calibrate;
+	int contrast;
 	bool decode;
 	unsigned debugLevel;
 	unsigned dpi;
@@ -84,7 +90,9 @@ struct Options {
 	bool select;
 
 	Options() {
+		brightness = numeric_limits<int>::max();
 		calibrate = false;
+		contrast = numeric_limits<int>::max();
 		decode = false;
 		infile = NULL;
 		help = false;
@@ -132,6 +140,22 @@ Application::Application(int argc, char ** argv) {
 
 	int result = SC_FAIL;
 
+	if (options.brightness != numeric_limits<int>::max()) {
+		result = slConfigScannerBrightness(options.brightness);
+		if (result < 0) {
+			cerr << "could not assign brightness: " << options.brightness << endl;
+			exit(1);
+		}
+	}
+
+	if (options.contrast != numeric_limits<int>::max()) {
+		result = slConfigScannerContrast(options.contrast);
+		if (result < 0) {
+			cerr << "could not assign contrast: " << options.contrast << endl;
+			exit(1);
+		}
+	}
+
 	if (options.calibrate) {
 		if (options.infile != NULL) {
 			calibrateToImage();
@@ -174,6 +198,14 @@ bool Application::getCmdOptions(int argc, char ** argv) {
 	while (args.Next()) {
 		if (args.LastError() == SO_SUCCESS) {
 			switch (args.OptionId()) {
+			case 'b':
+				options.brightness = strtoul((const char *)args.OptionArg(), &end, 10);
+				if (*end != 0) {
+					cerr << "invalid value for brightness: " << args.OptionArg() << endl;
+					exit(1);
+				}
+				break;
+
 			case 'c':
 				options.calibrate = true;
 				break;
@@ -228,6 +260,14 @@ bool Application::getCmdOptions(int argc, char ** argv) {
 
 			case 202:
 				options.select = true;
+				break;
+
+			case 203:
+				options.contrast = strtoul((const char *)args.OptionArg(), &end, 10);
+				if (*end != 0) {
+					cerr << "invalid value for contrast: " << args.OptionArg() << endl;
+					exit(1);
+				}
 				break;
 
 			default:

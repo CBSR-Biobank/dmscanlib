@@ -199,7 +199,7 @@ bool Decoder::processImageRegions(unsigned plateNum, Dib & dib,
 		return true;
 	}
 
-	boolean cropResult;
+	bool cropResult;
 	vector<BarcodeInfo *> barcodeInfos;
 
 	for (unsigned i = 0, n = decodeRegions.size(); i < n; ++i) {
