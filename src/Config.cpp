@@ -24,7 +24,7 @@ const char * Config::INI_REGION_LABEL = "region";
 
 
 Config::Config(const char * filename) :
-	inifilename(filename), state(STATE_OK) {
+	inifilename(filename), ini(false, false, true), state(STATE_OK) {
 	ua::Logger::Instance().subSysHeaderSet(5, "CONFIG");
 
 	SI_Error rc = ini.LoadFile(inifilename);
