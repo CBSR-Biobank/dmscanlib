@@ -137,11 +137,6 @@ bool Config::setPlateFrame(unsigned plateNum, double left,
 	UA_ASSERTS((plateNum >0) && (plateNum <= MAX_PLATES),
 			"parseRegions: invalid plate number: " << plateNum);
 
-	if (state != STATE_OK) {
-		UA_DOUT(5, 3, "setPlateFrame: invalid ini state: " << state);
-		return false;
-	}
-
 	SI_Error rc;
 
 	string secname = "plate-" + to_string(plateNum);

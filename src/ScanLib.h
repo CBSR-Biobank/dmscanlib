@@ -38,7 +38,7 @@ const int SC_INVALID_IMAGE         = -10;
 /**
  * Queries the availability of the TWAIN driver.
  *
- * @return SC_SUCCESS if available, and SC_INVALID_VALUE if unavailable.
+ * @return SC_SUCCESS if available, and SC_TWAIN_UAVAIL if unavailable.
  */
 EXPORT int slIsTwainAvailable();
 
@@ -149,7 +149,7 @@ typedef int (*SL_SCAN_PLATE) (unsigned dpi, unsigned plateNum, char * filename);
  *
  * @param dpi      The dots per inch for the image. Possible values are 200,
  *                 300, 400, 600.
- * @param plateNum The plate number. Must be a number beteen 1 and 4.
+ * @param plateNum The plate number. Must be a number between 1 and 4.
  *
  * @return SC_INVALID_DPI if the DPI value is invalid. SC_INVALID_PLATE_NUM if
  * the plate number is invalid. SC_INI_FILE_ERROR if the plate dimensions
@@ -177,8 +177,9 @@ typedef int (*SL_CALIBRATE_TO_PLATE) (unsigned dpi, unsigned plateNum);
  *                 300, 400, 600.
  * @param plateNum The plate number. Must be a number beteen 1 and 4.
  *
- * @return SC_INI_FILE_ERROR if the regions are not found in the INI file.
- * SC_SUCCESS if the scanning process was successful.
+ * @return SC_SUCCESS if the decoding process was successful. SC_INI_FILE_ERROR 
+ * if the regions are not found in the INI file. SC_INVALID_IMAGE if the scanned
+ * image is invalid.
  */
 EXPORT int slDecodePlate(unsigned dpi, unsigned plateNum);
 
@@ -197,7 +198,9 @@ typedef int (*SL_DECODE_PLATE) (unsigned dpi, unsigned plateNum);
  *
  * @param plateNum The plate number. Must be a number beteen 1 and 4.
  * @param filename The windows bitmap file to decode.
- * @return
+ * 
+ * @return SC_SUCCESS if the decoding process was successful. SC_INVALID_IMAGE 
+ * if the scanned image is invalid.
  */
 EXPORT int slDecodeImage(unsigned plateNum, char * filename);
 
