@@ -49,8 +49,8 @@
 <option defaultValue="gnu.c.optimization.level.none" id="gnu.c.compiler.mingw.so.debug.option.optimization.level.1356538910" name="Optimization Level" superClass="gnu.c.compiler.mingw.so.debug.option.optimization.level" valueType="enumerated"/>
 <option id="gnu.c.compiler.mingw.so.debug.option.debugging.level.417285214" name="Debug Level" superClass="gnu.c.compiler.mingw.so.debug.option.debugging.level" value="gnu.c.debugging.level.max" valueType="enumerated"/>
 <option id="gnu.c.compiler.option.include.paths.2023817480" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
-<listOptionValue builtIn="false" value="&quot;C:\Java\jdk1.6.0_14\include&quot;"/>
-<listOptionValue builtIn="false" value="&quot;C:\Java\jdk1.6.0_14\include\win32&quot;"/>
+<listOptionValue builtIn="false" value="&quot;${JAVA_HOME}\include&quot;"/>
+<listOptionValue builtIn="false" value="&quot;${JAVA_HOME}\include\win32&quot;"/>
 </option>
 <inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.688091711" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 </tool>
@@ -1035,7 +1035,7 @@
 </extensions>
 </storageModule>
 <storageModule moduleId="cdtBuildSystem" version="4.0.0">
-<configuration artifactExtension="dll" artifactName="scanlib" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.sharedLib" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release,org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.sharedLib" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.mingw.so.release.89333733" name="Release" parent="cdt.managedbuild.config.gnu.mingw.so.release">
+<configuration artifactExtension="dll" artifactName="scanlib" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.sharedLib" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release,org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.sharedLib" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.mingw.so.release.89333733" name="Release" parent="cdt.managedbuild.config.gnu.mingw.so.release" postbuildStep="cmd.exe /c &quot;copy ${workspace_loc:/scanlib/Release/libscanlib.dll}&quot; &quot;C:\Windows\system32\libscanlib.dll&quot;">
 <folderInfo id="cdt.managedbuild.config.gnu.mingw.so.release.89333733." name="/" resourcePath="">
 <toolChain id="cdt.managedbuild.toolchain.gnu.mingw.so.release.1155038820" name="MinGW GCC" superClass="cdt.managedbuild.toolchain.gnu.mingw.so.release">
 <targetPlatform binaryParser="org.eclipse.cdt.core.ELF" id="cdt.managedbuild.target.gnu.platform.mingw.so.release.773092958" name="Debug Platform" superClass="cdt.managedbuild.target.gnu.platform.mingw.so.release"/>
@@ -1064,8 +1064,8 @@
 <option defaultValue="gnu.c.optimization.level.most" id="gnu.c.compiler.mingw.so.release.option.optimization.level.1672572288" name="Optimization Level" superClass="gnu.c.compiler.mingw.so.release.option.optimization.level" valueType="enumerated"/>
 <option id="gnu.c.compiler.mingw.so.release.option.debugging.level.248989317" name="Debug Level" superClass="gnu.c.compiler.mingw.so.release.option.debugging.level" value="gnu.c.debugging.level.none" valueType="enumerated"/>
 <option id="gnu.c.compiler.option.include.paths.1633522856" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
-<listOptionValue builtIn="false" value="&quot;C:\Java\jdk1.6.0_14\include&quot;"/>
-<listOptionValue builtIn="false" value="&quot;C:\Java\jdk1.6.0_14\include\win32&quot;"/>
+<listOptionValue builtIn="false" value="&quot;${JAVA_HOME}\include&quot;"/>
+<listOptionValue builtIn="false" value="&quot;${JAVA_HOME}\include\win32&quot;"/>
 </option>
 <inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.627605605" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 </tool>
@@ -1074,6 +1074,7 @@
 </tool>
 <tool command="g++ -Wl,--add-stdcall-alias" commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG}${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}" id="cdt.managedbuild.tool.gnu.cpp.linker.mingw.so.release.2112881251" name="MinGW C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.mingw.so.release">
 <option defaultValue="true" id="gnu.cpp.link.mingw.so.release.option.shared.820801255" name="Shared (-shared)" superClass="gnu.cpp.link.mingw.so.release.option.shared" valueType="boolean"/>
+<option id="gnu.cpp.link.option.strip.1646846369" name="Omit all symbol information (-s)" superClass="gnu.cpp.link.option.strip" value="false" valueType="boolean"/>
 <inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.1890802395" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 <additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 <additionalInput kind="additionalinput" paths="$(LIBS)"/>
