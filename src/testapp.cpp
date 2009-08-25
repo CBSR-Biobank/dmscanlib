@@ -82,8 +82,9 @@ struct Options {
 	bool decode;
 	unsigned debugLevel;
 	unsigned dpi;
-	char * infile;
+	bool getdpi;
 	bool help;
+	char * infile;
 	unsigned plateNum;
 	char * outfile;
 	bool scan;
@@ -95,6 +96,7 @@ struct Options {
 		contrast = numeric_limits<int>::max();
 		decode = false;
 		infile = NULL;
+		getdpi = false;
 		help = false;
 		debugLevel = 0;
 		dpi = 300;
@@ -268,6 +270,10 @@ bool Application::getCmdOptions(int argc, char ** argv) {
 					cerr << "invalid value for contrast: " << args.OptionArg() << endl;
 					exit(1);
 				}
+				break;
+
+			case 204:
+				options.getdpi = true;
 				break;
 
 			default:

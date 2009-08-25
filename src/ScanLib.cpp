@@ -296,7 +296,7 @@ int slCalibrateToPlate(unsigned dpi, unsigned plateNum) {
 
 	Util::getTime(endtime);
 	Util::difftiime(starttime, endtime, timediff);
-	UA_DOUT(1, 1, "slDecodePlate: time taken: " << timediff);
+	UA_DOUT(1, 1, "slCalibrateToPlate: time taken: " << timediff);
 
 	return SC_SUCCESS;
 #else

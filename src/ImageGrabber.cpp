@@ -136,6 +136,7 @@ HANDLE ImageGrabber::acquireImage(unsigned dpi, int brightness, int contrast,
 	double left, double top, double right, double bottom) {
 	UA_ASSERT_NOT_NULL(g_hLib);
 
+	TW_UINT16 rc;
 	TW_UINT32 handle = 0;
 	TW_IDENTITY srcID;
 	TW_FIX32 value;
@@ -150,11 +151,9 @@ HANDLE ImageGrabber::acquireImage(unsigned dpi, int brightness, int contrast,
 
 	SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE);
 
-	TW_UINT16 rc;
 
 	// Open the data source manager.
 	rc = invokeTwain(NULL, DG_CONTROL, DAT_PARENT, MSG_OPENDSM, &hwnd);
-
 	UA_ASSERTS(rc == TWRC_SUCCESS, "Unable to open data source manager");
 
 	// get the default source
@@ -168,18 +167,20 @@ HANDLE ImageGrabber::acquireImage(unsigned dpi, int brightness, int contrast,
 	rc = invokeTwain(NULL, DG_CONTROL, DAT_IDENTITY, MSG_OPENDS, &srcID);
 	UA_ASSERTS(rc == TWRC_SUCCESS, "Unable to open default data source");
 
-	value.Whole = dpi;
-	SetCapOneValue(&srcID, ICAP_XRESOLUTION, TWTY_FIX32, *(long*)&value);
-	SetCapOneValue(&srcID, ICAP_YRESOLUTION, TWTY_FIX32, *(long*)&value);
+	getDpiCapability(&srcID);
 
-	SetCapOneValue(&srcID, ICAP_PIXELTYPE, TWTY_UINT16, TWPT_RGB);
+	value.Whole = dpi;
+	setCapOneValue(&srcID, ICAP_XRESOLUTION, TWTY_FIX32, *(long*)&value);
+	setCapOneValue(&srcID, ICAP_YRESOLUTION, TWTY_FIX32, *(long*)&value);
+
+	setCapOneValue(&srcID, ICAP_PIXELTYPE, TWTY_UINT16, TWPT_RGB);
 	//SetCapOneValue(&srcID, ICAP_BITDEPTH, TWTY_UINT16, 8);
 
 	value.Whole = brightness;
-	SetCapOneValue(&srcID, ICAP_BRIGHTNESS, TWTY_FIX32, *(long*)&value);
+	setCapOneValue(&srcID, ICAP_BRIGHTNESS, TWTY_FIX32, *(long*)&value);
 
 	value.Whole = contrast;
-	SetCapOneValue(&srcID, ICAP_CONTRAST, TWTY_FIX32, *(long*)&value);
+	setCapOneValue(&srcID, ICAP_CONTRAST, TWTY_FIX32, *(long*)&value);
 
 	UA_DOUT(2, 3, "acquireImage: source/\"" << srcID.ProductName << "\""
 		<< " brightness/" << brightness
@@ -189,7 +190,7 @@ HANDLE ImageGrabber::acquireImage(unsigned dpi, int brightness, int contrast,
 		<< " right/" << right
 		<< " bottom/" << bottom);
 
-	SetCapOneValue(&srcID, ICAP_UNITS, TWTY_UINT16, TWUN_INCHES);
+	setCapOneValue(&srcID, ICAP_UNITS, TWTY_UINT16, TWUN_INCHES);
 	TW_IMAGELAYOUT layout;
 	setFloatToIntPair(left,   layout.Frame.Left.Whole,   layout.Frame.Left.Frac);
 	setFloatToIntPair(top,    layout.Frame.Top.Whole,    layout.Frame.Top.Frac);
@@ -320,7 +321,7 @@ DmtxImage* ImageGrabber::acquireDmtxImage(unsigned dpi, int brightness,
 	return theImage;
 }
 
-BOOL ImageGrabber::SetCapOneValue(TW_IDENTITY * srcId, unsigned Cap, unsigned ItemType, long ItemVal) {
+BOOL ImageGrabber::setCapOneValue(TW_IDENTITY * srcId, unsigned Cap, unsigned ItemType, long ItemVal) {
 	BOOL ret_value = FALSE;
 	TW_CAPABILITY	cap;
 	pTW_ONEVALUE	pv;
@@ -341,27 +342,51 @@ BOOL ImageGrabber::SetCapOneValue(TW_IDENTITY * srcId, unsigned Cap, unsigned It
 	return ret_value;
 }
 
-void ImageGrabber::GetCapability(TW_IDENTITY * srcId, unsigned cap) {
+bool ImageGrabber::getCapability(TW_IDENTITY * srcId, TW_CAPABILITY & twCap) {
 	TW_UINT16 rc;
-	TW_CAPABILITY twCap;
-	pTW_RANGE r;
 
-	twCap.Cap = cap;
 	rc = invokeTwain(srcId, DG_CONTROL, DAT_CAPABILITY, MSG_GET, &twCap);
-	if ((rc == TWRC_SUCCESS) && (twCap.ConType == TWON_RANGE)) {
-		r = (pTW_RANGE) GlobalLock(twCap.hContainer);
+	return (rc == TWRC_SUCCESS);
+}
 
+bool ImageGrabber::getDpiCapability(TW_IDENTITY * srcId) {
+	TW_CAPABILITY twCapX, twCapY;
+	pTW_RANGE r;
+	bool xResult, yResult;
+
+	setCapOneValue(srcId, ICAP_UNITS, TWTY_UINT16, TWUN_INCHES);
+
+	twCapX.Cap = ICAP_XRESOLUTION;
+	xResult = getCapability(srcId, twCapX);
+
+	if (xResult && (twCapX.ConType == TWON_RANGE)) {
+		r = (pTW_RANGE) GlobalLock(twCapX.hContainer);
 		if (r->ItemType == TWTY_FIX32) {
-			UA_DOUT(2, 5, "GetCapability: TWON_RANGE, ItemType/" << r->ItemType
-				<< " MinValue/" << Fix32ToFloat(*reinterpret_cast<TW_FIX32*>(&r->MinValue))
-				<< " MaxValue/" << Fix32ToFloat(*reinterpret_cast<TW_FIX32*>(&r->MaxValue))
-				<< " StepSize/" << Fix32ToFloat(*reinterpret_cast<TW_FIX32*>(&r->StepSize))
-				<< " DefaultValue/" << Fix32ToFloat(*reinterpret_cast<TW_FIX32*>(&r->DefaultValue))
-				<< " CurrentValue/" << Fix32ToFloat(*reinterpret_cast<TW_FIX32*>(&r->CurrentValue)));
+			minDpi = fix32ToFloat(*reinterpret_cast<TW_FIX32*> (&r->MinValue));
+			maxDpi = fix32ToFloat(*reinterpret_cast<TW_FIX32*> (&r->MaxValue));
+			UA_ASSERTS(fix32ToFloat(*reinterpret_cast<TW_FIX32*>(&r->StepSize)) == 1,
+					"invalid step size");
 		}
-		GlobalUnlock(twCap.hContainer);
-		GlobalFree(twCap.hContainer);
+		GlobalUnlock(twCapX.hContainer);
+		GlobalFree(twCapX.hContainer);
 	}
+
+	twCapX.Cap = ICAP_YRESOLUTION;
+	yResult = getCapability(srcId, twCapY);
+
+	if (yResult && (twCapY.ConType == TWON_RANGE)) {
+		r = (pTW_RANGE) GlobalLock(twCapY.hContainer);
+		if (r->ItemType == TWTY_FIX32) {
+			UA_ASSERTS(minDpi == fix32ToFloat(*reinterpret_cast<TW_FIX32*> (&r->MinValue)),
+					"X and Y min values for DPI do not match");
+			UA_ASSERTS(maxDpi = fix32ToFloat(*reinterpret_cast<TW_FIX32*> (&r->MaxValue)),
+					"X and Y max values for DPI do not match");
+		}
+		GlobalUnlock(twCapX.hContainer);
+		GlobalFree(twCapX.hContainer);
+	}
+
+	return true;
 }
 
 
@@ -377,7 +402,7 @@ void ImageGrabber::getCustomDsData(TW_IDENTITY * srcId) {
 	}
 }
 
-double ImageGrabber::Fix32ToFloat(TW_FIX32 fix32) {
+double ImageGrabber::fix32ToFloat(TW_FIX32 fix32) {
 	return static_cast<double>(fix32.Whole) + static_cast<double>(fix32.Frac) / 65536.0;
 }
 

@@ -56,6 +56,14 @@ EXPORT int slSelectSourceAsDefault();
 typedef int (*SL_SELECT_SOURCE_AS_DEFAULT) ();
 
 /**
+ *
+ * @return
+ */
+EXPORT int slScannerGetDpiCapability();
+
+typedef int (*SL_SCANNER_GET_DPI_CAPABILITY) ();
+
+/**
  * Saves the brightness value to be used for scanning to the INI file.
  *
  * @param brightness a value between -1000 and 1000.

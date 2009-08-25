@@ -53,17 +53,19 @@ private:
 	void unloadTwain();
 
 	void setFloatToIntPair(const double f, short & whole, unsigned short & frac);
-	int GetPaletteSize(BITMAPINFOHEADER& bmInfo);
+	int getPaletteSize(BITMAPINFOHEADER& bmInfo);
 
 	//BOOL setCapability(TW_IDENTITY * srcId, TW_UINT16 cap,TW_UINT16 value,BOOL sign);
 
-	BOOL SetCapOneValue(TW_IDENTITY * srcId, unsigned Cap, unsigned ItemType, long ItemVal);
+	BOOL setCapOneValue(TW_IDENTITY * srcId, unsigned Cap, unsigned ItemType, long ItemVal);
 
-	void ImageGrabber::GetCapability(TW_IDENTITY * srcId, unsigned Cap);
+	bool getCapability(TW_IDENTITY * srcId, TW_CAPABILITY & twCap);
+
+	bool getDpiCapability(TW_IDENTITY * srcId);
 
 	bool getConfigFromIni(CSimpleIniA & ini, unsigned plateNum);
 
-	double ImageGrabber::Fix32ToFloat(TW_FIX32 fix32);
+	double fix32ToFloat(TW_FIX32 fix32);
 
 	void getCustomDsData(TW_IDENTITY * srcId);
 
@@ -91,6 +93,9 @@ private:
 
 	int brightness;
 	int contrast;
+
+	int minDpi;
+	int maxDpi;
 };
 
 #endif /* __INCLUDE_IMAGE_GRABBER_H */
