@@ -184,7 +184,7 @@ int slScanPlate(unsigned dpi, unsigned plateNum, char * filename) {
 		<< " filename/"<< filename);
 
 #ifdef WIN32
-	if ((dpi != 300) && (dpi != 400) && (dpi != 600)) {
+	if (dpi < 0 || dpi > 600) {
 		return SC_INVALID_DPI;
 	}
 
@@ -236,7 +236,7 @@ int slCalibrateToPlate(unsigned dpi, unsigned plateNum) {
 		<< " plateNum/" << plateNum);
 
 #ifdef WIN32
-	if ((dpi != 300) && (dpi != 400) && (dpi != 600)) {
+	if (dpi < 0 || dpi > 600) {
 		return SC_INVALID_DPI;
 	}
 
@@ -342,7 +342,7 @@ int slDecodePlate(unsigned dpi, unsigned plateNum) {
 		<< " plateNum/" << plateNum);
 
 #ifdef WIN32
-	if ((dpi != 300) && (dpi != 400) && (dpi != 600)) {
+	if (dpi < 0 || dpi > 600) {
 		return SC_INVALID_DPI;
 	}
 
