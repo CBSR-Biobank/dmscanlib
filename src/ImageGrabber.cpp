@@ -274,6 +274,10 @@ HANDLE ImageGrabber::acquireImage(unsigned dpi, int brightness, int contrast,
 				// Cancel all remaining transfers.
 				invokeTwain(&srcID, DG_CONTROL, DAT_PENDINGXFERS, MSG_RESET, &pxfers);
 			}
+			else {
+				rc = invokeTwain(&srcID, DG_CONTROL, DAT_USERINTERFACE, MSG_DISABLEDS, &ui);
+				break;
+			}
 		}
 	}
 
@@ -362,8 +366,10 @@ bool ImageGrabber::getDpiCapability(TW_IDENTITY * srcId) {
 	if (xResult && (twCapX.ConType == TWON_RANGE)) {
 		r = (pTW_RANGE) GlobalLock(twCapX.hContainer);
 		if (r->ItemType == TWTY_FIX32) {
-			minDpi = fix32ToFloat(*reinterpret_cast<TW_FIX32*> (&r->MinValue));
-			maxDpi = fix32ToFloat(*reinterpret_cast<TW_FIX32*> (&r->MaxValue));
+			minDpi = static_cast<int>(fix32ToFloat(
+					*reinterpret_cast<TW_FIX32*> (&r->MinValue)));
+			maxDpi = static_cast<int>(fix32ToFloat(
+					*reinterpret_cast<TW_FIX32*> (&r->MaxValue)));
 			UA_ASSERTS(fix32ToFloat(*reinterpret_cast<TW_FIX32*>(&r->StepSize)) == 1,
 					"invalid step size");
 		}
@@ -377,9 +383,11 @@ bool ImageGrabber::getDpiCapability(TW_IDENTITY * srcId) {
 	if (yResult && (twCapY.ConType == TWON_RANGE)) {
 		r = (pTW_RANGE) GlobalLock(twCapY.hContainer);
 		if (r->ItemType == TWTY_FIX32) {
-			UA_ASSERTS(minDpi == fix32ToFloat(*reinterpret_cast<TW_FIX32*> (&r->MinValue)),
+			UA_ASSERTS(minDpi == static_cast<int>(fix32ToFloat(
+					*reinterpret_cast<TW_FIX32*> (&r->MinValue))),
 					"X and Y min values for DPI do not match");
-			UA_ASSERTS(maxDpi = fix32ToFloat(*reinterpret_cast<TW_FIX32*> (&r->MaxValue)),
+			UA_ASSERTS(maxDpi = static_cast<int>(fix32ToFloat(
+					*reinterpret_cast<TW_FIX32*> (&r->MaxValue))),
 					"X and Y max values for DPI do not match");
 		}
 		GlobalUnlock(twCapX.hContainer);

@@ -132,7 +132,7 @@ typedef int (*SL_SCAN_IMAGE) (unsigned dpi, double x0, double y0,
  * is saved to a file in Windows BMP format.
  *
  * @param dpi      The dots per inch for the image. Possible values are 200,
- *                 300, 400, 600.
+ *                 300, 400, 600, 1200, 2400.
  * @param plateNum The plate number. Must be a number beteen 1 and 4.
  * @param filename The file name to use for the bitmap file.
  *
@@ -156,7 +156,7 @@ typedef int (*SL_SCAN_PLATE) (unsigned dpi, unsigned plateNum, char * filename);
  * which shows the decode regions in rows and columns.
  *
  * @param dpi      The dots per inch for the image. Possible values are 200,
- *                 300, 400, 600.
+ *                 300, 400, 600, 1200, 2400.
  * @param plateNum The plate number. Must be a number between 1 and 4.
  *
  * @return SC_INVALID_DPI if the DPI value is invalid. SC_INVALID_PLATE_NUM if
@@ -182,7 +182,7 @@ typedef int (*SL_CALIBRATE_TO_PLATE) (unsigned dpi, unsigned plateNum);
  * it.
  *
  * @param dpi      The dots per inch for the image. Possible values are 200,
- *                 300, 400, 600.
+ *                 300, 400, 600, 1200, 2400.
  * @param plateNum The plate number. Must be a number beteen 1 and 4.
  *
  * @return SC_SUCCESS if the decoding process was successful. SC_INI_FILE_ERROR 

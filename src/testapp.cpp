@@ -175,7 +175,12 @@ Application::Application(int argc, char ** argv) {
 		}
 	}
 	else if (options.scan) {
-		result = slScanPlate(options.dpi, options.plateNum, options.outfile);
+		if ((options.plateNum < 1) || (options.plateNum > 5)) {
+			result = slScanImage(options.dpi, 0, 0, 20, 20, options.outfile);
+		}
+		else {
+			result = slScanPlate(options.dpi, options.plateNum, options.outfile);
+		}
 	}
 	else if (options.select) {
 		result = slSelectSourceAsDefault();
