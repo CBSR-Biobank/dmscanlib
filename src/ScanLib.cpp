@@ -54,21 +54,23 @@ void configLogging(unsigned level) {
 /*
  * Could not use C++ streams for Release version of DLL.
  */
-void saveDecodeResults(unsigned plateNum, const vector<DecodeRegion *> & regions) {
+void saveDecodeResults(unsigned plateNum,
+		const vector<DecodeRegion *> & regions) {
 	UA_ASSERTS((plateNum > 0) && (plateNum <= Config::MAX_PLATES),
 			"parseRegions: invalid plate number: " << plateNum);
 	FILE * fh = fopen("scanlib.txt", "w");
-    UA_ASSERT_NOT_NULL(fh);
-    fprintf(fh, "#Plate,Row,Col,Barcode\n");
+	UA_ASSERT_NOT_NULL(fh);
+	fprintf(fh, "#Plate,Row,Col,Barcode\n");
 
 	for (unsigned i = 0, n = regions.size(); i < n; ++i) {
 		DecodeRegion & region = *regions[i];
 
-		if (region.barcodeInfo == NULL) continue;
+		if (region.barcodeInfo == NULL)
+			continue;
 
-		fprintf(fh, "%d,%c,%d,%s\n",
-				plateNum, static_cast<char>('A' + region.row),
-				region.col + 1, region.barcodeInfo->getMsg().c_str());
+		fprintf(fh, "%d,%c,%d,%s\n", plateNum, static_cast<char> ('A'
+				+ region.row), region.col + 1,
+				region.barcodeInfo->getMsg().c_str());
 	}
 	fclose(fh);
 }
@@ -129,14 +131,14 @@ int slConfigScannerContrast(int contrast) {
 	return SC_SUCCESS;
 }
 
-int slConfigPlateFrame(unsigned plateNum, double left,
-		double top,	double right, double bottom) {
+int slConfigPlateFrame(unsigned plateNum, double left, double top,
+		double right, double bottom) {
 	configLogging(3);
 	UA_DOUT(1, 3, "slConfigPlateFrame: plateNum/" << plateNum
-		<< " left/" << left
-		<< " top/"<< top
-		<< " right/"<< right
-		<< " bottom/"<< right);
+			<< " left/" << left
+			<< " top/"<< top
+			<< " right/"<< right
+			<< " bottom/"<< right);
 
 	Config config(INI_FILE_NAME);
 	if (!config.setPlateFrame(plateNum, left, top, right, bottom)) {
@@ -149,10 +151,10 @@ int slScanImage(unsigned dpi, double left, double top, double right,
 		double bottom, char * filename) {
 	configLogging(3);
 	UA_DOUT(1, 3, "slScanImage: dpi/" << dpi
-		<< " left/" << left
-		<< " top/"<< top
-		<< " right/"<< right
-		<< " bottom/"<< right);
+			<< " left/" << left
+			<< " top/"<< top
+			<< " right/"<< right
+			<< " bottom/"<< right);
 
 #ifdef WIN32
 	if (filename == NULL) {
@@ -163,7 +165,7 @@ int slScanImage(unsigned dpi, double left, double top, double right,
 	ImageGrabber ig;
 
 	HANDLE h = ig.acquireImage(dpi, config.getScannerBrightness(),
-		config.getScannerContrast(), left, top, right, bottom);
+			config.getScannerContrast(), left, top, right, bottom);
 	if (h == NULL) {
 		return SC_FAIL;
 	}
@@ -180,8 +182,8 @@ int slScanImage(unsigned dpi, double left, double top, double right,
 int slScanPlate(unsigned dpi, unsigned plateNum, char * filename) {
 	configLogging(3);
 	UA_DOUT(1, 3, "slScanPlate: dpi/" << dpi
-		<< " plateNum/" << plateNum
-		<< " filename/"<< filename);
+			<< " plateNum/" << plateNum
+			<< " filename/"<< filename);
 
 #ifdef WIN32
 	if (dpi < 0 || dpi > 2400) {
@@ -202,7 +204,7 @@ int slScanPlate(unsigned dpi, unsigned plateNum, char * filename) {
 	Dib dib;
 
 	UA_DEBUG(
-		Util::getTime(starttime);
+			Util::getTime(starttime);
 	);
 
 	Config config(INI_FILE_NAME);
@@ -213,7 +215,7 @@ int slScanPlate(unsigned dpi, unsigned plateNum, char * filename) {
 	}
 
 	h = ig.acquireImage(dpi, config.getScannerBrightness(),
-		config.getScannerContrast(), f.x0, f.y0, f.x1, f.y1);
+			config.getScannerContrast(), f.x0, f.y0, f.x1, f.y1);
 	if (h == NULL) {
 		UA_DOUT(1, 1, "could not acquire plate image: " << plateNum);
 		return SC_FAIL;
@@ -230,10 +232,10 @@ int slScanPlate(unsigned dpi, unsigned plateNum, char * filename) {
 #endif
 }
 
-int slCalibrateToPlate(unsigned dpi, unsigned plateNum) {
-	configLogging(3);
+int slCalibrateToPlate(unsigned dpi, unsigned plateNum, int processImage) {
+	configLogging(9);
 	UA_DOUT(1, 3, "slCalibrateToPlate: dpi/" << dpi
-		<< " plateNum/" << plateNum);
+			<< " plateNum/" << plateNum);
 
 #ifdef WIN32
 	if (dpi < 0 || dpi > 2400) {
@@ -251,6 +253,7 @@ int slCalibrateToPlate(unsigned dpi, unsigned plateNum) {
 	RgbQuad quad(255, 0, 0);
 	ImageGrabber ig;
 	HANDLE h;
+	bool result;
 	Config config(INI_FILE_NAME);
 
 	Util::getTime(starttime);
@@ -261,19 +264,30 @@ int slCalibrateToPlate(unsigned dpi, unsigned plateNum) {
 	}
 
 	h = ig.acquireImage(dpi, config.getScannerBrightness(),
-		config.getScannerContrast(), f.x0, f.y0, f.x1, f.y1);
+			config.getScannerContrast(), f.x0, f.y0, f.x1, f.y1);
 	if (h == NULL) {
 		UA_DOUT(1, 1, "could not aquire plate image: " << plateNum);
 		return SC_FAIL;
 	}
 	dib.readFromHandle(h);
 	dib.writeToFile("scanned.bmp");
-	processedDib.gaussianBlur(dib);
-	processedDib.unsharp(dib);
-	processedDib.expandColours(150, 220);
-	processedDib.writeToFile("processed.bmp");
 
-	if (!calibrator.processImage(processedDib)) {
+	if (processImage) {
+		processedDib.gaussianBlur(dib);
+		processedDib.unsharp(dib);
+		processedDib.expandColours(150, 220);
+		processedDib.writeToFile("processed.bmp");
+
+		result = calibrator.processImage(processedDib);
+	} else {
+		result = calibrator.processImage(dib);
+	}
+
+	Dib markedDib(dib);
+	calibrator.imageShowBins(markedDib, quad);
+	markedDib.writeToFile("calibrated.bmp");
+
+	if (!result) {
 		return SC_CALIBRATOR_NO_REGIONS;
 	}
 
@@ -287,11 +301,6 @@ int slCalibrateToPlate(unsigned dpi, unsigned plateNum) {
 	if (!config.setRegions(plateNum, dpi, rowBins, colBins)) {
 		return SC_INI_FILE_ERROR;
 	}
-
-	Dib markedDib(dib);
-
-	calibrator.imageShowBins(markedDib, quad);
-	markedDib.writeToFile("calibrated.bmp");
 	ig.freeImage(h);
 
 	Util::getTime(endtime);
@@ -304,23 +313,31 @@ int slCalibrateToPlate(unsigned dpi, unsigned plateNum) {
 #endif
 }
 
-int slDecodeCommon(unsigned plateNum, Dib & dib) {
+int slDecodeCommon(unsigned plateNum, Dib & dib, int processImage) {
 	Decoder decoder;
 	Config config(INI_FILE_NAME);
 
- 	if (!config.parseRegions(plateNum)) {
+	if (!config.parseRegions(plateNum)) {
 		return SC_INI_FILE_ERROR;
 	}
 
-	Dib processedDib(dib);
-	processedDib.expandColours(100, 200);
-	processedDib.writeToFile("processed.bmp");
+	const vector<DecodeRegion *> & regions = config.getRegions(plateNum,
+			dib.getDpi());
+
 	dib.writeToFile("scanned.bmp");
+	if (processImage) {
+		Dib processedDib(dib);
+		processedDib.expandColours(100, 200);
+		processedDib.writeToFile("processed.bmp");
 
-	const vector<DecodeRegion *> & regions = config.getRegions(plateNum, dib.getDpi());
+		if (!decoder.processImageRegions(plateNum, processedDib, regions)) {
+			return SC_INVALID_IMAGE;
+		}
+	} else {
+		if (!decoder.processImageRegions(plateNum, dib, regions)) {
+			return SC_INVALID_IMAGE;
+		}
 
-	if (!decoder.processImageRegions(plateNum, processedDib, regions)) {
-		return SC_INVALID_IMAGE;
 	}
 	saveDecodeResults(plateNum, regions);
 
@@ -336,10 +353,10 @@ int slDecodeCommon(unsigned plateNum, Dib & dib) {
 	return SC_SUCCESS;
 }
 
-int slDecodePlate(unsigned dpi, unsigned plateNum) {
+int slDecodePlate(unsigned dpi, unsigned plateNum, int processImage) {
 	configLogging(3);
 	UA_DOUT(1, 3, "slDecodePlate: dpi/" << dpi
-		<< " plateNum/" << plateNum);
+			<< " plateNum/" << plateNum);
 
 #ifdef WIN32
 	if (dpi < 0 || dpi > 2400) {
@@ -364,14 +381,14 @@ int slDecodePlate(unsigned dpi, unsigned plateNum) {
 	}
 
 	h = ig.acquireImage(dpi, config.getScannerBrightness(),
-		config.getScannerContrast(), f.x0, f.y0, f.x1, f.y1);
+			config.getScannerContrast(), f.x0, f.y0, f.x1, f.y1);
 	if (h == NULL) {
 		UA_DOUT(1, 1, "could not acquire plate image: " << plateNum);
 		return SC_FAIL;
 	}
 
 	dib.readFromHandle(h);
-	result = slDecodeCommon(plateNum, dib);
+	result = slDecodeCommon(plateNum, dib, processImage);
 	ig.freeImage(h);
 	return result;
 #else
@@ -379,10 +396,10 @@ int slDecodePlate(unsigned dpi, unsigned plateNum) {
 #endif
 }
 
-int slDecodeImage(unsigned plateNum, char * filename) {
+int slDecodeImage(unsigned plateNum, char * filename, int processImage) {
 	configLogging(3);
 	UA_DOUT(1, 3, "slDecodeImage: plateNum/" << plateNum
-		<< " filename/"<< filename);
+			<< " filename/"<< filename);
 
 	if ((plateNum == 0) || (plateNum > 4)) {
 		return SC_INVALID_PLATE_NUM;
@@ -397,5 +414,5 @@ int slDecodeImage(unsigned plateNum, char * filename) {
 	Dib dib;
 
 	dib.readFromFile(filename);
-	return slDecodeCommon(plateNum, dib);
+	return slDecodeCommon(plateNum, dib, processImage);
 }

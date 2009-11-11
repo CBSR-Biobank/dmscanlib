@@ -26,54 +26,44 @@
 
 using namespace std;
 
-const char * USAGE_FMT =
-	"Usage: %s [OPTIONS]\n"
-	"Test tool for scanlib library."
-	"\n"
-	"  --brightness NUM     The brightness setting to be used for scanning.\n"
-	"  -c, --calibrate      Acquires an image from the scanner. Use with --plate option.\n"
-	"  --debug NUM          Sets debugging level. Debugging messages are output\n"
-	"                       to stdout. Only when built UA_HAVE_DEBUG on.\n"
-	"  --contrast NUM       The contrast setting to be used for scanning.\n"
-	"  -d, --decode         Acquires an image from the scanner and Decodes the 2D barcodes.\n"
-	"                       Use with --plate option.\n"
-	"  --dpi NUM            Dots per inch to use with scanner.\n"
-	"  -h, --help           Displays this text.\n"
-	"  -i, --input FILE     Use the specified DIB image file instead of scanner.\n"
-	"  -p, --plate NUM      The plate number to use.\n"
-	"  -o, --output FILE    Saves the image to the specified file name.\n"
-	"  -s, --scan           Scans an image.\n";
+const char
+		* USAGE_FMT =
+				"Usage: %s [OPTIONS]\n"
+					"Test tool for scanlib library."
+					"\n"
+					"  --brightness NUM     The brightness setting to be used for scanning.\n"
+					"  -c, --calibrate      Acquires an image from the scanner. Use with --plate option.\n"
+					"  --debug NUM          Sets debugging level. Debugging messages are output\n"
+					"                       to stdout. Only when built UA_HAVE_DEBUG on.\n"
+					"  --contrast NUM       The contrast setting to be used for scanning.\n"
+					"  -d, --decode         Acquires an image from the scanner and Decodes the 2D barcodes.\n"
+					"                       Use with --plate option.\n"
+					"  --dpi NUM            Dots per inch to use with scanner.\n"
+					"  -h, --help           Displays this text.\n"
+					"  -i, --input FILE     Use the specified DIB image file instead of scanner.\n"
+					"  -p, --plate NUM      The plate number to use.\n"
+					"  --processImage       Perform image processing on image before decoding.\n"
+					"  -o, --output FILE    Saves the image to the specified file name.\n"
+					"  -s, --scan           Scans an image.\n";
 
 /* Allowed command line arguments.  */
-CSimpleOptA::SOption longOptions[] = {
-		{ 'b', "--brightness", SO_REQ_SEP },
-		{ 'c', "--calibrate", SO_NONE },
-		{ 'c', "-c",          SO_NONE },
-		{ 203, "--contrast",   SO_REQ_SEP },
-		{ 'd', "--decode",    SO_NONE },
-		{ 'd', "-d",          SO_NONE },
-		{ 200, "--debug",     SO_REQ_SEP },
-		{ 201, "--dpi",       SO_REQ_SEP },
-		{ 'h', "--help",      SO_NONE    },
-		{ 'h', "--h",         SO_NONE    },
-		{ 'i', "--input",     SO_REQ_SEP },
-		{ 'i', "-i",          SO_REQ_SEP },
-		{ 'p', "--plate",     SO_REQ_SEP },
-		{ 'p', "-p",          SO_REQ_SEP },
-		{ 'o', "--output",    SO_REQ_SEP },
-		{ 'o', "-o",          SO_REQ_SEP },
-		{ 's', "--scan",      SO_NONE },
-		{ 's', "-s",          SO_NONE },
-		{ 202, "--select",    SO_NONE },
-		SO_END_OF_OPTIONS
-};
+CSimpleOptA::SOption longOptions[] = { { 'b', "--brightness", SO_REQ_SEP }, {
+		'c', "--calibrate", SO_NONE }, { 'c', "-c", SO_NONE }, { 203,
+		"--contrast", SO_REQ_SEP }, { 'd', "--decode", SO_NONE }, { 'd', "-d",
+		SO_NONE }, { 200, "--debug", SO_REQ_SEP },
+		{ 201, "--dpi", SO_REQ_SEP }, { 'h', "--help", SO_NONE }, { 'h', "--h",
+				SO_NONE }, { 'i', "--input", SO_REQ_SEP }, { 'i', "-i",
+				SO_REQ_SEP }, { 'p', "--plate", SO_REQ_SEP }, { 'p', "-p",
+				SO_REQ_SEP }, { 204, "--processImage", SO_NONE }, { 'o',
+				"--output", SO_REQ_SEP }, { 'o', "-o", SO_REQ_SEP }, { 's',
+				"--scan", SO_NONE }, { 's', "-s", SO_NONE }, { 202, "--select",
+				SO_NONE }, SO_END_OF_OPTIONS };
 
 #ifdef WIN32
 #define DIR_SEP_CHR '\\'
 #else
 #define DIR_SEP_CHR '/'
 #endif
-
 
 struct Options {
 	int brightness;
@@ -82,10 +72,10 @@ struct Options {
 	bool decode;
 	unsigned debugLevel;
 	unsigned dpi;
-	bool getdpi;
 	bool help;
 	char * infile;
 	unsigned plateNum;
+	bool processImage;
 	char * outfile;
 	bool scan;
 	bool select;
@@ -96,11 +86,11 @@ struct Options {
 		contrast = numeric_limits<int>::max();
 		decode = false;
 		infile = NULL;
-		getdpi = false;
 		help = false;
 		debugLevel = 0;
 		dpi = 300;
 		plateNum = 0;
+		processImage = false;
 		outfile = NULL;
 		scan = false;
 		select = false;
@@ -128,7 +118,7 @@ private:
 const char * Application::INI_FILE_NAME = "scanlib.ini";
 
 Application::Application(int argc, char ** argv) {
-	progname = strrchr((char *)argv[0], DIR_SEP_CHR) + 1;
+	progname = strrchr((char *) argv[0], DIR_SEP_CHR) + 1;
 
 	ua::LoggerSinkStdout::Instance().showHeader(true);
 	ua::logstream.sink(ua::LoggerSinkStdout::Instance());
@@ -145,7 +135,8 @@ Application::Application(int argc, char ** argv) {
 	if (options.brightness != numeric_limits<int>::max()) {
 		result = slConfigScannerBrightness(options.brightness);
 		if (result < 0) {
-			cerr << "could not assign brightness: " << options.brightness << endl;
+			cerr << "could not assign brightness: " << options.brightness
+					<< endl;
 			exit(1);
 		}
 	}
@@ -161,28 +152,26 @@ Application::Application(int argc, char ** argv) {
 	if (options.calibrate) {
 		if (options.infile != NULL) {
 			calibrateToImage();
+		} else {
+			result = slCalibrateToPlate(options.dpi, options.plateNum,
+					options.processImage);
 		}
-		else {
-			result = slCalibrateToPlate(options.dpi, options.plateNum);
-		}
-	}
-	else if (options.decode) {
+	} else if (options.decode) {
 		if (options.infile != NULL) {
-			result = slDecodeImage(options.plateNum, options.infile);
+			result = slDecodeImage(options.plateNum, options.infile,
+					options.processImage);
+		} else {
+			result = slDecodePlate(options.dpi, options.plateNum,
+					options.processImage);
 		}
-		else {
-			result = slDecodePlate(options.dpi, options.plateNum);
-		}
-	}
-	else if (options.scan) {
+	} else if (options.scan) {
 		if ((options.plateNum < 1) || (options.plateNum > 5)) {
 			result = slScanImage(options.dpi, 0, 0, 20, 20, options.outfile);
+		} else {
+			result = slScanPlate(options.dpi, options.plateNum,
+							options.outfile);
 		}
-		else {
-			result = slScanPlate(options.dpi, options.plateNum, options.outfile);
-		}
-	}
-	else if (options.select) {
+	} else if (options.select) {
 		result = slSelectSourceAsDefault();
 	}
 
@@ -200,15 +189,17 @@ void Application::usage() {
 bool Application::getCmdOptions(int argc, char ** argv) {
 	char * end = 0;
 
-	CSimpleOptA args(argc, argv, longOptions, SO_O_NOERR|SO_O_EXACT);
+	CSimpleOptA args(argc, argv, longOptions, SO_O_NOERR | SO_O_EXACT);
 
 	while (args.Next()) {
 		if (args.LastError() == SO_SUCCESS) {
 			switch (args.OptionId()) {
 			case 'b':
-				options.brightness = strtoul((const char *)args.OptionArg(), &end, 10);
+				options.brightness = strtoul((const char *) args.OptionArg(),
+						&end, 10);
 				if (*end != 0) {
-					cerr << "invalid value for brightness: " << args.OptionArg() << endl;
+					cerr << "invalid value for brightness: "
+							<< args.OptionArg() << endl;
 					exit(1);
 				}
 				break;
@@ -230,10 +221,11 @@ bool Application::getCmdOptions(int argc, char ** argv) {
 				break;
 
 			case 'p':
-				options.plateNum = strtoul((const char *)args.OptionArg(), &end, 10);
+				options.plateNum = strtoul((const char *) args.OptionArg(),
+						&end, 10);
 				if (*end != 0) {
 					cerr << "invalid value for plate number: "
-						 << args.OptionArg() << endl;
+							<< args.OptionArg() << endl;
 					exit(1);
 				}
 				break;
@@ -247,20 +239,23 @@ bool Application::getCmdOptions(int argc, char ** argv) {
 				break;
 
 			case 200:
-				options.debugLevel = strtoul((const char *)args.OptionArg(), &end, 10);
+				options.debugLevel = strtoul((const char *) args.OptionArg(),
+						&end, 10);
 				if (*end != 0) {
 					cerr << "invalid value for debug level: "
-						 << args.OptionArg() << endl;
+							<< args.OptionArg() << endl;
 					exit(1);
 				}
-				ua::Logger::Instance().levelSet(ua::LoggerImpl::allSubSys_m, options.debugLevel);
+				ua::Logger::Instance().levelSet(ua::LoggerImpl::allSubSys_m,
+						options.debugLevel);
 				break;
 
 			case 201:
-				options.dpi = strtoul((const char *)args.OptionArg(), &end, 10);
+				options.dpi
+						= strtoul((const char *) args.OptionArg(), &end, 10);
 				if (*end != 0) {
-					cerr << "invalid value for dpi: "
-						 << args.OptionArg() << endl;
+					cerr << "invalid value for dpi: " << args.OptionArg()
+							<< endl;
 					exit(1);
 				}
 				break;
@@ -270,22 +265,23 @@ bool Application::getCmdOptions(int argc, char ** argv) {
 				break;
 
 			case 203:
-				options.contrast = strtoul((const char *)args.OptionArg(), &end, 10);
+				options.contrast = strtoul((const char *) args.OptionArg(),
+						&end, 10);
 				if (*end != 0) {
-					cerr << "invalid value for contrast: " << args.OptionArg() << endl;
+					cerr << "invalid value for contrast: " << args.OptionArg()
+							<< endl;
 					exit(1);
 				}
 				break;
 
 			case 204:
-				options.getdpi = true;
+				options.processImage = true;
 				break;
 
 			default:
 				return false;
 			}
-		}
-		else {
+		} else {
 			cerr << "Invalid argument: " << args.OptionText() << endl;
 			return false;
 		}

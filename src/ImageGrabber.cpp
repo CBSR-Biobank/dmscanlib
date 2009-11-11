@@ -7,7 +7,6 @@
  * Some portions of the implementation borrowed from EZTWAIN.
  */
 
-
 #include "ImageGrabber.h"
 #include "ScanLib.h"
 #include "UaLogger.h"
@@ -18,16 +17,10 @@ using namespace std;
 
 // Initialize g_AppID. This structure is passed to DSM_Entry() in each
 // function call.
-TW_IDENTITY ImageGrabber::g_AppID = {
-	0,
-	{ 1, 0, TWLG_ENGLISH_USA, TWCY_USA, "scanlib 1.0" },
-	TWON_PROTOCOLMAJOR,
-	TWON_PROTOCOLMINOR,
-	DG_CONTROL | DG_IMAGE,
-	"Canadian Biosample Repository",
-	"Image acquisition library",
-	"scanlib",
-};
+TW_IDENTITY ImageGrabber::g_AppID = { 0, { 1, 0, TWLG_ENGLISH_USA, TWCY_USA,
+		"scanlib 1.0" }, TWON_PROTOCOLMAJOR, TWON_PROTOCOLMINOR, DG_CONTROL
+		| DG_IMAGE, "Canadian Biosample Repository",
+		"Image acquisition library", "scanlib", };
 
 const char * ImageGrabber::TWAIN_DLL_FILENAME = "TWAIN_32.DLL";
 
@@ -85,7 +78,7 @@ bool ImageGrabber::selectSourceAsDefault() {
 
 	// Create a static window whose handle is passed to DSM_Entry() when we
 	// open the data source manager.
-	HWND hwnd = CreateWindowA("STATIC", "",	WS_POPUPWINDOW,	CW_USEDEFAULT,
+	HWND hwnd = CreateWindowA("STATIC", "", WS_POPUPWINDOW, CW_USEDEFAULT,
 			CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, HWND_DESKTOP, 0,
 			0 /* g_hinstDLL */, 0);
 
@@ -95,7 +88,8 @@ bool ImageGrabber::selectSourceAsDefault() {
 	TW_IDENTITY srcID;
 
 	// Open the data source manager.
-	rc = invokeTwain(NULL, DG_CONTROL, DAT_PARENT, MSG_OPENDSM, (TW_MEMREF) &hwnd);
+	rc = invokeTwain(NULL, DG_CONTROL, DAT_PARENT, MSG_OPENDSM,
+			(TW_MEMREF) &hwnd);
 
 	if (rc != TWRC_SUCCESS) {
 		return false;
@@ -121,9 +115,9 @@ bool ImageGrabber::selectSourceAsDefault() {
 void ImageGrabber::setFloatToIntPair(const double f, short & whole,
 		unsigned short & frac) {
 	double round = (f > 0) ? 0.5 : -0.5;
-	const unsigned tmp = static_cast<unsigned>(f * 65536.0 + round);
-	whole = static_cast<short>(tmp >> 16);
-	frac  = static_cast<unsigned short>(tmp & 0xffff);
+	const unsigned tmp = static_cast<unsigned> (f * 65536.0 + round);
+	whole = static_cast<short> (tmp >> 16);
+	frac = static_cast<unsigned short> (tmp & 0xffff);
 }
 
 /*
@@ -133,7 +127,7 @@ void ImageGrabber::setFloatToIntPair(const double f, short & whole,
  *	Grab an image from the twain source and convert it to the dmtxImage format
  */
 HANDLE ImageGrabber::acquireImage(unsigned dpi, int brightness, int contrast,
-	double left, double top, double right, double bottom) {
+		double left, double top, double right, double bottom) {
 	UA_ASSERT_NOT_NULL(g_hLib);
 
 	TW_UINT16 rc;
@@ -143,14 +137,13 @@ HANDLE ImageGrabber::acquireImage(unsigned dpi, int brightness, int contrast,
 	UA_ASSERT(sizeof(TW_FIX32) == sizeof(long));
 	value.Frac = 0;
 
-	HWND hwnd = CreateWindowA("STATIC", "",	WS_POPUPWINDOW, CW_USEDEFAULT,
+	HWND hwnd = CreateWindowA("STATIC", "", WS_POPUPWINDOW, CW_USEDEFAULT,
 			CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, HWND_DESKTOP,
 			0, 0 /* g_hinstDLL */, 0);
 
 	UA_ASSERTS(hwnd != 0, "Unable to create private window");
 
 	SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE);
-
 
 	// Open the data source manager.
 	rc = invokeTwain(NULL, DG_CONTROL, DAT_PARENT, MSG_OPENDSM, &hwnd);
@@ -170,35 +163,36 @@ HANDLE ImageGrabber::acquireImage(unsigned dpi, int brightness, int contrast,
 	getDpiCapability(&srcID);
 
 	value.Whole = dpi;
-	setCapOneValue(&srcID, ICAP_XRESOLUTION, TWTY_FIX32, *(long*)&value);
-	setCapOneValue(&srcID, ICAP_YRESOLUTION, TWTY_FIX32, *(long*)&value);
+	setCapOneValue(&srcID, ICAP_XRESOLUTION, TWTY_FIX32, *(long*) &value);
+	setCapOneValue(&srcID, ICAP_YRESOLUTION, TWTY_FIX32, *(long*) &value);
 
 	setCapOneValue(&srcID, ICAP_PIXELTYPE, TWTY_UINT16, TWPT_RGB);
 	//SetCapOneValue(&srcID, ICAP_BITDEPTH, TWTY_UINT16, 8);
 
 	value.Whole = brightness;
-	setCapOneValue(&srcID, ICAP_BRIGHTNESS, TWTY_FIX32, *(long*)&value);
+	setCapOneValue(&srcID, ICAP_BRIGHTNESS, TWTY_FIX32, *(long*) &value);
 
 	value.Whole = contrast;
-	setCapOneValue(&srcID, ICAP_CONTRAST, TWTY_FIX32, *(long*)&value);
+	setCapOneValue(&srcID, ICAP_CONTRAST, TWTY_FIX32, *(long*) &value);
 
 	UA_DOUT(2, 3, "acquireImage: source/\"" << srcID.ProductName << "\""
-		<< " brightness/" << brightness
-		<< " constrast/" << contrast
-		<< " left/" << left
-		<< " top/" << top
-		<< " right/" << right
-		<< " bottom/" << bottom);
+			<< " brightness/" << brightness
+			<< " constrast/" << contrast
+			<< " left/" << left
+			<< " top/" << top
+			<< " right/" << right
+			<< " bottom/" << bottom);
 
 	setCapOneValue(&srcID, ICAP_UNITS, TWTY_UINT16, TWUN_INCHES);
 	TW_IMAGELAYOUT layout;
-	setFloatToIntPair(left,   layout.Frame.Left.Whole,   layout.Frame.Left.Frac);
-	setFloatToIntPair(top,    layout.Frame.Top.Whole,    layout.Frame.Top.Frac);
-	setFloatToIntPair(right,  layout.Frame.Right.Whole,  layout.Frame.Right.Frac);
-	setFloatToIntPair(bottom, layout.Frame.Bottom.Whole, layout.Frame.Bottom.Frac);
-	layout.DocumentNumber     = 1;
-	layout.PageNumber         = 1;
-	layout.FrameNumber        = 1;
+	setFloatToIntPair(left, layout.Frame.Left.Whole, layout.Frame.Left.Frac);
+	setFloatToIntPair(top, layout.Frame.Top.Whole, layout.Frame.Top.Frac);
+	setFloatToIntPair(right, layout.Frame.Right.Whole, layout.Frame.Right.Frac);
+	setFloatToIntPair(bottom, layout.Frame.Bottom.Whole,
+			layout.Frame.Bottom.Frac);
+	layout.DocumentNumber = 1;
+	layout.PageNumber = 1;
+	layout.FrameNumber = 1;
 	rc = invokeTwain(&srcID, DG_IMAGE, DAT_IMAGELAYOUT, MSG_SET, &layout);
 
 	//Prepare to enable the default data source
@@ -214,19 +208,21 @@ HANDLE ImageGrabber::acquireImage(unsigned dpi, int brightness, int contrast,
 	TW_EVENT event;
 	TW_PENDINGXFERS pxfers;
 
-	while (GetMessage ((LPMSG) &msg, 0, 0, 0)) {
+	while (GetMessage((LPMSG) &msg, 0, 0, 0)) {
 		event.pEvent = (TW_MEMREF) &msg;
 		event.TWMessage = MSG_NULL;
 
-		rc = invokeTwain(&srcID, DG_CONTROL, DAT_EVENT, MSG_PROCESSEVENT, &event);
+		rc = invokeTwain(&srcID, DG_CONTROL, DAT_EVENT, MSG_PROCESSEVENT,
+				&event);
 		if (rc == TWRC_NOTDSEVENT) {
-			TranslateMessage ((LPMSG) &msg);
-			DispatchMessage ((LPMSG) &msg);
+			TranslateMessage((LPMSG) &msg);
+			DispatchMessage((LPMSG) &msg);
 			continue;
 		}
 
 		if (event.TWMessage == MSG_CLOSEDSREQ) {
-			rc = invokeTwain(&srcID, DG_CONTROL, DAT_USERINTERFACE, MSG_DISABLEDS, &ui);
+			rc = invokeTwain(&srcID, DG_CONTROL, DAT_USERINTERFACE,
+					MSG_DISABLEDS, &ui);
 			break;
 		}
 
@@ -236,16 +232,18 @@ HANDLE ImageGrabber::acquireImage(unsigned dpi, int brightness, int contrast,
 			rc = invokeTwain(&srcID, DG_IMAGE, DAT_IMAGEINFO, MSG_GET, &ii);
 
 			if (rc == TWRC_FAILURE) {
-				invokeTwain(&srcID, DG_CONTROL, DAT_PENDINGXFERS, MSG_RESET, &pxfers);
+				invokeTwain(&srcID, DG_CONTROL, DAT_PENDINGXFERS, MSG_RESET,
+						&pxfers);
 				UA_ERROR("Unable to obtain image information");
 				break;
 			}
 
 			// If image is compressed or is not 8-bit color and not 24-bit
 			// color ...
-			if ((ii.Compression != TWCP_NONE) ||
-					((ii.BitsPerPixel != 8) && (ii.BitsPerPixel != 24))) {
-				invokeTwain(&srcID, DG_CONTROL, DAT_PENDINGXFERS, MSG_RESET, &pxfers);
+			if ((ii.Compression != TWCP_NONE) || ((ii.BitsPerPixel != 8)
+					&& (ii.BitsPerPixel != 24))) {
+				invokeTwain(&srcID, DG_CONTROL, DAT_PENDINGXFERS, MSG_RESET,
+						&pxfers);
 				UA_ERROR("Image compressed or not 8-bit/24-bit ");
 				break;
 			}
@@ -259,83 +257,91 @@ HANDLE ImageGrabber::acquireImage(unsigned dpi, int brightness, int contrast,
 					<< " pixelType/" << ii.PixelType);
 
 			// Perform the transfer.
-			rc = invokeTwain(&srcID, DG_IMAGE, DAT_IMAGENATIVEXFER, MSG_GET, &handle);
+			rc = invokeTwain(&srcID, DG_IMAGE, DAT_IMAGENATIVEXFER, MSG_GET,
+					&handle);
 
 			// If image not successfully transferred ...
 			if (rc != TWRC_XFERDONE) {
-				invokeTwain(&srcID, DG_CONTROL, DAT_PENDINGXFERS, MSG_RESET, &pxfers);
+				invokeTwain(&srcID, DG_CONTROL, DAT_PENDINGXFERS, MSG_RESET,
+						&pxfers);
 				UA_ERROR("User aborted transfer or failure");
 				break;
 			}
 
 			// acknowledge end of transfer.
-			rc = invokeTwain(&srcID, DG_CONTROL, DAT_PENDINGXFERS, MSG_ENDXFER, &pxfers);
-			if ((rc == TWRC_SUCCESS) && (pxfers.Count != 0)) {
-				// Cancel all remaining transfers.
-				invokeTwain(&srcID, DG_CONTROL, DAT_PENDINGXFERS, MSG_RESET, &pxfers);
-			}
-			else {
-				rc = invokeTwain(&srcID, DG_CONTROL, DAT_USERINTERFACE, MSG_DISABLEDS, &ui);
-				break;
+			rc = invokeTwain(&srcID, DG_CONTROL, DAT_PENDINGXFERS, MSG_ENDXFER,
+					&pxfers);
+			if (rc == TWRC_SUCCESS) {
+				if (pxfers.Count != 0) {
+					// Cancel all remaining transfers.
+					invokeTwain(&srcID, DG_CONTROL, DAT_PENDINGXFERS,
+							MSG_RESET, &pxfers);
+				} else {
+					rc = invokeTwain(&srcID, DG_CONTROL, DAT_USERINTERFACE,
+							MSG_DISABLEDS, &ui);
+					break;
+				}
 			}
 		}
 	}
 
 	// Close the data source.
-	invokeTwain(&srcID, DG_CONTROL, DAT_IDENTITY,	MSG_CLOSEDS, &srcID);
+	invokeTwain(&srcID, DG_CONTROL, DAT_IDENTITY, MSG_CLOSEDS, &srcID);
 
 	// Close the data source manager.
 	invokeTwain(NULL, DG_CONTROL, DAT_PARENT, MSG_CLOSEDSM, &hwnd);
 
 	// Destroy window.
-	DestroyWindow (hwnd);
+	DestroyWindow(hwnd);
 	return (HANDLE) handle;
 }
 
 DmtxImage* ImageGrabber::acquireDmtxImage(unsigned dpi, int brightness,
-	int contrast){
+		int contrast) {
 	UA_ASSERT_NOT_NULL(g_hLib);
 
 	HANDLE h = acquireImage(dpi, brightness, contrast, 0, 0, 0, 0);
 	if (h == NULL) {
 		return NULL;
 	}
-	UCHAR *lpVoid,*pBits;
+	UCHAR *lpVoid, *pBits;
 	LPBITMAPINFOHEADER pHead;
-	lpVoid = (UCHAR *)GlobalLock(h);
-	pHead = (LPBITMAPINFOHEADER )lpVoid;
+	lpVoid = (UCHAR *) GlobalLock(h);
+	pHead = (LPBITMAPINFOHEADER) lpVoid;
 	int width = pHead->biWidth;
 	int height = pHead->biHeight;
 	int m_nBits = pHead->biBitCount;
 	DmtxImage *theImage;
 
 	pBits = lpVoid + sizeof(BITMAPINFOHEADER);
-	theImage = dmtxImageCreate((unsigned char*)pBits, width, height, DmtxPack24bppRGB);
+	theImage = dmtxImageCreate((unsigned char*) pBits, width, height,
+			DmtxPack24bppRGB);
 
 	int rowPadBytes = (width * m_nBits) & 0x3;
 
 	UA_DOUT(2, 1,"acquireDmtxImage: " << endl
-		<< "lpVoid: " << *((unsigned*) lpVoid) << endl
-		<< "sizeof(BITMAPINFOHEADER): " << sizeof(BITMAPINFOHEADER) << endl
-		<< "Width: " << width << endl
-		<< "height: " << height << endl
-		<< "towPadBytes: " << rowPadBytes);
+			<< "lpVoid: " << *((unsigned*) lpVoid) << endl
+			<< "sizeof(BITMAPINFOHEADER): " << sizeof(BITMAPINFOHEADER) << endl
+			<< "Width: " << width << endl
+			<< "height: " << height << endl
+			<< "towPadBytes: " << rowPadBytes);
 	dmtxImageSetProp(theImage, DmtxPropRowPadBytes, rowPadBytes);
 	dmtxImageSetProp(theImage, DmtxPropImageFlip, DmtxFlipY); // DIBs are flipped in Y
 	return theImage;
 }
 
-BOOL ImageGrabber::setCapOneValue(TW_IDENTITY * srcId, unsigned Cap, unsigned ItemType, long ItemVal) {
+BOOL ImageGrabber::setCapOneValue(TW_IDENTITY * srcId, unsigned Cap,
+		unsigned ItemType, long ItemVal) {
 	BOOL ret_value = FALSE;
-	TW_CAPABILITY	cap;
-	pTW_ONEVALUE	pv;
+	TW_CAPABILITY cap;
+	pTW_ONEVALUE pv;
 
-	cap.Cap = Cap;			// capability id
-	cap.ConType = TWON_ONEVALUE;		// container type
-	cap.hContainer = GlobalAlloc(GHND, sizeof (TW_ONEVALUE));
+	cap.Cap = Cap; // capability id
+	cap.ConType = TWON_ONEVALUE; // container type
+	cap.hContainer = GlobalAlloc(GHND, sizeof(TW_ONEVALUE));
 	UA_ASSERT_NOT_NULL(cap.hContainer);
 
-	pv = (pTW_ONEVALUE)GlobalLock(cap.hContainer);
+	pv = (pTW_ONEVALUE) GlobalLock(cap.hContainer);
 	UA_ASSERT_NOT_NULL(pv);
 
 	pv->ItemType = ItemType;
@@ -366,9 +372,9 @@ bool ImageGrabber::getDpiCapability(TW_IDENTITY * srcId) {
 	if (xResult && (twCapX.ConType == TWON_RANGE)) {
 		r = (pTW_RANGE) GlobalLock(twCapX.hContainer);
 		if (r->ItemType == TWTY_FIX32) {
-			minDpi = static_cast<int>(fix32ToFloat(
+			minDpi = static_cast<int> (fix32ToFloat(
 					*reinterpret_cast<TW_FIX32*> (&r->MinValue)));
-			maxDpi = static_cast<int>(fix32ToFloat(
+			maxDpi = static_cast<int> (fix32ToFloat(
 					*reinterpret_cast<TW_FIX32*> (&r->MaxValue)));
 			UA_ASSERTS(fix32ToFloat(*reinterpret_cast<TW_FIX32*>(&r->StepSize)) == 1,
 					"invalid step size");
@@ -384,10 +390,10 @@ bool ImageGrabber::getDpiCapability(TW_IDENTITY * srcId) {
 		r = (pTW_RANGE) GlobalLock(twCapY.hContainer);
 		if (r->ItemType == TWTY_FIX32) {
 			UA_ASSERTS(minDpi == static_cast<int>(fix32ToFloat(
-					*reinterpret_cast<TW_FIX32*> (&r->MinValue))),
+									*reinterpret_cast<TW_FIX32*> (&r->MinValue))),
 					"X and Y min values for DPI do not match");
 			UA_ASSERTS(maxDpi = static_cast<int>(fix32ToFloat(
-					*reinterpret_cast<TW_FIX32*> (&r->MaxValue))),
+									*reinterpret_cast<TW_FIX32*> (&r->MaxValue))),
 					"X and Y max values for DPI do not match");
 		}
 		GlobalUnlock(twCapX.hContainer);
@@ -397,11 +403,10 @@ bool ImageGrabber::getDpiCapability(TW_IDENTITY * srcId) {
 	return true;
 }
 
-
 void ImageGrabber::getCustomDsData(TW_IDENTITY * srcId) {
 	TW_UINT16 rc;
 	TW_CUSTOMDSDATA cdata;
-	
+
 	rc = invokeTwain(srcId, DG_CONTROL, DAT_CUSTOMDSDATA, MSG_GET, &cdata);
 	if (rc == TWRC_SUCCESS) {
 		//char * o = (char *)GlobalLock(cdata.hData);
@@ -411,7 +416,8 @@ void ImageGrabber::getCustomDsData(TW_IDENTITY * srcId) {
 }
 
 double ImageGrabber::fix32ToFloat(TW_FIX32 fix32) {
-	return static_cast<double>(fix32.Whole) + static_cast<double>(fix32.Frac) / 65536.0;
+	return static_cast<double> (fix32.Whole) + static_cast<double> (fix32.Frac)
+			/ 65536.0;
 }
 
 /*
@@ -428,7 +434,6 @@ void ImageGrabber::freeImage(HANDLE handle) {
 	GlobalFree(handle);
 }
 
-
 /*
  *	unloadTwain()
  *	@params - none
@@ -436,7 +441,7 @@ void ImageGrabber::freeImage(HANDLE handle) {
  *
  *	If twain_32.dll was loaded, it will be removed from memory
  */
-void ImageGrabber::unloadTwain(){
+void ImageGrabber::unloadTwain() {
 	UA_ASSERT_NOT_NULL(g_hLib);
 	FreeLibrary(g_hLib);
 	g_hLib = NULL;

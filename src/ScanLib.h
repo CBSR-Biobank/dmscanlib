@@ -6,15 +6,14 @@ extern "C" {
 #endif
 
 #if defined(WIN32) && defined(BUILD_DLL) && ! defined(STANDALONE)
-    /* DLL export */
+/* DLL export */
 #   define EXPORT __declspec(dllexport)
 #elif defined(WIN32) && ! defined(STANDALONE)
-    /* EXE import */
+/* EXE import */
 #   define EXPORT __declspec(dllimport)
 #else
 #   define EXPORT
 #endif
-
 
 #ifdef WIN32
 #   include <windows.h>
@@ -23,17 +22,17 @@ extern "C" {
 /**
  * Return codes used by the DLL API.
  */
-const int SC_SUCCESS               =  0;
-const int SC_FAIL                  = -1;
-const int SC_TWAIN_UAVAIL          = -2;
+const int SC_SUCCESS = 0;
+const int SC_FAIL = -1;
+const int SC_TWAIN_UAVAIL = -2;
 const int SC_CALIBRATOR_NO_REGIONS = -3;
-const int SC_CALIBRATOR_ERROR      = -4;
-const int SC_INI_FILE_ERROR        = -5;
-const int SC_INVALID_DPI           = -6;
-const int SC_INVALID_PLATE_NUM     = -7;
-const int SC_FILE_SAVE_ERROR       = -8;
-const int SC_INVALID_VALUE         = -9;
-const int SC_INVALID_IMAGE         = -10;
+const int SC_CALIBRATOR_ERROR = -4;
+const int SC_INI_FILE_ERROR = -5;
+const int SC_INVALID_DPI = -6;
+const int SC_INVALID_PLATE_NUM = -7;
+const int SC_FILE_SAVE_ERROR = -8;
+const int SC_INVALID_VALUE = -9;
+const int SC_INVALID_IMAGE = -10;
 
 /**
  * Queries the availability of the TWAIN driver.
@@ -42,7 +41,7 @@ const int SC_INVALID_IMAGE         = -10;
  */
 EXPORT int slIsTwainAvailable();
 
-typedef int (*SL_IS_TWAIN_AVAILABLE) ();
+typedef int (*SL_IS_TWAIN_AVAILABLE)();
 
 /**
  * Creates a dialog box to allow the user to select the scanner to use by
@@ -53,7 +52,7 @@ typedef int (*SL_IS_TWAIN_AVAILABLE) ();
  */
 EXPORT int slSelectSourceAsDefault();
 
-typedef int (*SL_SELECT_SOURCE_AS_DEFAULT) ();
+typedef int (*SL_SELECT_SOURCE_AS_DEFAULT)();
 
 /**
  *
@@ -61,7 +60,7 @@ typedef int (*SL_SELECT_SOURCE_AS_DEFAULT) ();
  */
 EXPORT int slScannerGetDpiCapability();
 
-typedef int (*SL_SCANNER_GET_DPI_CAPABILITY) ();
+typedef int (*SL_SCANNER_GET_DPI_CAPABILITY)();
 
 /**
  * Saves the brightness value to be used for scanning to the INI file.
@@ -74,7 +73,7 @@ typedef int (*SL_SCANNER_GET_DPI_CAPABILITY) ();
  */
 EXPORT int slConfigScannerBrightness(int brightness);
 
-typedef int (*SL_CONFIG_SCANNER_BRIGHTNESS) (int brightness);
+typedef int (*SL_CONFIG_SCANNER_BRIGHTNESS)(int brightness);
 
 /**
  * Saves the contrast value to be used for scanning to the INI file.
@@ -87,7 +86,7 @@ typedef int (*SL_CONFIG_SCANNER_BRIGHTNESS) (int brightness);
  */
 EXPORT int slConfigScannerContrast(int contrast);
 
-typedef int (*SL_CONFIG_SCANNER_CONTRAST) (int contrast);
+typedef int (*SL_CONFIG_SCANNER_CONTRAST)(int contrast);
 
 /**
  * Saves the plate dimensions to the INI file.
@@ -104,7 +103,7 @@ typedef int (*SL_CONFIG_SCANNER_CONTRAST) (int contrast);
 EXPORT int slConfigPlateFrame(unsigned plateNum, double left, double top,
 		double right, double bottom);
 
-typedef int (*SL_CONFIG_PLATE_FRAME) (unsigned, double x0, double y0, double x1,
+typedef int (*SL_CONFIG_PLATE_FRAME)(unsigned, double x0, double y0, double x1,
 		double y1);
 
 /**
@@ -121,11 +120,11 @@ typedef int (*SL_CONFIG_PLATE_FRAME) (unsigned, double x0, double y0, double x1,
  *
  * @return SC_SUCCESS if valid. SC_FAIL unable to scan an image.
  */
-EXPORT int slScanImage(unsigned dpi, double left, double top,
-		double right, double bottom, char * filename);
+EXPORT int slScanImage(unsigned dpi, double left, double top, double right,
+		double bottom, char * filename);
 
-typedef int (*SL_SCAN_IMAGE) (unsigned dpi, double x0, double y0,
-		double x1, double y1, char * filename);
+typedef int (*SL_SCAN_IMAGE)(unsigned dpi, double x0, double y0, double x1,
+		double y1, char * filename);
 
 /**
  * Scans a plate image from the dimensions specified in the INI file. The image
@@ -143,8 +142,7 @@ typedef int (*SL_SCAN_IMAGE) (unsigned dpi, double x0, double y0,
  */
 EXPORT int slScanPlate(unsigned dpi, unsigned plateNum, char * filename);
 
-typedef int (*SL_SCAN_PLATE) (unsigned dpi, unsigned plateNum, char * filename);
-
+typedef int (*SL_SCAN_PLATE)(unsigned dpi, unsigned plateNum, char * filename);
 
 /**
  * From the dimensions specified in the INI file for the plate, scans an image
@@ -159,6 +157,9 @@ typedef int (*SL_SCAN_PLATE) (unsigned dpi, unsigned plateNum, char * filename);
  *                 300, 400, 600, 1200, 2400.
  * @param plateNum The plate number. Must be a number between 1 and 4.
  *
+ * @param processImage If true then color adjustment is made to the image before
+ *                     2D barcodes are decoded.
+ *
  * @return SC_INVALID_DPI if the DPI value is invalid. SC_INVALID_PLATE_NUM if
  * the plate number is invalid. SC_INI_FILE_ERROR if the plate dimensions
  * cannot be found in the INI file or the results cannot be saved to the  INI
@@ -166,9 +167,11 @@ typedef int (*SL_SCAN_PLATE) (unsigned dpi, unsigned plateNum, char * filename);
  * barcode regions are found in the image. SC_SUCCESS if the regions are found
  * and successfully saved to the INI file.
  */
-EXPORT int slCalibrateToPlate(unsigned dpi, unsigned plateNum);
+EXPORT int slCalibrateToPlate(unsigned dpi, unsigned plateNum,
+		int processImage);
 
-typedef int (*SL_CALIBRATE_TO_PLATE) (unsigned dpi, unsigned plateNum);
+typedef int (*SL_CALIBRATE_TO_PLATE)(unsigned dpi, unsigned plateNum,
+		int processImage);
 
 /**
  * From the regions specified in the INI file for the corresponding plate,
@@ -184,14 +187,17 @@ typedef int (*SL_CALIBRATE_TO_PLATE) (unsigned dpi, unsigned plateNum);
  * @param dpi      The dots per inch for the image. Possible values are 200,
  *                 300, 400, 600, 1200, 2400.
  * @param plateNum The plate number. Must be a number beteen 1 and 4.
+ * @param processImage If true then color adjustment is made to the image before
+ *                     2D barcodes are decoded.
  *
- * @return SC_SUCCESS if the decoding process was successful. SC_INI_FILE_ERROR 
+ * @return SC_SUCCESS if the decoding process was successful. SC_INI_FILE_ERROR
  * if the regions are not found in the INI file. SC_INVALID_IMAGE if the scanned
  * image is invalid.
  */
-EXPORT int slDecodePlate(unsigned dpi, unsigned plateNum);
+EXPORT int slDecodePlate(unsigned dpi, unsigned plateNum, int processImage);
 
-typedef int (*SL_DECODE_PLATE) (unsigned dpi, unsigned plateNum);
+typedef int (*SL_DECODE_PLATE)(unsigned dpi, unsigned plateNum,
+		int processImage);
 
 /**
  * From the regions specified in the INI file for the corresponding plate,
@@ -206,13 +212,16 @@ typedef int (*SL_DECODE_PLATE) (unsigned dpi, unsigned plateNum);
  *
  * @param plateNum The plate number. Must be a number beteen 1 and 4.
  * @param filename The windows bitmap file to decode.
- * 
- * @return SC_SUCCESS if the decoding process was successful. SC_INVALID_IMAGE 
+ * @param processImage If true then color adjustment is made to the image before
+ *                     2D barcodes are decoded.
+ *
+ * @return SC_SUCCESS if the decoding process was successful. SC_INVALID_IMAGE
  * if the scanned image is invalid.
  */
-EXPORT int slDecodeImage(unsigned plateNum, char * filename);
+EXPORT int slDecodeImage(unsigned plateNum, char * filename, int processImage);
 
-typedef int (*SL_DECODE_IMAGE)(unsigned plateNum, char * filename);
+typedef int (*SL_DECODE_IMAGE)(unsigned plateNum, char * filename,
+		int processImage);
 
 #ifdef __cplusplus
 }

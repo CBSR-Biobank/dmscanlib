@@ -108,10 +108,15 @@ bool Decoder::decode(DmtxDecode *& dec, unsigned attempts,
 		if (msg != NULL) {
 			info = new BarcodeInfo(dec, reg, msg);
 			UA_ASSERT_NOT_NULL(info);
-
 			barcodeInfos.push_back(info);
+
+			DmtxPixelLoc & tlCorner = info->getTopLeftCorner();
+			DmtxPixelLoc & brCorner = info->getBotRightCorner();
+
 			UA_DOUT(3, 5, "message " << barcodeInfos.size() - 1
-					<< ": "	<< barcodeInfos.back()->getMsg());
+					<< ": "	<< info->getMsg()
+					<< " : tlCorner/" << tlCorner.X << "," << tlCorner.Y
+					<< "  brCorner/" << brCorner.X << "," << brCorner.Y);
 			//showStats(dec, reg, msg);
 			dmtxMessageDestroy(&msg);
 			dmtxRegionDestroy(&reg);

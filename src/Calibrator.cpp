@@ -46,7 +46,7 @@ bool Calibrator::processImage(Dib & dib) {
 	}
 	width = dib.getWidth();
 	height = dib.getHeight();
-	sortRegions();
+	//sortRegions();
 	dmtxImageDestroy(&image);
 	return true;
 }
@@ -100,8 +100,6 @@ bool Calibrator::processImage(DmtxImage & image) {
 		UA_DOUT(4, 1, "processImage: no barcodes found");
 		return false;
 	}
-	width = dmtxImageGetProp(&image, DmtxPropWidth);
-	height = dmtxImageGetProp(&image, DmtxPropHeight);
 	sortRegions();
 	return true;
 }
