@@ -233,7 +233,7 @@ int slScanPlate(unsigned dpi, unsigned plateNum, char * filename) {
 }
 
 int slCalibrateToPlate(unsigned dpi, unsigned plateNum, int processImage) {
-	configLogging(9);
+	configLogging(3);
 	UA_DOUT(1, 3, "slCalibrateToPlate: dpi/" << dpi
 			<< " plateNum/" << plateNum);
 
