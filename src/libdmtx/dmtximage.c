@@ -20,7 +20,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 Contact: mike@dragonflylogic.com
 */
 
-/* $Id: dmtximage.c 757 2009-02-26 16:00:35Z mblaughton $ */
+/* $Id: dmtximage.c 838 2009-05-13 18:30:16Z mblaughton $ */
 
 /**
  * @file dmtximage.c
@@ -104,7 +104,8 @@ dmtxImageCreate(unsigned char *pxl, int width, int height, int pack)
          break;
       case DmtxPack1bppK:
          err = dmtxImageSetChannel(img, 0, 1);
-         break;
+         return NULL; /* unsupported packing order */
+/*       break; */
       case DmtxPack8bppK:
          err = dmtxImageSetChannel(img, 0, 8);
          break;
@@ -199,6 +200,7 @@ dmtxImageSetChannel(DmtxImage *img, int channelStart, int bitsPerChannel)
  * @param  img pointer to image
  * @return image width
  */
+#ifndef CUSTOM_IMAGESETPROP
 extern DmtxPassFail
 dmtxImageSetProp(DmtxImage *img, int prop, int value)
 {
@@ -219,6 +221,7 @@ dmtxImageSetProp(DmtxImage *img, int prop, int value)
 
    return DmtxPass;
 }
+#endif
 
 /**
  * @brief  Get image width

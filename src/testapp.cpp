@@ -39,25 +39,39 @@ const char
 					"  -d, --decode         Acquires an image from the scanner and Decodes the 2D barcodes.\n"
 					"                       Use with --plate option.\n"
 					"  --dpi NUM            Dots per inch to use with scanner.\n"
+					"  --gap NUM            Use scan grid with gap of N pixels (or less) between lines.\n"
 					"  -h, --help           Displays this text.\n"
 					"  -i, --input FILE     Use the specified DIB image file instead of scanner.\n"
 					"  -p, --plate NUM      The plate number to use.\n"
 					"  --processImage       Perform image processing on image before decoding.\n"
 					"  -o, --output FILE    Saves the image to the specified file name.\n"
-					"  -s, --scan           Scans an image.\n";
+					"  -s, --scan           Scans an image.\n"
+					"  --square-dev NUM     Maximum  deviation  (degrees)  from  squareness between adjacent\n"
+					"                       barcode sides. Default value is N=40, but  N=10  is  recommended\n"
+					"                       for  flat  applications  like faxes and other scanned documents.\n"
+					"                       Barcode regions found with corners <(90-N) or  >(90+N)  will  be\n"
+					"                       ignored by the decoder.\n"
+					"  --threshold NUM      Set  the  minimum edge threshold as a percentage of maximum. For\n"
+					"                       example, an edge between a pure white and pure black pixel would\n"
+					"                       have  an  intensity  of  100.  Edges  with intensities below the\n"
+					"                       indicated threshold will be ignored  by  the  decoding  process.\n"
+					"                       Lowering  the  threshold  will increase the amount of work to be\n"
+					"                       done, but may be necessary for low contrast or blurry images.\n";
 
 /* Allowed command line arguments.  */
 CSimpleOptA::SOption longOptions[] = { { 'b', "--brightness", SO_REQ_SEP }, {
 		'c', "--calibrate", SO_NONE }, { 'c', "-c", SO_NONE }, { 203,
 		"--contrast", SO_REQ_SEP }, { 'd', "--decode", SO_NONE }, { 'd', "-d",
 		SO_NONE }, { 200, "--debug", SO_REQ_SEP },
-		{ 201, "--dpi", SO_REQ_SEP }, { 'h', "--help", SO_NONE }, { 'h', "--h",
-				SO_NONE }, { 'i', "--input", SO_REQ_SEP }, { 'i', "-i",
-				SO_REQ_SEP }, { 'p', "--plate", SO_REQ_SEP }, { 'p', "-p",
-				SO_REQ_SEP }, { 204, "--processImage", SO_NONE }, { 'o',
-				"--output", SO_REQ_SEP }, { 'o', "-o", SO_REQ_SEP }, { 's',
-				"--scan", SO_NONE }, { 's', "-s", SO_NONE }, { 202, "--select",
-				SO_NONE }, SO_END_OF_OPTIONS };
+		{ 201, "--dpi", SO_REQ_SEP }, { 300, "--gap", SO_REQ_SEP }, { 'h',
+				"--help", SO_NONE }, { 'h', "--h", SO_NONE }, { 'i', "--input",
+				SO_REQ_SEP }, { 'i', "-i", SO_REQ_SEP }, { 'p', "--plate",
+				SO_REQ_SEP }, { 'p', "-p", SO_REQ_SEP }, { 204,
+				"--processImage", SO_NONE }, { 'o', "--output", SO_REQ_SEP }, {
+				'o', "-o", SO_REQ_SEP }, { 's', "--scan", SO_NONE }, { 's',
+				"-s", SO_NONE }, { 202, "--select", SO_NONE }, { 301,
+				"--square-dev", SO_REQ_SEP },
+		{ 302, "--threshold", SO_REQ_SEP }, SO_END_OF_OPTIONS };
 
 #ifdef WIN32
 #define DIR_SEP_CHR '\\'
@@ -72,28 +86,32 @@ struct Options {
 	bool decode;
 	unsigned debugLevel;
 	unsigned dpi;
+	unsigned gap;
 	bool help;
 	char * infile;
 	unsigned plateNum;
-	bool processImage;
 	char * outfile;
 	bool scan;
 	bool select;
+	unsigned squareDev;
+	unsigned threshold;
 
 	Options() {
 		brightness = numeric_limits<int>::max();
 		calibrate = false;
 		contrast = numeric_limits<int>::max();
 		decode = false;
-		infile = NULL;
-		help = false;
 		debugLevel = 0;
 		dpi = 300;
+		gap = 0;
+		help = false;
+		infile = NULL;
 		plateNum = 0;
-		processImage = false;
 		outfile = NULL;
 		scan = false;
 		select = false;
+		squareDev = 10;
+		threshold = 50;
 	}
 };
 
@@ -109,7 +127,6 @@ private:
 	void calibrateToImage();
 
 	static const char * INI_FILE_NAME;
-
 	const char * progname;
 
 	Options options;
@@ -132,44 +149,28 @@ Application::Application(int argc, char ** argv) {
 
 	int result = SC_FAIL;
 
-	if (options.brightness != numeric_limits<int>::max()) {
-		result = slConfigScannerBrightness(options.brightness);
-		if (result < 0) {
-			cerr << "could not assign brightness: " << options.brightness
-					<< endl;
-			exit(1);
-		}
-	}
-
-	if (options.contrast != numeric_limits<int>::max()) {
-		result = slConfigScannerContrast(options.contrast);
-		if (result < 0) {
-			cerr << "could not assign contrast: " << options.contrast << endl;
-			exit(1);
-		}
-	}
-
 	if (options.calibrate) {
 		if (options.infile != NULL) {
 			calibrateToImage();
 		} else {
-			result = slCalibrateToPlate(options.dpi, options.plateNum,
-					options.processImage);
+			result = slCalibrateToPlate(options.dpi, options.plateNum);
 		}
 	} else if (options.decode) {
 		if (options.infile != NULL) {
-			result = slDecodeImage(options.plateNum, options.infile,
-					options.processImage);
+			result = slDecodeImage(options.debugLevel, options.plateNum, options.infile,
+					options.gap, options.squareDev, options.threshold);
 		} else {
-			result = slDecodePlate(options.dpi, options.plateNum,
-					options.processImage);
+			result = slDecodePlate(options.debugLevel, options.dpi, options.plateNum,
+					options.brightness, options.contrast, options.gap,
+					options.squareDev, options.threshold);
 		}
 	} else if (options.scan) {
 		if ((options.plateNum < 1) || (options.plateNum > 5)) {
-			result = slScanImage(options.dpi, 0, 0, 20, 20, options.outfile);
+			result = slScanImage(options.debugLevel, options.dpi, options.brightness,
+					options.contrast, 0, 0, 20, 20, options.outfile);
 		} else {
-			result = slScanPlate(options.dpi, options.plateNum,
-							options.outfile);
+			result = slScanPlate(options.debugLevel, options.dpi, options.plateNum,
+					options.brightness, options.contrast, options.outfile);
 		}
 	} else if (options.select) {
 		result = slSelectSourceAsDefault();
@@ -274,8 +275,34 @@ bool Application::getCmdOptions(int argc, char ** argv) {
 				}
 				break;
 
-			case 204:
-				options.processImage = true;
+			case 300:
+				options.gap
+						= strtoul((const char *) args.OptionArg(), &end, 10);
+				if (*end != 0) {
+					cerr << "invalid value for gap: " << args.OptionArg()
+							<< endl;
+					exit(1);
+				}
+				break;
+
+			case 301:
+				options.squareDev = strtoul((const char *) args.OptionArg(),
+						&end, 10);
+				if (*end != 0) {
+					cerr << "invalid value for gap: " << args.OptionArg()
+							<< endl;
+					exit(1);
+				}
+				break;
+
+			case 302:
+				options.threshold = strtoul((const char *) args.OptionArg(),
+						&end, 10);
+				if (*end != 0) {
+					cerr << "invalid value for gap: " << args.OptionArg()
+							<< endl;
+					exit(1);
+				}
 				break;
 
 			default:

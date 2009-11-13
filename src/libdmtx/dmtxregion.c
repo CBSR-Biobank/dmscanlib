@@ -20,7 +20,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 Contact: mike@dragonflylogic.com
 */
 
-/* $Id: dmtxregion.c 755 2009-02-26 05:20:06Z mblaughton $ */
+/* $Id: dmtxregion.c 860 2009-08-20 21:00:31Z mblaughton $ */
 
 #define DMTX_HOUGH_RES 180
 
@@ -74,6 +74,7 @@ dmtxRegionDestroy(DmtxRegion **reg)
  * @param  timeout Pointer to timeout time (NULL if none)
  * @return Detected region (if found)
  */
+#ifndef CUSTOM_REGIONFINDNEXT
 extern DmtxRegion *
 dmtxRegionFindNext(DmtxDecode *dec, DmtxTime *timeout)
 {
@@ -99,6 +100,7 @@ dmtxRegionFindNext(DmtxDecode *dec, DmtxTime *timeout)
 
    return NULL;
 }
+#endif
 
 /**
  * @brief  Scan individual pixel for presence of barcode edge
@@ -106,6 +108,7 @@ dmtxRegionFindNext(DmtxDecode *dec, DmtxTime *timeout)
  * @param  loc Pixel location
  * @return Detected region (if any)
  */
+#ifndef CUSTOM_REGIONSCANPIXEL
 extern DmtxRegion *
 dmtxRegionScanPixel(DmtxDecode *dec, int x, int y)
 {
@@ -126,38 +129,39 @@ dmtxRegionScanPixel(DmtxDecode *dec, int x, int y)
 
    /* Test for presence of any reasonable edge at this location */
    flowBegin = MatrixRegionSeekEdge(dec, loc);
-   if(flowBegin.mag < 10)
+   if(flowBegin.mag < (int)(dec->edgeThresh * 7.65 + 0.5))
       return NULL;
 
    memset(&reg, 0x00, sizeof(DmtxRegion));
 
    /* Determine barcode orientation */
-   if(MatrixRegionOrientation(dec, &reg, flowBegin) != DmtxPass)
+   if(MatrixRegionOrientation(dec, &reg, flowBegin) == DmtxFail)
       return NULL;
-   if(dmtxRegionUpdateXfrms(dec, &reg) != DmtxPass)
+   if(dmtxRegionUpdateXfrms(dec, &reg) == DmtxFail)
       return NULL;
 
    /* Define top edge */
-   if(MatrixRegionAlignCalibEdge(dec, &reg, DmtxEdgeTop) != DmtxPass)
+   if(MatrixRegionAlignCalibEdge(dec, &reg, DmtxEdgeTop) == DmtxFail)
       return NULL;
-   if(dmtxRegionUpdateXfrms(dec, &reg) != DmtxPass)
+   if(dmtxRegionUpdateXfrms(dec, &reg) == DmtxFail)
       return NULL;
 
    /* Define right edge */
-   if(MatrixRegionAlignCalibEdge(dec, &reg, DmtxEdgeRight) != DmtxPass)
+   if(MatrixRegionAlignCalibEdge(dec, &reg, DmtxEdgeRight) == DmtxFail)
       return NULL;
-   if(dmtxRegionUpdateXfrms(dec, &reg) != DmtxPass)
+   if(dmtxRegionUpdateXfrms(dec, &reg) == DmtxFail)
       return NULL;
 
    CALLBACK_MATRIX(&reg);
 
    /* Calculate the best fitting symbol size */
-   if(MatrixRegionFindSize(dec, &reg) != DmtxPass)
+   if(MatrixRegionFindSize(dec, &reg) == DmtxFail)
       return NULL;
 
    /* Found a valid matrix region */
    return dmtxRegionCreate(&reg);
 }
+#endif
 
 /**
  *

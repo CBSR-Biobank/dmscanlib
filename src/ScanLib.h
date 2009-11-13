@@ -63,32 +63,6 @@ EXPORT int slScannerGetDpiCapability();
 typedef int (*SL_SCANNER_GET_DPI_CAPABILITY)();
 
 /**
- * Saves the brightness value to be used for scanning to the INI file.
- *
- * @param brightness a value between -1000 and 1000.
- *
- * @return SC_SUCCESS if successfully saved to the INI file.
- * SC_INVALID_VALUE if brightness bad value. SC_INI_FILE_ERROR if unable to
- * save the value to the INI file.
- */
-EXPORT int slConfigScannerBrightness(int brightness);
-
-typedef int (*SL_CONFIG_SCANNER_BRIGHTNESS)(int brightness);
-
-/**
- * Saves the contrast value to be used for scanning to the INI file.
- *
- * @param contrast a value between -1000 and 1000.
- *
- * @return SC_SUCCESS if successfully saved to the INI file.
- * SC_INVALID_VALUE if brightness bad value. SC_INI_FILE_ERROR if unable to
- * save the value to the INI file.
- */
-EXPORT int slConfigScannerContrast(int contrast);
-
-typedef int (*SL_CONFIG_SCANNER_CONTRAST)(int contrast);
-
-/**
  * Saves the plate dimensions to the INI file.
  *
  * @param plateNum The corresponding plate number.
@@ -103,46 +77,59 @@ typedef int (*SL_CONFIG_SCANNER_CONTRAST)(int contrast);
 EXPORT int slConfigPlateFrame(unsigned plateNum, double left, double top,
 		double right, double bottom);
 
-typedef int (*SL_CONFIG_PLATE_FRAME)(unsigned, double x0, double y0, double x1,
-		double y1);
+typedef int (*SL_CONFIG_PLATE_FRAME)(unsigned, double left, double top,
+		double right, double bottom);
 
 /**
  * Scans an image for the specified dimensions. The image is in Windows BMP
  * format.
  *
- * @param dpi      The dots per inch for the image. Possible values are 200,
- *                 300, 400, 600.
- * @param left     The left margin in inches.
- * @param top      The top margin in inches.
- * @param right    The width in inches.
- * @param bottom   The height in inches.
- * @param filename The file name to save the bitmap to.
+ * @param verbose    The amount of logging information to generate. 1 is minimal
+ *                   and 9 is very detailed. Logging information is appended to
+ *                 file scanlib.log.
+ * @param dpi        The dots per inch for the image. Possible values are 200,
+ *                   300, 400, 600, 720, 800.
+ * @param brightness a value between -1000 and 1000.
+ * @param contrast   a value between -1000 and 1000.
+ * @param left       The left margin in inches.
+ * @param top        The top margin in inches.
+ * @param right      The width in inches.
+ * @param bottom     The height in inches.
+ * @param filename   The file name to save the bitmap to.
  *
  * @return SC_SUCCESS if valid. SC_FAIL unable to scan an image.
  */
-EXPORT int slScanImage(unsigned dpi, double left, double top, double right,
-		double bottom, char * filename);
+EXPORT int slScanImage(unsigned verbose, unsigned dpi, int brightness,
+		int contrast, double left, double top, double right, double bottom,
+		char * filename);
 
-typedef int (*SL_SCAN_IMAGE)(unsigned dpi, double x0, double y0, double x1,
-		double y1, char * filename);
+typedef int (*SL_SCAN_IMAGE)(unsigned verbose, unsigned dpi, double left,
+		double top, double right, double bottom, char * filename);
 
 /**
  * Scans a plate image from the dimensions specified in the INI file. The image
  * is saved to a file in Windows BMP format.
  *
- * @param dpi      The dots per inch for the image. Possible values are 200,
- *                 300, 400, 600, 1200, 2400.
- * @param plateNum The plate number. Must be a number beteen 1 and 4.
- * @param filename The file name to use for the bitmap file.
+ * @param verbose    The amount of logging information to generate. 1 is minimal
+ *                   and 9 is very detailed. Logging information is appended to
+ *                   file scanlib.log.
+ * @param dpi        The dots per inch for the image. Possible values are 200,
+ *                   300, 400, 600, 720, 800.
+ * @param plateNum   The plate number. Must be a number beteen 1 and 4.
+ * @param brightness a value between -1000 and 1000.
+ * @param contrast   a value between -1000 and 1000.
+ * @param filename   The file name to use for the bitmap file.
  *
  * @return SC_INVALID_DPI if the DPI value is invalid. SC_INVALID_PLATE_NUM if
  * the plate number is invalid. SC_FAIL if an invalid file name is given or the
  * scanning process failed. SC_FILE_SAVE_ERROR if the file could not be saved.
  * SC_SUCCESS if the image was successfully scanned.
  */
-EXPORT int slScanPlate(unsigned dpi, unsigned plateNum, char * filename);
+EXPORT int slScanPlate(unsigned verbose, unsigned dpi, unsigned plateNum,
+		int brightness, int contrast, char * filename);
 
-typedef int (*SL_SCAN_PLATE)(unsigned dpi, unsigned plateNum, char * filename);
+typedef int (*SL_SCAN_PLATE)(unsigned verbose, unsigned dpi, unsigned plateNum,
+		char * filename);
 
 /**
  * From the dimensions specified in the INI file for the plate, scans an image
@@ -154,7 +141,7 @@ typedef int (*SL_SCAN_PLATE)(unsigned dpi, unsigned plateNum, char * filename);
  * which shows the decode regions in rows and columns.
  *
  * @param dpi      The dots per inch for the image. Possible values are 200,
- *                 300, 400, 600, 1200, 2400.
+ *                 300, 400, 600, 720, 800.
  * @param plateNum The plate number. Must be a number between 1 and 4.
  *
  * @param processImage If true then color adjustment is made to the image before
@@ -167,11 +154,9 @@ typedef int (*SL_SCAN_PLATE)(unsigned dpi, unsigned plateNum, char * filename);
  * barcode regions are found in the image. SC_SUCCESS if the regions are found
  * and successfully saved to the INI file.
  */
-EXPORT int slCalibrateToPlate(unsigned dpi, unsigned plateNum,
-		int processImage);
+EXPORT int slCalibrateToPlate(unsigned dpi, unsigned plateNum);
 
-typedef int (*SL_CALIBRATE_TO_PLATE)(unsigned dpi, unsigned plateNum,
-		int processImage);
+typedef int (*SL_CALIBRATE_TO_PLATE)(unsigned dpi, unsigned plateNum);
 
 /**
  * From the regions specified in the INI file for the corresponding plate,
@@ -184,20 +169,41 @@ typedef int (*SL_CALIBRATE_TO_PLATE)(unsigned dpi, unsigned plateNum,
  * decoded. If the regions failed to decode then a red square is drawn around
  * it.
  *
- * @param dpi      The dots per inch for the image. Possible values are 200,
- *                 300, 400, 600, 1200, 2400.
- * @param plateNum The plate number. Must be a number beteen 1 and 4.
- * @param processImage If true then color adjustment is made to the image before
- *                     2D barcodes are decoded.
+ * @param verbose    The amount of logging information to generate. 1 is minimal
+ *                   and 9 is very detailed. Logging information is appended to
+ *                   file scanlib.log.
+ * @param dpi        The dots per inch for the image. Possible values are 200,
+ *                   300, 400, 600, 720, 800.
+ * @param plateNum   The plate number. Must be a number beteen 1 and 4.
+ * @param brightness a value between -1000 and 1000.
+ * @param contrast   a value between -1000 and 1000.
+ * @param scanGap    The number of pixels to use for scan grid gap. This is a
+ * 				     libdmtx paramerter.
+ * @param squareDev  Maximum  deviation  (degrees)  from  squareness between
+ *                   adjacent barcode sides. Default value is N=40, but N=10
+ *                   is  recommended for  flat  applications  like faxes and
+ *                   other scanned documents. Barcode regions found with
+ *                   corners <(90-N) or >(90+N) will be ignored by the decoder.
+ * @param edgeThresh Set  the  minimum edge threshold as a percentage of
+ *                   maximum. For example, an edge between a pure white and pure
+ *                   black pixel would have  an  intensity  of  100.  Edges
+ *                   with intensities below the indicated threshold will be
+ *                   ignored  by  the  decoding  process. Lowering  the
+ *                   threshold  will increase the amount of work to be done,
+ *                   but may be necessary for low contrast or blurry images.
  *
  * @return SC_SUCCESS if the decoding process was successful. SC_INI_FILE_ERROR
  * if the regions are not found in the INI file. SC_INVALID_IMAGE if the scanned
  * image is invalid.
  */
-EXPORT int slDecodePlate(unsigned dpi, unsigned plateNum, int processImage);
+EXPORT int
+slDecodePlate(unsigned verbose, unsigned dpi, unsigned plateNum,
+		int brightness, int contrast, unsigned scanGap, unsigned squareDev,
+		unsigned edgeThresh);
 
-typedef int (*SL_DECODE_PLATE)(unsigned dpi, unsigned plateNum,
-		int processImage);
+typedef int (*SL_DECODE_PLATE)(unsigned verbose, unsigned dpi,
+		unsigned plateNum, unsigned scanGap, unsigned squareDev,
+		unsigned edgeThresh);
 
 /**
  * From the regions specified in the INI file for the corresponding plate,
@@ -210,18 +216,35 @@ typedef int (*SL_DECODE_PLATE)(unsigned dpi, unsigned plateNum,
  * decoded. If the regions failed to decode then a red square is drawn around
  * it.
  *
- * @param plateNum The plate number. Must be a number beteen 1 and 4.
- * @param filename The windows bitmap file to decode.
- * @param processImage If true then color adjustment is made to the image before
- *                     2D barcodes are decoded.
+ * @param verbose    The amount of logging information to generate. 1 is minimal
+ *                   and 9 is very detailed. Logging information is appended to
+ *                   file scanlib.log.
+ * @param plateNum   The plate number. Must be a number beteen 1 and 4.
+ * @param filename   The windows bitmap file to decode.
+ * @param scanGap    The number of pixels to use for scan grid gap. This is a
+ * 				     libdmtx paramerter.
+ * @param squareDev  Maximum  deviation  (degrees)  from  squareness between
+ *                   adjacent barcode sides. Default value is N=40, but N=10
+ *                   is  recommended for  flat  applications  like faxes and
+ *                   other scanned documents. Barcode regions found with
+ *                   corners <(90-N) or >(90+N) will be ignored by the decoder.
+ * @param edgeThresh Set  the  minimum edge threshold as a percentage of
+ *                   maximum. For example, an edge between a pure white and pure
+ *                   black pixel would have  an  intensity  of  100.  Edges
+ *                   with intensities below the indicated threshold will be
+ *                   ignored  by  the  decoding  process. Lowering  the
+ *                   threshold  will increase the amount of work to be done,
+ *                   but may be necessary for low contrast or blurry images.
  *
  * @return SC_SUCCESS if the decoding process was successful. SC_INVALID_IMAGE
  * if the scanned image is invalid.
  */
-EXPORT int slDecodeImage(unsigned plateNum, char * filename, int processImage);
+EXPORT int slDecodeImage(unsigned verbose, unsigned plateNum, char * filename,
+		unsigned scanGap, unsigned squareDev, unsigned edgeThresh);
 
-typedef int (*SL_DECODE_IMAGE)(unsigned plateNum, char * filename,
-		int processImage);
+typedef int (*SL_DECODE_IMAGE)(unsigned verbose, unsigned plateNum,
+		char * filename, unsigned scanGap, unsigned squareDev,
+		unsigned edgeThresh);
 
 #ifdef __cplusplus
 }

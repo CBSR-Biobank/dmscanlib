@@ -17,7 +17,7 @@
 #pragma warning(disable : 4996)
 #endif
 
-Calibrator::Calibrator() {
+Calibrator::Calibrator() : Decoder(0, 0, 0) {
 	ua::Logger::Instance().subSysHeaderSet(4, "Calibrator");
 }
 
@@ -56,7 +56,7 @@ bool Calibrator::processImage(DmtxImage & image) {
 	unsigned width = dmtxImageGetProp(&image, DmtxPropWidth);
 	unsigned height = dmtxImageGetProp(&image, DmtxPropHeight);
 
-	UA_DOUT(4, 3, "processImage: image width/" << width
+	UA_DOUT(4, 5, "processImage: image width/" << width
 			<< " image height/" << height
 			<< " row padding/" << dmtxImageGetProp(&image, DmtxPropRowPadBytes)
 			<< " image bits per pixel/"

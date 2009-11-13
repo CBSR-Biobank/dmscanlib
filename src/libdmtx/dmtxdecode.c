@@ -2,6 +2,7 @@
 libdmtx - Data Matrix Encoding/Decoding Library
 
 Copyright (C) 2008, 2009 Mike Laughton
+Copyright (C) 2009 Mackenzie Straight
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -20,9 +21,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 Contact: mike@dragonflylogic.com
 */
 
-/* $Id: dmtxdecode.c 764 2009-02-27 00:27:05Z mblaughton $ */
-
-#include <stdio.h>
+/* $Id: dmtxdecode.c 849 2009-07-30 15:29:54Z mblaughton $ */
 
 /**
  * @file dmtxdecode.c
@@ -49,17 +48,16 @@ dmtxDecodeCreate(DmtxImage *img, int scale)
 
    dec->edgeMin = DmtxUndefined;
    dec->edgeMax = DmtxUndefined;
+   dec->scanGap = 1;
    dec->squareDevn = cos(50 * (M_PI/180));
    dec->sizeIdxExpected = DmtxSymbolShapeAuto;
    dec->edgeThresh = 10;
-   dec->scale = scale;
 
-   /* Unscaled values */
-   dec->scanGap = 1;
    dec->xMin = 0;
    dec->xMax = width - 1;
    dec->yMin = 0;
    dec->yMax = height - 1;
+   dec->scale = scale;
 
    dec->cache = (unsigned char *)calloc(width * height, sizeof(unsigned char));
    if(dec->cache == NULL) {
@@ -112,7 +110,7 @@ dmtxDecodeSetProp(DmtxDecode *dec, int prop, int value)
          dec->edgeMax = value;
          break;
       case DmtxPropScanGap:
-         dec->scanGap = value;
+         dec->scanGap = value; /* XXX Should this be scaled? */
          break;
       case DmtxPropSquareDevn:
          dec->squareDevn = cos(value * (M_PI/180.0));
@@ -212,6 +210,9 @@ dmtxDecodeGetCache(DmtxDecode *dec, int x, int y)
 
    assert(dec != NULL);
 
+/* if(dec.cacheComplete == DmtxFalse)
+      CacheImage(); */
+
    width = dmtxDecodeGetProp(dec, DmtxPropWidth);
    height = dmtxDecodeGetProp(dec, DmtxPropHeight);
 
@@ -263,19 +264,79 @@ dmtxDecodeGetPixelValue(DmtxDecode *dec, int x, int y, int channel, int *value)
 }
 
 /**
+ * @brief  Fill the region covered by the quadrilateral given by (p0,p1,p2,p3) in the cache.
+ *
+ */
+static void
+CacheFillQuad(DmtxDecode *dec, DmtxPixelLoc p0, DmtxPixelLoc p1, DmtxPixelLoc p2, DmtxPixelLoc p3)
+{
+   DmtxBresLine lines[4];
+   DmtxPixelLoc pEmpty = { 0, 0 };
+   unsigned char *cache;
+   int *scanlineMin, *scanlineMax;
+   int minY, maxY, sizeY, posY, posX;
+   int i, idx;
+
+   lines[0] = BresLineInit(p0, p1, pEmpty);
+   lines[1] = BresLineInit(p1, p2, pEmpty);
+   lines[2] = BresLineInit(p2, p3, pEmpty);
+   lines[3] = BresLineInit(p3, p0, pEmpty);
+
+   minY = dec->yMax;
+   maxY = 0;
+
+   minY = min(minY, p0.Y); maxY = max(maxY, p0.Y);
+   minY = min(minY, p1.Y); maxY = max(maxY, p1.Y);
+   minY = min(minY, p2.Y); maxY = max(maxY, p2.Y);
+   minY = min(minY, p3.Y); maxY = max(maxY, p3.Y);
+
+   sizeY = maxY - minY + 1;
+
+   scanlineMin = (int *)malloc(sizeY * sizeof(int));
+   scanlineMax = (int *)calloc(sizeY, sizeof(int));
+
+   assert(scanlineMin); /* XXX handle this better */
+   assert(scanlineMax); /* XXX handle this better */
+
+   for(i = 0; i < sizeY; i++)
+      scanlineMin[i] = dec->xMax;
+
+   for(i = 0; i < 4; i++) {
+      while(lines[i].loc.X != lines[i].loc1.X || lines[i].loc.Y != lines[i].loc1.Y) {
+         idx = lines[i].loc.Y - minY;
+         scanlineMin[idx] = min(scanlineMin[idx], lines[i].loc.X);
+         scanlineMax[idx] = max(scanlineMax[idx], lines[i].loc.X);
+         BresLineStep(lines + i, 1, 0);
+      }
+   }
+
+   for(posY = minY; posY < maxY && posY < dec->yMax; posY++) {
+      idx = posY - minY;
+      for(posX = scanlineMin[idx]; posX < scanlineMax[idx] && posX < dec->xMax; posX++) {
+         cache = dmtxDecodeGetCache(dec, posX, posY);
+         if(cache != NULL)
+            *cache |= 0x80;
+      }
+   }
+
+   free(scanlineMin);
+   free(scanlineMax);
+}
+
+/**
  * @brief  Convert fitted Data Matrix region into a decoded message
  * @param  dec
  * @param  reg
  * @param  fix
  * @return Decoded message
  */
+#ifndef CUSTOM_DECODEMATRIXREGION
 extern DmtxMessage *
 dmtxDecodeMatrixRegion(DmtxDecode *dec, DmtxRegion *reg, int fix)
 {
-   int row, col;
-   unsigned char *cache;
    DmtxMessage *msg;
-   DmtxVector2 p;
+   DmtxVector2 topLeft, topRight, bottomLeft, bottomRight;
+   DmtxPixelLoc pxTopLeft, pxTopRight, pxBottomLeft, pxBottomRight;
 
    msg = dmtxMessageCreate(reg->sizeIdx, DmtxFormatMatrix);
    if(msg == NULL)
@@ -286,6 +347,9 @@ dmtxDecodeMatrixRegion(DmtxDecode *dec, DmtxRegion *reg, int fix)
       return NULL;
    }
 
+   /* maybe place remaining logic into new dmtxDecodePopulatedArray()
+      function so other people can pass in their own arrays */
+
    ModulePlacementEcc200(msg->array, msg->code,
          reg->sizeIdx, DmtxModuleOnRed | DmtxModuleOnGreen | DmtxModuleOnBlue);
 
@@ -294,27 +358,30 @@ dmtxDecodeMatrixRegion(DmtxDecode *dec, DmtxRegion *reg, int fix)
       return NULL;
    }
 
-   for(row = dec->yMin; row < dec->yMax; row++) {
-      for(col = dec->xMin; col < dec->xMax; col++) {
-         p.X = col;
-         p.Y = row;
-         dmtxMatrix3VMultiplyBy(&p, reg->raw2fit);
-         /* XXX tighten these boundaries can by accounting for barcode size */
-         if(p.X >= -0.1 && p.X <= 1.1 && p.Y >= -0.1 && p.Y <= 1.1) {
+   topLeft.X = bottomLeft.X = topLeft.Y = topRight.Y = -0.1;
+   topRight.X = bottomRight.X = bottomLeft.Y = bottomRight.Y = 1.1;
 
-            cache = dmtxDecodeGetCache(dec, col, row);
-            if(cache == NULL)
-               continue;
-            else
-               *cache |= 0x80; /* Mark as visited */
-         }
-      }
-   }
+   dmtxMatrix3VMultiplyBy(&topLeft, reg->fit2raw);
+   dmtxMatrix3VMultiplyBy(&topRight, reg->fit2raw);
+   dmtxMatrix3VMultiplyBy(&bottomLeft, reg->fit2raw);
+   dmtxMatrix3VMultiplyBy(&bottomRight, reg->fit2raw);
+
+   pxTopLeft.X = (int)(0.5 + topLeft.X);
+   pxTopLeft.Y = (int)(0.5 + topLeft.Y);
+   pxBottomLeft.X = (int)(0.5 + bottomLeft.X);
+   pxBottomLeft.Y = (int)(0.5 + bottomLeft.Y);
+   pxTopRight.X = (int)(0.5 + topRight.X);
+   pxTopRight.Y = (int)(0.5 + topRight.Y);
+   pxBottomRight.X = (int)(0.5 + bottomRight.X);
+   pxBottomRight.Y = (int)(0.5 + bottomRight.Y);
+
+   CacheFillQuad(dec, pxTopLeft, pxTopRight, pxBottomRight, pxBottomLeft);
 
    DecodeDataStream(msg, reg->sizeIdx, NULL);
 
    return msg;
 }
+#endif
 
 /**
  * @brief  Convert fitted Data Mosaic region into a decoded message
@@ -323,6 +390,7 @@ dmtxDecodeMatrixRegion(DmtxDecode *dec, DmtxRegion *reg, int fix)
  * @param  fix
  * @return Decoded message
  */
+#ifndef CUSTOM_DECODEMOSAICREGION
 extern DmtxMessage *
 dmtxDecodeMosaicRegion(DmtxDecode *dec, DmtxRegion *reg, int fix)
 {
@@ -369,6 +437,7 @@ dmtxDecodeMosaicRegion(DmtxDecode *dec, DmtxRegion *reg, int fix)
 
    return oMsg;
 }
+#endif
 
 /**
  *
@@ -464,7 +533,8 @@ dmtxDecodeCreateDiagnostic(DmtxDecode *dec, int *totalBytes, int *headerBytes, i
 static void
 DecodeDataStream(DmtxMessage *msg, int sizeIdx, unsigned char *outputStart)
 {
-   DmtxSchemeDecode encScheme;
+   DmtxBoolean macro = DmtxFalse;
+   DmtxScheme encScheme;
    unsigned char *ptr, *dataEnd;
 
    msg->output = (outputStart == NULL) ? msg->output : outputStart;
@@ -473,37 +543,44 @@ DecodeDataStream(DmtxMessage *msg, int sizeIdx, unsigned char *outputStart)
    ptr = msg->code;
    dataEnd = ptr + dmtxGetSymbolAttribute(DmtxSymAttribSymbolDataWords, sizeIdx);
 
+   /* Print macro header if first codeword triggers it */
+   if(*ptr == DmtxChar05Macro || *ptr == DmtxChar06Macro) {
+      PushOutputMacroHeader(msg, *ptr);
+      macro = DmtxTrue;
+   }
+
    while(ptr < dataEnd) {
 
-      ptr = NextEncodationScheme(&encScheme, ptr);
+      encScheme = GetEncodationScheme(ptr);
+      if(encScheme != DmtxSchemeAscii)
+         ptr++;
 
       switch(encScheme) {
-         case DmtxSchemeDecodeAsciiStd:
-            ptr = DecodeSchemeAsciiStd(msg, ptr, dataEnd);
+         case DmtxSchemeAscii:
+            ptr = DecodeSchemeAscii(msg, ptr, dataEnd);
             break;
-
-         case DmtxSchemeDecodeAsciiExt:
-            ptr = DecodeSchemeAsciiExt(msg, ptr);
-            break;
-
-         case DmtxSchemeDecodeC40:
-         case DmtxSchemeDecodeText:
+         case DmtxSchemeC40:
+         case DmtxSchemeText:
             ptr = DecodeSchemeC40Text(msg, ptr, dataEnd, encScheme);
             break;
-
-         case DmtxSchemeDecodeX12:
+         case DmtxSchemeX12:
             ptr = DecodeSchemeX12(msg, ptr, dataEnd);
             break;
-
-         case DmtxSchemeDecodeEdifact:
+         case DmtxSchemeEdifact:
             ptr = DecodeSchemeEdifact(msg, ptr, dataEnd);
             break;
-
-         case DmtxSchemeDecodeBase256:
+         case DmtxSchemeBase256:
             ptr = DecodeSchemeBase256(msg, ptr, dataEnd);
+            break;
+         default:
+            /* error */
             break;
       }
    }
+
+   /* Print macro trailer if required */
+   if(macro == DmtxTrue)
+      PushOutputMacroTrailer(msg);
 }
 
 /**
@@ -512,34 +589,33 @@ DecodeDataStream(DmtxMessage *msg, int sizeIdx, unsigned char *outputStart)
  * @param  ptr
  * @return Pointer to next undecoded codeword
  */
-static unsigned char *
-NextEncodationScheme(DmtxSchemeDecode *encScheme, unsigned char *ptr)
+static int
+GetEncodationScheme(unsigned char *ptr)
 {
+   DmtxScheme encScheme;
+
    switch(*ptr) {
-      case 230:
-         *encScheme = DmtxSchemeDecodeC40;
+      case DmtxCharC40Latch:
+         encScheme = DmtxSchemeC40;
          break;
-      case 231:
-         *encScheme = DmtxSchemeDecodeBase256;
+      case DmtxCharTextLatch:
+         encScheme = DmtxSchemeText;
          break;
-      case 235:
-         *encScheme = DmtxSchemeDecodeAsciiExt;
+      case DmtxCharX12Latch:
+         encScheme = DmtxSchemeX12;
          break;
-      case 238:
-         *encScheme = DmtxSchemeDecodeX12;
+      case DmtxCharEdifactLatch:
+         encScheme = DmtxSchemeEdifact;
          break;
-      case 239:
-         *encScheme = DmtxSchemeDecodeText;
-         break;
-      case 240:
-         *encScheme = DmtxSchemeDecodeEdifact;
+      case DmtxCharBase256Latch:
+         encScheme = DmtxSchemeBase256;
          break;
       default:
-         *encScheme = DmtxSchemeDecodeAsciiStd;
-         return ptr;
+         encScheme = DmtxSchemeAscii;
+         break;
    }
 
-   return ptr + 1;
+   return encScheme;
 }
 
 /**
@@ -577,6 +653,39 @@ PushOutputC40TextWord(DmtxMessage *msg, C40TextState *state, int value)
 }
 
 /**
+ *
+ *
+ */
+static void
+PushOutputMacroHeader(DmtxMessage *msg, int macroType)
+{
+   PushOutputWord(msg, '[');
+   PushOutputWord(msg, ')');
+   PushOutputWord(msg, '>');
+   PushOutputWord(msg, 30); /* ASCII RS */
+   PushOutputWord(msg, '0');
+
+   assert(macroType == DmtxChar05Macro || macroType == DmtxChar06Macro);
+   if(macroType == DmtxChar05Macro)
+      PushOutputWord(msg, '5');
+   else
+      PushOutputWord(msg, '6');
+
+   PushOutputWord(msg, 29); /* ASCII GS */
+}
+
+/**
+ *
+ *
+ */
+static void
+PushOutputMacroTrailer(DmtxMessage *msg)
+{
+   PushOutputWord(msg, 30); /* ASCII RS */
+   PushOutputWord(msg, 4);  /* ASCII EOT */
+}
+
+/**
  * @brief  Decode stream assuming standard ASCII encodation
  * @param  msg
  * @param  ptr
@@ -584,46 +693,46 @@ PushOutputC40TextWord(DmtxMessage *msg, C40TextState *state, int value)
  * @return Pointer to next undecoded codeword
  */
 static unsigned char *
-DecodeSchemeAsciiStd(DmtxMessage *msg, unsigned char *ptr, unsigned char *dataEnd)
+DecodeSchemeAscii(DmtxMessage *msg, unsigned char *ptr, unsigned char *dataEnd)
 {
+   int upperShift;
    int codeword, digits;
 
-   codeword = (int)(*ptr);
+   upperShift = DmtxFalse;
 
-   if(codeword <= 128) {
-      PushOutputWord(msg, codeword - 1);
+   while(ptr < dataEnd) {
+
+      codeword = (int)(*ptr);
+
+      if(GetEncodationScheme(ptr) != DmtxSchemeAscii)
+         return ptr;
+      else
+         ptr++;
+
+      if(upperShift == DmtxTrue) {
+         PushOutputWord(msg, codeword + 127);
+         upperShift = DmtxFalse;
+      }
+      else if(codeword == DmtxCharAsciiUpperShift) {
+         upperShift = DmtxTrue;
+      }
+      else if(codeword == DmtxCharAsciiPad) {
+         assert(dataEnd >= ptr);
+         assert(dataEnd - ptr <= INT_MAX);
+         msg->padCount = (int)(dataEnd - ptr);
+         return dataEnd;
+      }
+      else if(codeword <= 128) {
+         PushOutputWord(msg, codeword - 1);
+      }
+      else if(codeword <= 229) {
+         digits = codeword - 130;
+         PushOutputWord(msg, digits/10 + '0');
+         PushOutputWord(msg, digits - (digits/10)*10 + '0');
+      }
    }
-   else if(codeword == 129) {
-      assert(dataEnd >= ptr);
-      assert(dataEnd - ptr <= INT_MAX);
-      msg->padCount = (int)(dataEnd - ptr);
-      return dataEnd;
-   }
-   else if(codeword <= 229) {
-      digits = codeword - 130;
-      PushOutputWord(msg, digits/10 + '0');
-      PushOutputWord(msg, digits - (digits/10)*10 + '0');
-   }
 
-   return ptr + 1;
-}
-
-/**
- * @brief  Decode stream assuming extended ASCII encodation
- * @param  msg
- * @param  ptr
- * @param  dataEnd
- * @return Pointer to next undecoded codeword
- */
-static unsigned char *
-DecodeSchemeAsciiExt(DmtxMessage *msg, unsigned char *ptr)
-{
-   int codeword;
-
-   codeword = (int)(*ptr);
-   PushOutputWord(msg, codeword + 128);
-
-   return ptr + 1;
+   return ptr;
 }
 
 /**
@@ -635,7 +744,7 @@ DecodeSchemeAsciiExt(DmtxMessage *msg, unsigned char *ptr)
  * @return Pointer to next undecoded codeword
  */
 static unsigned char *
-DecodeSchemeC40Text(DmtxMessage *msg, unsigned char *ptr, unsigned char *dataEnd, DmtxSchemeDecode encScheme)
+DecodeSchemeC40Text(DmtxMessage *msg, unsigned char *ptr, unsigned char *dataEnd, DmtxScheme encScheme)
 {
    int i;
    int packed;
@@ -645,7 +754,7 @@ DecodeSchemeC40Text(DmtxMessage *msg, unsigned char *ptr, unsigned char *dataEnd
    state.shift = DmtxC40TextBasicSet;
    state.upperShift = DmtxFalse;
 
-   assert(encScheme == DmtxSchemeDecodeC40 || encScheme == DmtxSchemeDecodeText);
+   assert(encScheme == DmtxSchemeC40 || encScheme == DmtxSchemeText);
 
    while(ptr < dataEnd) {
 
@@ -668,10 +777,10 @@ DecodeSchemeC40Text(DmtxMessage *msg, unsigned char *ptr, unsigned char *dataEnd
                PushOutputC40TextWord(msg, &state, c40Values[i] - 13 + '9'); /* 0-9 */
             }
             else if(c40Values[i] <= 39) {
-               if(encScheme == DmtxSchemeDecodeC40) {
+               if(encScheme == DmtxSchemeC40) {
                   PushOutputC40TextWord(msg, &state, c40Values[i] - 39 + 'Z'); /* A-Z */
                }
-               else if(encScheme == DmtxSchemeDecodeText) {
+               else if(encScheme == DmtxSchemeText) {
                   PushOutputC40TextWord(msg, &state, c40Values[i] - 39 + 'z'); /* a-z */
                }
             }
@@ -698,10 +807,10 @@ DecodeSchemeC40Text(DmtxMessage *msg, unsigned char *ptr, unsigned char *dataEnd
             }
          }
          else if(state.shift == DmtxC40TextShift3) { /* Shift 3 set */
-            if(encScheme == DmtxSchemeDecodeC40) {
+            if(encScheme == DmtxSchemeC40) {
                PushOutputC40TextWord(msg, &state, c40Values[i] + 96);
             }
-            else if(encScheme == DmtxSchemeDecodeText) {
+            else if(encScheme == DmtxSchemeText) {
                if(c40Values[i] == 0)
                   PushOutputC40TextWord(msg, &state, c40Values[i] + 96);
                else if(c40Values[i] <= 26)
@@ -713,7 +822,7 @@ DecodeSchemeC40Text(DmtxMessage *msg, unsigned char *ptr, unsigned char *dataEnd
       }
 
       /* Unlatch if codeword 254 follows 2 codewords in C40/Text encodation */
-      if(*ptr == 254)
+      if(*ptr == DmtxCharTripletUnlatch)
          return ptr + 1;
 
       /* Unlatch is implied if only one codeword remains */
@@ -763,7 +872,7 @@ DecodeSchemeX12(DmtxMessage *msg, unsigned char *ptr, unsigned char *dataEnd)
       }
 
       /* Unlatch if codeword 254 follows 2 codewords in C40/Text encodation */
-      if(*ptr == 254)
+      if(*ptr == DmtxCharTripletUnlatch)
          return ptr + 1;
 
       /* Unlatch is implied if only one codeword remains */
@@ -804,7 +913,7 @@ DecodeSchemeEdifact(DmtxMessage *msg, unsigned char *ptr, unsigned char *dataEnd
             ptr++;
 
          /* Test for unlatch condition */
-         if(unpacked[i] == 0x1f) {
+         if(unpacked[i] == DmtxCharEdifactUnlatch) {
             assert(msg->output[msg->outputIdx] == 0); /* XXX dirty why? */
             return ptr;
          }

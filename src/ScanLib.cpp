@@ -43,7 +43,6 @@ slTime timediff;
 
 void configLogging(unsigned level) {
 	//ua::logstream.sink(ua::LoggerSinkStdout::Instance());
-	//ua::LoggerSinkStdout::Instance().showHeader(true);
 	ua::LoggerSinkFile::Instance().setFile("scanlib.log");
 	ua::LoggerSinkFile::Instance().showHeader(true);
 	ua::logstream.sink(ua::LoggerSinkFile::Instance());
@@ -147,10 +146,12 @@ int slConfigPlateFrame(unsigned plateNum, double left, double top,
 	return SC_SUCCESS;
 }
 
-int slScanImage(unsigned dpi, double left, double top, double right,
-		double bottom, char * filename) {
-	configLogging(3);
+int slScanImage(unsigned verbose, unsigned dpi, int brightness, int contrast, double left,
+		double top, double right, double bottom, char * filename) {
+	configLogging(verbose);
 	UA_DOUT(1, 3, "slScanImage: dpi/" << dpi
+			<< " brightness/" << brightness
+			<< " contrast/" << contrast
 			<< " left/" << left
 			<< " top/"<< top
 			<< " right/"<< right
@@ -164,8 +165,8 @@ int slScanImage(unsigned dpi, double left, double top, double right,
 	Config config(INI_FILE_NAME);
 	ImageGrabber ig;
 
-	HANDLE h = ig.acquireImage(dpi, config.getScannerBrightness(),
-			config.getScannerContrast(), left, top, right, bottom);
+	HANDLE h = ig.acquireImage(dpi, brightness, contrast, left, top, right,
+			bottom);
 	if (h == NULL) {
 		return SC_FAIL;
 	}
@@ -179,10 +180,12 @@ int slScanImage(unsigned dpi, double left, double top, double right,
 #endif
 }
 
-int slScanPlate(unsigned dpi, unsigned plateNum, char * filename) {
-	configLogging(3);
+int slScanPlate(unsigned verbose, unsigned dpi, unsigned plateNum, int brightness, int contrast,
+		char * filename) {
+	configLogging(verbose);
 	UA_DOUT(1, 3, "slScanPlate: dpi/" << dpi
-			<< " plateNum/" << plateNum
+			<< " brightness/" << brightness
+			<< " contrast/" << contrast
 			<< " filename/"<< filename);
 
 #ifdef WIN32
@@ -214,8 +217,7 @@ int slScanPlate(unsigned dpi, unsigned plateNum, char * filename) {
 		return SC_INI_FILE_ERROR;
 	}
 
-	h = ig.acquireImage(dpi, config.getScannerBrightness(),
-			config.getScannerContrast(), f.x0, f.y0, f.x1, f.y1);
+	h = ig.acquireImage(dpi, brightness, contrast, f.x0, f.y0, f.x1, f.y1);
 	if (h == NULL) {
 		UA_DOUT(1, 1, "could not acquire plate image: " << plateNum);
 		return SC_FAIL;
@@ -232,7 +234,8 @@ int slScanPlate(unsigned dpi, unsigned plateNum, char * filename) {
 #endif
 }
 
-int slCalibrateToPlate(unsigned dpi, unsigned plateNum, int processImage) {
+int slCalibrateToPlate(unsigned dpi, unsigned plateNum) {
+	int processImage = 0;
 	configLogging(3);
 	UA_DOUT(1, 3, "slCalibrateToPlate: dpi/" << dpi
 			<< " plateNum/" << plateNum);
@@ -313,8 +316,10 @@ int slCalibrateToPlate(unsigned dpi, unsigned plateNum, int processImage) {
 #endif
 }
 
-int slDecodeCommon(unsigned plateNum, Dib & dib, int processImage) {
-	Decoder decoder;
+int slDecodeCommon(unsigned plateNum, Dib & dib, unsigned scanGap,
+		unsigned squareDev, unsigned edgeThresh) {
+	int processImage = 0;
+	Decoder decoder(scanGap, squareDev, edgeThresh);
 	Config config(INI_FILE_NAME);
 
 	if (!config.parseRegions(plateNum)) {
@@ -348,15 +353,21 @@ int slDecodeCommon(unsigned plateNum, Dib & dib, int processImage) {
 
 	Util::getTime(endtime);
 	Util::difftiime(starttime, endtime, timediff);
-	UA_DOUT(1, 1, "slDecodePlate: time taken: " << timediff);
+	UA_DOUT(1, 1, "slDecodeCommon: time taken: " << timediff);
 
 	return SC_SUCCESS;
 }
 
-int slDecodePlate(unsigned dpi, unsigned plateNum, int processImage) {
-	configLogging(3);
+int slDecodePlate(unsigned verbose, unsigned dpi, unsigned plateNum, int brightness,
+		int contrast, unsigned scanGap, unsigned squareDev, unsigned edgeThresh) {
+	configLogging(verbose);
 	UA_DOUT(1, 3, "slDecodePlate: dpi/" << dpi
-			<< " plateNum/" << plateNum);
+			<< " plateNum/" << plateNum
+			<< " brightness/" << brightness
+			<< " contrast/" << contrast
+			<< " scanGap/" << scanGap
+			<< " squareDev//" << squareDev
+			<< " edgeThresh/" << edgeThresh);
 
 #ifdef WIN32
 	if (dpi < 0 || dpi > 2400) {
@@ -380,15 +391,14 @@ int slDecodePlate(unsigned dpi, unsigned plateNum, int processImage) {
 		return SC_INI_FILE_ERROR;
 	}
 
-	h = ig.acquireImage(dpi, config.getScannerBrightness(),
-			config.getScannerContrast(), f.x0, f.y0, f.x1, f.y1);
+	h = ig.acquireImage(dpi, brightness, contrast, f.x0, f.y0, f.x1, f.y1);
 	if (h == NULL) {
 		UA_DOUT(1, 1, "could not acquire plate image: " << plateNum);
 		return SC_FAIL;
 	}
 
 	dib.readFromHandle(h);
-	result = slDecodeCommon(plateNum, dib, processImage);
+	result = slDecodeCommon(plateNum, dib, scanGap, squareDev, edgeThresh);
 	ig.freeImage(h);
 	return result;
 #else
@@ -396,10 +406,14 @@ int slDecodePlate(unsigned dpi, unsigned plateNum, int processImage) {
 #endif
 }
 
-int slDecodeImage(unsigned plateNum, char * filename, int processImage) {
-	configLogging(3);
+int slDecodeImage(unsigned verbose, unsigned plateNum, char * filename, unsigned scanGap,
+		unsigned squareDev, unsigned edgeThresh) {
+	configLogging(verbose);
 	UA_DOUT(1, 3, "slDecodeImage: plateNum/" << plateNum
-			<< " filename/"<< filename);
+			<< " filename/"<< filename
+			<< " scanGap/" << scanGap
+			<< " squareDev//" << squareDev
+			<< " edgeThresh/" << edgeThresh);
 
 	if ((plateNum == 0) || (plateNum > 4)) {
 		return SC_INVALID_PLATE_NUM;
@@ -414,5 +428,5 @@ int slDecodeImage(unsigned plateNum, char * filename, int processImage) {
 	Dib dib;
 
 	dib.readFromFile(filename);
-	return slDecodeCommon(plateNum, dib, processImage);
+	return slDecodeCommon(plateNum, dib, scanGap, squareDev, edgeThresh);
 }

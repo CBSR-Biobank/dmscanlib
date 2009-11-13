@@ -27,8 +27,11 @@
 
 using namespace std;
 
-Decoder::Decoder() {
+Decoder::Decoder(unsigned g, unsigned s, unsigned t) {
 	ua::Logger::Instance().subSysHeaderSet(3, "Decoder");
+	scanGap = g;
+	squareDev = s;
+	edgeThresh = t;
 }
 
 Decoder::~Decoder() {
@@ -45,7 +48,7 @@ void Decoder::findSingleBarcode(DmtxImage & image, vector<BarcodeInfo *>  & barc
 	unsigned width = dmtxImageGetProp(&image, DmtxPropWidth);
 	unsigned height = dmtxImageGetProp(&image, DmtxPropHeight);
 
-	UA_DOUT(3, 3, "processImage: image width/" << width
+	UA_DOUT(3, 6, "processImage: image width/" << width
 			<< " image height/" << height
 			<< " row padding/" << dmtxImageGetProp(&image, DmtxPropRowPadBytes)
 			<< " image bits per pixel/"
@@ -73,9 +76,9 @@ void Decoder::findSingleBarcode(DmtxImage & image, vector<BarcodeInfo *>  & barc
 #endif
 
 	dmtxDecodeSetProp(dec, DmtxPropSymbolSize, DmtxSymbolSquareAuto);
-	dmtxDecodeSetProp(dec, DmtxPropScanGap, 0);
-	dmtxDecodeSetProp(dec, DmtxPropSquareDevn, 5);
-	dmtxDecodeSetProp(dec, DmtxPropEdgeThresh, 50);
+	dmtxDecodeSetProp(dec, DmtxPropScanGap, scanGap);
+	dmtxDecodeSetProp(dec, DmtxPropSquareDevn, squareDev);
+	dmtxDecodeSetProp(dec, DmtxPropEdgeThresh, edgeThresh);
 	UA_DOUT(3, 5, "decode 1st attempt ");
 
 	if (!decode(dec, 4, barcodeInfos)) {

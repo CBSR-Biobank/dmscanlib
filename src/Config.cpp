@@ -383,7 +383,7 @@ bool Config::parseRegions(unsigned plateNum) {
 		}
 
 		regionInfos[plateNum].regions.push_back(region);
-		UA_DOUT(5, 3, "getRegionsFromIni: " << *region);
+		UA_DOUT(5, 9, "getRegionsFromIni: " << *region);
 	}
 	return true;
 }

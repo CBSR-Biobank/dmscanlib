@@ -41,7 +41,7 @@ private:
 	bool processImage(DmtxImage & image);
 
 	static const unsigned BIN_THRESH = 15;
-	static const unsigned BIN_MARGIN = 12;
+	static const unsigned BIN_MARGIN = 15;
 
 	unsigned width;
 	unsigned height;

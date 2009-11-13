@@ -36,7 +36,7 @@ ostream & operator<<(ostream &os, DecodeRegion & r);
 
 class Decoder {
 public:
-	Decoder();
+	Decoder(unsigned scanGap, unsigned squareDev, unsigned edgeThresh);
 	virtual ~Decoder();
 
 	bool processImageRegions(unsigned plateNum, Dib & dib,
@@ -49,6 +49,10 @@ protected:
 
 	static const char * INI_SECTION_NAME;
 	static const char * INI_REGION_LABEL;
+
+	unsigned scanGap;
+	unsigned squareDev;
+	unsigned edgeThresh;
 
 	void clearResults();
 	bool getRegionsFromIni(unsigned plateNum, CSimpleIniA & ini);

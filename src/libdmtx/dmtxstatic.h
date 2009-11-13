@@ -20,7 +20,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 Contact: mike@dragonflylogic.com
 */
 
-/* $Id: dmtxstatic.h 757 2009-02-26 16:00:35Z mblaughton $ */
+/* $Id: dmtxstatic.h 844 2009-06-24 21:52:36Z mblaughton $ */
 
 /**
  * @file dmtxstatic.h
@@ -30,13 +30,40 @@ Contact: mike@dragonflylogic.com
 #ifndef __DMTXSTATIC_H__
 #define __DMTXSTATIC_H__
 
-#define DmtxAlmostZero                 0.000001
+#define DmtxAlmostZero          0.000001
 #define DmtxAlmostInfinity            -1
+
+#define DmtxCharC40Latch             230
+#define DmtxCharTextLatch            239
+#define DmtxCharX12Latch             238
+#define DmtxCharEdifactLatch         240
+#define DmtxCharBase256Latch         231
+
+#define DmtxCharTripletUnlatch       254
+#define DmtxCharEdifactUnlatch        31
+
+#define DmtxCharAsciiPad             129
+#define DmtxCharAsciiUpperShift      235
+#define DmtxCharTripletShift1          0
+#define DmtxCharTripletShift2          1
+#define DmtxCharTripletShift3          2
+#define DmtxCharFNC1                 232
+#define DmtxCharStructuredAppend     233
+#define DmtxChar05Macro              236
+#define DmtxChar06Macro              237
+#define DmtxCharECI                  241
 
 #define DmtxC40TextBasicSet            0
 #define DmtxC40TextShift1              1
 #define DmtxC40TextShift2              2
 #define DmtxC40TextShift3              3
+
+#define DmtxUnlatchExplicit            0
+#define DmtxUnlatchImplicit            1
+
+#define DmtxChannelValid            0x00
+#define DmtxChannelUnsupportedChar  0x01 << 0
+#define DmtxChannelCannotUnlatch    0x01 << 1
 
 #undef min
 #define min(X,Y) (((X) < (Y)) ? (X) : (Y))
@@ -51,21 +78,21 @@ typedef enum {
 } DmtxRange;
 
 typedef enum {
-   DmtxEdgeTop    = 0x01 << 0,
-   DmtxEdgeBottom = 0x01 << 1,
-   DmtxEdgeLeft   = 0x01 << 2,
-   DmtxEdgeRight  = 0x01 << 3
+   DmtxEdgeTop               = 0x01 << 0,
+   DmtxEdgeBottom            = 0x01 << 1,
+   DmtxEdgeLeft              = 0x01 << 2,
+   DmtxEdgeRight             = 0x01 << 3
 } DmtxEdge;
 
 typedef enum {
-   DmtxMaskBit1 = 0x01 << 7,
-   DmtxMaskBit2 = 0x01 << 6,
-   DmtxMaskBit3 = 0x01 << 5,
-   DmtxMaskBit4 = 0x01 << 4,
-   DmtxMaskBit5 = 0x01 << 3,
-   DmtxMaskBit6 = 0x01 << 2,
-   DmtxMaskBit7 = 0x01 << 1,
-   DmtxMaskBit8 = 0x01 << 0
+   DmtxMaskBit8              = 0x01 << 0,
+   DmtxMaskBit7              = 0x01 << 1,
+   DmtxMaskBit6              = 0x01 << 2,
+   DmtxMaskBit5              = 0x01 << 3,
+   DmtxMaskBit4              = 0x01 << 4,
+   DmtxMaskBit3              = 0x01 << 5,
+   DmtxMaskBit2              = 0x01 << 6,
+   DmtxMaskBit1              = 0x01 << 7
 } DmtxMaskBit;
 
 /**
@@ -73,10 +100,10 @@ typedef enum {
  * @brief DmtxFollow
  */
 typedef struct DmtxFollow_struct {
-   unsigned char *ptr;
-   unsigned char neighbor;
-   int step;
-   DmtxPixelLoc loc;
+   unsigned char  *ptr;
+   unsigned char   neighbor;
+   int             step;
+   DmtxPixelLoc    loc;
 } DmtxFollow;
 
 /**
@@ -84,24 +111,24 @@ typedef struct DmtxFollow_struct {
  * @brief DmtxBresLine
  */
 typedef struct DmtxBresLine_struct {
-   int xStep;
-   int yStep;
-   int xDelta;
-   int yDelta;
-   int steep;
-   int xOut;
-   int yOut;
-   int travel;
-   int outward;
-   int error;
-   DmtxPixelLoc loc;
-   DmtxPixelLoc loc0;
-   DmtxPixelLoc loc1;
+   int             xStep;
+   int             yStep;
+   int             xDelta;
+   int             yDelta;
+   int             steep;
+   int             xOut;
+   int             yOut;
+   int             travel;
+   int             outward;
+   int             error;
+   DmtxPixelLoc    loc;
+   DmtxPixelLoc    loc0;
+   DmtxPixelLoc    loc1;
 } DmtxBresLine;
 
 typedef struct C40TextState_struct {
-   int shift;
-   DmtxBoolean upperShift;
+   int             shift;
+   DmtxBoolean     upperShift;
 } C40TextState;
 
 /* dmtxregion.c */
@@ -133,12 +160,13 @@ static DmtxPassFail BresLineStep(DmtxBresLine *line, int travel, int outward);
 
 /* dmtxdecode.c */
 static void DecodeDataStream(DmtxMessage *msg, int sizeIdx, unsigned char *outputStart);
-static unsigned char *NextEncodationScheme(DmtxSchemeDecode *encScheme, unsigned char *ptr);
+static int GetEncodationScheme(unsigned char *ptr);
 static void PushOutputWord(DmtxMessage *msg, int value);
 static void PushOutputC40TextWord(DmtxMessage *msg, C40TextState *state, int value);
-static unsigned char *DecodeSchemeAsciiStd(DmtxMessage *msg, unsigned char *ptr, unsigned char *dataEnd);
-static unsigned char *DecodeSchemeAsciiExt(DmtxMessage *msg, unsigned char *ptr);
-static unsigned char *DecodeSchemeC40Text(DmtxMessage *msg, unsigned char *ptr, unsigned char *dataEnd, DmtxSchemeDecode encScheme);
+static void PushOutputMacroHeader(DmtxMessage *msg, int macroType);
+static void PushOutputMacroTrailer(DmtxMessage *msg);
+static unsigned char *DecodeSchemeAscii(DmtxMessage *msg, unsigned char *ptr, unsigned char *dataEnd);
+static unsigned char *DecodeSchemeC40Text(DmtxMessage *msg, unsigned char *ptr, unsigned char *dataEnd, DmtxScheme encScheme);
 static unsigned char *DecodeSchemeX12(DmtxMessage *msg, unsigned char *ptr, unsigned char *dataEnd);
 static unsigned char *DecodeSchemeEdifact(DmtxMessage *msg, unsigned char *ptr, unsigned char *dataEnd);
 static unsigned char *DecodeSchemeBase256(DmtxMessage *msg, unsigned char *ptr, unsigned char *dataEnd);
@@ -153,23 +181,23 @@ static unsigned char Randomize253State(unsigned char codewordValue, int codeword
 static unsigned char Randomize255State(unsigned char codewordValue, int codewordPosition);
 static void PrintPattern(DmtxEncode *encode);
 static void InitChannel(DmtxChannel *channel, unsigned char *codewords, int length);
-static int EncodeDataCodewords(unsigned char *buf, unsigned char *inputString, int inputSize, DmtxSchemeEncode scheme, int *sizeIdx);
-static int EncodeSingleScheme(unsigned char *buf, unsigned char *codewords, int length, DmtxSchemeEncode scheme);
-static int EncodeAutoBest(unsigned char *buf, unsigned char *codewords, int length);
+static int EncodeDataCodewords(DmtxEncode *enc, unsigned char *buf, unsigned char *inputString, int inputSize, int *sizeIdx);
+static int EncodeSingleScheme(DmtxEncode *enc, unsigned char *buf, unsigned char *codewords, int length, DmtxScheme scheme);
+static int EncodeAutoBest(DmtxEncode *enc, unsigned char *buf, unsigned char *codewords, int length);
 /*static int EncodeAutoFast(unsigned char *buf, unsigned char *codewords, int length); */
-static DmtxChannel FindBestChannel(DmtxChannelGroup group, DmtxSchemeEncode targetScheme);
-static void EncodeNextWord(DmtxChannel *channel, DmtxSchemeEncode targetScheme);
-static void EncodeAsciiCodeword(DmtxChannel *channel);
-static void EncodeTripletCodeword(DmtxChannel *channel);
-static void EncodeEdifactCodeword(DmtxChannel *channel);
-static void EncodeBase256Codeword(DmtxChannel *channel);
-static void ChangeEncScheme(DmtxChannel *channel, DmtxSchemeEncode targetScheme, int unlatchType);
+static DmtxChannel FindBestChannel(DmtxEncode *enc, DmtxChannelGroup group, DmtxScheme targetScheme);
+static DmtxPassFail EncodeNextWord(DmtxEncode *enc, DmtxChannel *channel, DmtxScheme targetScheme);
+static DmtxPassFail EncodeAsciiCodeword(DmtxChannel *channel);
+static DmtxPassFail EncodeTripletCodeword(DmtxEncode *enc, DmtxChannel *channel);
+static DmtxPassFail EncodeEdifactCodeword(DmtxEncode *enc, DmtxChannel *channel);
+static DmtxPassFail EncodeBase256Codeword(DmtxChannel *channel);
+static void ChangeEncScheme(DmtxChannel *channel, DmtxScheme targetScheme, int unlatchType);
 static void PushInputWord(DmtxChannel *channel, unsigned char codeword);
 static void PushTriplet(DmtxChannel *channel, DmtxTriplet *triplet);
 static void IncrementProgress(DmtxChannel *channel, int encodedUnits);
-static void ProcessEndOfSymbolTriplet(DmtxChannel *channel, DmtxTriplet *triplet, int tripletCount, int inputCount);
-static void TestForEndOfSymbolEdifact(DmtxChannel *channel);
-static int GetC40TextX12Words(int *outputWords, int inputWord, DmtxSchemeEncode encScheme);
+static DmtxPassFail ProcessEndOfSymbolTriplet(DmtxEncode *enc, DmtxChannel *channel, DmtxTriplet *triplet, int tripletCount, int inputCount);
+static DmtxPassFail TestForEndOfSymbolEdifact(DmtxEncode *enc, DmtxChannel *channel);
+static int GetC40TextX12Words(int *outputWords, int inputWord, DmtxScheme encScheme);
 static DmtxTriplet GetTripletValues(unsigned char cw1, unsigned char cw2);
 static DmtxQuadruplet GetQuadrupletValues(unsigned char cw1, unsigned char cw2, unsigned char cw3);
 /*static void DumpChannel(DmtxChannel *channel);*/
