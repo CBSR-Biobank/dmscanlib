@@ -21,6 +21,7 @@ using namespace std;
 class Dib;
 struct RgbQuad;
 class BarcodeInfo;
+class BinRegion;
 
 struct DecodeRegion {
 	int row, col;
@@ -39,9 +40,8 @@ public:
 	Decoder(unsigned scanGap, unsigned squareDev, unsigned edgeThresh);
 	virtual ~Decoder();
 
-	bool processImageRegions(unsigned plateNum, Dib & dib,
-			const vector<DecodeRegion *> & decodeRegions);
-	void imageShowRegions(Dib & dib, const vector<DecodeRegion *> & decodeRegions);
+	bool processImageRegions(unsigned plateNum, Dib & dib);
+	void imageShowBarcodes(Dib & dib);
 
 protected:
 	bool decode(DmtxDecode *& dec, unsigned attempts,
@@ -49,18 +49,25 @@ protected:
 
 	static const char * INI_SECTION_NAME;
 	static const char * INI_REGION_LABEL;
+	static const unsigned BIN_THRESH = 15;
+	static const unsigned BIN_MARGIN = 15;
 
 	unsigned scanGap;
 	unsigned squareDev;
 	unsigned edgeThresh;
+	vector<BarcodeInfo *> barcodeInfos;
+	vector<BinRegion *>   rowBinRegions;
+	vector<BinRegion *>   colBinRegions;
+	unsigned width;
+	unsigned height;
 
 	void clearResults();
 	bool getRegionsFromIni(unsigned plateNum, CSimpleIniA & ini);
 	void messageAdd(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
 	DmtxImage * createDmtxImageFromDib(Dib & dib);
 	void showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
-	void processImage(Dib & dib, vector<BarcodeInfo *>  & barcodeInfos);
-	void findSingleBarcode(DmtxImage & image, vector<BarcodeInfo *>  & barcodeInfos);
+	bool processImage(Dib & dib);
+	void sortRegions();
 };
 
 #endif /* DECODER_H_ */

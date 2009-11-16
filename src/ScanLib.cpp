@@ -41,13 +41,28 @@ slTime starttime; // for debugging
 slTime endtime;
 slTime timediff;
 
-void configLogging(unsigned level) {
-	//ua::logstream.sink(ua::LoggerSinkStdout::Instance());
-	ua::LoggerSinkFile::Instance().setFile("scanlib.log");
-	ua::LoggerSinkFile::Instance().showHeader(true);
-	ua::logstream.sink(ua::LoggerSinkFile::Instance());
+static bool loggingInitialized = false;
+
+void configLogging(bool useFile, unsigned level) {
+	if (loggingInitialized) return;
+
+	if (useFile) {
+		ua::LoggerSinkFile::Instance().setFile("scanlib.log");
+		ua::LoggerSinkFile::Instance().showHeader(true);
+		ua::logstream.sink(ua::LoggerSinkFile::Instance());
+	}
+	else {
+		ua::LoggerSinkStdout::Instance().showHeader(true);
+		ua::logstream.sink(ua::LoggerSinkStdout::Instance());
+	}
+
 	ua::Logger::Instance().levelSet(ua::LoggerImpl::allSubSys_m, level);
 	ua::Logger::Instance().subSysHeaderSet(1, "ScanLib");
+	loggingInitialized = true;
+}
+
+void configLogging(unsigned level) {
+	configLogging(true, level);
 }
 
 /*
@@ -55,7 +70,7 @@ void configLogging(unsigned level) {
  */
 void saveDecodeResults(unsigned plateNum,
 		const vector<DecodeRegion *> & regions) {
-	UA_ASSERTS((plateNum > 0) && (plateNum <= Config::MAX_PLATES),
+	UA_ASSERTS((plateNum >= MIN_PLATE_NUM) && (plateNum <= MAX_PLATE_NUM),
 			"parseRegions: invalid plate number: " << plateNum);
 	FILE * fh = fopen("scanlib.txt", "w");
 	UA_ASSERT_NOT_NULL(fh);
@@ -193,7 +208,7 @@ int slScanPlate(unsigned verbose, unsigned dpi, unsigned plateNum, int brightnes
 		return SC_INVALID_DPI;
 	}
 
-	if ((plateNum == 0) || (plateNum > 4)) {
+	if ((plateNum < MIN_PLATE_NUM) || (plateNum > MAX_PLATE_NUM)) {
 		return SC_INVALID_PLATE_NUM;
 	}
 
@@ -245,7 +260,7 @@ int slCalibrateToPlate(unsigned dpi, unsigned plateNum) {
 		return SC_INVALID_DPI;
 	}
 
-	if ((plateNum == 0) || (plateNum > 4)) {
+	if ((plateNum < MIN_PLATE_NUM) || (plateNum > MAX_PLATE_NUM)) {
 		return SC_INVALID_PLATE_NUM;
 	}
 
@@ -326,29 +341,27 @@ int slDecodeCommon(unsigned plateNum, Dib & dib, unsigned scanGap,
 		return SC_INI_FILE_ERROR;
 	}
 
-	const vector<DecodeRegion *> & regions = config.getRegions(plateNum,
-			dib.getDpi());
-
 	dib.writeToFile("scanned.bmp");
 	if (processImage) {
 		Dib processedDib(dib);
 		processedDib.expandColours(100, 200);
 		processedDib.writeToFile("processed.bmp");
 
-		if (!decoder.processImageRegions(plateNum, processedDib, regions)) {
+		if (!decoder.processImageRegions(plateNum, processedDib)) {
 			return SC_INVALID_IMAGE;
 		}
 	} else {
-		if (!decoder.processImageRegions(plateNum, dib, regions)) {
+		if (!decoder.processImageRegions(plateNum, dib)) {
 			return SC_INVALID_IMAGE;
 		}
 
 	}
-	saveDecodeResults(plateNum, regions);
+
+	// saveDecodeResults(plateNum, regions);
 
 	Dib markedDib(dib);
+	decoder.imageShowBarcodes(markedDib);
 
-	decoder.imageShowRegions(markedDib, regions);
 	markedDib.writeToFile("decoded.bmp");
 
 	Util::getTime(endtime);
@@ -366,7 +379,7 @@ int slDecodePlate(unsigned verbose, unsigned dpi, unsigned plateNum, int brightn
 			<< " brightness/" << brightness
 			<< " contrast/" << contrast
 			<< " scanGap/" << scanGap
-			<< " squareDev//" << squareDev
+			<< " squareDev/" << squareDev
 			<< " edgeThresh/" << edgeThresh);
 
 #ifdef WIN32
@@ -374,7 +387,7 @@ int slDecodePlate(unsigned verbose, unsigned dpi, unsigned plateNum, int brightn
 		return SC_INVALID_DPI;
 	}
 
-	if ((plateNum == 0) || (plateNum > 4)) {
+	if ((plateNum < MIN_PLATE_NUM) || (plateNum > MAX_PLATE_NUM)) {
 		return SC_INVALID_PLATE_NUM;
 	}
 
@@ -415,7 +428,7 @@ int slDecodeImage(unsigned verbose, unsigned plateNum, char * filename, unsigned
 			<< " squareDev//" << squareDev
 			<< " edgeThresh/" << edgeThresh);
 
-	if ((plateNum == 0) || (plateNum > 4)) {
+	if ((plateNum < MIN_PLATE_NUM) || (plateNum > MAX_PLATE_NUM)) {
 		return SC_INVALID_PLATE_NUM;
 	}
 

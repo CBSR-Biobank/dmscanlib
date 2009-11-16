@@ -158,7 +158,10 @@ HANDLE ImageGrabber::acquireImage(unsigned dpi, int brightness, int contrast,
 	}
 
 	rc = invokeTwain(NULL, DG_CONTROL, DAT_IDENTITY, MSG_OPENDS, &srcID);
-	UA_ASSERTS(rc == TWRC_SUCCESS, "Unable to open default data source");
+	if (rc != TWRC_SUCCESS) {
+		// Unable to open default data source
+		return NULL;
+	}
 
 	getDpiCapability(&srcID);
 

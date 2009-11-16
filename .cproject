@@ -3369,7 +3369,7 @@
 </extensions>
 </storageModule>
 <storageModule moduleId="cdtBuildSystem" version="4.0.0">
-<configuration artifactExtension="exe" artifactName="scanlib" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug,org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe" cleanCommand="rm -rf" description="(non dll version)" id="cdt.managedbuild.config.gnu.mingw.so.debug.409171940.839493413.1028034454" name="Release-standalone" parent="cdt.managedbuild.config.gnu.mingw.so.debug" postbuildStep="">
+<configuration artifactExtension="exe" artifactName="scanlib" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug,org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe" cleanCommand="rm -rf" description="non dll version" id="cdt.managedbuild.config.gnu.mingw.so.debug.409171940.839493413.1028034454" name="Release-standalone" parent="cdt.managedbuild.config.gnu.mingw.so.debug" postbuildStep="">
 <folderInfo id="cdt.managedbuild.config.gnu.mingw.so.debug.409171940.839493413.1028034454." name="/" resourcePath="">
 <toolChain id="cdt.managedbuild.toolchain.gnu.mingw.so.debug.1729820493" name="MinGW GCC" superClass="cdt.managedbuild.toolchain.gnu.mingw.so.debug">
 <targetPlatform binaryParser="org.eclipse.cdt.core.PE;org.eclipse.cdt.core.GNU_ELF;org.eclipse.cdt.core.ELF" id="cdt.managedbuild.target.gnu.platform.mingw.so.debug.964599438" name="Debug Platform" superClass="cdt.managedbuild.target.gnu.platform.mingw.so.debug"/>

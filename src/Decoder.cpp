@@ -35,20 +35,48 @@ Decoder::Decoder(unsigned g, unsigned s, unsigned t) {
 }
 
 Decoder::~Decoder() {
+	BarcodeInfo * b;
+	BinRegion * c;
+
+	while (barcodeInfos.size() > 0) {
+		b = barcodeInfos.back();
+		barcodeInfos.pop_back();
+		UA_ASSERT_NOT_NULL(b);
+		delete b;
+	}
+
+	while (rowBinRegions.size() > 0) {
+		c = rowBinRegions.back();
+		rowBinRegions.pop_back();
+		UA_ASSERT_NOT_NULL(c);
+		delete c;
+	}
+	while (colBinRegions.size() > 0) {
+		c = colBinRegions.back();
+		colBinRegions.pop_back();
+		UA_ASSERT_NOT_NULL(c);
+		delete c;
+	}
 }
 
-void Decoder::processImage(Dib & dib, vector<BarcodeInfo *>  & barcodeInfos){
-	DmtxImage * image = createDmtxImageFromDib(dib);
-	findSingleBarcode(*image, barcodeInfos);
-	dmtxImageDestroy(&image);
+/*
+ * Should only be called after regions are loaded from INI file.
+ */
+bool Decoder::processImageRegions(unsigned plateNum, Dib & dib) {
+	if (!processImage(dib))
+		return false;
+
+	sortRegions();
+	return true;
 }
 
-void Decoder::findSingleBarcode(DmtxImage & image, vector<BarcodeInfo *>  & barcodeInfos) {
+bool Decoder::processImage(Dib & dib) {
+	DmtxImage & image = *createDmtxImageFromDib(dib);
 	DmtxDecode * dec = NULL;
 	unsigned width = dmtxImageGetProp(&image, DmtxPropWidth);
 	unsigned height = dmtxImageGetProp(&image, DmtxPropHeight);
 
-	UA_DOUT(3, 6, "processImage: image width/" << width
+	UA_DOUT(4, 5, "processImage: image width/" << width
 			<< " image height/" << height
 			<< " row padding/" << dmtxImageGetProp(&image, DmtxPropRowPadBytes)
 			<< " image bits per pixel/"
@@ -60,7 +88,6 @@ void Decoder::findSingleBarcode(DmtxImage & image, vector<BarcodeInfo *>  & barc
 	UA_ASSERT_NOT_NULL(dec);
 
 	// save image to a PNM file
-#if 0
 	UA_DEBUG(
 			FILE * fh;
 			unsigned char *pnm;
@@ -73,29 +100,27 @@ void Decoder::findSingleBarcode(DmtxImage & image, vector<BarcodeInfo *>  & barc
 			fclose(fh);
 			free(pnm);
 	);
-#endif
 
 	dmtxDecodeSetProp(dec, DmtxPropSymbolSize, DmtxSymbolSquareAuto);
 	dmtxDecodeSetProp(dec, DmtxPropScanGap, scanGap);
 	dmtxDecodeSetProp(dec, DmtxPropSquareDevn, squareDev);
 	dmtxDecodeSetProp(dec, DmtxPropEdgeThresh, edgeThresh);
-	UA_DOUT(3, 5, "decode 1st attempt ");
 
-	if (!decode(dec, 4, barcodeInfos)) {
-		dmtxDecodeDestroy(&dec);
-		dec = dmtxDecodeCreate(&image, 1);
-		UA_ASSERT_NOT_NULL(dec);
-
-		dmtxDecodeSetProp(dec, DmtxPropSymbolSize, DmtxSymbolSquareAuto);
-		dmtxDecodeSetProp(dec, DmtxPropScanGap, 0);
-		dmtxDecodeSetProp(dec, DmtxPropSquareDevn, 5);
-		dmtxDecodeSetProp(dec, DmtxPropEdgeThresh, 10);
-
-		UA_DOUT(3, 5, "could not retrieve message from region, 2nd attempt ");
-		decode(dec, 4, barcodeInfos);
+	unsigned regionCount = 0;
+	while (1) {
+		if (!decode(dec, 1, barcodeInfos)) {
+			break;
+		}
+		UA_DOUT(4, 5, "retrieved message from region " << regionCount++);
 	}
 
 	dmtxDecodeDestroy(&dec);
+
+	if (barcodeInfos.size() == 0) {
+		UA_DOUT(4, 1, "processImage: no barcodes found");
+		return false;
+	}
+	return true;
 }
 
 bool Decoder::decode(DmtxDecode *& dec, unsigned attempts,
@@ -105,7 +130,8 @@ bool Decoder::decode(DmtxDecode *& dec, unsigned attempts,
 
 	for (unsigned i = 0; i < attempts; ++i) {
 		reg = dmtxRegionFindNext(dec, NULL);
-		if (reg == NULL) return false;
+		if (reg == NULL)
+			return false;
 
 		DmtxMessage * msg = dmtxDecodeMatrixRegion(dec, reg, DmtxUndefined);
 		if (msg != NULL) {
@@ -117,7 +143,7 @@ bool Decoder::decode(DmtxDecode *& dec, unsigned attempts,
 			DmtxPixelLoc & brCorner = info->getBotRightCorner();
 
 			UA_DOUT(3, 5, "message " << barcodeInfos.size() - 1
-					<< ": "	<< info->getMsg()
+					<< ": " << info->getMsg()
 					<< " : tlCorner/" << tlCorner.X << "," << tlCorner.Y
 					<< "  brCorner/" << brCorner.X << "," << brCorner.Y);
 			//showStats(dec, reg, msg);
@@ -128,6 +154,127 @@ bool Decoder::decode(DmtxDecode *& dec, unsigned attempts,
 		dmtxRegionDestroy(&reg);
 	}
 	return true;
+}
+
+void Decoder::sortRegions() {
+	unsigned numBarcodes = barcodeInfos.size();
+	UA_ASSERTS(numBarcodes != 0, "no barcodes in barcodeInfos vector");
+
+	bool insideRowBin;
+	bool insideColBin;
+
+	for (unsigned i = 0, n = barcodeInfos.size(); i < n; ++i) {
+		insideRowBin = false;
+		insideColBin = false;
+
+		DmtxPixelLoc & tlCorner = barcodeInfos[i]->getTopLeftCorner();
+		DmtxPixelLoc & brCorner = barcodeInfos[i]->getBotRightCorner();
+
+		UA_DOUT(4, 9, "tag " << i << " : tlCorner/" << tlCorner.X << "," << tlCorner.Y
+				<< "  brCorner/" << brCorner.X << "," << brCorner.Y);
+
+		for (unsigned c = 0, cn = colBinRegions.size(); c < cn; ++c) {
+			BinRegion & bin = *colBinRegions[c];
+
+			int lDiff = tlCorner.X - bin.getMin();
+			int rDiff = brCorner.X - bin.getMax();
+
+			UA_DOUT(4, 9, "col " << c << ": left_diff/" << lDiff << ": right_diff/" << rDiff);
+
+			if ((lDiff >= 0) && (rDiff <= 0)) {
+				insideColBin = true;
+				barcodeInfos[i]->setColBinRegion(&bin);
+			} else if ((lDiff < 0) && (lDiff > -static_cast<int> (BIN_THRESH))) {
+				insideColBin = true;
+				barcodeInfos[i]->setColBinRegion(&bin);
+				bin.setMin(tlCorner.X);
+				UA_DOUT(4, 9, "col update min " << bin.getMin());
+			} else if ((rDiff > 0) && (rDiff < static_cast<int> (BIN_THRESH))) {
+				insideColBin = true;
+				barcodeInfos[i]->setColBinRegion(&bin);
+				bin.setMax(brCorner.X);
+				UA_DOUT(4, 9, "col update max " << bin.getMax());
+			}
+		}
+
+		for (unsigned r = 0, rn = rowBinRegions.size(); r < rn; ++r) {
+			BinRegion & bin = *rowBinRegions[r];
+
+			int tDiff = tlCorner.Y - bin.getMin();
+			int bDiff = brCorner.Y - bin.getMax();
+
+			UA_DOUT(4, 9, "row " << r << ": top_diff/" << tDiff << ": bot_diff/" << bDiff);
+
+			if ((tDiff >= 0) && (bDiff <= 0)) {
+				insideRowBin = true;
+				barcodeInfos[i]->setRowBinRegion(&bin);
+			} else if ((tDiff < 0) && (tDiff > -static_cast<int> (BIN_THRESH))) {
+				insideRowBin = true;
+				barcodeInfos[i]->setRowBinRegion(&bin);
+				bin.setMin(tlCorner.Y);
+				UA_DOUT(4, 9, "row update min " << bin.getMin());
+			} else if ((bDiff > 0) && (bDiff < static_cast<int> (BIN_THRESH))) {
+				insideRowBin = true;
+				barcodeInfos[i]->setRowBinRegion(&bin);
+				bin.setMax(brCorner.Y);
+				UA_DOUT(4, 9, "row update max " << bin.getMax());
+			}
+		}
+
+		if (!insideColBin) {
+			BinRegion * newBinRegion = new BinRegion(
+					BinRegion::ORIENTATION_VER, (unsigned) tlCorner.X,
+					(unsigned) brCorner.X);
+			UA_ASSERT_NOT_NULL(newBinRegion);
+			UA_DOUT(4, 9, "new col " << colBinRegions.size() << ": " << *newBinRegion);
+			colBinRegions.push_back(newBinRegion);
+			barcodeInfos[i]->setColBinRegion(newBinRegion);
+		}
+
+		if (!insideRowBin) {
+			BinRegion * newBinRegion = new BinRegion(
+					BinRegion::ORIENTATION_HOR, (unsigned) tlCorner.Y,
+					(unsigned) brCorner.Y);
+			UA_ASSERT_NOT_NULL(newBinRegion);
+			UA_DOUT(4, 9, "new row " << rowBinRegions.size() << ": " << *newBinRegion);
+			rowBinRegions.push_back(newBinRegion);
+			barcodeInfos[i]->setRowBinRegion(newBinRegion);
+		}
+	}
+
+	sort(rowBinRegions.begin(), rowBinRegions.end(), BinRegionSort());
+	sort(colBinRegions.begin(), colBinRegions.end(), BinRegionSort());
+
+	// assign ranks now and add threshold
+	for (unsigned i = 0, n = colBinRegions.size(); i < n; ++i) {
+		BinRegion & c = *colBinRegions[i];
+
+		unsigned min = c.getMin();
+		c.setMin(min > BIN_MARGIN ? min - BIN_MARGIN : 0);
+
+		unsigned max = c.getMax();
+		c.setMax(max < width - BIN_MARGIN - 1 ? max + BIN_MARGIN : width - 1);
+
+		c.setRank(i);
+		UA_DOUT(4, 5, "col BinRegion " << i << ": " << c);
+	}
+	for (unsigned i = 0, n = rowBinRegions.size(); i < n; ++i) {
+		BinRegion & c = *rowBinRegions[i];
+
+		unsigned min = c.getMin();
+		c.setMin(min > BIN_MARGIN ? min - BIN_MARGIN : 0);
+
+		unsigned max = c.getMax();
+		c.setMax(max < height - BIN_MARGIN - 1 ? max + BIN_MARGIN : height - 1);
+
+		c.setRank(i);
+		UA_DOUT(4, 5, "row BinRegion " << i << ": " << c);
+	}
+
+	UA_DOUT(4, 3, "number of columns: " << colBinRegions.size());
+	UA_DOUT(4, 3, "number of rows: " << rowBinRegions.size());
+
+	sort(barcodeInfos.begin(), barcodeInfos.end(), BarcodeInfoSort());
 }
 
 void Decoder::showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg) {
@@ -146,33 +293,38 @@ void Decoder::showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg) {
 	dmtxMatrix3VMultiplyBy(&p11, reg->fit2raw);
 	dmtxMatrix3VMultiplyBy(&p01, reg->fit2raw);
 
-	dataWordLength = dmtxGetSymbolAttribute(DmtxSymAttribSymbolDataWords, reg->sizeIdx);
+	dataWordLength = dmtxGetSymbolAttribute(DmtxSymAttribSymbolDataWords,
+			reg->sizeIdx);
 
-	rotate = (2 * M_PI) + (atan2(reg->fit2raw[0][1], reg->fit2raw[1][1]) -
-			atan2(reg->fit2raw[1][0], reg->fit2raw[0][0])) / 2.0;
+	rotate = (2 * M_PI) + (atan2(reg->fit2raw[0][1], reg->fit2raw[1][1])
+			- atan2(reg->fit2raw[1][0], reg->fit2raw[0][0])) / 2.0;
 
-	rotateInt = (int)(rotate * 180/M_PI + 0.5);
-	if(rotateInt >= 360)
+	rotateInt = (int) (rotate * 180 / M_PI + 0.5);
+	if (rotateInt >= 360)
 		rotateInt -= 360;
 
 	fprintf(stdout, "--------------------------------------------------\n");
-	fprintf(stdout, "       Matrix Size: %d x %d\n",
-			dmtxGetSymbolAttribute(DmtxSymAttribSymbolRows, reg->sizeIdx),
-			dmtxGetSymbolAttribute(DmtxSymAttribSymbolCols, reg->sizeIdx));
-	fprintf(stdout, "    Data Codewords: %d (capacity %d)\n",
-			dataWordLength - msg->padCount, dataWordLength);
-	fprintf(stdout, "   Error Codewords: %d\n",
-			dmtxGetSymbolAttribute(DmtxSymAttribSymbolErrorWords, reg->sizeIdx));
-	fprintf(stdout, "      Data Regions: %d x %d\n",
-			dmtxGetSymbolAttribute(DmtxSymAttribHorizDataRegions, reg->sizeIdx),
+	fprintf(stdout, "       Matrix Size: %d x %d\n", dmtxGetSymbolAttribute(
+			DmtxSymAttribSymbolRows, reg->sizeIdx), dmtxGetSymbolAttribute(
+			DmtxSymAttribSymbolCols, reg->sizeIdx));
+	fprintf(stdout, "    Data Codewords: %d (capacity %d)\n", dataWordLength
+			- msg->padCount, dataWordLength);
+	fprintf(stdout, "   Error Codewords: %d\n", dmtxGetSymbolAttribute(
+			DmtxSymAttribSymbolErrorWords, reg->sizeIdx));
+	fprintf(stdout, "      Data Regions: %d x %d\n", dmtxGetSymbolAttribute(
+			DmtxSymAttribHorizDataRegions, reg->sizeIdx),
 			dmtxGetSymbolAttribute(DmtxSymAttribVertDataRegions, reg->sizeIdx));
-	fprintf(stdout, "Interleaved Blocks: %d\n",
-			dmtxGetSymbolAttribute(DmtxSymAttribInterleavedBlocks, reg->sizeIdx));
+	fprintf(stdout, "Interleaved Blocks: %d\n", dmtxGetSymbolAttribute(
+			DmtxSymAttribInterleavedBlocks, reg->sizeIdx));
 	fprintf(stdout, "    Rotation Angle: %d\n", rotateInt);
-	fprintf(stdout, "          Corner 0: (%0.1f, %0.1f)\n", p00.X, height - 1 - p00.Y);
-	fprintf(stdout, "          Corner 1: (%0.1f, %0.1f)\n", p10.X, height - 1 - p10.Y);
-	fprintf(stdout, "          Corner 2: (%0.1f, %0.1f)\n", p11.X, height - 1 - p11.Y);
-	fprintf(stdout, "          Corner 3: (%0.1f, %0.1f)\n", p01.X, height - 1 - p01.Y);
+	fprintf(stdout, "          Corner 0: (%0.1f, %0.1f)\n", p00.X, height - 1
+			- p00.Y);
+	fprintf(stdout, "          Corner 1: (%0.1f, %0.1f)\n", p10.X, height - 1
+			- p10.Y);
+	fprintf(stdout, "          Corner 2: (%0.1f, %0.1f)\n", p11.X, height - 1
+			- p11.Y);
+	fprintf(stdout, "          Corner 3: (%0.1f, %0.1f)\n", p01.X, height - 1
+			- p01.Y);
 	fprintf(stdout, "--------------------------------------------------\n");
 }
 
@@ -183,10 +335,16 @@ void Decoder::showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg) {
 DmtxImage * Decoder::createDmtxImageFromDib(Dib & dib) {
 	int pack = DmtxPackCustom;
 
-	switch(dib.getBitsPerPixel()) {
-		case  8: pack = DmtxPack8bppK;     break;
-		case 24: pack = DmtxPack24bppRGB;  break;
-		case 32: pack = DmtxPack32bppXRGB; break;
+	switch (dib.getBitsPerPixel()) {
+	case 8:
+		pack = DmtxPack8bppK;
+		break;
+	case 24:
+		pack = DmtxPack24bppRGB;
+		break;
+	case 32:
+		pack = DmtxPack32bppXRGB;
+		break;
 	}
 
 	// create dmtxImage from the dib
@@ -197,72 +355,55 @@ DmtxImage * Decoder::createDmtxImageFromDib(Dib & dib) {
 	dmtxImageSetProp(image, DmtxPropRowPadBytes, dib.getRowPadBytes());
 	dmtxImageSetProp(image, DmtxPropImageFlip, DmtxFlipY); // DIBs are flipped in Y
 	return image;
-}/*
- * Should only be called after regions are loaded from INI file.
- */
-bool Decoder::processImageRegions(unsigned plateNum, Dib & dib,
-		const vector<DecodeRegion *> & decodeRegions) {
-	if (decodeRegions.size() == 0) {
-		UA_WARN("no decoded regions; exiting.");
-		return true;
-	}
-
-	bool cropResult;
-	vector<BarcodeInfo *> barcodeInfos;
-
-	for (unsigned i = 0, n = decodeRegions.size(); i < n; ++i) {
-		DecodeRegion & region = *decodeRegions[i];
-		Dib croppedDib;
-		cropResult = croppedDib.crop(dib, region.topLeft.X, region.topLeft.Y,
-				region.botRight.X, region.botRight.Y);
-
-		if (!cropResult) {
-			return false;
-		}
-
-		barcodeInfos.clear();
-		UA_DOUT(3, 3, "processing region at row/" << region.row << " col/" << region.col);
-		processImage(croppedDib, barcodeInfos);
-		unsigned size = barcodeInfos.size();
-		UA_ASSERT(size <= 1);
-		if (size == 1) {
-			region.barcodeInfo = barcodeInfos[0];
-			UA_DOUT(3, 3, "barcode found at row/" << region.row
-					<< " col/" << region.col << " barcode/" << region.barcodeInfo->getMsg());
-		}
-	}
-	return true;
 }
 
-void Decoder::imageShowRegions(Dib & dib, const vector<DecodeRegion *> & decodeRegions) {
+void Decoder::imageShowBarcodes(Dib & dib) {
 	UA_DOUT(4, 3, "marking tags ");
 
-	RgbQuad quadRed(255, 0, 0);
 	RgbQuad quadGreen(0, 255, 0);
 
-	for (unsigned i = 0, n = decodeRegions.size(); i < n; ++i) {
-		DecodeRegion & region = *decodeRegions[i];
+	for (unsigned i = 0, n = barcodeInfos.size(); i < n; ++i) {
+		BarcodeInfo & info = *barcodeInfos[i];
+		DmtxPixelLoc & tlCorner = info.getTopLeftCorner();
+		DmtxPixelLoc & brCorner = info.getBotRightCorner();
 
-		RgbQuad & quad = (region.barcodeInfo == NULL) ? quadRed : quadGreen;
+		dib.line(tlCorner.X, tlCorner.Y, tlCorner.X, brCorner.Y, quadGreen);
+		dib.line(tlCorner.X, brCorner.Y, brCorner.X, brCorner.Y, quadGreen);
+		dib.line(brCorner.X, brCorner.Y, brCorner.X, tlCorner.Y, quadGreen);
+		dib.line(brCorner.X, tlCorner.Y, tlCorner.X, tlCorner.Y, quadGreen);
+	}
 
-		dib.line(region.topLeft.X, region.topLeft.Y,
-				region.topLeft.X, region.botRight.Y, quad);
+	unsigned height = dib.getHeight() - 1;
+	unsigned width = dib.getWidth() - 1;
 
-		dib.line(region.topLeft.X, region.botRight.Y,
-				region.botRight.X, region.botRight.Y, quad);
+	for (unsigned r = 0, rn = rowBinRegions.size(); r < rn; ++r) {
+		BinRegion & region = *rowBinRegions[r];
 
-		dib.line(region.botRight.X, region.botRight.Y,
-				region.botRight.X, region.topLeft.Y, quad);
+		unsigned min = region.getMin();
+		unsigned max = region.getMax();
 
-		dib.line(region.botRight.X, region.topLeft.Y,
-				region.topLeft.X, region.topLeft.Y, quad);
+		dib.line(0, min, width, min, quadGreen);
+		dib.line(0, min, 0, max, quadGreen);
+		dib.line(0, max, width, max, quadGreen);
+		dib.line(width, min, width, max, quadGreen);
+	}
 
+	for (unsigned c = 0, n = colBinRegions.size(); c < n; ++c) {
+		BinRegion & region = *colBinRegions[c];
+
+		unsigned min = region.getMin();
+		unsigned max = region.getMax();
+
+		dib.line(min, 0, max, 0, quadGreen);
+		dib.line(min, height, max, height, quadGreen);
+		dib.line(min, 0, min, height, quadGreen);
+		dib.line(max, 0, max, height, quadGreen);
 	}
 }
 
 ostream & operator<<(ostream &os, DecodeRegion & r) {
-	os << r.row	<< "," << r.col << ": "
-		<< "(" << r.topLeft.X << ", " << r.topLeft.Y << "), "
-		<< "(" << r.botRight.X << ", " << r.botRight.Y << ")";
+	os << r.row << "," << r.col << ": " << "(" << r.topLeft.X << ", "
+			<< r.topLeft.Y << "), " << "(" << r.botRight.X << ", "
+			<< r.botRight.Y << ")";
 	return os;
 }

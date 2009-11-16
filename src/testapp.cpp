@@ -115,6 +115,9 @@ struct Options {
 	}
 };
 
+// this function defined in ScanLib.cpp and is only used by test application
+void configLogging(bool useFile, unsigned level);
+
 class Application {
 public:
 	Application(int argc, char ** argv);
@@ -148,6 +151,8 @@ Application::Application(int argc, char ** argv) {
 	}
 
 	int result = SC_FAIL;
+
+	configLogging(false, options.debugLevel);
 
 	if (options.calibrate) {
 		if (options.infile != NULL) {

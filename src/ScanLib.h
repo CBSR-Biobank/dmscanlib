@@ -19,6 +19,9 @@ extern "C" {
 #   include <windows.h>
 #endif
 
+const unsigned MIN_PLATE_NUM = 1;
+const unsigned MAX_PLATE_NUM = 5;
+
 /**
  * Return codes used by the DLL API.
  */
