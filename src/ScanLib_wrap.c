@@ -189,16 +189,20 @@ static void SWIGUNUSED SWIG_JavaThrowException(JNIEnv *jenv, SWIG_JavaExceptionC
 
 extern int slIsTwainAvailable();
 extern int slSelectSourceAsDefault();
-extern int slConfigScannerBrightness(int brightness);
-extern int slConfigScannerContrast(int contrast);
 extern int slConfigPlateFrame(unsigned plateNum, double left, double top,
         double right, double bottom);
-extern int slScanImage(unsigned dpi, double left, double top,
-        double right, double bottom, char * filename);
-extern int slScanPlate(unsigned dpi, unsigned plateNum, char * filename);
-extern int slCalibrateToPlate(unsigned dpi, unsigned plateNum, int processImage);
-extern int slDecodePlate(unsigned dpi, unsigned plateNum, int processImage);
-extern int slDecodeImage(unsigned plateNum, char * filename, int processImage);
+extern int slScanImage(unsigned verbose, unsigned dpi, int brightness,
+        int contrast, double left, double top, double right, double bottom,
+        char * filename);
+extern int slScanPlate(unsigned verbose, unsigned dpi, unsigned plateNum,
+        int brightness, int contrast, char * filename);
+extern int slCalibrateToPlate(unsigned dpi, unsigned plateNum);
+extern int
+slDecodePlate(unsigned verbose, unsigned dpi, unsigned plateNum,
+        int brightness, int contrast, unsigned scanGap, unsigned squareDev,
+        unsigned edgeThresh);
+extern int slDecodeImage(unsigned verbose, unsigned plateNum, char * filename,
+        unsigned scanGap, unsigned squareDev, unsigned edgeThresh);
 
 
 #ifdef __cplusplus
@@ -229,34 +233,6 @@ SWIGEXPORT jint JNICALL Java_edu_ualberta_med_scanlib_ScanLibWin32WrapperJNI_slS
 }
 
 
-SWIGEXPORT jint JNICALL Java_edu_ualberta_med_scanlib_ScanLibWin32WrapperJNI_slConfigScannerBrightness(JNIEnv *jenv, jclass jcls, jint jarg1) {
-  jint jresult = 0 ;
-  int arg1 ;
-  int result;
-  
-  (void)jenv;
-  (void)jcls;
-  arg1 = (int)jarg1; 
-  result = (int)slConfigScannerBrightness(arg1);
-  jresult = (jint)result; 
-  return jresult;
-}
-
-
-SWIGEXPORT jint JNICALL Java_edu_ualberta_med_scanlib_ScanLibWin32WrapperJNI_slConfigScannerContrast(JNIEnv *jenv, jclass jcls, jint jarg1) {
-  jint jresult = 0 ;
-  int arg1 ;
-  int result;
-  
-  (void)jenv;
-  (void)jcls;
-  arg1 = (int)jarg1; 
-  result = (int)slConfigScannerContrast(arg1);
-  jresult = (jint)result; 
-  return jresult;
-}
-
-
 SWIGEXPORT jint JNICALL Java_edu_ualberta_med_scanlib_ScanLibWin32WrapperJNI_slConfigPlateFrame(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5) {
   jint jresult = 0 ;
   unsigned int arg1 ;
@@ -279,40 +255,122 @@ SWIGEXPORT jint JNICALL Java_edu_ualberta_med_scanlib_ScanLibWin32WrapperJNI_slC
 }
 
 
-SWIGEXPORT jint JNICALL Java_edu_ualberta_med_scanlib_ScanLibWin32WrapperJNI_slScanImage(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5, jstring jarg6) {
+SWIGEXPORT jint JNICALL Java_edu_ualberta_med_scanlib_ScanLibWin32WrapperJNI_slScanImage(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2, jint jarg3, jint jarg4, jdouble jarg5, jdouble jarg6, jdouble jarg7, jdouble jarg8, jstring jarg9) {
   jint jresult = 0 ;
   unsigned int arg1 ;
-  double arg2 ;
-  double arg3 ;
-  double arg4 ;
+  unsigned int arg2 ;
+  int arg3 ;
+  int arg4 ;
   double arg5 ;
+  double arg6 ;
+  double arg7 ;
+  double arg8 ;
+  char *arg9 = (char *) 0 ;
+  int result;
+  
+  (void)jenv;
+  (void)jcls;
+  arg1 = (unsigned int)jarg1; 
+  arg2 = (unsigned int)jarg2; 
+  arg3 = (int)jarg3; 
+  arg4 = (int)jarg4; 
+  arg5 = (double)jarg5; 
+  arg6 = (double)jarg6; 
+  arg7 = (double)jarg7; 
+  arg8 = (double)jarg8; 
+  arg9 = 0;
+  if (jarg9) {
+    arg9 = (char *)(*jenv)->GetStringUTFChars(jenv, jarg9, 0);
+    if (!arg9) return 0;
+  }
+  result = (int)slScanImage(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9);
+  jresult = (jint)result; 
+  if (arg9) (*jenv)->ReleaseStringUTFChars(jenv, jarg9, (const char *)arg9);
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_edu_ualberta_med_scanlib_ScanLibWin32WrapperJNI_slScanPlate(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2, jlong jarg3, jint jarg4, jint jarg5, jstring jarg6) {
+  jint jresult = 0 ;
+  unsigned int arg1 ;
+  unsigned int arg2 ;
+  unsigned int arg3 ;
+  int arg4 ;
+  int arg5 ;
   char *arg6 = (char *) 0 ;
   int result;
   
   (void)jenv;
   (void)jcls;
   arg1 = (unsigned int)jarg1; 
-  arg2 = (double)jarg2; 
-  arg3 = (double)jarg3; 
-  arg4 = (double)jarg4; 
-  arg5 = (double)jarg5; 
+  arg2 = (unsigned int)jarg2; 
+  arg3 = (unsigned int)jarg3; 
+  arg4 = (int)jarg4; 
+  arg5 = (int)jarg5; 
   arg6 = 0;
   if (jarg6) {
     arg6 = (char *)(*jenv)->GetStringUTFChars(jenv, jarg6, 0);
     if (!arg6) return 0;
   }
-  result = (int)slScanImage(arg1,arg2,arg3,arg4,arg5,arg6);
+  result = (int)slScanPlate(arg1,arg2,arg3,arg4,arg5,arg6);
   jresult = (jint)result; 
   if (arg6) (*jenv)->ReleaseStringUTFChars(jenv, jarg6, (const char *)arg6);
   return jresult;
 }
 
 
-SWIGEXPORT jint JNICALL Java_edu_ualberta_med_scanlib_ScanLibWin32WrapperJNI_slScanPlate(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2, jstring jarg3) {
+SWIGEXPORT jint JNICALL Java_edu_ualberta_med_scanlib_ScanLibWin32WrapperJNI_slCalibrateToPlate(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2) {
+  jint jresult = 0 ;
+  unsigned int arg1 ;
+  unsigned int arg2 ;
+  int result;
+  
+  (void)jenv;
+  (void)jcls;
+  arg1 = (unsigned int)jarg1; 
+  arg2 = (unsigned int)jarg2; 
+  result = (int)slCalibrateToPlate(arg1,arg2);
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_edu_ualberta_med_scanlib_ScanLibWin32WrapperJNI_slDecodePlate(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2, jlong jarg3, jint jarg4, jint jarg5, jlong jarg6, jlong jarg7, jlong jarg8) {
+  jint jresult = 0 ;
+  unsigned int arg1 ;
+  unsigned int arg2 ;
+  unsigned int arg3 ;
+  int arg4 ;
+  int arg5 ;
+  unsigned int arg6 ;
+  unsigned int arg7 ;
+  unsigned int arg8 ;
+  int result;
+  
+  (void)jenv;
+  (void)jcls;
+  arg1 = (unsigned int)jarg1; 
+  arg2 = (unsigned int)jarg2; 
+  arg3 = (unsigned int)jarg3; 
+  arg4 = (int)jarg4; 
+  arg5 = (int)jarg5; 
+  arg6 = (unsigned int)jarg6; 
+  arg7 = (unsigned int)jarg7; 
+  arg8 = (unsigned int)jarg8; 
+  result = (int)slDecodePlate(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8);
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_edu_ualberta_med_scanlib_ScanLibWin32WrapperJNI_slDecodeImage(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2, jstring jarg3, jlong jarg4, jlong jarg5, jlong jarg6) {
   jint jresult = 0 ;
   unsigned int arg1 ;
   unsigned int arg2 ;
   char *arg3 = (char *) 0 ;
+  unsigned int arg4 ;
+  unsigned int arg5 ;
+  unsigned int arg6 ;
   int result;
   
   (void)jenv;
@@ -324,68 +382,12 @@ SWIGEXPORT jint JNICALL Java_edu_ualberta_med_scanlib_ScanLibWin32WrapperJNI_slS
     arg3 = (char *)(*jenv)->GetStringUTFChars(jenv, jarg3, 0);
     if (!arg3) return 0;
   }
-  result = (int)slScanPlate(arg1,arg2,arg3);
+  arg4 = (unsigned int)jarg4; 
+  arg5 = (unsigned int)jarg5; 
+  arg6 = (unsigned int)jarg6; 
+  result = (int)slDecodeImage(arg1,arg2,arg3,arg4,arg5,arg6);
   jresult = (jint)result; 
   if (arg3) (*jenv)->ReleaseStringUTFChars(jenv, jarg3, (const char *)arg3);
-  return jresult;
-}
-
-
-SWIGEXPORT jint JNICALL Java_edu_ualberta_med_scanlib_ScanLibWin32WrapperJNI_slCalibrateToPlate(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2, jint jarg3) {
-  jint jresult = 0 ;
-  unsigned int arg1 ;
-  unsigned int arg2 ;
-  int arg3 ;
-  int result;
-  
-  (void)jenv;
-  (void)jcls;
-  arg1 = (unsigned int)jarg1; 
-  arg2 = (unsigned int)jarg2; 
-  arg3 = (int)jarg3; 
-  result = (int)slCalibrateToPlate(arg1,arg2,arg3);
-  jresult = (jint)result; 
-  return jresult;
-}
-
-
-SWIGEXPORT jint JNICALL Java_edu_ualberta_med_scanlib_ScanLibWin32WrapperJNI_slDecodePlate(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2, jint jarg3) {
-  jint jresult = 0 ;
-  unsigned int arg1 ;
-  unsigned int arg2 ;
-  int arg3 ;
-  int result;
-  
-  (void)jenv;
-  (void)jcls;
-  arg1 = (unsigned int)jarg1; 
-  arg2 = (unsigned int)jarg2; 
-  arg3 = (int)jarg3; 
-  result = (int)slDecodePlate(arg1,arg2,arg3);
-  jresult = (jint)result; 
-  return jresult;
-}
-
-
-SWIGEXPORT jint JNICALL Java_edu_ualberta_med_scanlib_ScanLibWin32WrapperJNI_slDecodeImage(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2, jint jarg3) {
-  jint jresult = 0 ;
-  unsigned int arg1 ;
-  char *arg2 = (char *) 0 ;
-  int arg3 ;
-  int result;
-  
-  (void)jenv;
-  (void)jcls;
-  arg1 = (unsigned int)jarg1; 
-  arg2 = 0;
-  if (jarg2) {
-    arg2 = (char *)(*jenv)->GetStringUTFChars(jenv, jarg2, 0);
-    if (!arg2) return 0;
-  }
-  arg3 = (int)jarg3; 
-  result = (int)slDecodeImage(arg1,arg2,arg3);
-  jresult = (jint)result; 
-  if (arg2) (*jenv)->ReleaseStringUTFChars(jenv, jarg2, (const char *)arg2);
   return jresult;
 }
 

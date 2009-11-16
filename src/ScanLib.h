@@ -144,9 +144,6 @@ typedef int (*SL_SCAN_PLATE)(unsigned verbose, unsigned dpi, unsigned plateNum,
  *                 300, 400, 600, 720, 800.
  * @param plateNum The plate number. Must be a number between 1 and 4.
  *
- * @param processImage If true then color adjustment is made to the image before
- *                     2D barcodes are decoded.
- *
  * @return SC_INVALID_DPI if the DPI value is invalid. SC_INVALID_PLATE_NUM if
  * the plate number is invalid. SC_INI_FILE_ERROR if the plate dimensions
  * cannot be found in the INI file or the results cannot be saved to the  INI
