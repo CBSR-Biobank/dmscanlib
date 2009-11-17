@@ -17,7 +17,7 @@
 #include <string.h>
 #include <math.h>
 #include <string>
-#include <sstream>
+//#include <sstream>
 #include <limits>
 
 #ifdef _VISUALC_
@@ -87,6 +87,19 @@ bool Decoder::processImage(Dib & dib) {
 	dec = dmtxDecodeCreate(&image, 1);
 	UA_ASSERT_NOT_NULL(dec);
 
+	dmtxDecodeSetProp(dec, DmtxPropSymbolSize, DmtxSymbolSquareAuto);
+	dmtxDecodeSetProp(dec, DmtxPropScanGap, scanGap);
+	dmtxDecodeSetProp(dec, DmtxPropSquareDevn, squareDev);
+	dmtxDecodeSetProp(dec, DmtxPropEdgeThresh, edgeThresh);
+
+	unsigned regionCount = 0;
+	while (1) {
+		if (!decode(dec, 1, barcodeInfos)) {
+			break;
+		}
+		UA_DOUT(4, 5, "retrieved message from region " << regionCount++);
+	}
+
 	// save image to a PNM file
 	UA_DEBUG(
 			FILE * fh;
@@ -100,19 +113,6 @@ bool Decoder::processImage(Dib & dib) {
 			fclose(fh);
 			free(pnm);
 	);
-
-	dmtxDecodeSetProp(dec, DmtxPropSymbolSize, DmtxSymbolSquareAuto);
-	dmtxDecodeSetProp(dec, DmtxPropScanGap, scanGap);
-	dmtxDecodeSetProp(dec, DmtxPropSquareDevn, squareDev);
-	dmtxDecodeSetProp(dec, DmtxPropEdgeThresh, edgeThresh);
-
-	unsigned regionCount = 0;
-	while (1) {
-		if (!decode(dec, 1, barcodeInfos)) {
-			break;
-		}
-		UA_DOUT(4, 5, "retrieved message from region " << regionCount++);
-	}
 
 	dmtxDecodeDestroy(&dec);
 
@@ -173,58 +173,80 @@ void Decoder::sortRegions() {
 		UA_DOUT(4, 9, "tag " << i << " : tlCorner/" << tlCorner.X << "," << tlCorner.Y
 				<< "  brCorner/" << brCorner.X << "," << brCorner.Y);
 
+		if (tlCorner.X == 669) {
+			UA_DOUT(4, 1, "here");
+		}
+
 		for (unsigned c = 0, cn = colBinRegions.size(); c < cn; ++c) {
 			BinRegion & bin = *colBinRegions[c];
 
-			int lDiff = tlCorner.X - bin.getMin();
-			int rDiff = brCorner.X - bin.getMax();
+			unsigned min = bin.getMin();
+			unsigned max = bin.getMax();
+			unsigned left = static_cast<unsigned>(tlCorner.X);
+			unsigned right = static_cast<unsigned>(brCorner.X);
 
-			UA_DOUT(4, 9, "col " << c << ": left_diff/" << lDiff << ": right_diff/" << rDiff);
-
-			if ((lDiff >= 0) && (rDiff <= 0)) {
-				insideColBin = true;
-				barcodeInfos[i]->setColBinRegion(&bin);
-			} else if ((lDiff < 0) && (lDiff > -static_cast<int> (BIN_THRESH))) {
-				insideColBin = true;
-				barcodeInfos[i]->setColBinRegion(&bin);
-				bin.setMin(tlCorner.X);
-				UA_DOUT(4, 9, "col update min " << bin.getMin());
-			} else if ((rDiff > 0) && (rDiff < static_cast<int> (BIN_THRESH))) {
-				insideColBin = true;
-				barcodeInfos[i]->setColBinRegion(&bin);
-				bin.setMax(brCorner.X);
-				UA_DOUT(4, 9, "col update max " << bin.getMax());
+			if (((min - BIN_THRESH <= left) && (left <= max + BIN_THRESH))
+					|| ((min - BIN_THRESH <= right) && (right <= max + BIN_THRESH))) {
+				insideColBin = true;				barcodeInfos[i]->setColBinRegion(&bin);
+				UA_DOUT(4, 9, "overlaps col " << c);
+				if (left < min) {
+					bin.setMin(left);
+					UA_DOUT(4, 9, "col " << c << " update min " << bin.getMin());
+				}
+				if (left > max) {
+					bin.setMax(left);
+					UA_DOUT(4, 9, "col " << c << " update max " << bin.getMax());
+				}
+				if (right < min) {
+					bin.setMin(right);
+					UA_DOUT(4, 9, "col " << c << " update min " << bin.getMin());
+				}
+				if (right > max) {
+					bin.setMax(right);
+					UA_DOUT(4, 9, "col " << c << " update max " << bin.getMax());
+				}
+				break;
 			}
 		}
 
 		for (unsigned r = 0, rn = rowBinRegions.size(); r < rn; ++r) {
 			BinRegion & bin = *rowBinRegions[r];
 
-			int tDiff = tlCorner.Y - bin.getMin();
-			int bDiff = brCorner.Y - bin.getMax();
+			unsigned min = bin.getMin();
+			unsigned max = bin.getMax();
+			unsigned top = static_cast<unsigned>(tlCorner.Y);
+			unsigned bottom = static_cast<unsigned>(brCorner.Y);
 
-			UA_DOUT(4, 9, "row " << r << ": top_diff/" << tDiff << ": bot_diff/" << bDiff);
-
-			if ((tDiff >= 0) && (bDiff <= 0)) {
+			if (((min - BIN_THRESH <= top) && (top <= max + BIN_THRESH))
+					|| ((min - BIN_THRESH <= bottom) && (bottom <= max + BIN_THRESH))) {
 				insideRowBin = true;
 				barcodeInfos[i]->setRowBinRegion(&bin);
-			} else if ((tDiff < 0) && (tDiff > -static_cast<int> (BIN_THRESH))) {
-				insideRowBin = true;
-				barcodeInfos[i]->setRowBinRegion(&bin);
-				bin.setMin(tlCorner.Y);
-				UA_DOUT(4, 9, "row update min " << bin.getMin());
-			} else if ((bDiff > 0) && (bDiff < static_cast<int> (BIN_THRESH))) {
-				insideRowBin = true;
-				barcodeInfos[i]->setRowBinRegion(&bin);
-				bin.setMax(brCorner.Y);
-				UA_DOUT(4, 9, "row update max " << bin.getMax());
+				UA_DOUT(4, 9, "overlaps row " << r);
+				if (top < min) {
+					bin.setMin(top);
+					UA_DOUT(4, 9, "row " << r << " update min " << bin.getMin());
+				}
+				if (top > max) {
+					bin.setMax(top);
+					UA_DOUT(4, 9, "row " << r << " update max " << bin.getMax());
+				}
+				if (bottom < min) {
+					bin.setMin(bottom);
+					UA_DOUT(4, 9, "row " << r << " update min " << bin.getMin());
+				}
+				if (bottom > max) {
+					bin.setMax(bottom);
+					UA_DOUT(4, 9, "row " << r << " update max " << bin.getMax());
+				}
+				break;
 			}
 		}
 
 		if (!insideColBin) {
 			BinRegion * newBinRegion = new BinRegion(
-					BinRegion::ORIENTATION_VER, (unsigned) tlCorner.X,
-					(unsigned) brCorner.X);
+					BinRegion::ORIENTATION_VER,
+					static_cast<unsigned> (tlCorner.X),
+					static_cast<unsigned> (brCorner.X));
 			UA_ASSERT_NOT_NULL(newBinRegion);
 			UA_DOUT(4, 9, "new col " << colBinRegions.size() << ": " << *newBinRegion);
 			colBinRegions.push_back(newBinRegion);
@@ -233,13 +255,30 @@ void Decoder::sortRegions() {
 
 		if (!insideRowBin) {
 			BinRegion * newBinRegion = new BinRegion(
-					BinRegion::ORIENTATION_HOR, (unsigned) tlCorner.Y,
-					(unsigned) brCorner.Y);
+					BinRegion::ORIENTATION_HOR,
+					static_cast<unsigned> (tlCorner.Y),
+					static_cast<unsigned> (brCorner.Y));
 			UA_ASSERT_NOT_NULL(newBinRegion);
 			UA_DOUT(4, 9, "new row " << rowBinRegions.size() << ": " << *newBinRegion);
 			rowBinRegions.push_back(newBinRegion);
 			barcodeInfos[i]->setRowBinRegion(newBinRegion);
 		}
+
+		std::ostringstream msg;
+		for (unsigned c = 0, n = colBinRegions.size(); c < n; ++c) {
+			BinRegion & region = *colBinRegions[c];
+			msg << c << " (" << region.getMin() << ", " << region.getMax()
+					<< "), ";
+		}
+		UA_DOUT(4, 9, "columns " << msg.str());
+
+		msg.str("");
+		for (unsigned r = 0, rn = rowBinRegions.size(); r < rn; ++r) {
+			BinRegion & region = *rowBinRegions[r];
+			msg << r << " (" << region.getMin() << ", " << region.getMax()
+					<< "), ";
+		}
+		UA_DOUT(4, 9, "rows " << msg.str());
 	}
 
 	sort(rowBinRegions.begin(), rowBinRegions.end(), BinRegionSort());
