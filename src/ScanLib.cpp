@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 /*******************************************************************************
  * Canadian Biosample Repository
  *
@@ -443,3 +444,436 @@ int slDecodeImage(unsigned verbose, unsigned plateNum, char * filename, unsigned
 	dib.readFromFile(filename);
 	return slDecodeCommon(plateNum, dib, scanGap, squareDev, edgeThresh);
 }
+=======
+/*******************************************************************************
+ * Canadian Biosample Repository
+ *
+ * ScanLib project
+ *
+ * Multi-platform application for scanning and decoding datamatrix 2D barcodes.
+ *
+ ******************************************************************************/
+
+#include "ScanLib.h"
+#include "Config.h"
+#include "UaLogger.h"
+#include "UaAssert.h"
+#include "Decoder.h"
+#include "Calibrator.h"
+#include "Dib.h"
+#include "Util.h"
+#include "BarcodeInfo.h"
+#include "structs.h"
+
+#ifdef WIN32
+#include "ImageGrabber.h"
+#endif
+
+#ifdef _VISUALC_
+// disable warnings about fopen
+#pragma warning(disable : 4996)
+#endif
+
+#define SI_SUPPORT_IOSTREAMS
+#include "SimpleIni.h"
+
+#include <iostream>
+#include <fstream>
+
+using namespace std;
+
+const char * INI_FILE_NAME = "scanlib.ini";
+
+slTime starttime; // for debugging
+slTime endtime;
+slTime timediff;
+
+void configLogging(unsigned level) {
+	//ua::logstream.sink(ua::LoggerSinkStdout::Instance());
+	ua::LoggerSinkFile::Instance().setFile("scanlib.log");
+	ua::LoggerSinkFile::Instance().showHeader(true);
+	ua::logstream.sink(ua::LoggerSinkFile::Instance());
+	ua::Logger::Instance().levelSet(ua::LoggerImpl::allSubSys_m, level);
+	ua::Logger::Instance().subSysHeaderSet(1, "ScanLib");
+}
+
+/*
+ * Could not use C++ streams for Release version of DLL.
+ */
+void saveDecodeResults(unsigned plateNum,
+		const vector<DecodeRegion *> & regions) {
+	UA_ASSERTS((plateNum > 0) && (plateNum <= Config::MAX_PLATES),
+			"parseRegions: invalid plate number: " << plateNum);
+	FILE * fh = fopen("scanlib.txt", "w");
+	UA_ASSERT_NOT_NULL(fh);
+	fprintf(fh, "#Plate,Row,Col,Barcode\n");
+
+	for (unsigned i = 0, n = regions.size(); i < n; ++i) {
+		DecodeRegion & region = *regions[i];
+
+		if (region.barcodeInfo == NULL)
+			continue;
+
+		fprintf(fh, "%d,%c,%d,%s\n", plateNum, static_cast<char> ('A'
+				+ region.row), region.col + 1,
+				region.barcodeInfo->getMsg().c_str());
+	}
+	fclose(fh);
+}
+
+int slIsTwainAvailable() {
+	configLogging(3);
+	UA_DOUT(1, 3, "slIsTwainAvailable:");
+
+#ifdef WIN32
+	ImageGrabber ig;
+	if (ig.twainAvailable()) {
+		return SC_SUCCESS;
+	}
+#endif
+	return SC_TWAIN_UAVAIL;
+}
+
+int slSelectSourceAsDefault() {
+	configLogging(3);
+	UA_DOUT(1, 3, "slSelectSourceAsDefault:");
+
+#ifdef WIN32
+	ImageGrabber ig;
+	if (ig.selectSourceAsDefault()) {
+		return SC_SUCCESS;
+	}
+#endif
+	return SC_FAIL;
+}
+
+int slConfigScannerBrightness(int brightness) {
+	configLogging(3);
+	UA_DOUT(1, 3, "slConfigScannerBrightness: brightness/" << brightness);
+
+	if ((brightness < -1000) || (brightness > 1000)) {
+		return SC_INVALID_VALUE;
+	}
+
+	Config config(INI_FILE_NAME);
+	if (!config.setScannerBrightness(brightness)) {
+		return SC_INI_FILE_ERROR;
+	}
+	return SC_SUCCESS;
+}
+
+int slConfigScannerContrast(int contrast) {
+	configLogging(3);
+	UA_DOUT(1, 3, "slConfigScannerContrast: contrast/" << contrast);
+
+	if ((contrast < -1000) || (contrast > 1000)) {
+		return SC_INVALID_VALUE;
+	}
+
+	Config config(INI_FILE_NAME);
+	if (!config.setScannerContrast(contrast)) {
+		return SC_INI_FILE_ERROR;
+	}
+	return SC_SUCCESS;
+}
+
+int slConfigPlateFrame(unsigned plateNum, double left, double top,
+		double right, double bottom) {
+	configLogging(3);
+	UA_DOUT(1, 3, "slConfigPlateFrame: plateNum/" << plateNum
+			<< " left/" << left
+			<< " top/"<< top
+			<< " right/"<< right
+			<< " bottom/"<< right);
+
+	Config config(INI_FILE_NAME);
+	if (!config.setPlateFrame(plateNum, left, top, right, bottom)) {
+		return SC_INI_FILE_ERROR;
+	}
+	return SC_SUCCESS;
+}
+
+int slScanImage(unsigned verbose, unsigned dpi, int brightness, int contrast, double left,
+		double top, double right, double bottom, char * filename) {
+	configLogging(verbose);
+	UA_DOUT(1, 3, "slScanImage: dpi/" << dpi
+			<< " brightness/" << brightness
+			<< " contrast/" << contrast
+			<< " left/" << left
+			<< " top/"<< top
+			<< " right/"<< right
+			<< " bottom/"<< right);
+
+#ifdef WIN32
+	if (filename == NULL) {
+		return SC_FAIL;
+	}
+
+	Config config(INI_FILE_NAME);
+	ImageGrabber ig;
+
+	HANDLE h = ig.acquireImage(dpi, brightness, contrast, left, top, right,
+			bottom);
+	if (h == NULL) {
+		return SC_FAIL;
+	}
+	Dib dib;
+	dib.readFromHandle(h);
+	dib.writeToFile(filename);
+	ig.freeImage(h);
+	return SC_SUCCESS;
+#else
+	return SC_FAIL;
+#endif
+}
+
+int slScanPlate(unsigned verbose, unsigned dpi, unsigned plateNum, int brightness, int contrast,
+		char * filename) {
+	configLogging(verbose);
+	UA_DOUT(1, 3, "slScanPlate: dpi/" << dpi
+			<< " brightness/" << brightness
+			<< " contrast/" << contrast
+			<< " filename/"<< filename);
+
+#ifdef WIN32
+	if (dpi < 0 || dpi > 2400) {
+		return SC_INVALID_DPI;
+	}
+
+	if ((plateNum == 0) || (plateNum > 4)) {
+		return SC_INVALID_PLATE_NUM;
+	}
+
+	if (filename == NULL) {
+		return SC_FAIL;
+	}
+
+	ScFrame f;
+	ImageGrabber ig;
+	HANDLE h;
+	Dib dib;
+
+	UA_DEBUG(
+			Util::getTime(starttime);
+	);
+
+	Config config(INI_FILE_NAME);
+
+	config.parseFrames();
+	if (!config.getPlateFrame(plateNum, f)) {
+		return SC_INI_FILE_ERROR;
+	}
+
+	h = ig.acquireImage(dpi, brightness, contrast, f.x0, f.y0, f.x1, f.y1);
+	if (h == NULL) {
+		UA_DOUT(1, 1, "could not acquire plate image: " << plateNum);
+		return SC_FAIL;
+	}
+
+	dib.readFromHandle(h);
+	if (!dib.writeToFile(filename)) {
+		return SC_FILE_SAVE_ERROR;
+	}
+	ig.freeImage(h);
+	return SC_SUCCESS;
+#else
+	return SC_FAIL;
+#endif
+}
+
+int slCalibrateToPlate(unsigned dpi, unsigned plateNum) {
+	configLogging(3);
+	UA_DOUT(1, 3, "slCalibrateToPlate: dpi/" << dpi
+			<< " plateNum/" << plateNum);
+
+#ifdef WIN32
+	if (dpi < 0 || dpi > 2400) {
+		return SC_INVALID_DPI;
+	}
+
+	if ((plateNum == 0) || (plateNum > 4)) {
+		return SC_INVALID_PLATE_NUM;
+	}
+
+	ScFrame f;
+	Calibrator calibrator;
+	Dib dib;
+	Dib processedDib;
+	RgbQuad quad(255, 0, 0);
+	ImageGrabber ig;
+	HANDLE h;
+	bool result;
+	Config config(INI_FILE_NAME);
+
+	Util::getTime(starttime);
+
+	config.parseFrames();
+	if (!config.getPlateFrame(plateNum, f)) {
+		return SC_INI_FILE_ERROR;
+	}
+
+	h = ig.acquireImage(dpi, config.getScannerBrightness(),
+			config.getScannerContrast(), f.x0, f.y0, f.x1, f.y1);
+	if (h == NULL) {
+		UA_DOUT(1, 1, "could not aquire plate image: " << plateNum);
+		return SC_FAIL;
+	}
+	dib.readFromHandle(h);
+	dib.writeToFile("scanned.bmp");
+
+	if (processImage) {
+		processedDib.gaussianBlur(dib);
+		processedDib.unsharp(dib);
+		processedDib.expandColours(150, 220);
+		processedDib.writeToFile("processed.bmp");
+
+		result = calibrator.processImage(processedDib);
+	} else {
+		result = calibrator.processImage(dib);
+	}
+
+	Dib markedDib(dib);
+	calibrator.imageShowBins(markedDib, quad);
+	markedDib.writeToFile("calibrated.bmp");
+
+	if (!result) {
+		return SC_CALIBRATOR_NO_REGIONS;
+	}
+
+	const vector<BinRegion*> & rowBins = calibrator.getRowBinRegions();
+	const vector<BinRegion*> & colBins = calibrator.getColBinRegions();
+
+	if ((rowBins.size() != 8) || (colBins.size() != 12)) {
+		return SC_CALIBRATOR_ERROR;
+	}
+
+	if (!config.setRegions(plateNum, dpi, rowBins, colBins)) {
+		return SC_INI_FILE_ERROR;
+	}
+	ig.freeImage(h);
+
+	Util::getTime(endtime);
+	Util::difftiime(starttime, endtime, timediff);
+	UA_DOUT(1, 1, "slCalibrateToPlate: time taken: " << timediff);
+
+	return SC_SUCCESS;
+#else
+	return SC_FAIL;
+#endif
+}
+
+int slDecodeCommon(unsigned plateNum, Dib & dib, unsigned scanGap,
+		unsigned squareDev, unsigned edgeThresh) {
+	int processImage = 0;
+	Decoder decoder(scanGap, squareDev, edgeThresh);
+	Config config(INI_FILE_NAME);
+
+	//if (!config.parseRegions(plateNum)) {
+	//	return SC_INI_FILE_ERROR;
+	//}
+
+	//const vector<DecodeRegion *> & regions = config.getRegions(plateNum,
+	//		dib.getDpi());
+
+	if (processImage) {
+		Dib processedDib(dib);
+		processedDib.expandColours(100, 200);
+		processedDib.writeToFile("processed.bmp");
+
+		if (!decoder.processImageRegions(plateNum, processedDib, regions)) {
+			return SC_INVALID_IMAGE;
+		}
+	} else {
+		if (!decoder.processImageRegions(plateNum, dib, regions)) {
+			return SC_INVALID_IMAGE;
+		}
+
+	}
+	saveDecodeResults(plateNum, regions);
+
+	Dib markedDib(dib);
+
+	decoder.imageShowRegions(markedDib, regions);
+	markedDib.writeToFile("decoded.bmp");
+
+	Util::getTime(endtime);
+	Util::difftiime(starttime, endtime, timediff);
+	UA_DOUT(1, 1, "slDecodeCommon: time taken: " << timediff);
+
+	return SC_SUCCESS;
+}
+
+int slDecodePlate(unsigned verbose, unsigned dpi, unsigned plateNum, int brightness,
+		int contrast, unsigned scanGap, unsigned squareDev, unsigned edgeThresh) {
+	configLogging(verbose);
+	UA_DOUT(1, 3, "slDecodePlate: dpi/" << dpi
+			<< " plateNum/" << plateNum
+			<< " brightness/" << brightness
+			<< " contrast/" << contrast
+			<< " scanGap/" << scanGap
+			<< " squareDev//" << squareDev
+			<< " edgeThresh/" << edgeThresh);
+
+#ifdef WIN32
+	if (dpi < 0 || dpi > 2400) {
+		return SC_INVALID_DPI;
+	}
+
+	if ((plateNum == 0) || (plateNum > 4)) {
+		return SC_INVALID_PLATE_NUM;
+	}
+
+	ScFrame f;
+	ImageGrabber ig;
+	HANDLE h;
+	int result;
+	Dib dib;
+
+	Util::getTime(starttime);
+	Config config(INI_FILE_NAME);
+	config.parseFrames();
+	if (!config.getPlateFrame(plateNum, f)) {
+		return SC_INI_FILE_ERROR;
+	}
+
+	h = ig.acquireImage(dpi, brightness, contrast, f.x0, f.y0, f.x1, f.y1);
+	if (h == NULL) {
+		UA_DOUT(1, 1, "could not acquire plate image: " << plateNum);
+		return SC_FAIL;
+	}
+
+	dib.readFromHandle(h);
+	dib.writeToFile("scanned.bmp");
+	result = slDecodeCommon(plateNum, dib, scanGap, squareDev, edgeThresh);
+	ig.freeImage(h);
+	return result;
+#else
+	return SC_FAIL;
+#endif
+}
+
+int slDecodeImage(unsigned verbose, unsigned plateNum, char * filename, unsigned scanGap,
+		unsigned squareDev, unsigned edgeThresh) {
+	configLogging(verbose);
+	UA_DOUT(1, 3, "slDecodeImage: plateNum/" << plateNum
+			<< " filename/"<< filename
+			<< " scanGap/" << scanGap
+			<< " squareDev//" << squareDev
+			<< " edgeThresh/" << edgeThresh);
+
+	if ((plateNum == 0) || (plateNum > 4)) {
+		return SC_INVALID_PLATE_NUM;
+	}
+
+	if (filename == NULL) {
+		return SC_FAIL;
+	}
+
+	Util::getTime(starttime);
+
+	Dib dib;
+
+	dib.readFromFile(filename);
+	return slDecodeCommon(plateNum, dib, scanGap, squareDev, edgeThresh);
+}
+>>>>>>> 1fa532a429df6f448bbe616eddc21b922434c8ff
