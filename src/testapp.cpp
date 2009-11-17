@@ -167,7 +167,7 @@ Application::Application(int argc, char ** argv) {
 	} else if (options.scan) {
 		if ((options.plateNum < 1) || (options.plateNum > 5)) {
 			result = slScanImage(options.debugLevel, options.dpi, options.brightness,
-					options.contrast, 0, 0, 20, 20, options.outfile);
+					options.contrast, 0, 0, 20, 20, options.infile);
 		} else {
 			result = slScanPlate(options.debugLevel, options.dpi, options.plateNum,
 					options.brightness, options.contrast, options.outfile);

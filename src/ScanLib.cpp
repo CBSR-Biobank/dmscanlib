@@ -235,7 +235,6 @@ int slScanPlate(unsigned verbose, unsigned dpi, unsigned plateNum, int brightnes
 }
 
 int slCalibrateToPlate(unsigned dpi, unsigned plateNum) {
-	int processImage = 0;
 	configLogging(3);
 	UA_DOUT(1, 3, "slCalibrateToPlate: dpi/" << dpi
 			<< " plateNum/" << plateNum);
@@ -322,14 +321,13 @@ int slDecodeCommon(unsigned plateNum, Dib & dib, unsigned scanGap,
 	Decoder decoder(scanGap, squareDev, edgeThresh);
 	Config config(INI_FILE_NAME);
 
-	if (!config.parseRegions(plateNum)) {
-		return SC_INI_FILE_ERROR;
-	}
+	//if (!config.parseRegions(plateNum)) {
+	//	return SC_INI_FILE_ERROR;
+	//}
 
-	const vector<DecodeRegion *> & regions = config.getRegions(plateNum,
-			dib.getDpi());
+	//const vector<DecodeRegion *> & regions = config.getRegions(plateNum,
+	//		dib.getDpi());
 
-	dib.writeToFile("scanned.bmp");
 	if (processImage) {
 		Dib processedDib(dib);
 		processedDib.expandColours(100, 200);
@@ -398,6 +396,7 @@ int slDecodePlate(unsigned verbose, unsigned dpi, unsigned plateNum, int brightn
 	}
 
 	dib.readFromHandle(h);
+	dib.writeToFile("scanned.bmp");
 	result = slDecodeCommon(plateNum, dib, scanGap, squareDev, edgeThresh);
 	ig.freeImage(h);
 	return result;
