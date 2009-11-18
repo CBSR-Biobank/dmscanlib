@@ -27,6 +27,8 @@
 
 using namespace std;
 
+const double Decoder::SLOT_DISTANCE = 0.3; // inches between slots
+
 Decoder::Decoder(unsigned g, unsigned s, unsigned t) {
 	ua::Logger::Instance().subSysHeaderSet(3, "Decoder");
 	scanGap = g;

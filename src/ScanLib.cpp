@@ -112,9 +112,7 @@ int slScanImage(unsigned verbose, unsigned dpi, int brightness, int contrast,
 		return SC_FAIL;
 	}
 
-	Config config(INI_FILE_NAME);
 	ImageGrabber ig;
-
 	HANDLE h = ig.acquireImage(dpi, brightness, contrast, left, top, right,
 			bottom);
 	if (h == NULL) {
@@ -196,13 +194,7 @@ int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
 	HANDLE h;
 	int result;
 	Dib dib;
-
 	Util::getTime(starttime);
-	Config config(INI_FILE_NAME);
-	config.parseFrames();
-	if (!config.getPlateFrame(plateNum, f)) {
-		return SC_INI_FILE_ERROR;
-	}
 
 	h = ig.acquireImage(dpi, brightness, contrast, f.x0, f.y0, f.x1, f.y1);
 	if (h == NULL) {

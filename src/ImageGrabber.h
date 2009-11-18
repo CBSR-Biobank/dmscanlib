@@ -16,7 +16,6 @@
 #include "dmtx.h"
 #include "twain.h"     // Standard TWAIN header.
 #include "Singleton.h"
-#include "SimpleIni.h"
 #include "ScanLib.h"
 
 #include <windows.h>
@@ -62,8 +61,6 @@ private:
 	bool getCapability(TW_IDENTITY * srcId, TW_CAPABILITY & twCap);
 
 	bool getDpiCapability(TW_IDENTITY * srcId);
-
-	bool getConfigFromIni(CSimpleIniA & ini, unsigned plateNum);
 
 	double fix32ToFloat(TW_FIX32 fix32);
 

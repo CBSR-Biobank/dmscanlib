@@ -36,7 +36,7 @@ protected:
 	static const char * INI_REGION_LABEL;
 	static const unsigned BIN_THRESH = 15;
 	static const unsigned BIN_MARGIN = 15;
-	static const double SLOT_DISTANCE = 0.3; // inches between slots
+	static const double SLOT_DISTANCE;
 
 	unsigned scanGap;
 	unsigned squareDev;
