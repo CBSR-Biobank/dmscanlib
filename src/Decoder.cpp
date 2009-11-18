@@ -62,11 +62,13 @@ Decoder::~Decoder() {
 /*
  * Should only be called after regions are loaded from INI file.
  */
-bool Decoder::processImageRegions(unsigned plateNum, Dib & dib) {
+bool Decoder::processImageRegions(unsigned plateNum, Dib & dib, string & msg) {
 	if (!processImage(dib))
 		return false;
 
-	sortRegions();
+	calcRowsAndColumns();
+	calculateSlots(static_cast<double> (dib.getDpi()));
+	getDecodeLoacations(plateNum, msg);
 	return true;
 }
 
@@ -156,7 +158,7 @@ bool Decoder::decode(DmtxDecode *& dec, unsigned attempts,
 	return true;
 }
 
-void Decoder::sortRegions() {
+void Decoder::calcRowsAndColumns() {
 	unsigned numBarcodes = barcodeInfos.size();
 	UA_ASSERTS(numBarcodes != 0, "no barcodes in barcodeInfos vector");
 
@@ -182,12 +184,14 @@ void Decoder::sortRegions() {
 
 			unsigned min = bin.getMin();
 			unsigned max = bin.getMax();
-			unsigned left = static_cast<unsigned>(tlCorner.X);
-			unsigned right = static_cast<unsigned>(brCorner.X);
+			unsigned left = static_cast<unsigned> (tlCorner.X);
+			unsigned right = static_cast<unsigned> (brCorner.X);
 
 			if (((min - BIN_THRESH <= left) && (left <= max + BIN_THRESH))
-					|| ((min - BIN_THRESH <= right) && (right <= max + BIN_THRESH))) {
-				insideColBin = true;				barcodeInfos[i]->setColBinRegion(&bin);
+					|| ((min - BIN_THRESH <= right) && (right <= max
+							+ BIN_THRESH))) {
+				insideColBin = true;
+				barcodeInfos[i]->setColBinRegion(&bin);
 				UA_DOUT(4, 9, "overlaps col " << c);
 				if (left < min) {
 					bin.setMin(left);
@@ -214,11 +218,12 @@ void Decoder::sortRegions() {
 
 			unsigned min = bin.getMin();
 			unsigned max = bin.getMax();
-			unsigned top = static_cast<unsigned>(tlCorner.Y);
-			unsigned bottom = static_cast<unsigned>(brCorner.Y);
+			unsigned top = static_cast<unsigned> (tlCorner.Y);
+			unsigned bottom = static_cast<unsigned> (brCorner.Y);
 
 			if (((min - BIN_THRESH <= top) && (top <= max + BIN_THRESH))
-					|| ((min - BIN_THRESH <= bottom) && (bottom <= max + BIN_THRESH))) {
+					|| ((min - BIN_THRESH <= bottom) && (bottom <= max
+							+ BIN_THRESH))) {
 				insideRowBin = true;
 				barcodeInfos[i]->setRowBinRegion(&bin);
 				UA_DOUT(4, 9, "overlaps row " << r);
@@ -316,6 +321,71 @@ void Decoder::sortRegions() {
 	sort(barcodeInfos.begin(), barcodeInfos.end(), BarcodeInfoSort());
 }
 
+void Decoder::calculateSlots(double dpi) {
+	// for columns the one with largest rank is column 1
+	unsigned numCols = colBinRegions.size();
+
+	if (numCols > 0) {
+		colBinRegions[numCols - 1]->setId(0);
+	}
+	if (numCols > 1) {
+		for (unsigned c = numCols - 1; c > 0; --c) {
+			BinRegion & region1 = *colBinRegions[c - 1];
+			BinRegion & region2 = *colBinRegions[c];
+
+			unsigned
+					slotDistance =
+							static_cast<unsigned> (static_cast<double> (region2.getCenter()
+									- region1.getCenter()) / dpi
+									/ SLOT_DISTANCE);
+
+			region1.setId(region2.getId() + slotDistance);
+
+			UA_DOUT(4, 5, "col region " << c << "-" << c - 1 << " slot_distance/"
+					<< slotDistance);
+		}
+	}
+
+	unsigned numRows = rowBinRegions.size();
+	rowBinRegions[0]->setId(0);
+	if (numRows > 1) {
+		for (unsigned r = 1; r < numRows; ++r) {
+			BinRegion & region1 = *rowBinRegions[r - 1];
+			BinRegion & region2 = *rowBinRegions[r];
+
+			unsigned
+					slotDistance =
+							static_cast<unsigned> (static_cast<double> (region2.getCenter()
+									- region1.getCenter()) / dpi
+									/ SLOT_DISTANCE);
+
+			region2.setId(region1.getId() + slotDistance);
+
+			UA_DOUT(4, 5, "row region " << r << "-" << r - 1 << " slot_distance/"
+					<< slotDistance);
+		}
+	}
+
+	for (unsigned i = 0, n = barcodeInfos.size(); i < n; ++i) {
+		BarcodeInfo & info = *barcodeInfos[i];
+		UA_DOUT(4, 5, "barcode " << i
+				<< " (" << (char)('A' + info.getRowBinRegion().getId()) << ", "
+				<< info.getColBinRegion().getId() + 1<< ")");
+	}
+}
+
+void Decoder::getDecodeLoacations(unsigned plateNum, string & msg) {
+	std::ostringstream out;
+	out << "#Plate,Row,Col,Barcode" << std::endl;
+	for (unsigned i = 0, n = barcodeInfos.size(); i < n; ++i) {
+		BarcodeInfo & info = *barcodeInfos[i];
+		out << plateNum << "," << (char) ('A' + info.getRowBinRegion().getId())
+				<< "," << info.getColBinRegion().getId() + 1 << ","
+				<< info.getMsg() << std::endl;
+	}
+	msg = out.str();
+}
+
 void Decoder::showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg) {
 	int height;
 	int dataWordLength;
@@ -400,6 +470,7 @@ void Decoder::imageShowBarcodes(Dib & dib) {
 	UA_DOUT(4, 3, "marking tags ");
 
 	RgbQuad quadGreen(0, 255, 0);
+	RgbQuad quadRed(255, 0, 0);
 
 	for (unsigned i = 0, n = barcodeInfos.size(); i < n; ++i) {
 		BarcodeInfo & info = *barcodeInfos[i];
@@ -420,11 +491,13 @@ void Decoder::imageShowBarcodes(Dib & dib) {
 
 		unsigned min = region.getMin();
 		unsigned max = region.getMax();
+		//unsigned center = region.getCenter();
 
 		dib.line(0, min, width, min, quadGreen);
 		dib.line(0, min, 0, max, quadGreen);
 		dib.line(0, max, width, max, quadGreen);
 		dib.line(width, min, width, max, quadGreen);
+		//dib.line(0, center, width, center, quadRed);
 	}
 
 	for (unsigned c = 0, n = colBinRegions.size(); c < n; ++c) {
@@ -432,17 +505,13 @@ void Decoder::imageShowBarcodes(Dib & dib) {
 
 		unsigned min = region.getMin();
 		unsigned max = region.getMax();
+		//unsigned center = region.getCenter();
 
 		dib.line(min, 0, max, 0, quadGreen);
 		dib.line(min, height, max, height, quadGreen);
 		dib.line(min, 0, min, height, quadGreen);
 		dib.line(max, 0, max, height, quadGreen);
+		//dib.line(center, 0, center, height, quadRed);
 	}
 }
 
-ostream & operator<<(ostream &os, DecodeRegion & r) {
-	os << r.row << "," << r.col << ": " << "(" << r.topLeft.X << ", "
-			<< r.topLeft.Y << "), " << "(" << r.botRight.X << ", "
-			<< r.botRight.Y << ")";
-	return os;
-}

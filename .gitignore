@@ -1,5 +1,6 @@
 scanlib
 obj/
+Linux-Debug/
 scanlib.a
 scanlib.ini
 scanlib.ncb

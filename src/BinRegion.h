@@ -23,28 +23,38 @@ public:
 
 	void update(unsigned min, unsigned max);
 
-	void setMin(unsigned min) {
-		minimum = min;
-	}
-
 	unsigned getMin() {
 		return minimum;
 	}
 
-	void setMax(unsigned max) {
-		maximum = max;
+	void setMin(unsigned min) {
+		minimum = min;
 	}
 
 	unsigned getMax() {
 		return maximum;
 	}
 
+	void setMax(unsigned max) {
+		maximum = max;
+	}
+
+	unsigned getCenter();
+
+	unsigned getRank() {
+		return rank;
+	}
+
 	void setRank(unsigned r) {
 		rank = r;
 	}
 
-	unsigned getRank() {
-		return rank;
+	unsigned getId() {
+		return id;
+	}
+
+	void setId(unsigned i) {
+		id = i;
 	}
 
 	static const unsigned ORIENTATION_HOR = 0;
@@ -54,7 +64,9 @@ private:
 	unsigned orientation;
 	unsigned minimum;
 	unsigned maximum;
+	unsigned center;
 	unsigned rank;
+	unsigned id;
 
 	friend ostream & operator<<(ostream & os, BinRegion & r);
 	friend struct BinRegionSort;
