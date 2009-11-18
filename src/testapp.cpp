@@ -197,8 +197,9 @@ Application::Application(int argc, char ** argv) {
    } else if (options.scan) {
       if ((options.plateNum < 1) || (options.plateNum > 5)) {
          result = slScanImage(options.debugLevel, options.dpi,
-        		 options.brightness, options.contrast, options.left,
-        		 options.top, options.right, options.bottom, options.infile);
+                              options.brightness, options.contrast, options.left, options.top,
+                              options.right, options.bottom,
+                              options.infile);
       }
    } else if (options.select) {
       result = slSelectSourceAsDefault();
@@ -337,27 +338,27 @@ bool Application::getCmdOptions(int argc, char ** argv) {
             case 401:
             case 402:
             case 403: {
-            	double num = strtod((const char *) args.OptionArg(),
-                        &end);
-            	if (*end != 0) {
-            		cerr << "invalid value for " << args.OptionId() << ": "
-            				<< args.OptionArg() << endl;
-            		exit(1);
-            	}
+               double num = strtod((const char *) args.OptionArg(),
+                                   &end);
+               if (*end != 0) {
+                  cerr << "invalid value for " << args.OptionId() << ": "
+                       << args.OptionArg() << endl;
+                  exit(1);
+               }
 
-            	if ((args.OptionId() == 'l') || (args.OptionId() == 400)) {
-            		options.left = num;
-            	}
-            	else if ((args.OptionId() == 't') || (args.OptionId() == 401)) {
-            		options.top = num;
-            	}
-            	else if ((args.OptionId() == 'r') || (args.OptionId() == 402)) {
-            		options.right = num;
-            	}
-            	else if ((args.OptionId() == 'b') || (args.OptionId() == 403)) {
-            		options.bottom= num;
-            	}
-            	break;
+               if ((args.OptionId() == 'l') || (args.OptionId() == 400)) {
+                  options.left = num;
+               }
+               else if ((args.OptionId() == 't') || (args.OptionId() == 401)) {
+                  options.top = num;
+               }
+               else if ((args.OptionId() == 'r') || (args.OptionId() == 402)) {
+                  options.right = num;
+               }
+               else if ((args.OptionId() == 'b') || (args.OptionId() == 403)) {
+                  options.bottom= num;
+               }
+               break;
             }
 
             default:
