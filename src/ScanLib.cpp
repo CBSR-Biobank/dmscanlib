@@ -122,9 +122,15 @@ int slDecodeCommon(unsigned plateNum, Dib & dib, unsigned scanGap,
 	Decoder decoder(scanGap, squareDev, edgeThresh);
 	string msg;
 
-	if (!decoder.processImageRegions(plateNum, dib, msg)) {
+	Decoder::ProcessResult result = decoder.processImageRegions(plateNum, dib, msg);
+
+	if (result == Decoder::IMG_INVALID) {
 		return SC_INVALID_IMAGE;
 	}
+	else if (result == Decoder::POSITION_INVALID) {
+		return SC_INVALID_POSITION;
+	}
+
 	saveResults(msg);
 	Dib markedDib(dib);
 	decoder.imageShowBarcodes(markedDib);

@@ -25,7 +25,13 @@ public:
 	Decoder(unsigned scanGap, unsigned squareDev, unsigned edgeThresh);
 	virtual ~Decoder();
 
-	bool processImageRegions(unsigned plateNum, Dib & dib, string & msg);
+	typedef enum {
+		IMG_INVALID,
+		POSITION_INVALID,
+		OK
+	} ProcessResult;
+
+	ProcessResult processImageRegions(unsigned plateNum, Dib & dib, string & msg);
 	void imageShowBarcodes(Dib & dib);
 
 protected:
@@ -53,7 +59,7 @@ protected:
 	void showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
 	bool processImage(Dib & dib);
 	void calcRowsAndColumns();
-	void calculateSlots(double dpi);
+	bool calculateSlots(double dpi);
 	void getDecodeLoacations(unsigned plateNum, string & msg);
 };
 

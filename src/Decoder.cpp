@@ -27,7 +27,7 @@
 
 using namespace std;
 
-const double Decoder::SLOT_DISTANCE = 0.3; // inches between slots
+const double Decoder::SLOT_DISTANCE = 0.35; // inches between tubes on SBS pallet
 
 Decoder::Decoder(unsigned g, unsigned s, unsigned t) {
 	ua::Logger::Instance().subSysHeaderSet(3, "Decoder");
@@ -64,17 +64,20 @@ Decoder::~Decoder() {
 /*
  * Should only be called after regions are loaded from INI file.
  */
-bool Decoder::processImageRegions(unsigned plateNum, Dib & dib, string & msg) {
+Decoder::ProcessResult Decoder::processImageRegions(unsigned plateNum,
+		Dib & dib, string & msg) {
 	height = dib.getHeight();
 	width = dib.getWidth();
 
 	if (!processImage(dib))
-		return false;
+		return IMG_INVALID;
 
 	calcRowsAndColumns();
-	calculateSlots(static_cast<double> (dib.getDpi()));
+	if (!calculateSlots(static_cast<double> (dib.getDpi()))) {
+		return POSITION_INVALID;
+	}
 	getDecodeLoacations(plateNum, msg);
-	return true;
+	return OK;
 }
 
 bool Decoder::processImage(Dib & dib) {
@@ -324,48 +327,77 @@ void Decoder::calcRowsAndColumns() {
 	sort(barcodeInfos.begin(), barcodeInfos.end(), BarcodeInfoSort());
 }
 
-void Decoder::calculateSlots(double dpi) {
+bool Decoder::calculateSlots(double dpi) {
 	// for columns the one with largest rank is column 1
 	unsigned numCols = colBinRegions.size();
+	unsigned numRows = rowBinRegions.size();
 
 	if (numCols > 0) {
-		colBinRegions[numCols - 1]->setId(0);
+		BinRegion & region = *colBinRegions[numCols - 1];
+
+		// Calculate the distance of the 12'th column to check that it is within
+		// the bounds of the image. If not then the column is not really the
+		// first one.
+		double edgeDist = 11.0 * SLOT_DISTANCE * dpi;
+		UA_DOUT(4, 5, "first_col_center/" << region.getCenter()
+				<< " edge_distance/" << edgeDist);
+		if (region.getCenter() <= static_cast<unsigned> (edgeDist)) {
+			UA_DOUT(4, 5, "out of bounds");
+			return false;
+		}
+
+		region.setId(0);
 	}
+
+	if (numRows > 0) {
+		BinRegion & region = *rowBinRegions[0];
+
+		// Calculate the distance of the 8'th row to check that it is within
+		// the bounds of the image. If not then the column is not really the
+		// first one.
+		double edgeDist = 7.0 * SLOT_DISTANCE * dpi;
+		UA_DOUT(4, 5, "first_row_center/" << region.getCenter()
+				<< " edge_distance/" << edgeDist << " height/" << height);
+		if (region.getCenter() + static_cast<unsigned> (edgeDist) >= height) {
+			UA_DOUT(4, 5, "out of bounds");
+			return false;
+		}
+		rowBinRegions[0]->setId(0);
+	}
+
 	if (numCols > 1) {
 		for (unsigned c = numCols - 1; c > 0; --c) {
 			BinRegion & region1 = *colBinRegions[c - 1];
 			BinRegion & region2 = *colBinRegions[c];
 
-			unsigned
-					slotDistance =
-							static_cast<unsigned> (static_cast<double> (region2.getCenter()
-									- region1.getCenter()) / dpi
-									/ SLOT_DISTANCE);
-
-			region1.setId(region2.getId() + slotDistance);
+			double slotDistance = static_cast<double> (region2.getCenter()
+					- region1.getCenter()) / dpi / SLOT_DISTANCE / 0.85;
 
 			UA_DOUT(4, 5, "col region " << c << "-" << c - 1 << " slot_distance/"
 					<< slotDistance);
+
+			UA_ASSERTS(slotDistance >= 1.0, "invalid slot distance");
+
+			region1.setId(region2.getId()
+					+ static_cast<unsigned> (slotDistance));
 		}
 	}
 
-	unsigned numRows = rowBinRegions.size();
-	rowBinRegions[0]->setId(0);
 	if (numRows > 1) {
 		for (unsigned r = 1; r < numRows; ++r) {
 			BinRegion & region1 = *rowBinRegions[r - 1];
 			BinRegion & region2 = *rowBinRegions[r];
 
-			unsigned
-					slotDistance =
-							static_cast<unsigned> (static_cast<double> (region2.getCenter()
-									- region1.getCenter()) / dpi
-									/ SLOT_DISTANCE);
-
-			region2.setId(region1.getId() + slotDistance);
+			double slotDistance = static_cast<double> (region2.getCenter()
+					- region1.getCenter()) / dpi / SLOT_DISTANCE / 0.85;
 
 			UA_DOUT(4, 5, "row region " << r << "-" << r - 1 << " slot_distance/"
 					<< slotDistance);
+
+			UA_ASSERTS(slotDistance >= 1.0, "invalid slot distance");
+
+			region2.setId(region1.getId()
+					+ static_cast<unsigned> (slotDistance));
 		}
 	}
 
@@ -375,6 +407,7 @@ void Decoder::calculateSlots(double dpi) {
 				<< " (" << (char)('A' + info.getRowBinRegion().getId()) << ", "
 				<< info.getColBinRegion().getId() + 1<< ")");
 	}
+	return true;
 }
 
 void Decoder::getDecodeLoacations(unsigned plateNum, string & msg) {
@@ -491,7 +524,8 @@ void Decoder::imageShowBarcodes(Dib & dib) {
 
 	unsigned logLevel = ua::Logger::Instance().levelGet(3);
 
-	if (logLevel == 0) return;
+	if (logLevel == 0)
+		return;
 
 	for (unsigned r = 0, rn = rowBinRegions.size(); r < rn; ++r) {
 		BinRegion & region = *rowBinRegions[r];
