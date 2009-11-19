@@ -65,6 +65,9 @@ Decoder::~Decoder() {
  * Should only be called after regions are loaded from INI file.
  */
 bool Decoder::processImageRegions(unsigned plateNum, Dib & dib, string & msg) {
+	height = dib.getHeight();
+	width = dib.getWidth();
+
 	if (!processImage(dib))
 		return false;
 
@@ -77,8 +80,6 @@ bool Decoder::processImageRegions(unsigned plateNum, Dib & dib, string & msg) {
 bool Decoder::processImage(Dib & dib) {
 	DmtxImage & image = *createDmtxImageFromDib(dib);
 	DmtxDecode * dec = NULL;
-	unsigned width = dmtxImageGetProp(&image, DmtxPropWidth);
-	unsigned height = dmtxImageGetProp(&image, DmtxPropHeight);
 
 	UA_DOUT(4, 5, "processImage: image width/" << width
 			<< " image height/" << height
@@ -487,6 +488,10 @@ void Decoder::imageShowBarcodes(Dib & dib) {
 
 	unsigned height = dib.getHeight() - 1;
 	unsigned width = dib.getWidth() - 1;
+
+	unsigned logLevel = ua::Logger::Instance().levelGet(3);
+
+	if (logLevel == 0) return;
 
 	for (unsigned r = 0, rn = rowBinRegions.size(); r < rn; ++r) {
 		BinRegion & region = *rowBinRegions[r];

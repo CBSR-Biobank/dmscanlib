@@ -38,26 +38,21 @@ slTime timediff;
 
 static bool loggingInitialized = false;
 
-void configLogging(bool useFile, unsigned level) {
-	if (loggingInitialized)
-		return;
-
-	if (useFile) {
-		ua::LoggerSinkFile::Instance().setFile("scanlib.log");
-		ua::LoggerSinkFile::Instance().showHeader(true);
-		ua::logstream.sink(ua::LoggerSinkFile::Instance());
-	} else {
-		ua::LoggerSinkStdout::Instance().showHeader(true);
-		ua::logstream.sink(ua::LoggerSinkStdout::Instance());
+void configLogging(unsigned level, bool useFile = true) {
+	if (!loggingInitialized) {
+		if (useFile) {
+			ua::LoggerSinkFile::Instance().setFile("scanlib.log");
+			ua::LoggerSinkFile::Instance().showHeader(true);
+			ua::logstream.sink(ua::LoggerSinkFile::Instance());
+		} else {
+			ua::LoggerSinkStdout::Instance().showHeader(true);
+			ua::logstream.sink(ua::LoggerSinkStdout::Instance());
+		}
+		ua::Logger::Instance().subSysHeaderSet(1, "ScanLib");
+		loggingInitialized = true;
 	}
 
 	ua::Logger::Instance().levelSet(ua::LoggerImpl::allSubSys_m, level);
-	ua::Logger::Instance().subSysHeaderSet(1, "ScanLib");
-	loggingInitialized = true;
-}
-
-void configLogging(unsigned level) {
-	configLogging(true, level);
 }
 
 /*
@@ -71,9 +66,6 @@ void saveResults(string & msg) {
 }
 
 int slIsTwainAvailable() {
-	configLogging(3);
-	UA_DOUT(1, 3, "slIsTwainAvailable:");
-
 #ifdef WIN32
 	ImageGrabber ig;
 	if (ig.twainAvailable()) {
@@ -84,9 +76,6 @@ int slIsTwainAvailable() {
 }
 
 int slSelectSourceAsDefault() {
-	configLogging(3);
-	UA_DOUT(1, 3, "slSelectSourceAsDefault:");
-
 #ifdef WIN32
 	ImageGrabber ig;
 	if (ig.selectSourceAsDefault()) {
@@ -130,27 +119,13 @@ int slScanImage(unsigned verbose, unsigned dpi, int brightness, int contrast,
 
 int slDecodeCommon(unsigned plateNum, Dib & dib, unsigned scanGap,
 		unsigned squareDev, unsigned edgeThresh) {
-	int processImage = 0;
 	Decoder decoder(scanGap, squareDev, edgeThresh);
 	string msg;
 
-	if (processImage) {
-		Dib processedDib(dib);
-		processedDib.expandColours(100, 200);
-		processedDib.writeToFile("processed.bmp");
-
-		if (!decoder.processImageRegions(plateNum, processedDib, msg)) {
-			return SC_INVALID_IMAGE;
-		}
-	} else {
-		if (!decoder.processImageRegions(plateNum, dib, msg)) {
-			return SC_INVALID_IMAGE;
-		}
-
+	if (!decoder.processImageRegions(plateNum, dib, msg)) {
+		return SC_INVALID_IMAGE;
 	}
-
 	saveResults(msg);
-
 	Dib markedDib(dib);
 	decoder.imageShowBarcodes(markedDib);
 
@@ -189,14 +164,13 @@ int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
 		return SC_INVALID_PLATE_NUM;
 	}
 
-	ScFrame f;
 	ImageGrabber ig;
 	HANDLE h;
 	int result;
 	Dib dib;
 	Util::getTime(starttime);
 
-	h = ig.acquireImage(dpi, brightness, contrast, f.x0, f.y0, f.x1, f.y1);
+	h = ig.acquireImage(dpi, brightness, contrast, left, top, right, bottom);
 	if (h == NULL) {
 		UA_DOUT(1, 1, "could not acquire plate image: " << plateNum);
 		return SC_FAIL;

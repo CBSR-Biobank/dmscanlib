@@ -55,14 +55,6 @@ EXPORT int slSelectSourceAsDefault();
 typedef int (*SL_SELECT_SOURCE_AS_DEFAULT)();
 
 /**
- *
- * @return
- */
-EXPORT int slScannerGetDpiCapability();
-
-typedef int (*SL_SCANNER_GET_DPI_CAPABILITY)();
-
-/**
  * Scans an image for the specified dimensions. The image is in Windows BMP
  * format.
  *
@@ -112,7 +104,7 @@ typedef int (*SL_SCAN_IMAGE)(unsigned verbose, unsigned dpi, double left,
  * @param right      The width in inches.
  * @param bottom     The height in inches.
  * @param scanGap    The number of pixels to use for scan grid gap. This is a
- * 				     libdmtx paramerter.
+ * 				     libdmtx parameter.
  * @param squareDev  Maximum  deviation  (degrees)  from  squareness between
  *                   adjacent barcode sides. Default value is N=40, but N=10
  *                   is  recommended for  flat  applications  like faxes and
@@ -158,7 +150,7 @@ typedef int (*SL_DECODE_PLATE)(unsigned verbose, unsigned dpi, int brightness,
  * @param plateNum   The plate number. Must be a number beteen 1 and 4.
  * @param filename   The windows bitmap file to decode.
  * @param scanGap    The number of pixels to use for scan grid gap. This is a
- * 				     libdmtx paramerter.
+ * 				     libdmtx parameter.
  * @param squareDev  Maximum  deviation  (degrees)  from  squareness between
  *                   adjacent barcode sides. Default value is N=40, but N=10
  *                   is  recommended for  flat  applications  like faxes and

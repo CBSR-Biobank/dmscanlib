@@ -991,39 +991,6 @@ void Dib::unsharp(Dib & src) {
 	}
 }
 
-void Dib::expandColours(int start, int end) {
-	UA_ASSERT_NOT_NULL(infoHeader);
-
-	bool isRgb = (infoHeader->bitCount == 24) || (infoHeader->bitCount == 32);
-	double cDoubleWidth = end - start;
-	int nval;
-	unsigned Y, X;
-	unsigned char * rowPtr = pixels;
-	unsigned char * pixel, pixelValue;
-
-	for (Y = 0; Y <= infoHeader->height - 1; ++Y, rowPtr += rowBytes)  {
-		pixel = rowPtr;
-		for (X = 0; X <= infoHeader->width - 1 ; ++X, pixel += bytesPerPixel)  {
-			if (isRgb) {
-				pixelValue = static_cast<unsigned char>(
-						0.3 * pixel[0] + 0.59 * pixel[1] + 0.11 * pixel[2]);
-			}
-			else {
-				pixelValue = pixel[0];
-			}
-			nval = static_cast<int>((pixelValue - start) * 255.0 / cDoubleWidth);
-			if (nval > 255) nval = 255;
-			if (nval < 0) nval = 0;
-
-			pixel[0] = nval;
-			if (isRgb) {
-				pixel[1] = pixel[2] = pixel[0];
-			}
-		}
-	}
-
-}
-
 unsigned Dib::getDpi() {
 	// 1 inch = 0.0254 meters
 	return static_cast<unsigned>(infoHeader->hPixelsPerMeter * 0.0254 + 0.5);

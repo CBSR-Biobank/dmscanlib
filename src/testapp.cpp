@@ -144,7 +144,7 @@ struct Options {
 };
 
 // this function defined in ScanLib.cpp and is only used by test application
-void configLogging(bool useFile, unsigned level);
+void configLogging(unsigned level, bool useFile);
 
 class Application {
 public:
@@ -180,7 +180,7 @@ Application::Application(int argc, char ** argv) {
 
    int result = SC_FAIL;
 
-   configLogging(false, options.debugLevel);
+   configLogging(options.debugLevel, false);
 
    if (options.decode) {
       if (options.infile != NULL) {
@@ -189,10 +189,10 @@ Application::Application(int argc, char ** argv) {
                                 options.threshold);
       } else {
          result = slDecodePlate(options.debugLevel, options.dpi,
-                                options.plateNum, options.left, options.top,
-                                options.right, options.bottom,
-                                options.brightness, options.contrast,
-                                options.gap, options.squareDev, options.threshold);
+                 options.brightness, options.contrast,
+                 options.plateNum, options.left, options.top,
+                 options.right, options.bottom,
+                 options.gap, options.squareDev, options.threshold);
       }
    } else if (options.scan) {
       if ((options.plateNum < 1) || (options.plateNum > 5)) {
