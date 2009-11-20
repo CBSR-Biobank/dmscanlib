@@ -127,8 +127,11 @@ int slDecodeCommon(unsigned plateNum, Dib & dib, unsigned scanGap,
 	if (result == Decoder::IMG_INVALID) {
 		return SC_INVALID_IMAGE;
 	}
-	else if (result == Decoder::POSITION_INVALID) {
+	else if (result == Decoder::POS_INVALID) {
 		return SC_INVALID_POSITION;
+	}
+	else if (result == Decoder::POS_CALC_ERROR) {
+		return SC_POS_CALC_ERROR;
 	}
 
 	saveResults(msg);

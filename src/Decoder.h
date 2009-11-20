@@ -27,7 +27,8 @@ public:
 
 	typedef enum {
 		IMG_INVALID,
-		POSITION_INVALID,
+		POS_INVALID,
+		POS_CALC_ERROR,
 		OK
 	} ProcessResult;
 
@@ -43,6 +44,7 @@ protected:
 	static const unsigned BIN_THRESH = 15;
 	static const unsigned BIN_MARGIN = 15;
 	static const double SLOT_DISTANCE;
+	static const double SLOT_DISTANCE_FACTOR;
 
 	unsigned scanGap;
 	unsigned squareDev;
@@ -59,7 +61,7 @@ protected:
 	void showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
 	bool processImage(Dib & dib);
 	void calcRowsAndColumns();
-	bool calculateSlots(double dpi);
+	ProcessResult calculateSlots(double dpi);
 	void getDecodeLoacations(unsigned plateNum, string & msg);
 };
 

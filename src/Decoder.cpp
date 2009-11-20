@@ -29,6 +29,8 @@ using namespace std;
 
 const double Decoder::SLOT_DISTANCE = 0.35; // inches between tubes on SBS pallet
 
+const double Decoder::SLOT_DISTANCE_FACTOR = 0.85 * Decoder::SLOT_DISTANCE;
+
 Decoder::Decoder(unsigned g, unsigned s, unsigned t) {
 	ua::Logger::Instance().subSysHeaderSet(3, "Decoder");
 	scanGap = g;
@@ -73,8 +75,10 @@ Decoder::ProcessResult Decoder::processImageRegions(unsigned plateNum,
 		return IMG_INVALID;
 
 	calcRowsAndColumns();
-	if (!calculateSlots(static_cast<double> (dib.getDpi()))) {
-		return POSITION_INVALID;
+	Decoder::ProcessResult calcStolResult = calculateSlots(
+			static_cast<double> (dib.getDpi()));
+	if (calcStolResult != OK) {
+		return calcStolResult;
 	}
 	getDecodeLoacations(plateNum, msg);
 	return OK;
@@ -327,7 +331,7 @@ void Decoder::calcRowsAndColumns() {
 	sort(barcodeInfos.begin(), barcodeInfos.end(), BarcodeInfoSort());
 }
 
-bool Decoder::calculateSlots(double dpi) {
+Decoder::ProcessResult Decoder::calculateSlots(double dpi) {
 	// for columns the one with largest rank is column 1
 	unsigned numCols = colBinRegions.size();
 	unsigned numRows = rowBinRegions.size();
@@ -343,7 +347,7 @@ bool Decoder::calculateSlots(double dpi) {
 				<< " edge_distance/" << edgeDist);
 		if (region.getCenter() <= static_cast<unsigned> (edgeDist)) {
 			UA_DOUT(4, 5, "out of bounds");
-			return false;
+			return POS_CALC_ERROR;
 		}
 
 		region.setId(0);
@@ -360,7 +364,7 @@ bool Decoder::calculateSlots(double dpi) {
 				<< " edge_distance/" << edgeDist << " height/" << height);
 		if (region.getCenter() + static_cast<unsigned> (edgeDist) >= height) {
 			UA_DOUT(4, 5, "out of bounds");
-			return false;
+			return POS_CALC_ERROR;
 		}
 		rowBinRegions[0]->setId(0);
 	}
@@ -371,12 +375,15 @@ bool Decoder::calculateSlots(double dpi) {
 			BinRegion & region2 = *colBinRegions[c];
 
 			double slotDistance = static_cast<double> (region2.getCenter()
-					- region1.getCenter()) / dpi / SLOT_DISTANCE / 0.85;
+					- region1.getCenter()) / dpi / SLOT_DISTANCE_FACTOR;
 
 			UA_DOUT(4, 5, "col region " << c << "-" << c - 1 << " slot_distance/"
 					<< slotDistance);
 
-			UA_ASSERTS(slotDistance >= 1.0, "invalid slot distance");
+			if (slotDistance < 1.0) {
+				// invalid slot distance
+				return POS_CALC_ERROR;
+			}
 
 			region1.setId(region2.getId()
 					+ static_cast<unsigned> (slotDistance));
@@ -389,12 +396,15 @@ bool Decoder::calculateSlots(double dpi) {
 			BinRegion & region2 = *rowBinRegions[r];
 
 			double slotDistance = static_cast<double> (region2.getCenter()
-					- region1.getCenter()) / dpi / SLOT_DISTANCE / 0.85;
+					- region1.getCenter()) / dpi / SLOT_DISTANCE_FACTOR;
 
 			UA_DOUT(4, 5, "row region " << r << "-" << r - 1 << " slot_distance/"
 					<< slotDistance);
 
-			UA_ASSERTS(slotDistance >= 1.0, "invalid slot distance");
+			if (slotDistance < 1.0) {
+				// invalid slot distance
+				return POS_CALC_ERROR;
+			}
 
 			region2.setId(region1.getId()
 					+ static_cast<unsigned> (slotDistance));
@@ -407,7 +417,7 @@ bool Decoder::calculateSlots(double dpi) {
 				<< " (" << (char)('A' + info.getRowBinRegion().getId()) << ", "
 				<< info.getColBinRegion().getId() + 1<< ")");
 	}
-	return true;
+	return OK;
 }
 
 void Decoder::getDecodeLoacations(unsigned plateNum, string & msg) {

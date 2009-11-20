@@ -33,6 +33,7 @@ const int SC_INVALID_PLATE_NUM = -4;
 const int SC_INVALID_VALUE = -5;
 const int SC_INVALID_IMAGE = -6;
 const int SC_INVALID_POSITION = -7;
+const int SC_POS_CALC_ERROR = -8;
 
 /**
  * Queries the availability of the TWAIN driver.
@@ -120,7 +121,8 @@ typedef int (*SL_SCAN_IMAGE)(unsigned verbose, unsigned dpi, double left,
  *
  * @return SC_SUCCESS if the decoding process was successful. SC_INVALID_IMAGE
  * if the scanned image is invalid. SC_INVALID_POSITION if no sample found on
- * row A or column 1 of the pallet.
+ * row A or column 1 of the pallet. SC_POS_CALC_ERROR if sample positions could
+ *  not be determined.
  */
 EXPORT int
 slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
@@ -166,7 +168,8 @@ typedef int (*SL_DECODE_PLATE)(unsigned verbose, unsigned dpi, int brightness,
  *
  * @return SC_SUCCESS if the decoding process was successful. SC_INVALID_IMAGE
  * if the scanned image is invalid. SC_INVALID_POSITION if no tube found on row
- * A or column 1 of the pallet.
+ * A or column 1 of the pallet. SC_POS_CALC_ERROR if sample positions could
+ *  not be determined.
  */
 EXPORT int slDecodeImage(unsigned verbose, unsigned plateNum, char * filename,
 		unsigned scanGap, unsigned squareDev, unsigned edgeThresh);
