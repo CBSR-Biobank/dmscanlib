@@ -122,8 +122,14 @@ struct Options {
    double bottom;
 
    Options() {
+       #ifdef WIN32
+      brightness = 9999;
+      contrast = 9999;
+#else
       brightness = numeric_limits<int>::max();
       contrast = numeric_limits<int>::max();
+#endif 
+
       decode = false;
       debugLevel = 0;
       dpi = 300;
@@ -199,7 +205,7 @@ Application::Application(int argc, char ** argv) {
          result = slScanImage(options.debugLevel, options.dpi,
                               options.brightness, options.contrast, options.left, options.top,
                               options.right, options.bottom,
-                              options.infile);
+                              options.outfile);
       }
    } else if (options.select) {
       result = slSelectSourceAsDefault();

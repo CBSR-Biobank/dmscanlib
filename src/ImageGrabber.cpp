@@ -243,11 +243,11 @@ HANDLE ImageGrabber::acquireImage(unsigned dpi, int brightness, int contrast,
 
 			// If image is compressed or is not 8-bit color and not 24-bit
 			// color ...
-			if ((ii.Compression != TWCP_NONE) || ((ii.BitsPerPixel != 8)
-					&& (ii.BitsPerPixel != 24))) {
+			if ((rc != TWRC_CANCEL) && ((ii.Compression != TWCP_NONE) || ((ii.BitsPerPixel != 8)
+					&& (ii.BitsPerPixel != 24)))) {
 				invokeTwain(&srcID, DG_CONTROL, DAT_PENDINGXFERS, MSG_RESET,
 						&pxfers);
-				UA_ERROR("Image compressed or not 8-bit/24-bit ");
+				UA_WARN("Image compressed or not 8-bit/24-bit ");
 				break;
 			}
 
@@ -267,7 +267,7 @@ HANDLE ImageGrabber::acquireImage(unsigned dpi, int brightness, int contrast,
 			if (rc != TWRC_XFERDONE) {
 				invokeTwain(&srcID, DG_CONTROL, DAT_PENDINGXFERS, MSG_RESET,
 						&pxfers);
-				UA_ERROR("User aborted transfer or failure");
+				UA_WARN("User aborted transfer or failure");
 				break;
 			}
 

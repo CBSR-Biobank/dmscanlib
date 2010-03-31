@@ -181,14 +181,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\Calibrator.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\src\Config.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\src\utils\ConvertUTF.c"
 				>
 			</File>
@@ -236,14 +228,6 @@
 			</File>
 			<File
 				RelativePath=".\src\BinRegion.h"
-				>
-			</File>
-			<File
-				RelativePath=".\src\Calibrator.h"
-				>
-			</File>
-			<File
-				RelativePath=".\src\Config.h"
 				>
 			</File>
 			<File
