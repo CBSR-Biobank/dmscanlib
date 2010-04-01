@@ -237,7 +237,7 @@ HANDLE ImageGrabber::acquireImage(unsigned dpi, int brightness, int contrast,
 			if (rc == TWRC_FAILURE) {
 				invokeTwain(&srcID, DG_CONTROL, DAT_PENDINGXFERS, MSG_RESET,
 						&pxfers);
-				UA_ERROR("Unable to obtain image information");
+				UA_WARN("Unable to obtain image information");
 				break;
 			}
 
