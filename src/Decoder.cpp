@@ -27,9 +27,7 @@
 
 using namespace std;
 
-const double Decoder::SLOT_DISTANCE = 0.35; // inches between tubes on SBS pallet
-
-const double Decoder::SLOT_DISTANCE_FACTOR = 0.85 * Decoder::SLOT_DISTANCE;
+const double Decoder::SLOT_DISTANCE = 0.3345; // inches between tubes on SBS pallet
 
 Decoder::Decoder(unsigned g, unsigned s, unsigned t) {
 	ua::Logger::Instance().subSysHeaderSet(3, "Decoder");
@@ -99,7 +97,7 @@ bool Decoder::processImage(Dib & dib) {
 	dec = dmtxDecodeCreate(&image, 1);
 	UA_ASSERT_NOT_NULL(dec);
 
-	dmtxDecodeSetProp(dec, DmtxPropSymbolSize, DmtxSymbolSquareAuto);
+	dmtxDecodeSetProp(dec, DmtxPropSymbolSize, DmtxSymbol14x14);
 	dmtxDecodeSetProp(dec, DmtxPropScanGap, scanGap);
 	dmtxDecodeSetProp(dec, DmtxPropSquareDevn, squareDev);
 	dmtxDecodeSetProp(dec, DmtxPropEdgeThresh, edgeThresh);
@@ -370,17 +368,17 @@ Decoder::ProcessResult Decoder::calculateSlots(double dpi) {
 	}
 
 	if (numCols > 1) {
-		for (unsigned c = numCols - 1; c > 0; --c) {
+		for (int c = numCols - 1; c > 0; --c) {
 			BinRegion & region1 = *colBinRegions[c - 1];
 			BinRegion & region2 = *colBinRegions[c];
 
 			double slotDistance = static_cast<double> (region2.getCenter()
-					- region1.getCenter()) / dpi / SLOT_DISTANCE_FACTOR;
+					- region1.getCenter()) / dpi / SLOT_DISTANCE;
 
 			UA_DOUT(4, 5, "col region " << c << "-" << c - 1 << " slot_distance/"
 					<< slotDistance);
 
-			if (slotDistance < 1.0) {
+			if (slotDistance < 0.9) {
 				// invalid slot distance
 				return POS_CALC_ERROR;
 			}
@@ -396,12 +394,12 @@ Decoder::ProcessResult Decoder::calculateSlots(double dpi) {
 			BinRegion & region2 = *rowBinRegions[r];
 
 			double slotDistance = static_cast<double> (region2.getCenter()
-					- region1.getCenter()) / dpi / SLOT_DISTANCE_FACTOR;
+					- region1.getCenter()) / dpi / SLOT_DISTANCE;
 
 			UA_DOUT(4, 5, "row region " << r << "-" << r - 1 << " slot_distance/"
 					<< slotDistance);
 
-			if (slotDistance < 1.0) {
+			if (slotDistance < 0.9) {
 				// invalid slot distance
 				return POS_CALC_ERROR;
 			}
@@ -413,9 +411,15 @@ Decoder::ProcessResult Decoder::calculateSlots(double dpi) {
 
 	for (unsigned i = 0, n = barcodeInfos.size(); i < n; ++i) {
 		BarcodeInfo & info = *barcodeInfos[i];
-		UA_DOUT(4, 5, "barcode " << i
-				<< " (" << (char)('A' + info.getRowBinRegion().getId()) << ", "
-				<< info.getColBinRegion().getId() + 1<< ")");
+		unsigned row = info.getRowBinRegion().getId();
+		unsigned col = info.getColBinRegion().getId();
+
+		if ((row >= 8) || (col >= 12)) {
+			return POS_CALC_ERROR;
+		}
+
+		UA_DOUT(4, 5, "barcode " << i << " (" << (char)('A' + row) << ", "
+				<< col + 1 << ")");
 	}
 	return OK;
 }
@@ -489,6 +493,7 @@ void Decoder::showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg) {
  */
 DmtxImage * Decoder::createDmtxImageFromDib(Dib & dib) {
 	int pack = DmtxPackCustom;
+	unsigned padding =  dib.getRowPadBytes();
 
 	switch (dib.getBitsPerPixel()) {
 	case 8:
@@ -507,7 +512,7 @@ DmtxImage * Decoder::createDmtxImageFromDib(Dib & dib) {
 			dib.getHeight(), pack);
 
 	//set the properties (pad bytes, flip)
-	dmtxImageSetProp(image, DmtxPropRowPadBytes, dib.getRowPadBytes());
+	dmtxImageSetProp(image, DmtxPropRowPadBytes, padding);
 	dmtxImageSetProp(image, DmtxPropImageFlip, DmtxFlipY); // DIBs are flipped in Y
 	return image;
 }
