@@ -118,8 +118,8 @@ int slScanImage(unsigned verbose, unsigned dpi, int brightness, int contrast,
 }
 
 int slDecodeCommon(unsigned plateNum, Dib & dib, unsigned scanGap,
-		unsigned squareDev, unsigned edgeThresh) {
-	Decoder decoder(scanGap, squareDev, edgeThresh);
+		unsigned squareDev, unsigned edgeThresh, unsigned corrections) {
+	Decoder decoder(scanGap, squareDev, edgeThresh, corrections);
 	string msg;
 
 	Decoder::ProcessResult result = decoder.processImageRegions(plateNum, dib, msg);
@@ -150,7 +150,7 @@ int slDecodeCommon(unsigned plateNum, Dib & dib, unsigned scanGap,
 int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
 		unsigned plateNum, double left, double top, double right,
 		double bottom, unsigned scanGap, unsigned squareDev,
-		unsigned edgeThresh) {
+		unsigned edgeThresh, unsigned corrections) {
 	configLogging(verbose);
 	UA_DOUT(1, 3, "slDecodePlate: dpi/" << dpi
 			<< " brightness/" << brightness
@@ -162,7 +162,8 @@ int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
 			<< " bottom/"<< bottom
 			<< " scanGap/" << scanGap
 			<< " squareDev/" << squareDev
-			<< " edgeThresh/" << edgeThresh);
+			<< " edgeThresh/" << edgeThresh
+			<< " corrections/" << corrections);
 
 #ifdef WIN32
 	if (dpi < 0 || dpi > 2400) {
@@ -187,7 +188,8 @@ int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
 
 	dib.readFromHandle(h);
 	dib.writeToFile("scanned.bmp");
-	result = slDecodeCommon(plateNum, dib, scanGap, squareDev, edgeThresh);
+	result = slDecodeCommon(plateNum, dib, scanGap, squareDev, edgeThresh,
+							corrections);
 	ig.freeImage(h);
 	return result;
 #else
@@ -196,7 +198,8 @@ int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
 }
 
 int slDecodeImage(unsigned verbose, unsigned plateNum, char * filename,
-		unsigned scanGap, unsigned squareDev, unsigned edgeThresh) {
+		unsigned scanGap, unsigned squareDev, unsigned edgeThresh,
+		unsigned corrections) {
 	configLogging(verbose);
 	UA_DOUT(1, 3, "slDecodeImage: plateNum/" << plateNum
 			<< " filename/"<< filename
@@ -217,5 +220,5 @@ int slDecodeImage(unsigned verbose, unsigned plateNum, char * filename,
 	Dib dib;
 
 	dib.readFromFile(filename);
-	return slDecodeCommon(plateNum, dib, scanGap, squareDev, edgeThresh);
+	return slDecodeCommon(plateNum, dib, scanGap, squareDev, edgeThresh, corrections);
 }

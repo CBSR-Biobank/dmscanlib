@@ -22,7 +22,8 @@ class BinRegion;
 
 class Decoder {
 public:
-	Decoder(unsigned scanGap, unsigned squareDev, unsigned edgeThresh);
+	Decoder(unsigned scanGap, unsigned squareDev, unsigned edgeThresh,
+			unsigned corrections);
 	virtual ~Decoder();
 
 	typedef enum {
@@ -49,6 +50,7 @@ protected:
 	unsigned scanGap;
 	unsigned squareDev;
 	unsigned edgeThresh;
+	unsigned corrections;
 	vector<BarcodeInfo *> barcodeInfos;
 	vector<BinRegion *>   rowBinRegions;
 	vector<BinRegion *>   colBinRegions;

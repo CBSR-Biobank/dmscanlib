@@ -29,11 +29,12 @@ using namespace std;
 
 const double Decoder::SLOT_DISTANCE = 0.3345; // inches between tubes on SBS pallet
 
-Decoder::Decoder(unsigned g, unsigned s, unsigned t) {
+Decoder::Decoder(unsigned g, unsigned s, unsigned t, unsigned c) {
 	ua::Logger::Instance().subSysHeaderSet(3, "Decoder");
 	scanGap = g;
 	squareDev = s;
 	edgeThresh = t;
+	corrections = c;
 }
 
 Decoder::~Decoder() {
@@ -74,7 +75,7 @@ Decoder::ProcessResult Decoder::processImageRegions(unsigned plateNum,
 
 	calcRowsAndColumns();
 	Decoder::ProcessResult calcStolResult = calculateSlots(
-			static_cast<double> (dib.getDpi()));
+			static_cast<double>(dib.getDpi()));
 	if (calcStolResult != OK) {
 		return calcStolResult;
 	}
@@ -97,6 +98,11 @@ bool Decoder::processImage(Dib & dib) {
 	dec = dmtxDecodeCreate(&image, 1);
 	UA_ASSERT_NOT_NULL(dec);
 
+	int edge = static_cast<unsigned>(0.15 * static_cast<double>(dib.getDpi()));
+
+
+	dmtxDecodeSetProp(dec, DmtxPropEdgeMin, edge - 5);
+	dmtxDecodeSetProp(dec, DmtxPropEdgeMax, edge + 5);
 	dmtxDecodeSetProp(dec, DmtxPropSymbolSize, DmtxSymbol14x14);
 	dmtxDecodeSetProp(dec, DmtxPropScanGap, scanGap);
 	dmtxDecodeSetProp(dec, DmtxPropSquareDevn, squareDev);
@@ -143,7 +149,7 @@ bool Decoder::decode(DmtxDecode *& dec, unsigned attempts,
 		if (reg == NULL)
 			return false;
 
-		DmtxMessage * msg = dmtxDecodeMatrixRegion(dec, reg, DmtxUndefined);
+		DmtxMessage * msg = dmtxDecodeMatrixRegion(dec, reg, corrections);
 		if (msg != NULL) {
 			info = new BarcodeInfo(dec, reg, msg);
 			UA_ASSERT_NOT_NULL(info);

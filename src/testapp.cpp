@@ -32,6 +32,7 @@ const char
    "  --brightness NUM     The brightness setting to be used for scanning.\n"
    "  --debug NUM          Sets debugging level. Debugging messages are output\n"
    "                       to stdout. Only when built UA_HAVE_DEBUG on.\n"
+   "  --corrections NUM    The number of corrections to make.\n"
    "  --contrast NUM       The contrast setting to be used for scanning.\n"
    "  -d, --decode         Acquires an image from the scanner and Decodes the 2D barcodes.\n"
    "                       Use with --plate option.\n"
@@ -64,6 +65,7 @@ const char
 /* Allowed command line arguments.  */
 CSimpleOptA::SOption longOptions[] = {
    { 205, "--brightness", SO_REQ_SEP },
+   { 206, "--corrections", SO_REQ_SEP },
    { 203, "--contrast", SO_REQ_SEP },
    { 'd', "--decode", SO_NONE },
    { 'd', "-d", SO_NONE },
@@ -103,6 +105,7 @@ CSimpleOptA::SOption longOptions[] = {
 
 struct Options {
    int brightness;
+   int corrections;
    int contrast;
    bool decode;
    unsigned debugLevel;
@@ -124,6 +127,7 @@ struct Options {
    Options() {
        #ifdef WIN32
       brightness = 9999;
+      corrections = 0;
       contrast = 9999;
 #else
       brightness = numeric_limits<int>::max();
@@ -192,13 +196,13 @@ Application::Application(int argc, char ** argv) {
       if (options.infile != NULL) {
          result = slDecodeImage(options.debugLevel, options.plateNum,
                                 options.infile, options.gap, options.squareDev,
-                                options.threshold);
+                                options.threshold, options.corrections);
       } else {
          result = slDecodePlate(options.debugLevel, options.dpi,
-                 options.brightness, options.contrast,
-                 options.plateNum, options.left, options.top,
-                 options.right, options.bottom,
-                 options.gap, options.squareDev, options.threshold);
+                 options.brightness, options.contrast, options.plateNum,
+                 options.left, options.top, options.right, options.bottom,
+                 options.gap, options.squareDev, options.threshold,
+                 options.corrections);
       }
    } else if (options.scan) {
       if ((options.plateNum < 1) || (options.plateNum > 5)) {
@@ -301,6 +305,16 @@ bool Application::getCmdOptions(int argc, char ** argv) {
                                           &end, 10);
                if (*end != 0) {
                   cerr << "invalid value for contrast: " << args.OptionArg()
+                       << endl;
+                  exit(1);
+               }
+               break;
+
+            case 206:
+               options.corrections = strtoul((const char *) args.OptionArg(),
+                                          &end, 10);
+               if (*end != 0) {
+                  cerr << "invalid value for corrections: " << args.OptionArg()
                        << endl;
                   exit(1);
                }

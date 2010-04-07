@@ -118,6 +118,7 @@ typedef int (*SL_SCAN_IMAGE)(unsigned verbose, unsigned dpi, double left,
  *                   ignored  by  the  decoding  process. Lowering  the
  *                   threshold  will increase the amount of work to be done,
  *                   but may be necessary for low contrast or blurry images.
+ * @param corrections The number of corrections to make while decoding.
  *
  * @return SC_SUCCESS if the decoding process was successful. SC_INVALID_IMAGE
  * if the scanned image is invalid. SC_INVALID_POSITION if no sample found on
@@ -128,12 +129,12 @@ EXPORT int
 slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
 		unsigned plateNum, double left, double top, double right,
 		double bottom, unsigned scanGap, unsigned squareDev,
-		unsigned edgeThresh);
+		unsigned edgeThresh, unsigned corrections);
 
 typedef int (*SL_DECODE_PLATE)(unsigned verbose, unsigned dpi, int brightness,
 		int contrast, unsigned plateNum, double left, double top, double right,
 		double bottom, unsigned scanGap, unsigned squareDev,
-		unsigned edgeThresh);
+		unsigned edgeThresh, unsigned corrections);
 
 /**
  * From the regions specified in the INI file for the corresponding plate,
@@ -165,6 +166,7 @@ typedef int (*SL_DECODE_PLATE)(unsigned verbose, unsigned dpi, int brightness,
  *                   ignored  by  the  decoding  process. Lowering  the
  *                   threshold  will increase the amount of work to be done,
  *                   but may be necessary for low contrast or blurry images.
+ * @param corrections The number of corrections to make while decoding.
  *
  * @return SC_SUCCESS if the decoding process was successful. SC_INVALID_IMAGE
  * if the scanned image is invalid. SC_INVALID_POSITION if no tube found on row
@@ -172,11 +174,12 @@ typedef int (*SL_DECODE_PLATE)(unsigned verbose, unsigned dpi, int brightness,
  *  not be determined.
  */
 EXPORT int slDecodeImage(unsigned verbose, unsigned plateNum, char * filename,
-		unsigned scanGap, unsigned squareDev, unsigned edgeThresh);
+		unsigned scanGap, unsigned squareDev, unsigned edgeThresh,
+		unsigned corrections);
 
 typedef int (*SL_DECODE_IMAGE)(unsigned verbose, unsigned plateNum,
 		char * filename, unsigned scanGap, unsigned squareDev,
-		unsigned edgeThresh);
+		unsigned edgeThresh, unsigned corrections);
 
 #ifdef __cplusplus
 }
