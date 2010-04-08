@@ -57,6 +57,8 @@ protected:
 	unsigned width;
 	unsigned height;
 
+	unsigned char * imageBuf;
+
 	void clearResults();
 	void messageAdd(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
 	DmtxImage * createDmtxImageFromDib(Dib & dib);

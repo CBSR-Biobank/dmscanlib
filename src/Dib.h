@@ -112,6 +112,7 @@ private:
 	unsigned getPaletteSize();
 	void setPalette();
 	void setPalette(RgbQuad * palette);
+	unsigned getRowBytes(unsigned width, unsigned bitCount);
 
 };
 

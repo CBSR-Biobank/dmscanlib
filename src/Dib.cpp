@@ -63,7 +63,7 @@ Dib::Dib(unsigned rows, unsigned cols, unsigned colorBits)  :
 		setPalette();
 	}
 
-	rowBytes = ((infoHeader->width * infoHeader->bitCount + 31) >> 5) << 2;
+	rowBytes = getRowBytes(infoHeader->width, infoHeader->bitCount);
 	rowPaddingBytes = rowBytes - (infoHeader->width * bytesPerPixel);
 	infoHeader->imageSize       = infoHeader->height * rowBytes;
 
@@ -173,7 +173,7 @@ void Dib::readFromHandle(HANDLE handle) {
 		+ paletteSize * sizeof(RgbQuad);
 
 	bytesPerPixel = infoHeader->bitCount >> 3;
-	rowBytes = ((infoHeader->width * infoHeader->bitCount + 31) >> 5) << 2;
+	rowBytes = getRowBytes(infoHeader->width, infoHeader->bitCount);
 	rowPaddingBytes = rowBytes - (infoHeader->width * bytesPerPixel);
 }
 #endif
@@ -230,7 +230,7 @@ void Dib::readFromFile(const char * filename) {
 	}
 
 	bytesPerPixel = infoHeader->bitCount >> 3;
-	rowBytes = ((infoHeader->width * infoHeader->bitCount + 31) >> 5) << 2;
+	rowBytes = getRowBytes(infoHeader->width, infoHeader->bitCount);
 	rowPaddingBytes = rowBytes - (infoHeader->width * bytesPerPixel);
 
 	isAllocated = true;
@@ -238,6 +238,10 @@ void Dib::readFromFile(const char * filename) {
 	r = fread(pixels, sizeof(unsigned char), infoHeader->imageSize, fh);
 	UA_ASSERT(r = infoHeader->imageSize);
 	fclose(fh);
+}
+
+unsigned Dib::getRowBytes(unsigned width, unsigned bitCount) {
+	return static_cast<unsigned>(ceil((width * bitCount) / 32.0)) << 2;
 }
 
 bool Dib::writeToFile(const char * filename) {
@@ -405,7 +409,7 @@ bool Dib::crop(Dib &src, unsigned x0, unsigned y0, unsigned x1, unsigned y1) {
 	infoHeader->width  = x1 - x0;
 	infoHeader->height = y1 - y0;
 
-	rowBytes = ((infoHeader->width * infoHeader->bitCount + 31) >> 5) << 2;
+	rowBytes = getRowBytes(infoHeader->width, infoHeader->bitCount);
 	rowPaddingBytes = rowBytes - (infoHeader->width * bytesPerPixel);
 
 	infoHeader->imageSize = infoHeader->height * rowBytes;

@@ -19,6 +19,7 @@
 #include <string>
 //#include <sstream>
 #include <limits>
+#include <vector>
 
 #ifdef _VISUALC_
 // disable fopen warnings
@@ -35,6 +36,7 @@ Decoder::Decoder(unsigned g, unsigned s, unsigned t, unsigned c) {
 	squareDev = s;
 	edgeThresh = t;
 	corrections = c;
+	imageBuf = NULL;
 }
 
 Decoder::~Decoder() {
@@ -60,6 +62,10 @@ Decoder::~Decoder() {
 		UA_ASSERT_NOT_NULL(c);
 		delete c;
 	}
+
+	if (imageBuf != NULL) {
+		free(imageBuf);
+	}
 }
 
 /*
@@ -74,10 +80,10 @@ Decoder::ProcessResult Decoder::processImageRegions(unsigned plateNum,
 		return IMG_INVALID;
 
 	calcRowsAndColumns();
-	Decoder::ProcessResult calcStolResult = calculateSlots(
-			static_cast<double>(dib.getDpi()));
-	if (calcStolResult != OK) {
-		return calcStolResult;
+	Decoder::ProcessResult calcSlotResult = calculateSlots(
+			static_cast<double> (dib.getDpi()));
+	if (calcSlotResult != OK) {
+		return calcSlotResult;
 	}
 	getDecodeLoacations(plateNum, msg);
 	return OK;
@@ -98,8 +104,8 @@ bool Decoder::processImage(Dib & dib) {
 	dec = dmtxDecodeCreate(&image, 1);
 	UA_ASSERT_NOT_NULL(dec);
 
-	int edge = static_cast<unsigned>(0.15 * static_cast<double>(dib.getDpi()));
-
+	int edge =
+			static_cast<unsigned> (0.15 * static_cast<double> (dib.getDpi()));
 
 	dmtxDecodeSetProp(dec, DmtxPropEdgeMin, edge - 5);
 	dmtxDecodeSetProp(dec, DmtxPropEdgeMax, edge + 5);
@@ -107,6 +113,20 @@ bool Decoder::processImage(Dib & dib) {
 	dmtxDecodeSetProp(dec, DmtxPropScanGap, scanGap);
 	dmtxDecodeSetProp(dec, DmtxPropSquareDevn, squareDev);
 	dmtxDecodeSetProp(dec, DmtxPropEdgeThresh, edgeThresh);
+
+	// save image to a PNM file
+	UA_DEBUG(
+			FILE * fh;
+			unsigned char *pnm;
+			int totalBytes;
+			int headerBytes;
+
+			pnm = dmtxDecodeCreateDiagnostic(dec, &totalBytes, &headerBytes, 0);
+			fh = fopen("out_pre.pnm", "w");
+			fwrite(pnm, sizeof(unsigned char), totalBytes, fh);
+			fclose(fh);
+			free(pnm);
+	);
 
 	unsigned regionCount = 0;
 	while (1) {
@@ -144,31 +164,27 @@ bool Decoder::decode(DmtxDecode *& dec, unsigned attempts,
 	DmtxRegion * reg = NULL;
 	BarcodeInfo * info = NULL;
 
-	for (unsigned i = 0; i < attempts; ++i) {
-		reg = dmtxRegionFindNext(dec, NULL);
-		if (reg == NULL)
-			return false;
+	reg = dmtxRegionFindNext(dec, NULL);
+	if (reg == NULL)
+		return false;
 
-		DmtxMessage * msg = dmtxDecodeMatrixRegion(dec, reg, corrections);
-		if (msg != NULL) {
-			info = new BarcodeInfo(dec, reg, msg);
-			UA_ASSERT_NOT_NULL(info);
-			barcodeInfos.push_back(info);
+	DmtxMessage * msg = dmtxDecodeMatrixRegion(dec, reg, corrections);
+	if (msg != NULL) {
+		info = new BarcodeInfo(dec, reg, msg);
+		UA_ASSERT_NOT_NULL(info);
+		barcodeInfos.push_back(info);
 
-			DmtxPixelLoc & tlCorner = info->getTopLeftCorner();
-			DmtxPixelLoc & brCorner = info->getBotRightCorner();
+		DmtxPixelLoc & tlCorner = info->getTopLeftCorner();
+		DmtxPixelLoc & brCorner = info->getBotRightCorner();
 
-			UA_DOUT(3, 5, "message " << barcodeInfos.size() - 1
-					<< ": " << info->getMsg()
-					<< " : tlCorner/" << tlCorner.X << "," << tlCorner.Y
-					<< "  brCorner/" << brCorner.X << "," << brCorner.Y);
-			//showStats(dec, reg, msg);
-			dmtxMessageDestroy(&msg);
-			dmtxRegionDestroy(&reg);
-			return true;
-		}
-		dmtxRegionDestroy(&reg);
+		UA_DOUT(3, 5, "message " << barcodeInfos.size() - 1
+				<< ": " << info->getMsg()
+				<< " : tlCorner/" << tlCorner.X << "," << tlCorner.Y
+				<< "  brCorner/" << brCorner.X << "," << brCorner.Y);
+		//showStats(dec, reg, msg);
+		dmtxMessageDestroy(&msg);
 	}
+	dmtxRegionDestroy(&reg);
 	return true;
 }
 
@@ -415,17 +431,52 @@ Decoder::ProcessResult Decoder::calculateSlots(double dpi) {
 		}
 	}
 
+	// get max rows and max cols
+	unsigned maxRow = 0;
+	unsigned maxCol = 0;
 	for (unsigned i = 0, n = barcodeInfos.size(); i < n; ++i) {
 		BarcodeInfo & info = *barcodeInfos[i];
 		unsigned row = info.getRowBinRegion().getId();
 		unsigned col = info.getColBinRegion().getId();
 
-		if ((row >= 8) || (col >= 12)) {
-			return POS_CALC_ERROR;
+		if (row > maxRow) {
+			maxRow = row;
 		}
+
+		if (col > maxCol) {
+			maxCol = col;
+		}
+	}
+
+	if ((maxRow >= 8) || (maxCol >= 12)) {
+		return POS_CALC_ERROR;
+	}
+
+	// make sure no barcodes are in the same cells
+	std::vector<std::vector<BarcodeInfo *> > cells;
+	cells.resize(maxRow + 1);
+	for (unsigned row = 0; row <= maxRow; ++row) {
+		cells[row].resize(maxCol + 1);
+		for (unsigned col = 0; col <= maxCol; ++col) {
+			cells[row][col] = NULL;
+		}
+	}
+
+	for (unsigned i = 0, n = barcodeInfos.size(); i < n; ++i) {
+		BarcodeInfo & info = *barcodeInfos[i];
+		unsigned row = info.getRowBinRegion().getId();
+		unsigned col = info.getColBinRegion().getId();
 
 		UA_DOUT(4, 5, "barcode " << i << " (" << (char)('A' + row) << ", "
 				<< col + 1 << ")");
+
+		if (cells[row][col] != NULL) {
+			UA_DOUT(4, 5, "position (" << (char)('A' + row) << ", "
+					<< col + 1 << ") already occupied");
+			return POS_CALC_ERROR;
+		}
+
+		cells[row][col] = barcodeInfos[i];
 	}
 	return OK;
 }
@@ -499,7 +550,7 @@ void Decoder::showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg) {
  */
 DmtxImage * Decoder::createDmtxImageFromDib(Dib & dib) {
 	int pack = DmtxPackCustom;
-	unsigned padding =  dib.getRowPadBytes();
+	unsigned padding = dib.getRowPadBytes();
 
 	switch (dib.getBitsPerPixel()) {
 	case 8:
@@ -513,13 +564,31 @@ DmtxImage * Decoder::createDmtxImageFromDib(Dib & dib) {
 		break;
 	}
 
+#if 0
+	height = dib.getHeight();
+	width = dib.getWidth();
+	unsigned rowBytes = width * dib.getBitsPerPixel() / 8;
+	imageBuf = (unsigned char *) malloc(rowBytes * height * sizeof(unsigned char));
+	unsigned char * p = imageBuf;
+	for (unsigned row = 0; row < height; ++row) {
+		memcpy(p, dib.getRowPtr(row), rowBytes);
+		p += rowBytes;
+	}
+
 	// create dmtxImage from the dib
+	DmtxImage * image = dmtxImageCreate(imageBuf, dib.getWidth(),
+			dib.getHeight(), pack);
+
+	//set the properties (pad bytes, flip)
+	dmtxImageSetProp(image, DmtxPropImageFlip, DmtxFlipY); // DIBs are flipped in Y
+#else
 	DmtxImage * image = dmtxImageCreate(dib.getPixelBuffer(), dib.getWidth(),
 			dib.getHeight(), pack);
 
 	//set the properties (pad bytes, flip)
 	dmtxImageSetProp(image, DmtxPropRowPadBytes, padding);
 	dmtxImageSetProp(image, DmtxPropImageFlip, DmtxFlipY); // DIBs are flipped in Y
+#endif
 	return image;
 }
 
