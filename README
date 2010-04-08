@@ -1,0 +1,9 @@
+Call test app as follows:
+  scanlib.exe --debug 5 --decode --dpi 600 --brightness 0 --contrast 0 --plate 1 --left 0.3 --top 0.14 --right 4.6 --bottom 3.0  --gap 20
+
+  
+  Debug-standalone/scanlib.exe -l 2.1 -t 0.725 -r 4.3 -b 2.9 -p 1 --square-dev 10 --threshold 30 --gap 30 --dpi 400 -d --debug 9
+  
+  Debug-standalone/scanlib.exe -l 2.1 -t 0.725 -r 4.3 -b 2.9 -p 1 --square-dev 10 --threshold 30 --gap 30 --dpi 400 -d --debug 9 -i scanned.bmp
+  
+  Debug-standalone/scanlib.exe -l 0.3 -t 0.2 -r 4.4 -b 3.0 -p 1 --square-dev 10 --threshold 30 --gap 30 --dpi 300 -d --debug 9 --corrections 10 
