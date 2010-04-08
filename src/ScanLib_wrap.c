@@ -195,9 +195,10 @@ extern int slScanImage(unsigned verbose, unsigned dpi, int brightness,
 extern int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, 
     int contrast, unsigned plateNum, double left, double top, double right,
     double bottom, unsigned scanGap, unsigned squareDev,
-    unsigned edgeThresh);
+    unsigned edgeThresh, unsigned corrections);
 extern int slDecodeImage(unsigned verbose, unsigned plateNum, char * filename,
-        unsigned scanGap, unsigned squareDev, unsigned edgeThresh);
+        unsigned scanGap, unsigned squareDev, unsigned edgeThresh, 
+        unsigned corrections);
 
 
 #ifdef __cplusplus
