@@ -31,11 +31,13 @@ const unsigned Dib::GAUSS_SUM = 2048;
 Dib::Dib() :
 	fileHeader(NULL), infoHeader(NULL), colorPalette(NULL), pixels(NULL),
 	isAllocated(false) {
+	ua::Logger::Instance().subSysHeaderSet(4, "Dib");
 }
 
 Dib::Dib(Dib & src) :
 	fileHeader(NULL), infoHeader(NULL), colorPalette(NULL), pixels(NULL),
 	isAllocated(false) {
+	ua::Logger::Instance().subSysHeaderSet(4, "Dib");
 	copyInternals(src);
 	memcpy(pixels, src.pixels, infoHeader->imageSize);
 }
@@ -175,6 +177,9 @@ void Dib::readFromHandle(HANDLE handle) {
 	bytesPerPixel = infoHeader->bitCount >> 3;
 	rowBytes = getRowBytes(infoHeader->width, infoHeader->bitCount);
 	rowPaddingBytes = rowBytes - (infoHeader->width * bytesPerPixel);
+
+	UA_DOUT(4, 5, "readFromHandle: rowBytes/" << rowBytes
+			<< " paddingBytes/" << rowPaddingBytes);
 }
 #endif
 
@@ -238,6 +243,9 @@ void Dib::readFromFile(const char * filename) {
 	r = fread(pixels, sizeof(unsigned char), infoHeader->imageSize, fh);
 	UA_ASSERT(r = infoHeader->imageSize);
 	fclose(fh);
+
+	UA_DOUT(4, 5, "readFromFile: rowBytes/" << rowBytes
+			<< " paddingBytes/" << rowPaddingBytes);
 }
 
 unsigned Dib::getRowBytes(unsigned width, unsigned bitCount) {

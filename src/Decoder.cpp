@@ -93,7 +93,7 @@ bool Decoder::processImage(Dib & dib) {
 	DmtxImage & image = *createDmtxImageFromDib(dib);
 	DmtxDecode * dec = NULL;
 
-	UA_DOUT(4, 5, "processImage: image width/" << width
+	UA_DOUT(3, 5, "processImage: image width/" << width
 			<< " image height/" << height
 			<< " row padding/" << dmtxImageGetProp(&image, DmtxPropRowPadBytes)
 			<< " image bits per pixel/"
@@ -104,12 +104,15 @@ bool Decoder::processImage(Dib & dib) {
 	dec = dmtxDecodeCreate(&image, 1);
 	UA_ASSERT_NOT_NULL(dec);
 
-	int edge =
-			static_cast<unsigned> (0.15 * static_cast<double> (dib.getDpi()));
+	// setting min and max edge does not work with new tubes (ones printed on
+	// paper)
+	//
+	//int edge =
+	//		static_cast<unsigned> (0.15 * static_cast<double> (dib.getDpi()));
 
-	dmtxDecodeSetProp(dec, DmtxPropEdgeMin, edge - 5);
-	dmtxDecodeSetProp(dec, DmtxPropEdgeMax, edge + 5);
-	dmtxDecodeSetProp(dec, DmtxPropSymbolSize, DmtxSymbol14x14);
+	//dmtxDecodeSetProp(dec, DmtxPropEdgeMin, edge - 20);
+	//dmtxDecodeSetProp(dec, DmtxPropEdgeMax, edge + 20);
+	dmtxDecodeSetProp(dec, DmtxPropSymbolSize, DmtxSymbolSquareAuto);
 	dmtxDecodeSetProp(dec, DmtxPropScanGap, scanGap);
 	dmtxDecodeSetProp(dec, DmtxPropSquareDevn, squareDev);
 	dmtxDecodeSetProp(dec, DmtxPropEdgeThresh, edgeThresh);
