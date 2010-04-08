@@ -110,26 +110,12 @@ bool Decoder::processImage(Dib & dib) {
 	//int edge =
 	//		static_cast<unsigned> (0.15 * static_cast<double> (dib.getDpi()));
 
-	//dmtxDecodeSetProp(dec, DmtxPropEdgeMin, edge - 20);
-	//dmtxDecodeSetProp(dec, DmtxPropEdgeMax, edge + 20);
+	dmtxDecodeSetProp(dec, DmtxPropEdgeMin, DmtxUndefined);
+	dmtxDecodeSetProp(dec, DmtxPropEdgeMax, DmtxUndefined);
 	dmtxDecodeSetProp(dec, DmtxPropSymbolSize, DmtxSymbolSquareAuto);
 	dmtxDecodeSetProp(dec, DmtxPropScanGap, scanGap);
 	dmtxDecodeSetProp(dec, DmtxPropSquareDevn, squareDev);
 	dmtxDecodeSetProp(dec, DmtxPropEdgeThresh, edgeThresh);
-
-	// save image to a PNM file
-	UA_DEBUG(
-			FILE * fh;
-			unsigned char *pnm;
-			int totalBytes;
-			int headerBytes;
-
-			pnm = dmtxDecodeCreateDiagnostic(dec, &totalBytes, &headerBytes, 0);
-			fh = fopen("out_pre.pnm", "w");
-			fwrite(pnm, sizeof(unsigned char), totalBytes, fh);
-			fclose(fh);
-			free(pnm);
-	);
 
 	unsigned regionCount = 0;
 	while (1) {
@@ -147,10 +133,12 @@ bool Decoder::processImage(Dib & dib) {
 			int headerBytes;
 
 			pnm = dmtxDecodeCreateDiagnostic(dec, &totalBytes, &headerBytes, 0);
-			fh = fopen("out.pnm", "w");
-			fwrite(pnm, sizeof(unsigned char), totalBytes, fh);
-			fclose(fh);
-			free(pnm);
+			if (pnm != NULL) {
+				fh = fopen("out.pnm", "wb");
+				fwrite(pnm, sizeof(unsigned char), totalBytes, fh);
+				fclose(fh);
+				free(pnm);
+			}
 	);
 
 	dmtxDecodeDestroy(&dec);
