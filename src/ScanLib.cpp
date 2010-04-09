@@ -118,8 +118,9 @@ int slScanImage(unsigned verbose, unsigned dpi, int brightness, int contrast,
 }
 
 int slDecodeCommon(unsigned plateNum, Dib & dib, unsigned scanGap,
-		unsigned squareDev, unsigned edgeThresh, unsigned corrections) {
-	Decoder decoder(scanGap, squareDev, edgeThresh, corrections);
+		unsigned squareDev, unsigned edgeThresh, unsigned corrections,
+		double cellDistance) {
+	Decoder decoder(scanGap, squareDev, edgeThresh, corrections, cellDistance);
 	string msg;
 
 	Decoder::ProcessResult result = decoder.processImageRegions(plateNum, dib, msg);
@@ -150,7 +151,7 @@ int slDecodeCommon(unsigned plateNum, Dib & dib, unsigned scanGap,
 int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
 		unsigned plateNum, double left, double top, double right,
 		double bottom, unsigned scanGap, unsigned squareDev,
-		unsigned edgeThresh, unsigned corrections) {
+		unsigned edgeThresh, unsigned corrections, double cellDistance) {
 	configLogging(verbose);
 	UA_DOUT(1, 3, "slDecodePlate: dpi/" << dpi
 			<< " brightness/" << brightness
@@ -163,7 +164,8 @@ int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
 			<< " scanGap/" << scanGap
 			<< " squareDev/" << squareDev
 			<< " edgeThresh/" << edgeThresh
-			<< " corrections/" << corrections);
+			<< " corrections/" << corrections
+			<< " cellDistance/" << cellDistance);
 
 #ifdef WIN32
 	if (dpi < 0 || dpi > 2400) {
@@ -189,7 +191,7 @@ int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
 	dib.readFromHandle(h);
 	dib.writeToFile("scanned.bmp");
 	result = slDecodeCommon(plateNum, dib, scanGap, squareDev, edgeThresh,
-							corrections);
+							corrections, cellDistance);
 	ig.freeImage(h);
 	return result;
 #else
@@ -199,13 +201,15 @@ int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
 
 int slDecodeImage(unsigned verbose, unsigned plateNum, char * filename,
 		unsigned scanGap, unsigned squareDev, unsigned edgeThresh,
-		unsigned corrections) {
+		unsigned corrections, double cellDistance) {
 	configLogging(verbose);
 	UA_DOUT(1, 3, "slDecodeImage: plateNum/" << plateNum
 			<< " filename/"<< filename
 			<< " scanGap/" << scanGap
 			<< " squareDev/" << squareDev
-			<< " edgeThresh/" << edgeThresh);
+			<< " edgeThresh/" << edgeThresh
+			<< " corrections/" << corrections
+			<< " cellDistance/" << cellDistance);
 
 	if ((plateNum < MIN_PLATE_NUM) || (plateNum > MAX_PLATE_NUM)) {
 		return SC_INVALID_PLATE_NUM;
@@ -220,5 +224,6 @@ int slDecodeImage(unsigned verbose, unsigned plateNum, char * filename,
 	Dib dib;
 
 	dib.readFromFile(filename);
-	return slDecodeCommon(plateNum, dib, scanGap, squareDev, edgeThresh, corrections);
+	return slDecodeCommon(plateNum, dib, scanGap, squareDev, edgeThresh,
+			corrections, cellDistance);
 }

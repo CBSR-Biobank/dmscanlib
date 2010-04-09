@@ -23,7 +23,7 @@ class BinRegion;
 class Decoder {
 public:
 	Decoder(unsigned scanGap, unsigned squareDev, unsigned edgeThresh,
-			unsigned corrections);
+			unsigned corrections, double cellDistance);
 	virtual ~Decoder();
 
 	typedef enum {
@@ -44,8 +44,6 @@ protected:
 	static const char * INI_REGION_LABEL;
 	static const unsigned BIN_THRESH = 15;
 	static const unsigned BIN_MARGIN = 15;
-	static const double SLOT_DISTANCE;
-	static const double SLOT_DISTANCE_FACTOR;
 
 	unsigned scanGap;
 	unsigned squareDev;
@@ -56,6 +54,7 @@ protected:
 	vector<BinRegion *>   colBinRegions;
 	unsigned width;
 	unsigned height;
+	double cellDistance;
 
 	unsigned char * imageBuf;
 

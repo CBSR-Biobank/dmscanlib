@@ -32,6 +32,7 @@ const char
    "  --brightness NUM     The brightness setting to be used for scanning.\n"
    "  --debug NUM          Sets debugging level. Debugging messages are output\n"
    "                       to stdout. Only when built UA_HAVE_DEBUG on.\n"
+   "  --celldist NUM       Distance between tube cells in inches.\n"
    "  --corrections NUM    The number of corrections to make.\n"
    "  --contrast NUM       The contrast setting to be used for scanning.\n"
    "  -d, --decode         Acquires an image from the scanner and Decodes the 2D barcodes.\n"
@@ -65,6 +66,7 @@ const char
 /* Allowed command line arguments.  */
 CSimpleOptA::SOption longOptions[] = {
    { 205, "--brightness", SO_REQ_SEP },
+   { 207, "--celldist", SO_REQ_SEP },
    { 206, "--corrections", SO_REQ_SEP },
    { 203, "--contrast", SO_REQ_SEP },
    { 'd', "--decode", SO_NONE },
@@ -105,6 +107,7 @@ CSimpleOptA::SOption longOptions[] = {
 
 struct Options {
    int brightness;
+   double cellDistance;
    int corrections;
    int contrast;
    bool decode;
@@ -127,6 +130,7 @@ struct Options {
    Options() {
        #ifdef WIN32
       brightness = 9999;
+      cellDistance = 0.33;
       corrections = 0;
       contrast = 9999;
 #else
@@ -196,13 +200,14 @@ Application::Application(int argc, char ** argv) {
       if (options.infile != NULL) {
          result = slDecodeImage(options.debugLevel, options.plateNum,
                                 options.infile, options.gap, options.squareDev,
-                                options.threshold, options.corrections);
+                                options.threshold, options.corrections,
+                                options.cellDistance);
       } else {
          result = slDecodePlate(options.debugLevel, options.dpi,
                  options.brightness, options.contrast, options.plateNum,
                  options.left, options.top, options.right, options.bottom,
                  options.gap, options.squareDev, options.threshold,
-                 options.corrections);
+                 options.corrections, options.cellDistance);
       }
    } else if (options.scan) {
       if ((options.plateNum < 1) || (options.plateNum > 5)) {
@@ -354,6 +359,7 @@ bool Application::getCmdOptions(int argc, char ** argv) {
             case 't':
             case 'r':
             case 'b':
+            case 207:
             case 400:
             case 401:
             case 402:
@@ -376,7 +382,10 @@ bool Application::getCmdOptions(int argc, char ** argv) {
                   options.right = num;
                }
                else if ((args.OptionId() == 'b') || (args.OptionId() == 403)) {
-                  options.bottom= num;
+                  options.bottom = num;
+               }
+               else if (args.OptionId() == 207) {
+                  options.cellDistance = num;
                }
                break;
             }

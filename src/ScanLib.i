@@ -8,10 +8,10 @@ extern int slScanImage(unsigned verbose, unsigned dpi, int brightness,
 extern int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, 
     int contrast, unsigned plateNum, double left, double top, double right,
     double bottom, unsigned scanGap, unsigned squareDev,
-    unsigned edgeThresh, unsigned corrections);
+    unsigned edgeThresh, unsigned corrections, double cellDistance);
 extern int slDecodeImage(unsigned verbose, unsigned plateNum, char * filename,
         unsigned scanGap, unsigned squareDev, unsigned edgeThresh, 
-        unsigned corrections);
+        unsigned corrections, double cellDistance);
 %}
 
 extern int slIsTwainAvailable();
@@ -22,8 +22,8 @@ extern int slScanImage(unsigned verbose, unsigned dpi, int brightness,
 extern int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, 
     int contrast, unsigned plateNum, double left, double top, double right,
     double bottom, unsigned scanGap, unsigned squareDev,
-    unsigned edgeThresh, unsigned corrections);
+    unsigned edgeThresh, unsigned corrections, double cellDistance);
 extern int slDecodeImage(unsigned verbose, unsigned plateNum, char * filename,
         unsigned scanGap, unsigned squareDev, unsigned edgeThresh, 
-        unsigned corrections);
+        unsigned corrections, double cellDistance);
         
