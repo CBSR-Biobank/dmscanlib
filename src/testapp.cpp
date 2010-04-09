@@ -113,7 +113,7 @@ struct Options {
    bool decode;
    unsigned debugLevel;
    unsigned dpi;
-   unsigned gap;
+   double gap;
    bool help;
    char * infile;
    unsigned plateNum;
@@ -141,7 +141,7 @@ struct Options {
       decode = false;
       debugLevel = 0;
       dpi = 300;
-      gap = 0;
+      gap = 0.0;
       help = false;
       infile = NULL;
       plateNum = 0;
@@ -325,16 +325,6 @@ bool Application::getCmdOptions(int argc, char ** argv) {
                }
                break;
 
-            case 300:
-               options.gap
-                  = strtoul((const char *) args.OptionArg(), &end, 10);
-               if (*end != 0) {
-                  cerr << "invalid value for gap: " << args.OptionArg()
-                       << endl;
-                  exit(1);
-               }
-               break;
-
             case 301:
                options.squareDev = strtoul((const char *) args.OptionArg(),
                                            &end, 10);
@@ -355,11 +345,12 @@ bool Application::getCmdOptions(int argc, char ** argv) {
                }
                break;
 
+            case 207:
+            case 300:
             case 'l':
             case 't':
             case 'r':
             case 'b':
-            case 207:
             case 400:
             case 401:
             case 402:
@@ -386,6 +377,9 @@ bool Application::getCmdOptions(int argc, char ** argv) {
                }
                else if (args.OptionId() == 207) {
                   options.cellDistance = num;
+               }
+               else if (args.OptionId() == 300) {
+                  options.gap = num;
                }
                break;
             }

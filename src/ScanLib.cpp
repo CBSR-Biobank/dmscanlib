@@ -117,7 +117,7 @@ int slScanImage(unsigned verbose, unsigned dpi, int brightness, int contrast,
 #endif
 }
 
-int slDecodeCommon(unsigned plateNum, Dib & dib, unsigned scanGap,
+int slDecodeCommon(unsigned plateNum, Dib & dib, double scanGap,
 		unsigned squareDev, unsigned edgeThresh, unsigned corrections,
 		double cellDistance) {
 	Decoder decoder(scanGap, squareDev, edgeThresh, corrections, cellDistance);
@@ -150,7 +150,7 @@ int slDecodeCommon(unsigned plateNum, Dib & dib, unsigned scanGap,
 
 int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
 		unsigned plateNum, double left, double top, double right,
-		double bottom, unsigned scanGap, unsigned squareDev,
+		double bottom, double scanGap, unsigned squareDev,
 		unsigned edgeThresh, unsigned corrections, double cellDistance) {
 	configLogging(verbose);
 	UA_DOUT(1, 3, "slDecodePlate: dpi/" << dpi
@@ -200,7 +200,7 @@ int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
 }
 
 int slDecodeImage(unsigned verbose, unsigned plateNum, char * filename,
-		unsigned scanGap, unsigned squareDev, unsigned edgeThresh,
+		double scanGap, unsigned squareDev, unsigned edgeThresh,
 		unsigned corrections, double cellDistance) {
 	configLogging(verbose);
 	UA_DOUT(1, 3, "slDecodeImage: plateNum/" << plateNum

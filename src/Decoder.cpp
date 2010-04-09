@@ -29,7 +29,7 @@
 
 using namespace std;
 
-Decoder::Decoder(unsigned g, unsigned s, unsigned t, unsigned c, double dist) {
+Decoder::Decoder(double g, unsigned s, unsigned t, unsigned c, double dist) {
 	ua::Logger::Instance().subSysHeaderSet(3, "Decoder");
 	scanGap = g;
 	squareDev = s;
@@ -105,17 +105,16 @@ bool Decoder::processImage(Dib & dib) {
 	UA_ASSERT_NOT_NULL(dec);
 
 	// slightly smaller than the new tube edge
-	int minEdgeSize =
-			static_cast<unsigned>(0.08 * static_cast<double>(dib.getDpi()));
+	int minEdgeSize = static_cast<unsigned> (0.08 * dib.getDpi());
 
 	// slightly bigger than the Nunc edge
-	int maxEdgeSize =
-			static_cast<unsigned>(0.18 * static_cast<double>(dib.getDpi()));
+	int maxEdgeSize = static_cast<unsigned> (0.18 * dib.getDpi());
 
 	dmtxDecodeSetProp(dec, DmtxPropEdgeMin, minEdgeSize);
 	dmtxDecodeSetProp(dec, DmtxPropEdgeMax, maxEdgeSize);
 	dmtxDecodeSetProp(dec, DmtxPropSymbolSize, DmtxSymbolSquareAuto);
-	dmtxDecodeSetProp(dec, DmtxPropScanGap, scanGap);
+	dmtxDecodeSetProp(dec, DmtxPropScanGap, static_cast<unsigned> (scanGap
+			* dib.getDpi()));
 	dmtxDecodeSetProp(dec, DmtxPropSquareDevn, squareDev);
 	dmtxDecodeSetProp(dec, DmtxPropEdgeThresh, edgeThresh);
 
@@ -390,8 +389,8 @@ Decoder::ProcessResult Decoder::calculateSlots(double dpi) {
 			BinRegion & region1 = *colBinRegions[c - 1];
 			BinRegion & region2 = *colBinRegions[c];
 
-			double dist = static_cast<double>(region2.getCenter()
-					- region1.getCenter()) / static_cast<double>(dpi);
+			double dist = static_cast<double> (region2.getCenter()
+					- region1.getCenter()) / static_cast<double> (dpi);
 
 			interval = 0;
 			for (unsigned i = 1; i < 12; ++i) {
@@ -417,8 +416,8 @@ Decoder::ProcessResult Decoder::calculateSlots(double dpi) {
 			BinRegion & region1 = *rowBinRegions[r - 1];
 			BinRegion & region2 = *rowBinRegions[r];
 
-			double dist = static_cast<double>(region2.getCenter()
-					- region1.getCenter()) / static_cast<double>(dpi);
+			double dist = static_cast<double> (region2.getCenter()
+					- region1.getCenter()) / static_cast<double> (dpi);
 
 			interval = 0;
 			for (unsigned i = 1; i < 8; ++i) {
@@ -495,8 +494,8 @@ void Decoder::getDecodeLoacations(unsigned plateNum, string & msg) {
 	for (unsigned i = 0, n = barcodeInfos.size(); i < n; ++i) {
 		BarcodeInfo & info = *barcodeInfos[i];
 		out << plateNum << "," << (char) ('A' + info.getRowBinRegion().getId())
-		<< "," << info.getColBinRegion().getId() + 1 << ","
-		<< info.getMsg() << std::endl;
+				<< "," << info.getColBinRegion().getId() + 1 << ","
+				<< info.getMsg() << std::endl;
 	}
 	msg = out.str();
 }
@@ -525,21 +524,21 @@ void Decoder::showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg) {
 
 	rotateInt = (int) (rotate * 180 / M_PI + 0.5);
 	if (rotateInt >= 360)
-	rotateInt -= 360;
+		rotateInt -= 360;
 
 	fprintf(stdout, "--------------------------------------------------\n");
 	fprintf(stdout, "       Matrix Size: %d x %d\n", dmtxGetSymbolAttribute(
-					DmtxSymAttribSymbolRows, reg->sizeIdx), dmtxGetSymbolAttribute(
-					DmtxSymAttribSymbolCols, reg->sizeIdx));
+			DmtxSymAttribSymbolRows, reg->sizeIdx), dmtxGetSymbolAttribute(
+			DmtxSymAttribSymbolCols, reg->sizeIdx));
 	fprintf(stdout, "    Data Codewords: %d (capacity %d)\n", dataWordLength
 			- msg->padCount, dataWordLength);
 	fprintf(stdout, "   Error Codewords: %d\n", dmtxGetSymbolAttribute(
-					DmtxSymAttribSymbolErrorWords, reg->sizeIdx));
+			DmtxSymAttribSymbolErrorWords, reg->sizeIdx));
 	fprintf(stdout, "      Data Regions: %d x %d\n", dmtxGetSymbolAttribute(
-					DmtxSymAttribHorizDataRegions, reg->sizeIdx),
+			DmtxSymAttribHorizDataRegions, reg->sizeIdx),
 			dmtxGetSymbolAttribute(DmtxSymAttribVertDataRegions, reg->sizeIdx));
 	fprintf(stdout, "Interleaved Blocks: %d\n", dmtxGetSymbolAttribute(
-					DmtxSymAttribInterleavedBlocks, reg->sizeIdx));
+			DmtxSymAttribInterleavedBlocks, reg->sizeIdx));
 	fprintf(stdout, "    Rotation Angle: %d\n", rotateInt);
 	fprintf(stdout, "          Corner 0: (%0.1f, %0.1f)\n", p00.X, height - 1
 			- p00.Y);
@@ -561,13 +560,13 @@ DmtxImage * Decoder::createDmtxImageFromDib(Dib & dib) {
 	unsigned padding = dib.getRowPadBytes();
 
 	switch (dib.getBitsPerPixel()) {
-		case 8:
+	case 8:
 		pack = DmtxPack8bppK;
 		break;
-		case 24:
+	case 24:
 		pack = DmtxPack24bppRGB;
 		break;
-		case 32:
+	case 32:
 		pack = DmtxPack32bppXRGB;
 		break;
 	}
@@ -623,7 +622,7 @@ void Decoder::imageShowBarcodes(Dib & dib) {
 	unsigned logLevel = ua::Logger::Instance().levelGet(3);
 
 	if (logLevel == 0)
-	return;
+		return;
 
 	for (unsigned r = 0, rn = rowBinRegions.size(); r < rn; ++r) {
 		BinRegion & region = *rowBinRegions[r];

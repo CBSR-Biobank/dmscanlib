@@ -22,7 +22,7 @@ class BinRegion;
 
 class Decoder {
 public:
-	Decoder(unsigned scanGap, unsigned squareDev, unsigned edgeThresh,
+	Decoder(double scanGap, unsigned squareDev, unsigned edgeThresh,
 			unsigned corrections, double cellDistance);
 	virtual ~Decoder();
 
@@ -45,7 +45,7 @@ protected:
 	static const unsigned BIN_THRESH = 15;
 	static const unsigned BIN_MARGIN = 15;
 
-	unsigned scanGap;
+	double scanGap;
 	unsigned squareDev;
 	unsigned edgeThresh;
 	unsigned corrections;

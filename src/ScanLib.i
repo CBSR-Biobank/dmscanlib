@@ -7,10 +7,10 @@ extern int slScanImage(unsigned verbose, unsigned dpi, int brightness,
         char * filename);
 extern int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, 
     int contrast, unsigned plateNum, double left, double top, double right,
-    double bottom, unsigned scanGap, unsigned squareDev,
+    double bottom, double scanGap, unsigned squareDev,
     unsigned edgeThresh, unsigned corrections, double cellDistance);
 extern int slDecodeImage(unsigned verbose, unsigned plateNum, char * filename,
-        unsigned scanGap, unsigned squareDev, unsigned edgeThresh, 
+        double scanGap, unsigned squareDev, unsigned edgeThresh, 
         unsigned corrections, double cellDistance);
 %}
 
@@ -21,9 +21,9 @@ extern int slScanImage(unsigned verbose, unsigned dpi, int brightness,
         char * filename);
 extern int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, 
     int contrast, unsigned plateNum, double left, double top, double right,
-    double bottom, unsigned scanGap, unsigned squareDev,
+    double bottom, double scanGap, unsigned squareDev,
     unsigned edgeThresh, unsigned corrections, double cellDistance);
 extern int slDecodeImage(unsigned verbose, unsigned plateNum, char * filename,
-        unsigned scanGap, unsigned squareDev, unsigned edgeThresh, 
+        double scanGap, unsigned squareDev, unsigned edgeThresh, 
         unsigned corrections, double cellDistance);
         
