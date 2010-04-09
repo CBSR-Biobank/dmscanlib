@@ -130,7 +130,6 @@ struct Options {
    Options() {
        #ifdef WIN32
       brightness = 9999;
-      cellDistance = 0.33;
       corrections = 0;
       contrast = 9999;
 #else
@@ -138,6 +137,7 @@ struct Options {
       contrast = numeric_limits<int>::max();
 #endif 
 
+      cellDistance = 0.33;
       decode = false;
       debugLevel = 0;
       dpi = 300;
