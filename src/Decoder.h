@@ -54,6 +54,7 @@ protected:
 	vector<BinRegion *>   colBinRegions;
 	unsigned width;
 	unsigned height;
+	unsigned dpi;
 	double cellDistance;
 
 	unsigned char * imageBuf;

@@ -73,8 +73,6 @@ Decoder::~Decoder() {
  */
 Decoder::ProcessResult Decoder::processImageRegions(unsigned plateNum,
 		Dib & dib, string & msg) {
-	height = dib.getHeight();
-	width = dib.getWidth();
 
 	if (!processImage(dib))
 		return IMG_INVALID;
@@ -90,6 +88,10 @@ Decoder::ProcessResult Decoder::processImageRegions(unsigned plateNum,
 }
 
 bool Decoder::processImage(Dib & dib) {
+	height = dib.getHeight();
+	width = dib.getWidth();
+	dpi = dib.getDpi();
+
 	DmtxImage & image = *createDmtxImageFromDib(dib);
 	DmtxDecode * dec = NULL;
 
@@ -105,16 +107,16 @@ bool Decoder::processImage(Dib & dib) {
 	UA_ASSERT_NOT_NULL(dec);
 
 	// slightly smaller than the new tube edge
-	int minEdgeSize = static_cast<unsigned> (0.08 * dib.getDpi());
+	int minEdgeSize = static_cast<unsigned> (0.08 * dpi);
 
 	// slightly bigger than the Nunc edge
-	int maxEdgeSize = static_cast<unsigned> (0.18 * dib.getDpi());
+	int maxEdgeSize = static_cast<unsigned> (0.18 * dpi);
 
 	dmtxDecodeSetProp(dec, DmtxPropEdgeMin, minEdgeSize);
 	dmtxDecodeSetProp(dec, DmtxPropEdgeMax, maxEdgeSize);
 	dmtxDecodeSetProp(dec, DmtxPropSymbolSize, DmtxSymbolSquareAuto);
 	dmtxDecodeSetProp(dec, DmtxPropScanGap, static_cast<unsigned> (scanGap
-			* dib.getDpi()));
+			* dpi));
 	dmtxDecodeSetProp(dec, DmtxPropSquareDevn, squareDev);
 	dmtxDecodeSetProp(dec, DmtxPropEdgeThresh, edgeThresh);
 
@@ -382,7 +384,9 @@ Decoder::ProcessResult Decoder::calculateSlots(double dpi) {
 	}
 
 	unsigned interval;
-	double cellDistError = cellDistance * 0.25;
+	double cellDistError = cellDistance * 0.4;
+
+	UA_DOUT(4, 5, "cellDistError/" << cellDistError);
 
 	if (numCols > 1) {
 		for (int c = numCols - 1; c > 0; --c) {
@@ -394,7 +398,10 @@ Decoder::ProcessResult Decoder::calculateSlots(double dpi) {
 
 			interval = 0;
 			for (unsigned i = 1; i < 12; ++i) {
-				if (abs(dist - i * cellDistance) < cellDistError) {
+				double diff = abs(dist - i * cellDistance);
+				UA_DOUT(4, 5, "col region " << c << "-" << c - 1 << " distance/"
+						<< dist << " diff/" << diff << " inteval/" << i);
+				if (diff < cellDistError) {
 					interval = i;
 					break;
 				}
@@ -421,6 +428,9 @@ Decoder::ProcessResult Decoder::calculateSlots(double dpi) {
 
 			interval = 0;
 			for (unsigned i = 1; i < 8; ++i) {
+				double diff = abs(dist - i * cellDistance);
+				UA_DOUT(4, 5, "row region " << r << "-" << r - 1 << " distance/"
+						<< dist << " diff/" << diff << " inteval/" << i);
 				if (abs(dist - i * cellDistance) < cellDistError) {
 					interval = i;
 					break;
