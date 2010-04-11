@@ -32,6 +32,7 @@ const char
    "  --brightness NUM     The brightness setting to be used for scanning.\n"
    "  --debug NUM          Sets debugging level. Debugging messages are output\n"
    "                       to stdout. Only when built UA_HAVE_DEBUG on.\n"
+   "  --debugfile          Send debugging output to file named scanlib.log.\n"
    "  --celldist NUM       Distance between tube cells in inches.\n"
    "  --corrections NUM    The number of corrections to make.\n"
    "  --contrast NUM       The contrast setting to be used for scanning.\n"
@@ -72,6 +73,7 @@ CSimpleOptA::SOption longOptions[] = {
    { 'd', "--decode", SO_NONE },
    { 'd', "-d", SO_NONE },
    { 200, "--debug", SO_REQ_SEP },
+   { 208, "--debugfile", SO_NONE },
    { 201, "--dpi", SO_REQ_SEP },
    { 300, "--gap", SO_REQ_SEP },
    { 'h', "--help", SO_NONE },
@@ -112,6 +114,7 @@ struct Options {
    int contrast;
    bool decode;
    unsigned debugLevel;
+   bool debugfile;
    unsigned dpi;
    double gap;
    bool help;
@@ -140,6 +143,7 @@ struct Options {
       cellDistance = 0.33;
       decode = false;
       debugLevel = 0;
+      debugfile = false;
       dpi = 300;
       gap = 0.0;
       help = false;
@@ -182,10 +186,13 @@ const char * Application::INI_FILE_NAME = "scanlib.ini";
 Application::Application(int argc, char ** argv) {
    progname = strrchr((char *) argv[0], DIR_SEP_CHR) + 1;
 
-   ua::LoggerSinkStdout::Instance().showHeader(true);
-   ua::logstream.sink(ua::LoggerSinkStdout::Instance());
-
    getCmdOptions(argc, argv);
+
+   ua::LoggerSinkStdout::Instance().showHeader(true);
+   if (!options.debugfile) {
+	   ua::logstream.sink(ua::LoggerSinkStdout::Instance());
+   }
+   configLogging(options.debugLevel, options.debugfile);
 
    if (options.help) {
       usage();
@@ -193,8 +200,6 @@ Application::Application(int argc, char ** argv) {
    }
 
    int result = SC_FAIL;
-
-   configLogging(options.debugLevel, false);
 
    if (options.decode) {
       if (options.infile != NULL) {
@@ -324,6 +329,10 @@ bool Application::getCmdOptions(int argc, char ** argv) {
                   exit(1);
                }
                break;
+
+            case 208:
+            	options.debugfile = true;
+            	break;
 
             case 301:
                options.squareDev = strtoul((const char *) args.OptionArg(),

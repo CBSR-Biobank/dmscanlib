@@ -22,10 +22,11 @@ do
                     do
                         img_basename=`basename $image`
                         log="${sqdev}_${thresh}_${gap}_${corr}_${celldist}_${img_basename}.log"
-                        out=`$PROG --debug 9 -d -p 1 --square-dev $sqdev --threshold $thresh --gap $gap --corrections $corr --celldist $celldist -i $image | tee $log`
+                        out=`$PROG --debug 9 --debugfile -d -p 1 --square-dev $sqdev --threshold $thresh --gap $gap --corrections $corr --celldist $celldist -i $image`
+                        mv scanlib.log "$log"
                         tubecnt=`cat scanlib.txt | wc -l`
                         tubecnt=`expr $tubecnt - 1`
-                        echo "$sqdev,$thresh,$gap,$corr,$celldist,$image,$tubecnt,$out"
+                        echo "$sqdev,$thresh,$gap,$corr,$celldist,$image,$tubecnt,${out/return code is: /}"
                     done
                 done
             done
