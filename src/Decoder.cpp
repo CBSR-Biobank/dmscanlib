@@ -14,10 +14,8 @@
 #include "BinRegion.h"
 
 #include <iostream>
-#include <string.h>
 #include <math.h>
 #include <string>
-//#include <sstream>
 #include <limits>
 #include <vector>
 #include <cmath>
@@ -68,11 +66,18 @@ Decoder::~Decoder() {
 	}
 }
 
+void Decoder::initCells(unsigned maxRows, unsigned maxCols) {
+	cells.resize(maxRows);
+	for (unsigned row = 0; row < maxRows; ++row) {
+		cells[row].resize(maxCols);
+	}
+}
+
 /*
  * Should only be called after regions are loaded from INI file.
  */
 Decoder::ProcessResult Decoder::processImageRegions(unsigned plateNum,
-		Dib & dib, string & msg) {
+		Dib & dib, vector<vector<string> > & cellsRef) {
 
 	if (!processImage(dib))
 		return IMG_INVALID;
@@ -83,7 +88,7 @@ Decoder::ProcessResult Decoder::processImageRegions(unsigned plateNum,
 	if (calcSlotResult != OK) {
 		return calcSlotResult;
 	}
-	getDecodeLoacations(plateNum, msg);
+	cellsRef = cells;
 	return OK;
 }
 
@@ -293,7 +298,7 @@ void Decoder::calcRowsAndColumns() {
 			barcodeInfos[i]->setRowBinRegion(newBinRegion);
 		}
 
-		std::ostringstream msg;
+		ostringstream msg;
 		for (unsigned c = 0, n = colBinRegions.size(); c < n; ++c) {
 			BinRegion & region = *colBinRegions[c];
 			msg << c << " (" << region.getMin() << ", " << region.getMax()
@@ -470,15 +475,7 @@ Decoder::ProcessResult Decoder::calculateSlots(double dpi) {
 	}
 
 	// make sure no barcodes are in the same cells
-	std::vector<std::vector<BarcodeInfo *> > cells;
-	cells.resize(maxRow + 1);
-	for (unsigned row = 0; row <= maxRow; ++row) {
-		cells[row].resize(maxCol + 1);
-		for (unsigned col = 0; col <= maxCol; ++col) {
-			cells[row][col] = NULL;
-		}
-	}
-
+	initCells(maxRow + 1, maxCol + 1);
 	for (unsigned i = 0, n = barcodeInfos.size(); i < n; ++i) {
 		BarcodeInfo & info = *barcodeInfos[i];
 		unsigned row = info.getRowBinRegion().getId();
@@ -487,27 +484,15 @@ Decoder::ProcessResult Decoder::calculateSlots(double dpi) {
 		UA_DOUT(4, 5, "barcode " << i << " (" << (char)('A' + row) << ", "
 				<< col + 1 << ")");
 
-		if (cells[row][col] != NULL) {
+		if (cells[row][col].length() > 0) {
 			UA_DOUT(4, 5, "position (" << (char)('A' + row) << ", "
 					<< col + 1 << ") already occupied");
 			return POS_CALC_ERROR;
 		}
 
-		cells[row][col] = barcodeInfos[i];
+		cells[row][col] = info.getMsg();
 	}
 	return OK;
-}
-
-void Decoder::getDecodeLoacations(unsigned plateNum, string & msg) {
-	std::ostringstream out;
-	out << "#Plate,Row,Col,Barcode" << std::endl;
-	for (unsigned i = 0, n = barcodeInfos.size(); i < n; ++i) {
-		BarcodeInfo & info = *barcodeInfos[i];
-		out << plateNum << "," << (char) ('A' + info.getRowBinRegion().getId())
-				<< "," << info.getColBinRegion().getId() + 1 << ","
-				<< info.getMsg() << std::endl;
-	}
-	msg = out.str();
 }
 
 void Decoder::showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg) {

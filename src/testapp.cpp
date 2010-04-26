@@ -64,36 +64,56 @@ const char
    "  -r, --right NUM      The left coordinate, in inches, for the scanning window.\n"
    "  -b, --bottom NUM     The bottom coordinate, in inches, for the scanning window.\n";
 
+
+enum longOptID {
+	OPT_ID_BRIGHTNESS = 200,
+			OPT_ID_CELLDIST,
+			OPT_ID_CORRECTIONS,
+			OPT_ID_CONTRAST,
+			OPT_ID_DEBUG,
+			OPT_ID_DEBUG_FILE,
+			OPT_ID_DPI,
+			OPT_ID_GAP,
+			OPT_ID_PROCESS_IMAGE,
+			OPT_ID_SELECT,
+			OPT_ID_SQUARE_DEV,
+			OPT_ID_THRESHOLD,
+			OPT_ID_LEFT,
+			OPT_ID_TOP,
+			OPT_ID_RIGHT,
+			OPT_ID_BOTTOM
+};
+
 /* Allowed command line arguments.  */
 CSimpleOptA::SOption longOptions[] = {
-   { 205, "--brightness", SO_REQ_SEP },
-   { 207, "--celldist", SO_REQ_SEP },
-   { 206, "--corrections", SO_REQ_SEP },
-   { 203, "--contrast", SO_REQ_SEP },
+   { OPT_ID_BRIGHTNESS, "--brightness", SO_REQ_SEP },
+   { OPT_ID_CELLDIST, "--celldist", SO_REQ_SEP },
+   { OPT_ID_CORRECTIONS, "--corrections", SO_REQ_SEP },
+   { OPT_ID_CONTRAST, "--contrast", SO_REQ_SEP },
    { 'd', "--decode", SO_NONE },
    { 'd', "-d", SO_NONE },
-   { 200, "--debug", SO_REQ_SEP },
-   { 208, "--debugfile", SO_NONE },
-   { 201, "--dpi", SO_REQ_SEP },
-   { 300, "--gap", SO_REQ_SEP },
+   { OPT_ID_DEBUG, "--debug", SO_REQ_SEP },
+   { OPT_ID_DEBUG_FILE, "--debugfile", SO_NONE },
+   { OPT_ID_DPI, "--dpi", SO_REQ_SEP },
+   { OPT_ID_GAP, "--gap", SO_REQ_SEP },
    { 'h', "--help", SO_NONE },
    { 'h', "--h", SO_NONE },
    { 'i', "--input", SO_REQ_SEP },
    { 'i', "-i", SO_REQ_SEP },
    { 'p', "--plate", SO_REQ_SEP },
    { 'p', "-p", SO_REQ_SEP },
-   { 204, "--processImage", SO_NONE },
+   { OPT_ID_PROCESS_IMAGE, "--processImage", SO_NONE },
    { 'o', "--output", SO_REQ_SEP },
    { 'o', "-o", SO_REQ_SEP },
    { 's', "--scan", SO_NONE },
    { 's', "-s", SO_NONE },
-   { 202, "--select", SO_NONE },
-   { 301, "--square-dev", SO_REQ_SEP },
-   { 302, "--threshold", SO_REQ_SEP },
-   { 400, "--left",  SO_REQ_SEP },
-   { 401, "--top",  SO_REQ_SEP },
-   { 402, "--right",  SO_REQ_SEP },
-   { 403, "--bottom",  SO_REQ_SEP },
+   { OPT_ID_SELECT, "--select", SO_NONE },
+   { OPT_ID_SQUARE_DEV, "--square-dev", SO_REQ_SEP },
+   { OPT_ID_THRESHOLD, "--threshold", SO_REQ_SEP },
+   { OPT_ID_LEFT, "--left",  SO_REQ_SEP },
+   { OPT_ID_TOP, "--top",  SO_REQ_SEP },
+   { OPT_ID_RIGHT, "--right",  SO_REQ_SEP },
+   { OPT_ID_BOTTOM, "--bottom",  SO_REQ_SEP },
    { 'l', "-l",  SO_REQ_SEP },
    { 't', "-t",  SO_REQ_SEP },
    { 'r', "-r",  SO_REQ_SEP },
@@ -115,7 +135,7 @@ struct Options {
    bool decode;
    unsigned debugLevel;
    bool debugfile;
-   unsigned dpi;
+   std::vector<unsigned> dpis;
    double gap;
    bool help;
    char * infile;
@@ -144,7 +164,6 @@ struct Options {
       decode = false;
       debugLevel = 0;
       debugfile = false;
-      dpi = 300;
       gap = 0.0;
       help = false;
       infile = NULL;
@@ -200,6 +219,7 @@ Application::Application(int argc, char ** argv) {
    }
 
    int result = SC_FAIL;
+   unsigned numDpis = options.dpis.size();
 
    if (options.decode) {
       if (options.infile != NULL) {
@@ -207,16 +227,26 @@ Application::Application(int argc, char ** argv) {
                                 options.infile, options.gap, options.squareDev,
                                 options.threshold, options.corrections,
                                 options.cellDistance);
-      } else {
-         result = slDecodePlate(options.debugLevel, options.dpi,
-                 options.brightness, options.contrast, options.plateNum,
-                 options.left, options.top, options.right, options.bottom,
-                 options.gap, options.squareDev, options.threshold,
-                 options.corrections, options.cellDistance);
+      } else if (numDpis == 1) {
+    	  result = slDecodePlate(options.debugLevel, options.dpis[0],
+    			  options.brightness, options.contrast, options.plateNum,
+    			  options.left, options.top, options.right, options.bottom,
+    			  options.gap, options.squareDev, options.threshold,
+    			  options.corrections, options.cellDistance);
+      } else if ((numDpis == 2) || (numDpis == 3)) {
+    	  if (numDpis == 2) {
+    		  options.dpis.push_back(0);
+    	  }
+    	  result = slDecodePlateMultipleDpi(options.debugLevel, options.dpis[0],
+    			  options.dpis[1], options.dpis[2],
+    			  options.brightness, options.contrast, options.plateNum,
+    			  options.left, options.top, options.right, options.bottom,
+    			  options.gap, options.squareDev, options.threshold,
+    			  options.corrections, options.cellDistance);
       }
    } else if (options.scan) {
       if ((options.plateNum < 1) || (options.plateNum > 5)) {
-         result = slScanImage(options.debugLevel, options.dpi,
+         result = slScanImage(options.debugLevel, options.dpis[0],
                               options.brightness, options.contrast, options.left, options.top,
                               options.right, options.bottom,
                               options.outfile);
@@ -244,7 +274,7 @@ bool Application::getCmdOptions(int argc, char ** argv) {
    while (args.Next()) {
       if (args.LastError() == SO_SUCCESS) {
          switch (args.OptionId()) {
-            case 205:
+            case OPT_ID_BRIGHTNESS:
                options.brightness = strtoul((const char *) args.OptionArg(),
                                             &end, 10);
                if (*end != 0) {
@@ -284,7 +314,7 @@ bool Application::getCmdOptions(int argc, char ** argv) {
                options.scan = true;
                break;
 
-            case 200:
+            case OPT_ID_DEBUG:
                options.debugLevel = strtoul((const char *) args.OptionArg(),
                                             &end, 10);
                if (*end != 0) {
@@ -296,9 +326,9 @@ bool Application::getCmdOptions(int argc, char ** argv) {
                                                options.debugLevel);
                break;
 
-            case 201:
-               options.dpi
-                  = strtoul((const char *) args.OptionArg(), &end, 10);
+            case OPT_ID_DPI:
+               options.dpis.push_back(
+                  strtoul((const char *) args.OptionArg(), &end, 10));
                if (*end != 0) {
                   cerr << "invalid value for dpi: " << args.OptionArg()
                        << endl;
@@ -306,11 +336,11 @@ bool Application::getCmdOptions(int argc, char ** argv) {
                }
                break;
 
-            case 202:
+            case OPT_ID_SELECT:
                options.select = true;
                break;
 
-            case 203:
+            case OPT_ID_CONTRAST:
                options.contrast = strtoul((const char *) args.OptionArg(),
                                           &end, 10);
                if (*end != 0) {
@@ -320,7 +350,7 @@ bool Application::getCmdOptions(int argc, char ** argv) {
                }
                break;
 
-            case 206:
+            case OPT_ID_CORRECTIONS:
                options.corrections = strtoul((const char *) args.OptionArg(),
                                           &end, 10);
                if (*end != 0) {
@@ -330,11 +360,11 @@ bool Application::getCmdOptions(int argc, char ** argv) {
                }
                break;
 
-            case 208:
+            case OPT_ID_DEBUG_FILE:
             	options.debugfile = true;
             	break;
 
-            case 301:
+            case OPT_ID_SQUARE_DEV:
                options.squareDev = strtoul((const char *) args.OptionArg(),
                                            &end, 10);
                if (*end != 0) {
@@ -344,7 +374,7 @@ bool Application::getCmdOptions(int argc, char ** argv) {
                }
                break;
 
-            case 302:
+            case OPT_ID_THRESHOLD:
                options.threshold = strtoul((const char *) args.OptionArg(),
                                            &end, 10);
                if (*end != 0) {
@@ -354,16 +384,16 @@ bool Application::getCmdOptions(int argc, char ** argv) {
                }
                break;
 
-            case 207:
-            case 300:
+            case OPT_ID_CELLDIST:
+            case OPT_ID_GAP:
             case 'l':
             case 't':
             case 'r':
             case 'b':
-            case 400:
-            case 401:
-            case 402:
-            case 403: {
+            case OPT_ID_LEFT:
+            case OPT_ID_TOP:
+            case OPT_ID_RIGHT:
+            case OPT_ID_BOTTOM: {
                double num = strtod((const char *) args.OptionArg(),
                                    &end);
                if (*end != 0) {
@@ -372,22 +402,22 @@ bool Application::getCmdOptions(int argc, char ** argv) {
                   exit(1);
                }
 
-               if ((args.OptionId() == 'l') || (args.OptionId() == 400)) {
+               if ((args.OptionId() == 'l') || (args.OptionId() == OPT_ID_LEFT)) {
                   options.left = num;
                }
-               else if ((args.OptionId() == 't') || (args.OptionId() == 401)) {
+               else if ((args.OptionId() == 't') || (args.OptionId() == OPT_ID_TOP)) {
                   options.top = num;
                }
-               else if ((args.OptionId() == 'r') || (args.OptionId() == 402)) {
+               else if ((args.OptionId() == 'r') || (args.OptionId() == OPT_ID_RIGHT)) {
                   options.right = num;
                }
-               else if ((args.OptionId() == 'b') || (args.OptionId() == 403)) {
+               else if ((args.OptionId() == 'b') || (args.OptionId() == OPT_ID_BOTTOM)) {
                   options.bottom = num;
                }
-               else if (args.OptionId() == 207) {
+               else if (args.OptionId() == OPT_ID_CELLDIST) {
                   options.cellDistance = num;
                }
-               else if (args.OptionId() == 300) {
+               else if (args.OptionId() == OPT_ID_GAP) {
                   options.gap = num;
                }
                break;

@@ -33,12 +33,11 @@ public:
 		OK
 	} ProcessResult;
 
-	ProcessResult processImageRegions(unsigned plateNum, Dib & dib, string & msg);
+	ProcessResult processImageRegions(unsigned plateNum, Dib & dib,
+			vector<vector<string> > & cells);
 	void imageShowBarcodes(Dib & dib);
 
 protected:
-	bool decode(DmtxDecode *& dec, unsigned attempts,
-			vector<BarcodeInfo *> & barcodeInfos);
 
 	static const char * INI_SECTION_NAME;
 	static const char * INI_REGION_LABEL;
@@ -52,6 +51,7 @@ protected:
 	vector<BarcodeInfo *> barcodeInfos;
 	vector<BinRegion *>   rowBinRegions;
 	vector<BinRegion *>   colBinRegions;
+	vector<vector<string> > cells;
 	unsigned width;
 	unsigned height;
 	unsigned dpi;
@@ -66,7 +66,9 @@ protected:
 	bool processImage(Dib & dib);
 	void calcRowsAndColumns();
 	ProcessResult calculateSlots(double dpi);
-	void getDecodeLoacations(unsigned plateNum, string & msg);
+	void initCells(unsigned maxRow, unsigned maxCol);
+	bool decode(DmtxDecode *& dec, unsigned attempts,
+			vector<BarcodeInfo *> & barcodeInfos);
 };
 
 #endif /* DECODER_H_ */
