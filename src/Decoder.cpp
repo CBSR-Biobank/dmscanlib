@@ -581,31 +581,12 @@ DmtxImage * Decoder::createDmtxImageFromDib(Dib & dib) {
 		break;
 	}
 
-#if 0
-	height = dib.getHeight();
-	width = dib.getWidth();
-	unsigned rowBytes = width * dib.getBitsPerPixel() / 8;
-	imageBuf = (unsigned char *) malloc(rowBytes * height * sizeof(unsigned char));
-	unsigned char * p = imageBuf;
-	for (unsigned row = 0; row < height; ++row) {
-		memcpy(p, dib.getRowPtr(row), rowBytes);
-		p += rowBytes;
-	}
-
-	// create dmtxImage from the dib
-	DmtxImage * image = dmtxImageCreate(imageBuf, dib.getWidth(),
-			dib.getHeight(), pack);
-
-	//set the properties (pad bytes, flip)
-	dmtxImageSetProp(image, DmtxPropImageFlip, DmtxFlipY); // DIBs are flipped in Y
-#else
 	DmtxImage * image = dmtxImageCreate(dib.getPixelBuffer(), dib.getWidth(),
 			dib.getHeight(), pack);
 
 	//set the properties (pad bytes, flip)
 	dmtxImageSetProp(image, DmtxPropRowPadBytes, padding);
 	dmtxImageSetProp(image, DmtxPropImageFlip, DmtxFlipY); // DIBs are flipped in Y
-#endif
 	return image;
 }
 
