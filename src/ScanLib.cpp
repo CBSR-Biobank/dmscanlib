@@ -261,7 +261,7 @@ int slDecodePlateMultipleDpi(unsigned verbose, unsigned dpi1, unsigned dpi2,
     std::ostringstream filename;
 	ImageGrabber ig;
 	HANDLE h;
-	int result;
+	int result = SC_FAIL;
 	Dib dib;
 	vector<vector<string> > cells;
 	vector<vector<string> > newCells;

@@ -188,8 +188,7 @@ bool Decoder::decode(DmtxDecode *& dec, unsigned attempts,
 }
 
 void Decoder::calcRowsAndColumns() {
-	unsigned numBarcodes = barcodeInfos.size();
-	UA_ASSERTS(numBarcodes != 0, "no barcodes in barcodeInfos vector");
+	UA_ASSERTS(barcodeInfos.size() != 0, "no barcodes in barcodeInfos vector");
 
 	bool insideRowBin;
 	bool insideColBin;
