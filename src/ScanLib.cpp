@@ -140,7 +140,12 @@ int slDecodeCommon(unsigned plateNum, Dib & dib, Decoder & decoder,
 		const char * markedDibFilename, vector<vector<string> > & cellsRef) {
 	string msg;
 
-	Decoder::ProcessResult result = decoder.processImageRegions(plateNum, dib,
+
+	// filter
+	Dib processedDib(dib);
+	processedDib.tpPresetFilter(dib);
+
+	Decoder::ProcessResult result = decoder.processImageRegions(plateNum, processedDib,
 			cellsRef);
 
 	if (result == Decoder::IMG_INVALID) {
@@ -151,7 +156,7 @@ int slDecodeCommon(unsigned plateNum, Dib & dib, Decoder & decoder,
 		return SC_POS_CALC_ERROR;
 	}
 
-	Dib markedDib(dib);
+	Dib markedDib(processedDib);
 	decoder.imageShowBarcodes(markedDib);
 
 	markedDib.writeToFile(markedDibFilename);
@@ -160,7 +165,7 @@ int slDecodeCommon(unsigned plateNum, Dib & dib, Decoder & decoder,
 	Util::difftiime(starttime, endtime, timediff);
 	UA_DOUT(1, 1, "slDecodeCommon: time taken: " << timediff);
 
-	return SC_SUCCESS;
+	return SC_SUCCESS;//return SC_SUCCESS;
 }
 
 int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,

@@ -78,12 +78,16 @@ public:
 	void setPixelsNoPadding(unsigned char * pixels);
 	bool crop(Dib &src, unsigned x0, unsigned y0, unsigned x1, unsigned y1);
 	void convertGrayscale(Dib & src);
+
 	void sobelEdgeDetectionWithMask(Dib & src, int mask1[3][3],
 			int mask2[3][3]);
+
 	void sobelEdgeDetection(Dib & src);
 	void laplaceEdgeDetection(Dib & src);
 	void histEqualization(Dib & src);
 	void line(unsigned x0, unsigned y0, unsigned x1, unsigned y1, RgbQuad & quad);
+	void tpPresetFilter(Dib & src);
+	bool convolve2DFast( Dib & src, float* kernel, int kernelSizeX, int kernelSizeY);
 	void gaussianBlur(Dib & src);
 	void blur(Dib & src);
 	void unsharp(Dib & src);
