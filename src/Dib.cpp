@@ -738,34 +738,27 @@ void Dib::tpPresetFilter(Dib & src){
 			0.06185567f, 0.12371134f, 0.06185567f,
 		};
 
+	// performs poorly on black 2d barcodes on white
 	float dpi400Kernel[9] = {
 			0.0587031f, 0.1222315f, 0.0587031f,
 			0.1222315f,  0.2762618f, 0.1222315f,
 			0.0587031f, 0.1222315f, 0.0587031f,
 		};
 
-	//0.2180301,0.0833527,0.1121398
-	float dpi300Kernel[9] = {
-			0.1121398f,  0.0833527f, 0.1121398f,
-			0.0833527f, 0.2180301f, 0.0833527f,
-			0.1121398f,  0.0833527f, 0.1121398f,
-		};
-
 
 
 	switch (src.getDpi()) {
-
-		case 600:
-			processedDibBuffer1.convolve2DFast(processedDibBuffer2, blankKernel, 3,3);
-			processedDibBuffer2.convolve2DFast(processedDibBuffer1, blurKernel, 3,3);
-			break;
 
 		case 400:
 			processedDibBuffer2.convolve2DFast(processedDibBuffer1, dpi400Kernel, 3,3);
 			break;
 
 		case 300:
-			processedDibBuffer2.convolve2DFast(processedDibBuffer1, dpi300Kernel, 3,3);
+			break;
+
+		default:
+			processedDibBuffer1.convolve2DFast(processedDibBuffer2, blankKernel, 3,3);
+			processedDibBuffer2.convolve2DFast(processedDibBuffer1, blurKernel, 3,3);
 			break;
 
 	}

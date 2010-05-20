@@ -149,8 +149,6 @@ int slDecodeCommon(unsigned plateNum, Dib & dib, Decoder & decoder,
 	Dib processedDib(dib);
 	processedDib.tpPresetFilter(dib);
 
-
-
   	Decoder::ProcessResult result = decoder.processImageRegions(plateNum, processedDib,
 			cellsRef);
 	if (result == Decoder::IMG_INVALID) {
