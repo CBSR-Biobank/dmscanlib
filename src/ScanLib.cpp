@@ -30,6 +30,11 @@
 #include <sstream>
 #include <string>
 
+//XXX KERNELTEST
+#include <ctime>
+#include <cstdlib>
+#include <math.h>
+
 using namespace std;
 
 const char * INI_FILE_NAME = "scanlib.ini";
@@ -140,14 +145,14 @@ int slDecodeCommon(unsigned plateNum, Dib & dib, Decoder & decoder,
 		const char * markedDibFilename, vector<vector<string> > & cellsRef) {
 	string msg;
 
-
 	// filter
 	Dib processedDib(dib);
 	processedDib.tpPresetFilter(dib);
 
-	Decoder::ProcessResult result = decoder.processImageRegions(plateNum, processedDib,
-			cellsRef);
 
+
+  	Decoder::ProcessResult result = decoder.processImageRegions(plateNum, processedDib,
+			cellsRef);
 	if (result == Decoder::IMG_INVALID) {
 		return SC_INVALID_IMAGE;
 	} else if (result == Decoder::POS_INVALID) {
@@ -155,6 +160,7 @@ int slDecodeCommon(unsigned plateNum, Dib & dib, Decoder & decoder,
 	} else if (result == Decoder::POS_CALC_ERROR) {
 		return SC_POS_CALC_ERROR;
 	}
+
 
 	Dib markedDib(processedDib);
 	decoder.imageShowBarcodes(markedDib);
@@ -167,6 +173,7 @@ int slDecodeCommon(unsigned plateNum, Dib & dib, Decoder & decoder,
 
 	return SC_SUCCESS;//return SC_SUCCESS;
 }
+
 
 int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
 		unsigned plateNum, double left, double top, double right,

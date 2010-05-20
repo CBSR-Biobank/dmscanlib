@@ -348,6 +348,22 @@ void Dib::getPixel(unsigned row, unsigned col, RgbQuad & quad) {
 	quad.rgbReserved = 0;
 }
 
+unsigned char Dib::getPixelAvgGrayscale(unsigned row, unsigned col) {
+	UA_ASSERT(row < infoHeader->height);
+	UA_ASSERT(col < infoHeader->width);
+
+	unsigned char * ptr = pixels + row * rowBytes + col * bytesPerPixel;
+
+	if ((infoHeader->bitCount == 24) || (infoHeader->bitCount == 32)) {
+		return (unsigned char) (0.33333 * ptr[0] + 0.33333 * ptr[1] + 0.33333 * ptr[2]);
+	}
+	else if (infoHeader->bitCount == 8) {
+		return *ptr;
+	}
+	UA_ASSERTS(false, "bitCount " << infoHeader->bitCount << " not implemented yet");
+	return  0;
+}
+
 unsigned char Dib::getPixelGrayscale(unsigned row, unsigned col) {
 	UA_ASSERT(row < infoHeader->height);
 	UA_ASSERT(col < infoHeader->width);
@@ -363,6 +379,7 @@ unsigned char Dib::getPixelGrayscale(unsigned row, unsigned col) {
 	UA_ASSERTS(false, "bitCount " << infoHeader->bitCount << " not implemented yet");
 	return  0;
 }
+
 
 void Dib::setPixel(unsigned x, unsigned y, RgbQuad & quad) {
 	UA_ASSERT(x < infoHeader->width);
@@ -703,6 +720,7 @@ void Dib::line(unsigned x0, unsigned y0, unsigned x1, unsigned y1, RgbQuad & qua
 
 void Dib::tpPresetFilter(Dib & src){
 
+	UA_ASSERT_NOT_NULL(src.infoHeader);
 	copyInternals(src);
 
 	Dib processedDibBuffer1(src);
@@ -720,14 +738,40 @@ void Dib::tpPresetFilter(Dib & src){
 			0.06185567f, 0.12371134f, 0.06185567f,
 		};
 
-	processedDibBuffer1.convolve2DFast(processedDibBuffer2,blankKernel, 3, 3);
-	processedDibBuffer2.convolve2DFast(processedDibBuffer1,blurKernel, 3, 3);
+	float dpi400Kernel[9] = {
+			0.0587031f, 0.1222315f, 0.0587031f,
+			0.1222315f,  0.2762618f, 0.1222315f,
+			0.0587031f, 0.1222315f, 0.0587031f,
+		};
+
+	//0.2180301,0.0833527,0.1121398
+	float dpi300Kernel[9] = {
+			0.1121398f,  0.0833527f, 0.1121398f,
+			0.0833527f, 0.2180301f, 0.0833527f,
+			0.1121398f,  0.0833527f, 0.1121398f,
+		};
+
+
+
+	switch (src.getDpi()) {
+
+		case 600:
+			processedDibBuffer1.convolve2DFast(processedDibBuffer2, blankKernel, 3,3);
+			processedDibBuffer2.convolve2DFast(processedDibBuffer1, blurKernel, 3,3);
+			break;
+
+		case 400:
+			processedDibBuffer2.convolve2DFast(processedDibBuffer1, dpi400Kernel, 3,3);
+			break;
+
+		case 300:
+			processedDibBuffer2.convolve2DFast(processedDibBuffer1, dpi300Kernel, 3,3);
+			break;
+
+	}
 
 	memcpy(pixels,processedDibBuffer2.pixels,infoHeader->imageSize); //XXX not sure if this is safe
 }
-
-
-
 
 // 8 bit convolve2D
 // converts the image to gray scale
@@ -1014,12 +1058,6 @@ bool Dib::convolve2DFast(Dib & src, float* kernel, int kernelSizeX, int kernelSi
         ++y;                                        // the starting row index is increased
     }
 
-
-	for (unsigned row = 0; row < src.infoHeader->height; ++row) {
-		for (unsigned col = 0; col < src.infoHeader->width; ++col) {
-			setPixelGrayscale(row, col,	src.getPixelGrayscale(row, col));
-		}
-	}
 
 	for (y = 0; y < dataSizeY; ++y) {
 		for (x = 0; x < dataSizeX; ++x) {

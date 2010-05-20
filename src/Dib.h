@@ -71,6 +71,7 @@ public:
 	unsigned char * getPixelBuffer();
 	unsigned char * getRowPtr(unsigned row);
 	void getPixel(unsigned row, unsigned col, RgbQuad & quad);
+	unsigned char getPixelAvgGrayscale(unsigned row, unsigned col);
 	unsigned char getPixelGrayscale(unsigned row, unsigned col);
 	void setPixel(unsigned row, unsigned col, RgbQuad & quad);
 	void setPixelGrayscale(unsigned row, unsigned col, unsigned char value);
@@ -78,6 +79,8 @@ public:
 	void setPixelsNoPadding(unsigned char * pixels);
 	bool crop(Dib &src, unsigned x0, unsigned y0, unsigned x1, unsigned y1);
 	void convertGrayscale(Dib & src);
+
+
 
 	void sobelEdgeDetectionWithMask(Dib & src, int mask1[3][3],
 			int mask2[3][3]);
