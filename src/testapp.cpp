@@ -39,7 +39,7 @@ const char
    "  -d, --decode         Acquires an image from the scanner and Decodes the 2D barcodes.\n"
    "                       Use with --plate option.\n"
    "  --dpi NUM            Dots per inch to use with scanner.\n"
-   "  --gap NUM            Use scan grid with gap of N pixels (or less) between lines.\n"
+   "  --gap NUM            Use scan grid with gap of NUM inches (or less) between lines.\n"
    "  -h, --help           Displays this text.\n"
    "  -i, --input FILE     Use the specified DIB image file instead of scanner.\n"
    "  -p, --plate NUM      The plate number to use.\n"
