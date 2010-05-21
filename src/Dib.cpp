@@ -742,26 +742,23 @@ void Dib::tpPresetFilter(Dib & src){
 	UA_ASSERT_NOT_NULL(src.infoHeader);
 	copyInternals(src);
 
-	Dib processedDibBuffer1(src);
-	Dib processedDibBuffer2(src);
-
 	switch (src.getDpi()) {
 
 		case 400:
-			processedDibBuffer2.convolve2DFast(processedDibBuffer1, Dib::DPI_400_KERNEL, 3,3);
+			this->convolve2DFast(src, Dib::DPI_400_KERNEL, 3,3);
 			break;
 
 		case 300:
+			memcpy(this->pixels,src.pixels,infoHeader->imageSize);
+			//convert to grayscale?
 			break;
 
 		default:
-			processedDibBuffer1.convolve2DFast(processedDibBuffer2, Dib::BLANK_KERNEL, 3,3);
-			processedDibBuffer2.convolve2DFast(processedDibBuffer1, Dib::BLUR_KERNEL, 3,3);
+			Dib processedDibBuffer;
+			processedDibBuffer.convolve2DFast(src, Dib::BLANK_KERNEL, 3,3);
+			this->convolve2DFast(processedDibBuffer, Dib::BLUR_KERNEL, 3,3);
 			break;
-
 	}
-
-	memcpy(pixels,processedDibBuffer2.pixels,infoHeader->imageSize); //XXX not sure if this is safe
 }
 
 // 8 bit convolve2D
@@ -769,7 +766,6 @@ void Dib::tpPresetFilter(Dib & src){
 bool Dib::convolve2DFast(Dib & src, const float(&kernel) [9], int kernelSizeX, int kernelSizeY){
 
 	UA_ASSERT_NOT_NULL(src.infoHeader);
-
 	copyInternals(src);
 
     unsigned char *in, *out;
@@ -780,28 +776,24 @@ bool Dib::convolve2DFast(Dib & src, const float(&kernel) [9], int kernelSizeX, i
     int rowEnd, colEnd;                             // ending indice for section divider
     float sum;                                      // temp accumulation buffer
     int k, kSize;
-    int dataSizeX, dataSizeY, dataSize1D;
 
-    dataSizeX = (int)src.infoHeader->width;
-    dataSizeY = (int)src.infoHeader->height;
-    dataSize1D = dataSizeX * dataSizeY;
+    // 8 bit grayscale image stored
+    // don't want to modify the entire program, will leave it like this
+    in = new unsigned char[(int)src.infoHeader->width * (int) src.infoHeader->height];
+    out = new unsigned char[(int)src.infoHeader->width * (int) src.infoHeader->height];
 
-
-    in = new unsigned char[dataSize1D];
-    out = new unsigned char[dataSize1D];
     UA_ASSERT_NOT_NULL(in);
     UA_ASSERT_NOT_NULL(out);
 
-
-	for (y = 0; y < dataSizeY; ++y) {
-		for (x = 0; x < dataSizeX; ++x) {
-			in[x + y*dataSizeX] = src.getPixelGrayscale(y, x);
+	for (y = 0; y < (int) src.infoHeader->height; ++y) {
+		for (x = 0; x < (int) src.infoHeader->width; ++x) {
+			in[x + y*(int) src.infoHeader->width] = src.getPixelGrayscale(y, x);
 		}
 	}
 
     // check validity of params
-    if(!in || !out || !kernel) return false;
-    if(dataSizeX <= 0 || kernelSizeX <= 0) return false;
+    if(!in || !out ) return false;
+    if((int) src.infoHeader->width <= 0 || kernelSizeX <= 0) return false;
 
     // find center position of kernel (half of kernel size)
     kCenterX = kernelSizeX >> 1;
@@ -813,21 +805,21 @@ bool Dib::convolve2DFast(Dib & src, const float(&kernel) [9], int kernelSizeX, i
     if(!inPtr) return false;                        // allocation error
 
     // set initial position of multi-cursor, NOTE: it is swapped instead of kernel
-    ptr = in + (dataSizeX * kCenterY + kCenterX); // the first cursor is shifted (kCenterX, kCenterY)
+    ptr = in + ((int) src.infoHeader->width * kCenterY + kCenterX); // the first cursor is shifted (kCenterX, kCenterY)
     for(m=0, t=0; m < kernelSizeY; ++m)
     {
         for(n=0; n < kernelSizeX; ++n, ++t)
         {
             inPtr[t] = ptr - n;
         }
-        ptr -= dataSizeX;
+        ptr -= (int) src.infoHeader->width;
     }
 
     // init working  pointers
     outPtr = out;
 
-    rowEnd = dataSizeY - kCenterY;                  // bottom row partition divider
-    colEnd = dataSizeX - kCenterX;                  // right column partition divider
+    rowEnd = (int) src.infoHeader->height - kCenterY;                  // bottom row partition divider
+    colEnd = (int) src.infoHeader->width - kCenterX;                  // right column partition divider
 
     // convolve rows from index=0 to index=kCenterY-1
     y = kCenterY;
@@ -857,7 +849,7 @@ bool Dib::convolve2DFast(Dib & src, const float(&kernel) [9], int kernelSizeX, i
         }
 
         // partition #2 ***********************************
-        for(j=kCenterX; j < colEnd; ++j)            // column from index=kCenterX to index=(dataSizeX-kCenterX-1)
+        for(j=kCenterX; j < colEnd; ++j)            // column from index=kCenterX to index=((int) src.infoHeader->width-kCenterX-1)
         {
             sum = 0;
             t = 0;
@@ -879,7 +871,7 @@ bool Dib::convolve2DFast(Dib & src, const float(&kernel) [9], int kernelSizeX, i
 
         // partition #3 ***********************************
         x = 1;
-        for(j=colEnd; j < dataSizeX; ++j)           // column from index=(dataSizeX-kCenter) to index=(dataSizeX-1)
+        for(j=colEnd; j < (int) src.infoHeader->width; ++j)           // column from index=((int) src.infoHeader->width-kCenter) to index=((int) src.infoHeader->width-1)
         {
             sum = 0;
             t = x;
@@ -903,7 +895,7 @@ bool Dib::convolve2DFast(Dib & src, const float(&kernel) [9], int kernelSizeX, i
         ++y;                                        // add one more row to convolve for next run
     }
 
-    // convolve rows from index=kCenterY to index=(dataSizeY-kCenterY-1)
+    // convolve rows from index=kCenterY to index=((int) src.infoHeader->height-kCenterY-1)
     for(i= kCenterY; i < rowEnd; ++i)               // number of rows
     {
         // partition #4 ***********************************
@@ -930,7 +922,7 @@ bool Dib::convolve2DFast(Dib & src, const float(&kernel) [9], int kernelSizeX, i
         }
 
         // partition #5 ***********************************
-        for(j = kCenterX; j < colEnd; ++j)          // column from index=kCenterX to index=(dataSizeX-kCenterX-1)
+        for(j = kCenterX; j < colEnd; ++j)          // column from index=kCenterX to index=((int) src.infoHeader->width-kCenterX-1)
         {
             sum = 0;
             t = 0;
@@ -952,7 +944,7 @@ bool Dib::convolve2DFast(Dib & src, const float(&kernel) [9], int kernelSizeX, i
 
         // partition #6 ***********************************
         x = 1;
-        for(j=colEnd; j < dataSizeX; ++j)           // column from index=(dataSizeX-kCenter) to index=(dataSizeX-1)
+        for(j=colEnd; j < (int) src.infoHeader->width; ++j)           // column from index=((int) src.infoHeader->width-kCenter) to index=((int) src.infoHeader->width-1)
         {
             sum = 0;
             t = x;
@@ -974,9 +966,9 @@ bool Dib::convolve2DFast(Dib & src, const float(&kernel) [9], int kernelSizeX, i
         }
     }
 
-    // convolve rows from index=(dataSizeY-kCenterY) to index=(dataSizeY-1)
+    // convolve rows from index=((int) src.infoHeader->height-kCenterY) to index=((int) src.infoHeader->height-1)
     y = 1;
-    for(i= rowEnd; i < dataSizeY; ++i)               // number of rows
+    for(i= rowEnd; i < (int) src.infoHeader->height; ++i)               // number of rows
     {
         // partition #7 ***********************************
         x = kCenterX;
@@ -1003,7 +995,7 @@ bool Dib::convolve2DFast(Dib & src, const float(&kernel) [9], int kernelSizeX, i
         }
 
         // partition #8 ***********************************
-        for(j=kCenterX; j < colEnd; ++j)            // column from index=kCenterX to index=(dataSizeX-kCenterX-1)
+        for(j=kCenterX; j < colEnd; ++j)            // column from index=kCenterX to index=((int) src.infoHeader->width-kCenterX-1)
         {
             sum = 0;
             t = kernelSizeX * y;
@@ -1025,7 +1017,7 @@ bool Dib::convolve2DFast(Dib & src, const float(&kernel) [9], int kernelSizeX, i
 
         // partition #9 ***********************************
         x = 1;
-        for(j=colEnd; j < dataSizeX; ++j)           // column from index=(dataSizeX-kCenter) to index=(dataSizeX-1)
+        for(j=colEnd; j < (int) src.infoHeader->width; ++j)           // column from index=((int) src.infoHeader->width-kCenter) to index=((int) src.infoHeader->width-1)
         {
             sum = 0;
             t = kernelSizeX * y + x;
@@ -1049,9 +1041,9 @@ bool Dib::convolve2DFast(Dib & src, const float(&kernel) [9], int kernelSizeX, i
         ++y;                                        // the starting row index is increased
     }
 
-	for (y = 0; y < dataSizeY; ++y) {
-		for (x = 0; x < dataSizeX; ++x) {
-			setPixelGrayscale(y,x,out[x + y*dataSizeX]);
+	for (y = 0; y < (int) src.infoHeader->height; ++y) {
+		for (x = 0; x < (int) src.infoHeader->width; ++x) {
+			setPixelGrayscale(y,x,out[x + y*(int) src.infoHeader->width]);
 		}
 	}
 
