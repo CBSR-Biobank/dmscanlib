@@ -28,6 +28,25 @@ const unsigned Dib::GAUSS_FACTORS[GAUSS_WIDTH] = {
 };
 const unsigned Dib::GAUSS_SUM = 2048;
 
+const float Dib::BLUR_KERNEL[9] = {
+		0.0f, 0.2f, 0.0f,
+		0.2f, 0.2f, 0.2f,
+		0.0f, 0.2f, 0.0f,
+	};
+
+const float Dib::BLANK_KERNEL[9] = {
+		0.06185567f, 0.12371134f, 0.06185567f,
+		0.12371134f, 0.257731959f, 0.12371134f,
+		0.06185567f, 0.12371134f, 0.06185567f,
+	};
+
+// performs poorly on black 2d barcodes on white
+const float Dib::DPI_400_KERNEL[9] = {
+		0.0587031f, 0.1222315f, 0.0587031f,
+		0.1222315f,  0.2762618f, 0.1222315f,
+		0.0587031f, 0.1222315f, 0.0587031f,
+	};
+
 Dib::Dib() :
 	fileHeader(NULL), infoHeader(NULL), colorPalette(NULL), pixels(NULL),
 	isAllocated(false) {
@@ -726,39 +745,18 @@ void Dib::tpPresetFilter(Dib & src){
 	Dib processedDibBuffer1(src);
 	Dib processedDibBuffer2(src);
 
-	float blurKernel[9] = {
-			0.0f, 0.2f, 0.0f,
-			0.2f, 0.2f, 0.2f,
-			0.0f, 0.2f, 0.0f,
-		};
-
-	float blankKernel[9] = {
-			0.06185567f, 0.12371134f, 0.06185567f,
-			0.12371134f, 0.257731959f, 0.12371134f,
-			0.06185567f, 0.12371134f, 0.06185567f,
-		};
-
-	// performs poorly on black 2d barcodes on white
-	float dpi400Kernel[9] = {
-			0.0587031f, 0.1222315f, 0.0587031f,
-			0.1222315f,  0.2762618f, 0.1222315f,
-			0.0587031f, 0.1222315f, 0.0587031f,
-		};
-
-
-
 	switch (src.getDpi()) {
 
 		case 400:
-			processedDibBuffer2.convolve2DFast(processedDibBuffer1, dpi400Kernel, 3,3);
+			processedDibBuffer2.convolve2DFast(processedDibBuffer1, Dib::DPI_400_KERNEL, 3,3);
 			break;
 
 		case 300:
 			break;
 
 		default:
-			processedDibBuffer1.convolve2DFast(processedDibBuffer2, blankKernel, 3,3);
-			processedDibBuffer2.convolve2DFast(processedDibBuffer1, blurKernel, 3,3);
+			processedDibBuffer1.convolve2DFast(processedDibBuffer2, Dib::BLANK_KERNEL, 3,3);
+			processedDibBuffer2.convolve2DFast(processedDibBuffer1, Dib::BLUR_KERNEL, 3,3);
 			break;
 
 	}
@@ -768,7 +766,7 @@ void Dib::tpPresetFilter(Dib & src){
 
 // 8 bit convolve2D
 // converts the image to gray scale
-bool Dib::convolve2DFast(Dib & src, float* kernel, int kernelSizeX, int kernelSizeY){
+bool Dib::convolve2DFast(Dib & src, const float(&kernel) [9], int kernelSizeX, int kernelSizeY){
 
 	UA_ASSERT_NOT_NULL(src.infoHeader);
 
@@ -1051,12 +1049,16 @@ bool Dib::convolve2DFast(Dib & src, float* kernel, int kernelSizeX, int kernelSi
         ++y;                                        // the starting row index is increased
     }
 
-
 	for (y = 0; y < dataSizeY; ++y) {
 		for (x = 0; x < dataSizeX; ++x) {
 			setPixelGrayscale(y,x,out[x + y*dataSizeX]);
 		}
 	}
+
+    delete [] inPtr;
+    delete [] in;
+    delete [] out;
+
     return true;
 }
 

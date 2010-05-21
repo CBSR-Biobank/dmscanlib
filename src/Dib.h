@@ -90,7 +90,7 @@ public:
 	void histEqualization(Dib & src);
 	void line(unsigned x0, unsigned y0, unsigned x1, unsigned y1, RgbQuad & quad);
 	void tpPresetFilter(Dib & src);
-	bool convolve2DFast( Dib & src, float* kernel, int kernelSizeX, int kernelSizeY);
+	bool convolve2DFast( Dib & src, const float(&kernel) [9], int kernelSizeX, int kernelSizeY);
 	void gaussianBlur(Dib & src);
 	void blur(Dib & src);
 	void unsharp(Dib & src);
@@ -103,6 +103,11 @@ private:
     static const unsigned GAUSS_WIDTH;
     static const unsigned GAUSS_FACTORS[];
     static const unsigned GAUSS_SUM;
+
+	static const float BLUR_KERNEL[9];
+	static const float BLANK_KERNEL[9];
+	static const float DPI_400_KERNEL[9];
+
 
 	BitmapFileHeader * fileHeader;
 	BitmapInfoHeader * infoHeader;

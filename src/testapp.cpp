@@ -160,6 +160,7 @@ struct Options {
       contrast = numeric_limits<int>::max();
 #endif 
 
+      corrections = 0;
       cellDistance = 0.33;
       decode = false;
       debugLevel = 0;

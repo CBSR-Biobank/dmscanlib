@@ -97,18 +97,18 @@ bool Decoder::processImage(Dib & dib) {
 	width = dib.getWidth();
 	dpi = dib.getDpi();
 
-	DmtxImage & image = *createDmtxImageFromDib(dib);
+	DmtxImage * image = createDmtxImageFromDib(dib);
 	DmtxDecode * dec = NULL;
 
 	UA_DOUT(3, 5, "processImage: image width/" << width
 			<< " image height/" << height
-			<< " row padding/" << dmtxImageGetProp(&image, DmtxPropRowPadBytes)
+			<< " row padding/" << dmtxImageGetProp(image, DmtxPropRowPadBytes)
 			<< " image bits per pixel/"
-			<< dmtxImageGetProp(&image, DmtxPropBitsPerPixel)
+			<< dmtxImageGetProp(image, DmtxPropBitsPerPixel)
 			<< " image row size bytes/"
-			<< dmtxImageGetProp(&image, DmtxPropRowSizeBytes));
+			<< dmtxImageGetProp(image, DmtxPropRowSizeBytes));
 
-	dec = dmtxDecodeCreate(&image, 1);
+	dec = dmtxDecodeCreate(image, 1);
 	UA_ASSERT_NOT_NULL(dec);
 
 	// slightly smaller than the new tube edge
@@ -150,6 +150,7 @@ bool Decoder::processImage(Dib & dib) {
 	);
 
 	dmtxDecodeDestroy(&dec);
+	dmtxImageDestroy(&image);
 
 	if (barcodeInfos.size() == 0) {
 		UA_DOUT(4, 1, "processImage: no barcodes found");

@@ -8,15 +8,15 @@ CORRECTIONS=(0 1 5 10 15 20)
 CELLDIST=(0.32 0.325 0.33 0.335 0.34 0.345 0.35 0.355)
 IMAGES=("$HOME/Desktop/problem_tube_images/5_scanned_20100409.1451.bmp")
 
-for sqdev in "${SQUARE_DEVS[@]}"
+for celldist in "${CELLDIST[@]}"
 do
-    for thresh in "${THRESHOLDS[@]}"
+    for gap in "${GAPS[@]}"
     do
-        for gap in "${GAPS[@]}"
+        for corr in "${CORRECTIONS[@]}"
         do
-            for corr in "${CORRECTIONS[@]}"
+            for thresh in "${THRESHOLDS[@]}"
             do
-                for celldist in "${CELLDIST[@]}"
+                for sqdev in "${SQUARE_DEVS[@]}"
                 do
                     for image in "${IMAGES[@]}"
                     do
