@@ -157,7 +157,6 @@ void Dib::copyInternals(Dib & src) {
 }
 
 unsigned Dib::getPaletteSize(unsigned bitCount) {
-	UA_ASSERT_NOT_NULL(infoHeader);
 	switch (bitCount) {
 	case 1: return 2;
 	case 4: return 16;
@@ -500,6 +499,7 @@ Dib * Dib::convertGrayscale(Dib & src) {
 	Dib * dibBuffer = new Dib(src.getHeight(),src.getWidth(),8);
 
 	dibBuffer->infoHeader->hPixelsPerMeter = src.infoHeader->hPixelsPerMeter;
+	dibBuffer->infoHeader->vPixelsPerMeter = src.infoHeader->vPixelsPerMeter;
 
 	UA_DOUT(9, 9, "convertGrayscale: Made dib");
 
