@@ -145,10 +145,14 @@ int slDecodeCommon(unsigned plateNum, Dib & dib, Decoder & decoder,
 		const char * markedDibFilename, vector<vector<string> > & cellsRef) {
 	string msg;
 
-	Dib processDibBuffer;
+	Dib * grayscaleDib = Dib::convertGrayscale(dib);
 
-	// Filter Scanned Image
-	processDibBuffer.tpPresetFilter(dib);
+	grayscaleDib->writeToFile("bacon.bmp");
+
+	Dib processDibBuffer;
+	processDibBuffer.tpPresetFilter(*grayscaleDib);
+
+	delete grayscaleDib;
 
   	Decoder::ProcessResult result = decoder.processImageRegions(plateNum, processDibBuffer,
 			cellsRef);
@@ -166,6 +170,7 @@ int slDecodeCommon(unsigned plateNum, Dib & dib, Decoder & decoder,
 	Util::getTime(endtime);
 	Util::difftiime(starttime, endtime, timediff);
 	UA_DOUT(1, 1, "slDecodeCommon: time taken: " << timediff);
+
 
 	return SC_SUCCESS;
 }

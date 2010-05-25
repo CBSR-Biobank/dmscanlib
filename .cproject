@@ -882,7 +882,7 @@
 <listOptionValue builtIn="false" value="BUILD_DLL"/>
 <listOptionValue builtIn="false" value="UA_LOGGER"/>
 </option>
-<option id="gnu.cpp.compiler.option.optimization.flags.1773829406" superClass="gnu.cpp.compiler.option.optimization.flags" value="-fno-strict-aliasing" valueType="string"/>
+<option id="gnu.cpp.compiler.option.optimization.flags.1773829406" name="Other optimization flags" superClass="gnu.cpp.compiler.option.optimization.flags" value="-fno-strict-aliasing" valueType="string"/>
 <inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.562958609" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 </tool>
 <tool id="cdt.managedbuild.tool.gnu.c.compiler.mingw.so.release.1621842276" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.mingw.so.release">

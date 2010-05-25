@@ -65,7 +65,7 @@ Dib::Dib(unsigned rows, unsigned cols, unsigned colorBits)  :
 	fileHeader(NULL) {
 	bytesPerPixel = colorBits >> 3;
 
-	unsigned paletteSize = getPaletteSize();
+	unsigned paletteSize = getPaletteSize(colorBits);
 
 	infoHeader = new BitmapInfoHeader;
 	infoHeader->size            = 40;
@@ -78,6 +78,8 @@ Dib::Dib(unsigned rows, unsigned cols, unsigned colorBits)  :
 	infoHeader->vPixelsPerMeter = 0;
 	infoHeader->numColors       = paletteSize;
 	infoHeader->numColorsImp    = 0;
+
+
 
 	if (paletteSize > 0) {
 		colorPalette = new RgbQuad[paletteSize];
@@ -111,7 +113,7 @@ Dib::~Dib() {
 }
 
 void Dib::setPalette() {
-	unsigned paletteSize = getPaletteSize();
+	unsigned paletteSize = getPaletteSize(infoHeader->bitCount);
 	if (paletteSize == 0) return;
 
 	UA_ASSERT_NOT_NULL(colorPalette);
@@ -123,7 +125,7 @@ void Dib::setPalette() {
 }
 
 void Dib::setPalette(RgbQuad * palette) {
-	unsigned paletteSize = getPaletteSize();
+	unsigned paletteSize = getPaletteSize(infoHeader->bitCount);
 	if (paletteSize == 0) return;
 	UA_ASSERT_NOT_NULL(colorPalette);
 	memcpy(colorPalette, palette, paletteSize * sizeof(RgbQuad));
@@ -138,7 +140,7 @@ void Dib::copyInternals(Dib & src) {
 	}
 	*infoHeader = *src.infoHeader;
 
-	unsigned paletteSize = getPaletteSize();
+	unsigned paletteSize = getPaletteSize(infoHeader->bitCount);
 	if (paletteSize > 0) {
 		colorPalette = new RgbQuad[paletteSize];
 		setPalette(src.colorPalette);
@@ -154,9 +156,9 @@ void Dib::copyInternals(Dib & src) {
 	rowPaddingBytes = src.rowPaddingBytes;
 }
 
-unsigned Dib::getPaletteSize() {
+unsigned Dib::getPaletteSize(unsigned bitCount) {
 	UA_ASSERT_NOT_NULL(infoHeader);
-	switch (infoHeader->bitCount) {
+	switch (bitCount) {
 	case 1: return 2;
 	case 4: return 16;
 	case 8: return 256;
@@ -183,7 +185,7 @@ void Dib::readFromHandle(HANDLE handle) {
 	infoHeader->numColors       = dibHeaderPtr->biClrUsed;
 	infoHeader->numColorsImp    = dibHeaderPtr->biClrImportant;
 
-	unsigned paletteSize = getPaletteSize();
+	unsigned paletteSize = getPaletteSize(infoHeader->bitCount);
 	if (paletteSize > 0) {
 		colorPalette = reinterpret_cast<RgbQuad *>(
 				reinterpret_cast<unsigned char *>(dibHeaderPtr)
@@ -245,7 +247,7 @@ void Dib::readFromFile(const char * filename) {
 	infoHeader->numColors       = *(unsigned *)&infoHeaderRaw[0x2E - 0xE];
 	infoHeader->numColorsImp    = *(unsigned *)&infoHeaderRaw[0x32 - 0xE];
 
-	unsigned paletteSize = getPaletteSize();
+	unsigned paletteSize = getPaletteSize(infoHeader->bitCount);
 	if (paletteSize > 0) {
 		colorPalette = new RgbQuad[paletteSize];
 		unsigned paletteBytes = paletteSize * sizeof(RgbQuad);
@@ -277,7 +279,7 @@ bool Dib::writeToFile(const char * filename) {
 
 	unsigned char fileHeaderRaw[0xE];
 	unsigned char infoHeaderRaw[0x28];
-	unsigned paletteSize = getPaletteSize();
+	unsigned paletteSize = getPaletteSize(infoHeader->bitCount);
 	unsigned paletteBytes = paletteSize * sizeof(RgbQuad);
 
 	if (fileHeader != NULL) {
@@ -400,6 +402,9 @@ unsigned char Dib::getPixelGrayscale(unsigned row, unsigned col) {
 }
 
 
+
+
+
 void Dib::setPixel(unsigned x, unsigned y, RgbQuad & quad) {
 	UA_ASSERT(x < infoHeader->width);
 	UA_ASSERT(y < infoHeader->height);
@@ -472,15 +477,35 @@ bool Dib::crop(Dib &src, unsigned x0, unsigned y0, unsigned x1, unsigned y1) {
 	return true;
 }
 
-void Dib::convertGrayscale(Dib & src) {
-	UA_ASSERT_NOT_NULL(src.infoHeader);
+//XXX
+Dib * Dib::convertGrayscale(Dib & src) {
+	UA_ASSERT(src.getBitsPerPixel() == 24 || src.getBitsPerPixel() == 8);
 
-	copyInternals(src);
-	for (unsigned row = 0; row < src.infoHeader->height; ++row) {
-		for (unsigned col = 0; col < src.infoHeader->width; ++col) {
-			setPixelGrayscale(row, col,	src.getPixelGrayscale(row, col));
+	if(src.getBitsPerPixel() == 8){
+
+		UA_DOUT(9, 9, "convertGrayscale: Already grayscale image.");
+		Dib * dibBuffer = new Dib(src);
+		memcpy(dibBuffer->pixels,src.pixels,src.infoHeader->imageSize);
+		return dibBuffer;
+	}
+	UA_DOUT(9, 9, "convertGrayscale: Converting from 24 bit to 8 bit.");
+
+	// 24bpp -> 8bpp
+	Dib * dibBuffer = new Dib(src.getHeight(),src.getWidth(),8);
+
+	UA_DOUT(9, 9, "convertGrayscale: Made dib");
+
+
+	for (unsigned row = 0; row < src.getHeight(); ++row) {
+		for (unsigned col = 0; col < src.getWidth(); ++col) {
+			dibBuffer->setPixelGrayscale(row, col,	src.getPixelGrayscale(row, col));
+			//dibBuffer.setPixelGrayscale(row, col,	src.getPixelAvgGrayscale(row, col));
 		}
 	}
+
+	UA_DOUT(9, 9, "convertGrayscale: Generated 8 bit grayscale image.");
+
+	return dibBuffer;
 }
 
 void Dib::sobelEdgeDetectionWithMask(Dib & src, int mask1[3][3],
@@ -742,18 +767,22 @@ void Dib::tpPresetFilter(Dib & src){
 	UA_ASSERT_NOT_NULL(src.infoHeader);
 	copyInternals(src);
 
+
+
 	switch (src.getDpi()) {
 
 		case 400:
+			UA_DOUT(9, 9, "Applying tpPresetFilter for Dpi 400 ");
 			this->convolve2DFast(src, Dib::DPI_400_KERNEL, 3,3);
 			break;
 
 		case 300:
+			UA_DOUT(9, 9, "Applying tpPresetFilter for Dpi 300 ");
 			memcpy(this->pixels,src.pixels,infoHeader->imageSize);
-			//convert to grayscale?
 			break;
 
 		default:
+			UA_DOUT(9, 9, "Applying tpPresetFilter for Dpi != 300,400");
 			Dib processedDibBuffer;
 			processedDibBuffer.convolve2DFast(src, Dib::BLANK_KERNEL, 3,3);
 			this->convolve2DFast(processedDibBuffer, Dib::BLUR_KERNEL, 3,3);
@@ -761,14 +790,16 @@ void Dib::tpPresetFilter(Dib & src){
 	}
 }
 
+
 // 8 bit convolve2D
-// converts the image to gray scale
-bool Dib::convolve2DFast(Dib & src, const float(&kernel) [9], int kernelSizeX, int kernelSizeY){
+// only works on grayscale
+void Dib::convolve2DFast(Dib & src, const float(&kernel) [9], int kernelSizeX, int kernelSizeY){
 
 	UA_ASSERT_NOT_NULL(src.infoHeader);
-	copyInternals(src);
+	UA_ASSERT(kernelSizeX > 0 && src.infoHeader->width > 0);
+	UA_ASSERT(src.getBitsPerPixel() == 8);
 
-    unsigned char *in, *out;
+	copyInternals(src);
 
     int i, j, m, n, x, y, t;
     unsigned char **inPtr, *outPtr, *ptr;
@@ -777,24 +808,6 @@ bool Dib::convolve2DFast(Dib & src, const float(&kernel) [9], int kernelSizeX, i
     float sum;                                      // temp accumulation buffer
     int k, kSize;
 
-    // 8 bit grayscale image stored
-    // don't want to modify the entire program, will leave it like this
-    in = new unsigned char[(int)src.infoHeader->width * (int) src.infoHeader->height];
-    out = new unsigned char[(int)src.infoHeader->width * (int) src.infoHeader->height];
-
-    UA_ASSERT_NOT_NULL(in);
-    UA_ASSERT_NOT_NULL(out);
-
-	for (y = 0; y < (int) src.infoHeader->height; ++y) {
-		for (x = 0; x < (int) src.infoHeader->width; ++x) {
-			in[x + y*(int) src.infoHeader->width] = src.getPixelGrayscale(y, x);
-		}
-	}
-
-    // check validity of params
-    if(!in || !out ) return false;
-    if((int) src.infoHeader->width <= 0 || kernelSizeX <= 0) return false;
-
     // find center position of kernel (half of kernel size)
     kCenterX = kernelSizeX >> 1;
     kCenterY = kernelSizeY >> 1;
@@ -802,10 +815,10 @@ bool Dib::convolve2DFast(Dib & src, const float(&kernel) [9], int kernelSizeX, i
 
     // allocate memeory for multi-cursor
     inPtr = new unsigned char*[kSize];
-    if(!inPtr) return false;                        // allocation error
+
 
     // set initial position of multi-cursor, NOTE: it is swapped instead of kernel
-    ptr = in + ((int) src.infoHeader->width * kCenterY + kCenterX); // the first cursor is shifted (kCenterX, kCenterY)
+    ptr = src.pixels + ((int) src.infoHeader->width * kCenterY + kCenterX); // the first cursor is shifted (kCenterX, kCenterY)
     for(m=0, t=0; m < kernelSizeY; ++m)
     {
         for(n=0; n < kernelSizeX; ++n, ++t)
@@ -816,7 +829,7 @@ bool Dib::convolve2DFast(Dib & src, const float(&kernel) [9], int kernelSizeX, i
     }
 
     // init working  pointers
-    outPtr = out;
+    outPtr = pixels;
 
     rowEnd = (int) src.infoHeader->height - kCenterY;                  // bottom row partition divider
     colEnd = (int) src.infoHeader->width - kCenterX;                  // right column partition divider
@@ -1040,18 +1053,7 @@ bool Dib::convolve2DFast(Dib & src, const float(&kernel) [9], int kernelSizeX, i
 
         ++y;                                        // the starting row index is increased
     }
-
-	for (y = 0; y < (int) src.infoHeader->height; ++y) {
-		for (x = 0; x < (int) src.infoHeader->width; ++x) {
-			setPixelGrayscale(y,x,out[x + y*(int) src.infoHeader->width]);
-		}
-	}
-
     delete [] inPtr;
-    delete [] in;
-    delete [] out;
-
-    return true;
 }
 
 
