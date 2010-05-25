@@ -107,6 +107,10 @@ Dib::~Dib() {
 	}
 	delete infoHeader;
 
+	if (colorPalette != NULL) {
+		delete [] colorPalette;
+	}
+
 	if ((isAllocated) && (pixels != NULL)) {
 		delete [] pixels;
 	}

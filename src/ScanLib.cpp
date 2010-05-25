@@ -147,8 +147,6 @@ int slDecodeCommon(unsigned plateNum, Dib & dib, Decoder & decoder,
 
 	Dib * grayscaleDib = Dib::convertGrayscale(dib);
 
-	grayscaleDib->writeToFile("bacon.bmp");
-
 	Dib processDibBuffer;
 	processDibBuffer.tpPresetFilter(*grayscaleDib);
 
