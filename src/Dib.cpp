@@ -392,7 +392,7 @@ unsigned char Dib::getPixelGrayscale(unsigned row, unsigned col) {
 	unsigned char * ptr = pixels + row * rowBytes + col * bytesPerPixel;
 
 	if ((infoHeader->bitCount == 24) || (infoHeader->bitCount == 32)) {
-		return (unsigned char) (0.3 * ptr[0] + 0.59 * ptr[1] + 0.11 * ptr[2]);
+		return static_cast<unsigned char>(0.3333 * ptr[0] + 0.3333 * ptr[1] + 0.3333 * ptr[2]);
 	}
 	else if (infoHeader->bitCount == 8) {
 		return *ptr;
@@ -402,18 +402,24 @@ unsigned char Dib::getPixelGrayscale(unsigned row, unsigned col) {
 }
 
 
-
-
-
 void Dib::setPixel(unsigned x, unsigned y, RgbQuad & quad) {
 	UA_ASSERT(x < infoHeader->width);
 	UA_ASSERT(y < infoHeader->height);
 
 	unsigned char * ptr = (pixels + y * rowBytes + x * bytesPerPixel);
 
+	if (infoHeader->bitCount == 8) {
+		setPixelGrayscale(y, x, static_cast<unsigned char>(
+				0.3333 * quad.rgbRed
+				+ 0.3333 * quad.rgbGreen
+				+ 0.3333 * quad.rgbBlue));
+		return;
+	}
+
 	if ((infoHeader->bitCount != 24) && (infoHeader->bitCount != 32)) {
 		UA_ERROR("can't assign RgbQuad to dib");
 	}
+
 	ptr[2] = quad.rgbRed;
 	ptr[1] = quad.rgbGreen;
 	ptr[0] = quad.rgbBlue;
@@ -492,6 +498,8 @@ Dib * Dib::convertGrayscale(Dib & src) {
 
 	// 24bpp -> 8bpp
 	Dib * dibBuffer = new Dib(src.getHeight(),src.getWidth(),8);
+
+	dibBuffer->infoHeader->hPixelsPerMeter = src.infoHeader->hPixelsPerMeter;
 
 	UA_DOUT(9, 9, "convertGrayscale: Made dib");
 
