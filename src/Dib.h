@@ -63,6 +63,8 @@ public:
 
 
 	static Dib * convertGrayscale(Dib & src);
+	static void tpPresetFilter(Dib * img);
+	static void convolve2DFast( Dib * img, const float(&kernel) [9], int kernelSizeX, int kernelSizeY);
 
 #ifdef WIN32
 	void readFromHandle(HANDLE handle);
@@ -90,9 +92,7 @@ public:
 	void laplaceEdgeDetection(Dib & src);
 	void histEqualization(Dib & src);
 	void line(unsigned x0, unsigned y0, unsigned x1, unsigned y1, RgbQuad & quad);
-	void tpPresetFilter(Dib & src);
 	void grayscale(Dib & src);
-	void convolve2DFast( Dib & src, const float(&kernel) [9], int kernelSizeX, int kernelSizeY);
 	void gaussianBlur(Dib & src);
 	void blur(Dib & src);
 	void unsharp(Dib & src);

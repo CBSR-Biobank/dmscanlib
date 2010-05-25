@@ -145,25 +145,28 @@ int slDecodeCommon(unsigned plateNum, Dib & dib, Decoder & decoder,
 		const char * markedDibFilename, vector<vector<string> > & cellsRef) {
 	string msg;
 
-	Dib * grayscaleDib = Dib::convertGrayscale(dib);
+	Dib * grayscaleDib;
 
-	Dib processDibBuffer;
-	processDibBuffer.tpPresetFilter(*grayscaleDib);
+	grayscaleDib = Dib::convertGrayscale(dib);
+	UA_ASSERT_NOT_NULL(grayscaleDib);
 
-	delete grayscaleDib;
+	Dib::tpPresetFilter(grayscaleDib);
 
-  	Decoder::ProcessResult result = decoder.processImageRegions(plateNum, processDibBuffer,
-			cellsRef);
-	if (result == Decoder::IMG_INVALID) {
-		return SC_INVALID_IMAGE;
-	} else if (result == Decoder::POS_INVALID) {
-		return SC_INVALID_POSITION;
-	} else if (result == Decoder::POS_CALC_ERROR) {
-		return SC_POS_CALC_ERROR;
+  	Decoder::ProcessResult result = decoder.processImageRegions(plateNum, *grayscaleDib, cellsRef);
+
+  	switch (result) {
+		case Decoder::IMG_INVALID:
+			return SC_INVALID_IMAGE;
+
+		case Decoder::POS_INVALID:
+			return SC_INVALID_POSITION;
+
+		case Decoder::POS_CALC_ERROR:
+			return SC_POS_CALC_ERROR;
 	}
 
-	decoder.imageShowBarcodes(processDibBuffer);
-	processDibBuffer.writeToFile(markedDibFilename);
+	decoder.imageShowBarcodes(*grayscaleDib);
+	grayscaleDib->writeToFile(markedDibFilename);
 
 	Util::getTime(endtime);
 	Util::difftiime(starttime, endtime, timediff);

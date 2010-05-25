@@ -578,7 +578,7 @@ DmtxImage * Decoder::createDmtxImageFromDib(Dib & dib) {
 void Decoder::imageShowBarcodes(Dib & dib) {
 	UA_DOUT(4, 3, "marking tags ");
 
-	RgbQuad quadGreen(0, 255, 0);
+	RgbQuad quadGreen(255, 255, 255); // change to white (shows up better in grayscale)
 	RgbQuad quadRed(255, 0, 0);
 
 	for (unsigned i = 0, n = barcodeInfos.size(); i < n; ++i) {
