@@ -409,10 +409,10 @@ void Dib::setPixel(unsigned x, unsigned y, RgbQuad & quad) {
 	unsigned char * ptr = (pixels + y * rowBytes + x * bytesPerPixel);
 
 	if (infoHeader->bitCount == 8) {
-		setPixelGrayscale(y, x, static_cast<unsigned char>(
+		*ptr = static_cast<unsigned char>(
 				0.3333 * quad.rgbRed
 				+ 0.3333 * quad.rgbGreen
-				+ 0.3333 * quad.rgbBlue));
+				+ 0.3333 * quad.rgbBlue);
 		return;
 	}
 
