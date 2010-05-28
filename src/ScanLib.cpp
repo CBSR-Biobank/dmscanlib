@@ -145,8 +145,7 @@ int slDecodeCommon(unsigned plateNum, Dib & dib, Decoder & decoder,
 		const char * markedDibFilename, vector<vector<string> > & cellsRef) {
 	string msg;
 
-	Dib * grayscaleDib;
-
+	Dib * grayscaleDib = NULL;
 	grayscaleDib = Dib::convertGrayscale(dib);
 	UA_ASSERT_NOT_NULL(grayscaleDib);
 
@@ -156,24 +155,27 @@ int slDecodeCommon(unsigned plateNum, Dib & dib, Decoder & decoder,
 
   	switch (result) {
 		case Decoder::IMG_INVALID:
+			delete grayscaleDib;
 			return SC_INVALID_IMAGE;
 
 		case Decoder::POS_INVALID:
+			delete grayscaleDib;
 			return SC_INVALID_POSITION;
 
 		case Decoder::POS_CALC_ERROR:
+			delete grayscaleDib;
 			return SC_POS_CALC_ERROR;
+
+		default:
+			decoder.imageShowBarcodes(*grayscaleDib);
+			grayscaleDib->writeToFile(markedDibFilename);
+			delete grayscaleDib;
+
+			Util::getTime(endtime);
+			Util::difftiime(starttime, endtime, timediff);
+			UA_DOUT(1, 1, "slDecodeCommon: time taken: " << timediff);
+			return SC_SUCCESS;
 	}
-
-	decoder.imageShowBarcodes(*grayscaleDib);
-	grayscaleDib->writeToFile(markedDibFilename);
-
-	Util::getTime(endtime);
-	Util::difftiime(starttime, endtime, timediff);
-	UA_DOUT(1, 1, "slDecodeCommon: time taken: " << timediff);
-
-
-	return SC_SUCCESS;
 }
 
 
