@@ -595,13 +595,13 @@ void Decoder::imageShowBarcodes(Dib & dib) {
 		dib.line(brCorner.X, tlCorner.Y, tlCorner.X, tlCorner.Y, highlightQuad);
 	}
 
-	unsigned height = dib.getHeight() - 1;
-	unsigned width = dib.getWidth() - 1;
-
 	unsigned logLevel = ua::Logger::Instance().levelGet(3);
 
 	if (logLevel == 0)
 		return;
+
+	unsigned height = dib.getHeight() - 1;
+	unsigned width = dib.getWidth() - 1;
 
 	for (unsigned r = 0, rn = rowBinRegions.size(); r < rn; ++r) {
 		BinRegion & region = *rowBinRegions[r];
