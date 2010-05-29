@@ -92,18 +92,17 @@ int slSelectSourceAsDefault() {
 	return SC_FAIL;
 }
 
-void formatCellMessages(unsigned plateNum,
-		vector<vector<string> > & cells, string & msg) {
+void formatCellMessages(unsigned plateNum, vector<vector<string> > & cells,
+		string & msg) {
 	ostringstream out;
 	out << "#Plate,Row,Col,Barcode" << endl;
 	for (unsigned row = 0, numRows = cells.size(); row < numRows; ++row) {
 		for (unsigned col = 0, numCols = cells[row].size(); col < numCols; ++col) {
-			if (cells[row][col].length() == 0) continue;
+			if (cells[row][col].length() == 0)
+				continue;
 
-			out << plateNum << "," << (char) ('A'
-					+ row) << ","
-					<< col + 1 << ","
-					<< cells[row][col] << endl;
+			out << plateNum << "," << (char) ('A' + row) << "," << col + 1
+					<< "," << cells[row][col] << endl;
 		}
 	}
 	msg = out.str();
@@ -149,35 +148,37 @@ int slDecodeCommon(unsigned plateNum, Dib & dib, Decoder & decoder,
 	grayscaleDib = Dib::convertGrayscale(dib);
 	UA_ASSERT_NOT_NULL(grayscaleDib);
 
-	Dib::tpPresetFilter(grayscaleDib);
+	grayscaleDib->tpPresetFilter();
 
-  	Decoder::ProcessResult result = decoder.processImageRegions(plateNum, *grayscaleDib, cellsRef);
+	Decoder::ProcessResult result = decoder.processImageRegions(plateNum,
+			*grayscaleDib, cellsRef);
 
-  	switch (result) {
-		case Decoder::IMG_INVALID:
-			delete grayscaleDib;
-			return SC_INVALID_IMAGE;
-
-		case Decoder::POS_INVALID:
-			delete grayscaleDib;
-			return SC_INVALID_POSITION;
-
-		case Decoder::POS_CALC_ERROR:
-			delete grayscaleDib;
-			return SC_POS_CALC_ERROR;
-
-		default:
-			decoder.imageShowBarcodes(*grayscaleDib);
-			grayscaleDib->writeToFile(markedDibFilename);
-			delete grayscaleDib;
-
-			Util::getTime(endtime);
-			Util::difftiime(starttime, endtime, timediff);
-			UA_DOUT(1, 1, "slDecodeCommon: time taken: " << timediff);
-			return SC_SUCCESS;
+	if (result == Decoder::OK) {
+		decoder.imageShowBarcodes(*grayscaleDib);
+		grayscaleDib->writeToFile(markedDibFilename);
 	}
-}
+	delete grayscaleDib;
 
+	switch (result) {
+	case Decoder::IMG_INVALID:
+		return SC_INVALID_IMAGE;
+
+	case Decoder::POS_INVALID:
+		return SC_INVALID_POSITION;
+
+	case Decoder::POS_CALC_ERROR:
+		return SC_POS_CALC_ERROR;
+
+	default:
+		; // do nothing
+	}
+
+	// only get here if decoder returned Decoder::OK
+	Util::getTime(endtime);
+	Util::difftiime(starttime, endtime, timediff);
+	UA_DOUT(1, 1, "slDecodeCommon: time taken: " << timediff);
+	return SC_SUCCESS;
+}
 
 int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
 		unsigned plateNum, double left, double top, double right,
@@ -263,7 +264,7 @@ int slDecodePlateMultipleDpi(unsigned verbose, unsigned dpi1, unsigned dpi2,
 #ifdef WIN32
 	Util::getTime(starttime);
 
-	unsigned dpis[] = { dpi1, dpi2, dpi3 };
+	unsigned dpis[] = {dpi1, dpi2, dpi3};
 	for (unsigned i = 0; i < 3; ++i) {
 		if (dpis[i] < 0 || dpis[i] > 2400) {
 			return SC_INVALID_DPI;
@@ -274,7 +275,7 @@ int slDecodePlateMultipleDpi(unsigned verbose, unsigned dpi1, unsigned dpi2,
 		return SC_INVALID_PLATE_NUM;
 	}
 
-    std::ostringstream filename;
+	std::ostringstream filename;
 	ImageGrabber ig;
 	HANDLE h;
 	int result = SC_FAIL;
@@ -289,8 +290,8 @@ int slDecodePlateMultipleDpi(unsigned verbose, unsigned dpi1, unsigned dpi2,
 		UA_ASSERT_NOT_NULL(decoder);
 
 		h
-				= ig.acquireImage(dpis[i], brightness, contrast, left, top, right,
-						bottom);
+		= ig.acquireImage(dpis[i], brightness, contrast, left, top, right,
+				bottom);
 		if (h == NULL) {
 			UA_DOUT(1, 1, "could not acquire plate image: " << plateNum);
 			return SC_FAIL;
@@ -316,7 +317,7 @@ int slDecodePlateMultipleDpi(unsigned verbose, unsigned dpi1, unsigned dpi2,
 					if ((cells[row][col].length() > 0) && (newCells[row][col].length() > 0) && (cells[row][col] != newCells[row][col])) {
 						UA_WARN("current cell and new cell do not match: row/"
 								<< row << " col/" << col << " current/" << cells[row][col]
-                                << " new/" << newCells[row][col]);
+								<< " new/" << newCells[row][col]);
 					} else {
 						cells[row][col] = newCells[row][col];
 					}
@@ -327,7 +328,6 @@ int slDecodePlateMultipleDpi(unsigned verbose, unsigned dpi1, unsigned dpi2,
 		ig.freeImage(h);
 		delete decoder;
 	}
-
 
 	if (result == SC_SUCCESS) {
 		string msg;

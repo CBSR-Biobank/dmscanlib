@@ -19,85 +19,77 @@
 #include <strings.h>
 #endif
 
-
-const double Dib::UNSHARP_RAD  = 8.0;
+const double Dib::UNSHARP_RAD = 8.0;
 const double Dib::UNSHARP_DEPTH = 1.1;
 const unsigned Dib::GAUSS_WIDTH = 12;
-const unsigned Dib::GAUSS_FACTORS[GAUSS_WIDTH] = {
-		1, 11, 55, 165, 330, 462, 462, 330, 165, 55, 11, 1
-};
+const unsigned Dib::GAUSS_FACTORS[GAUSS_WIDTH] = { 1, 11, 55, 165, 330, 462,
+		462, 330, 165, 55, 11, 1 };
 const unsigned Dib::GAUSS_SUM = 2048;
 
-const float Dib::BLUR_KERNEL[9] = {
-		0.0f, 0.2f, 0.0f,
-		0.2f, 0.2f, 0.2f,
-		0.0f, 0.2f, 0.0f,
-	};
+const float Dib::BLUR_KERNEL[9] = { 0.0f, 0.2f, 0.0f, 0.2f, 0.2f, 0.2f, 0.0f,
+		0.2f, 0.0f, };
 
-const float Dib::BLANK_KERNEL[9] = {
-		0.06185567f, 0.12371134f, 0.06185567f,
-		0.12371134f, 0.257731959f, 0.12371134f,
-		0.06185567f, 0.12371134f, 0.06185567f,
-	};
+const float Dib::BLANK_KERNEL[9] = { 0.06185567f, 0.12371134f, 0.06185567f,
+		0.12371134f, 0.257731959f, 0.12371134f, 0.06185567f, 0.12371134f,
+		0.06185567f, };
 
 // performs poorly on black 2d barcodes on white
-const float Dib::DPI_400_KERNEL[9] = {
-		0.0587031f, 0.1222315f, 0.0587031f,
-		0.1222315f,  0.2762618f, 0.1222315f,
-		0.0587031f, 0.1222315f, 0.0587031f,
-	};
+const float
+		Dib::DPI_400_KERNEL[9] = { 0.0587031f, 0.1222315f, 0.0587031f,
+				0.1222315f, 0.2762618f, 0.1222315f, 0.0587031f, 0.1222315f,
+				0.0587031f, };
 
 Dib::Dib() :
 	fileHeader(NULL), infoHeader(NULL), colorPalette(NULL), pixels(NULL),
-	isAllocated(false) {
+			isAllocated(false) {
 	ua::Logger::Instance().subSysHeaderSet(4, "Dib");
 }
 
 Dib::Dib(Dib & src) :
 	fileHeader(NULL), infoHeader(NULL), colorPalette(NULL), pixels(NULL),
-	isAllocated(false) {
+			isAllocated(false) {
 	ua::Logger::Instance().subSysHeaderSet(4, "Dib");
 	copyInternals(src);
 	memcpy(pixels, src.pixels, infoHeader->imageSize);
 }
 
-Dib::Dib(unsigned rows, unsigned cols, unsigned colorBits)  :
-	fileHeader(NULL) {
+Dib::Dib(unsigned rows, unsigned cols, unsigned colorBits) :
+	fileHeader(NULL), colorPalette(NULL) {
 	bytesPerPixel = colorBits >> 3;
 
 	unsigned paletteSize = getPaletteSize(colorBits);
 
 	infoHeader = new BitmapInfoHeader;
-	infoHeader->size            = 40;
-	infoHeader->width           = cols;
-	infoHeader->height          = rows;
-	infoHeader->planes          = 1;
-	infoHeader->bitCount        = colorBits;
-	infoHeader->compression     = 0;
+	infoHeader->size = 40;
+	infoHeader->width = cols;
+	infoHeader->height = rows;
+	infoHeader->planes = 1;
+	infoHeader->bitCount = colorBits;
+	infoHeader->compression = 0;
 	infoHeader->hPixelsPerMeter = 0;
 	infoHeader->vPixelsPerMeter = 0;
-	infoHeader->numColors       = paletteSize;
-	infoHeader->numColorsImp    = 0;
-
-
+	infoHeader->numColors = paletteSize;
+	infoHeader->numColorsImp = 0;
 
 	if (paletteSize > 0) {
 		colorPalette = new RgbQuad[paletteSize];
 		setPalette();
+		UA_DOUT(4, 5, "constructor: color palette created: size "
+				<< paletteSize * sizeof(RgbQuad));
 	}
 
 	rowBytes = getRowBytes(infoHeader->width, infoHeader->bitCount);
 	rowPaddingBytes = rowBytes - (infoHeader->width * bytesPerPixel);
-	infoHeader->imageSize       = infoHeader->height * rowBytes;
+	infoHeader->imageSize = infoHeader->height * rowBytes;
 
 	isAllocated = true;
 	pixels = new unsigned char[infoHeader->imageSize];
 	memset(pixels, 255, infoHeader->imageSize);
+	UA_DOUT(4, 5, "constructor: image size is " << infoHeader->imageSize);
 }
 
 Dib::Dib(char * filename) :
-	fileHeader(NULL), infoHeader(NULL), pixels(NULL),
-	isAllocated(false) {
+	fileHeader(NULL), infoHeader(NULL), pixels(NULL), isAllocated(false) {
 	readFromFile(filename);
 }
 
@@ -108,29 +100,29 @@ Dib::~Dib() {
 	delete infoHeader;
 
 	if (colorPalette != NULL) {
-		delete [] colorPalette;
+		delete[] colorPalette;
 	}
 
 	if ((isAllocated) && (pixels != NULL)) {
-		delete [] pixels;
+		delete[] pixels;
 	}
 }
 
 void Dib::setPalette() {
 	unsigned paletteSize = getPaletteSize(infoHeader->bitCount);
-	if (paletteSize == 0) return;
+	if (paletteSize == 0)
+		return;
 
 	UA_ASSERT_NOT_NULL(colorPalette);
 	for (unsigned i = 0; i < paletteSize; ++i) {
-		colorPalette[i].rgbRed = i;
-		colorPalette[i].rgbGreen = i;
-		colorPalette[i].rgbBlue = i;
+		colorPalette[i].set(i, i, i);
 	}
 }
 
 void Dib::setPalette(RgbQuad * palette) {
 	unsigned paletteSize = getPaletteSize(infoHeader->bitCount);
-	if (paletteSize == 0) return;
+	if (paletteSize == 0)
+		return;
 	UA_ASSERT_NOT_NULL(colorPalette);
 	memcpy(colorPalette, palette, paletteSize * sizeof(RgbQuad));
 }
@@ -162,10 +154,14 @@ void Dib::copyInternals(Dib & src) {
 
 unsigned Dib::getPaletteSize(unsigned bitCount) {
 	switch (bitCount) {
-	case 1: return 2;
-	case 4: return 16;
-	case 8: return 256;
-	default: return 0;
+	case 1:
+		return 2;
+	case 4:
+		return 16;
+	case 8:
+		return 256;
+	default:
+		return 0;
 	}
 
 }
@@ -176,17 +172,17 @@ void Dib::readFromHandle(HANDLE handle) {
 
 	infoHeader = new BitmapInfoHeader;
 
-	infoHeader->size            = dibHeaderPtr->biSize;
-	infoHeader->width           = dibHeaderPtr->biWidth;
-	infoHeader->height          = dibHeaderPtr->biHeight;
-	infoHeader->planes          = dibHeaderPtr->biPlanes;
-	infoHeader->bitCount        = dibHeaderPtr->biBitCount;
-	infoHeader->compression     = dibHeaderPtr->biCompression;
-	infoHeader->imageSize       = dibHeaderPtr->biSizeImage;
+	infoHeader->size = dibHeaderPtr->biSize;
+	infoHeader->width = dibHeaderPtr->biWidth;
+	infoHeader->height = dibHeaderPtr->biHeight;
+	infoHeader->planes = dibHeaderPtr->biPlanes;
+	infoHeader->bitCount = dibHeaderPtr->biBitCount;
+	infoHeader->compression = dibHeaderPtr->biCompression;
+	infoHeader->imageSize = dibHeaderPtr->biSizeImage;
 	infoHeader->hPixelsPerMeter = dibHeaderPtr->biXPelsPerMeter;
 	infoHeader->vPixelsPerMeter = dibHeaderPtr->biYPelsPerMeter;
-	infoHeader->numColors       = dibHeaderPtr->biClrUsed;
-	infoHeader->numColorsImp    = dibHeaderPtr->biClrImportant;
+	infoHeader->numColors = dibHeaderPtr->biClrUsed;
+	infoHeader->numColorsImp = dibHeaderPtr->biClrImportant;
 
 	unsigned paletteSize = getPaletteSize(infoHeader->bitCount);
 	if (paletteSize > 0) {
@@ -196,7 +192,7 @@ void Dib::readFromHandle(HANDLE handle) {
 	}
 
 	pixels = reinterpret_cast<unsigned char *>(dibHeaderPtr) + sizeof(BITMAPINFOHEADER)
-		+ paletteSize * sizeof(RgbQuad);
+	+ paletteSize * sizeof(RgbQuad);
 
 	bytesPerPixel = infoHeader->bitCount >> 3;
 	rowBytes = getRowBytes(infoHeader->width, infoHeader->bitCount);
@@ -232,23 +228,23 @@ void Dib::readFromFile(const char * filename) {
 	r = fread(infoHeaderRaw, sizeof(unsigned char), sizeof(infoHeaderRaw), fh);
 	UA_ASSERT(r = sizeof(infoHeaderRaw));
 
-	fileHeader->type      = *(unsigned short *)&fileHeaderRaw[0];
-	fileHeader->size      = *(unsigned *)&fileHeaderRaw[2];
-	fileHeader->reserved1 = *(unsigned short *)&fileHeaderRaw[6];
-	fileHeader->reserved2 = *(unsigned short *)&fileHeaderRaw[8];
-	fileHeader->offset    = *(unsigned *)&fileHeaderRaw[0xA];
+	fileHeader->type = *(unsigned short *) &fileHeaderRaw[0];
+	fileHeader->size = *(unsigned *) &fileHeaderRaw[2];
+	fileHeader->reserved1 = *(unsigned short *) &fileHeaderRaw[6];
+	fileHeader->reserved2 = *(unsigned short *) &fileHeaderRaw[8];
+	fileHeader->offset = *(unsigned *) &fileHeaderRaw[0xA];
 
-	infoHeader->size            = *(unsigned *)&infoHeaderRaw[0];
-	infoHeader->width           = *(unsigned *)&infoHeaderRaw[0x12 - 0xE];
-	infoHeader->height          = *(unsigned *)&infoHeaderRaw[0x16 - 0xE];
-	infoHeader->planes          = *(unsigned short *)&infoHeaderRaw[0x1A - 0xE];
-	infoHeader->bitCount        = *(unsigned short *)&infoHeaderRaw[0x1C - 0xE];
-	infoHeader->compression     = *(unsigned *)&infoHeaderRaw[0x1E - 0xE];
-	infoHeader->imageSize       = *(unsigned *)&infoHeaderRaw[0x22 - 0xE];
-	infoHeader->hPixelsPerMeter = *(unsigned *)&infoHeaderRaw[0x26 - 0xE];
-	infoHeader->vPixelsPerMeter = *(unsigned *)&infoHeaderRaw[0x2A - 0xE];
-	infoHeader->numColors       = *(unsigned *)&infoHeaderRaw[0x2E - 0xE];
-	infoHeader->numColorsImp    = *(unsigned *)&infoHeaderRaw[0x32 - 0xE];
+	infoHeader->size = *(unsigned *) &infoHeaderRaw[0];
+	infoHeader->width = *(unsigned *) &infoHeaderRaw[0x12 - 0xE];
+	infoHeader->height = *(unsigned *) &infoHeaderRaw[0x16 - 0xE];
+	infoHeader->planes = *(unsigned short *) &infoHeaderRaw[0x1A - 0xE];
+	infoHeader->bitCount = *(unsigned short *) &infoHeaderRaw[0x1C - 0xE];
+	infoHeader->compression = *(unsigned *) &infoHeaderRaw[0x1E - 0xE];
+	infoHeader->imageSize = *(unsigned *) &infoHeaderRaw[0x22 - 0xE];
+	infoHeader->hPixelsPerMeter = *(unsigned *) &infoHeaderRaw[0x26 - 0xE];
+	infoHeader->vPixelsPerMeter = *(unsigned *) &infoHeaderRaw[0x2A - 0xE];
+	infoHeader->numColors = *(unsigned *) &infoHeaderRaw[0x2E - 0xE];
+	infoHeader->numColorsImp = *(unsigned *) &infoHeaderRaw[0x32 - 0xE];
 
 	unsigned paletteSize = getPaletteSize(infoHeader->bitCount);
 	if (paletteSize > 0) {
@@ -273,7 +269,7 @@ void Dib::readFromFile(const char * filename) {
 }
 
 unsigned Dib::getRowBytes(unsigned width, unsigned bitCount) {
-	return static_cast<unsigned>(ceil((width * bitCount) / 32.0)) << 2;
+	return static_cast<unsigned> (ceil((width * bitCount) / 32.0)) << 2;
 }
 
 bool Dib::writeToFile(const char * filename) {
@@ -286,32 +282,32 @@ bool Dib::writeToFile(const char * filename) {
 	unsigned paletteBytes = paletteSize * sizeof(RgbQuad);
 
 	if (fileHeader != NULL) {
-		*(unsigned short *)&fileHeaderRaw[0] = fileHeader->type;
-		*(unsigned *)&fileHeaderRaw[2]       = fileHeader->size;
-		*(unsigned short *)&fileHeaderRaw[6] = fileHeader->reserved1;
-		*(unsigned short *)&fileHeaderRaw[8] = fileHeader->reserved2;
-		*(unsigned *)&fileHeaderRaw[0xA]     = fileHeader->offset;
-	}
-	else {
-		*(unsigned short *)&fileHeaderRaw[0] = 0x4D42;
-		*(unsigned *)&fileHeaderRaw[2]       =
-			infoHeader->imageSize + sizeof(fileHeaderRaw) + sizeof(infoHeaderRaw) + paletteBytes;
-		*(unsigned short *)&fileHeaderRaw[6] = 0;
-		*(unsigned short *)&fileHeaderRaw[8] = 0;
-		*(unsigned *)&fileHeaderRaw[0xA]     = sizeof(fileHeaderRaw) + sizeof(infoHeaderRaw) + paletteBytes;
+		*(unsigned short *) &fileHeaderRaw[0] = fileHeader->type;
+		*(unsigned *) &fileHeaderRaw[2] = fileHeader->size;
+		*(unsigned short *) &fileHeaderRaw[6] = fileHeader->reserved1;
+		*(unsigned short *) &fileHeaderRaw[8] = fileHeader->reserved2;
+		*(unsigned *) &fileHeaderRaw[0xA] = fileHeader->offset;
+	} else {
+		*(unsigned short *) &fileHeaderRaw[0] = 0x4D42;
+		*(unsigned *) &fileHeaderRaw[2] = infoHeader->imageSize
+				+ sizeof(fileHeaderRaw) + sizeof(infoHeaderRaw) + paletteBytes;
+		*(unsigned short *) &fileHeaderRaw[6] = 0;
+		*(unsigned short *) &fileHeaderRaw[8] = 0;
+		*(unsigned *) &fileHeaderRaw[0xA] = sizeof(fileHeaderRaw)
+				+ sizeof(infoHeaderRaw) + paletteBytes;
 	}
 
-	*(unsigned *)&infoHeaderRaw[0]                = infoHeader->size;
-	*(unsigned *)&infoHeaderRaw[0x12 - 0xE]       = infoHeader->width;
-	*(unsigned *)&infoHeaderRaw[0x16 - 0xE]       = infoHeader->height;
-	*(unsigned short *)&infoHeaderRaw[0x1A - 0xE] = infoHeader->planes;
-	*(unsigned short *)&infoHeaderRaw[0x1C - 0xE] = infoHeader->bitCount;
-	*(unsigned *)&infoHeaderRaw[0x1E - 0xE]       = infoHeader->compression;
-	*(unsigned *)&infoHeaderRaw[0x22 - 0xE]       = infoHeader->imageSize;
-	*(unsigned *)&infoHeaderRaw[0x26 - 0xE]       = infoHeader->hPixelsPerMeter;
-	*(unsigned *)&infoHeaderRaw[0x2A - 0xE]       = infoHeader->vPixelsPerMeter;
-	*(unsigned *)&infoHeaderRaw[0x2E - 0xE]       = infoHeader->numColors;
-	*(unsigned *)&infoHeaderRaw[0x32 - 0xE]       = infoHeader->numColorsImp;
+	*(unsigned *) &infoHeaderRaw[0] = infoHeader->size;
+	*(unsigned *) &infoHeaderRaw[0x12 - 0xE] = infoHeader->width;
+	*(unsigned *) &infoHeaderRaw[0x16 - 0xE] = infoHeader->height;
+	*(unsigned short *) &infoHeaderRaw[0x1A - 0xE] = infoHeader->planes;
+	*(unsigned short *) &infoHeaderRaw[0x1C - 0xE] = infoHeader->bitCount;
+	*(unsigned *) &infoHeaderRaw[0x1E - 0xE] = infoHeader->compression;
+	*(unsigned *) &infoHeaderRaw[0x22 - 0xE] = infoHeader->imageSize;
+	*(unsigned *) &infoHeaderRaw[0x26 - 0xE] = infoHeader->hPixelsPerMeter;
+	*(unsigned *) &infoHeaderRaw[0x2A - 0xE] = infoHeader->vPixelsPerMeter;
+	*(unsigned *) &infoHeaderRaw[0x2E - 0xE] = infoHeader->numColors;
+	*(unsigned *) &infoHeaderRaw[0x32 - 0xE] = infoHeader->numColorsImp;
 
 	FILE * fh = fopen(filename, "wb"); // C4996
 	if (fh == NULL) {
@@ -319,7 +315,8 @@ bool Dib::writeToFile(const char * filename) {
 		return false;
 	}
 
-	unsigned r = fwrite(fileHeaderRaw, sizeof(unsigned char), sizeof(fileHeaderRaw), fh);
+	unsigned r = fwrite(fileHeaderRaw, sizeof(unsigned char),
+			sizeof(fileHeaderRaw), fh);
 	UA_ASSERT(r == sizeof(fileHeaderRaw));
 	r = fwrite(infoHeaderRaw, sizeof(unsigned char), sizeof(infoHeaderRaw), fh);
 	UA_ASSERT(r == sizeof(infoHeaderRaw));
@@ -366,9 +363,9 @@ void Dib::getPixel(unsigned row, unsigned col, RgbQuad & quad) {
 	unsigned char * ptr = pixels + row * rowBytes + col * bytesPerPixel;
 
 	assert(infoHeader->bitCount != 8);
-	quad.rgbRed      = ptr[0];
-	quad.rgbGreen    = ptr[1];
-	quad.rgbBlue     = ptr[2];
+	quad.rgbRed = ptr[0];
+	quad.rgbGreen = ptr[1];
+	quad.rgbBlue = ptr[2];
 	quad.rgbReserved = 0;
 }
 
@@ -379,13 +376,13 @@ unsigned char Dib::getPixelAvgGrayscale(unsigned row, unsigned col) {
 	unsigned char * ptr = pixels + row * rowBytes + col * bytesPerPixel;
 
 	if ((infoHeader->bitCount == 24) || (infoHeader->bitCount == 32)) {
-		return (unsigned char) (0.33333 * ptr[0] + 0.33333 * ptr[1] + 0.33333 * ptr[2]);
-	}
-	else if (infoHeader->bitCount == 8) {
+		return (unsigned char) (0.33333 * ptr[0] + 0.33333 * ptr[1] + 0.33333
+				* ptr[2]);
+	} else if (infoHeader->bitCount == 8) {
 		return *ptr;
 	}
 	UA_ASSERTS(false, "bitCount " << infoHeader->bitCount << " not implemented yet");
-	return  0;
+	return 0;
 }
 
 unsigned char Dib::getPixelGrayscale(unsigned row, unsigned col) {
@@ -395,15 +392,14 @@ unsigned char Dib::getPixelGrayscale(unsigned row, unsigned col) {
 	unsigned char * ptr = pixels + row * rowBytes + col * bytesPerPixel;
 
 	if ((infoHeader->bitCount == 24) || (infoHeader->bitCount == 32)) {
-		return static_cast<unsigned char>(0.3333 * ptr[0] + 0.3333 * ptr[1] + 0.3333 * ptr[2]);
-	}
-	else if (infoHeader->bitCount == 8) {
+		return static_cast<unsigned char> (0.3333 * ptr[0] + 0.3333 * ptr[1]
+				+ 0.3333 * ptr[2]);
+	} else if (infoHeader->bitCount == 8) {
 		return *ptr;
 	}
 	UA_ASSERTS(false, "bitCount " << infoHeader->bitCount << " not implemented yet");
-	return  0;
+	return 0;
 }
-
 
 void Dib::setPixel(unsigned x, unsigned y, RgbQuad & quad) {
 	UA_ASSERT(x < infoHeader->width);
@@ -412,10 +408,8 @@ void Dib::setPixel(unsigned x, unsigned y, RgbQuad & quad) {
 	unsigned char * ptr = (pixels + y * rowBytes + x * bytesPerPixel);
 
 	if (infoHeader->bitCount == 8) {
-		*ptr = static_cast<unsigned char>(
-				0.3333 * quad.rgbRed
-				+ 0.3333 * quad.rgbGreen
-				+ 0.3333 * quad.rgbBlue);
+		*ptr = static_cast<unsigned char> (0.3333 * quad.rgbRed + 0.3333
+				* quad.rgbGreen + 0.3333 * quad.rgbBlue);
 		return;
 	}
 
@@ -428,7 +422,7 @@ void Dib::setPixel(unsigned x, unsigned y, RgbQuad & quad) {
 	ptr[0] = quad.rgbBlue;
 }
 
-void Dib::setPixelGrayscale(unsigned row, unsigned col,	unsigned char value) {
+void Dib::setPixelGrayscale(unsigned row, unsigned col, unsigned char value) {
 	UA_ASSERT(row < infoHeader->height);
 	UA_ASSERT(col < infoHeader->width);
 
@@ -438,11 +432,9 @@ void Dib::setPixelGrayscale(unsigned row, unsigned col,	unsigned char value) {
 		ptr[0] = value;
 		ptr[1] = value;
 		ptr[2] = value;
-	}
-	else if (infoHeader->bitCount == 8) {
+	} else if (infoHeader->bitCount == 8) {
 		*ptr = value;
-	}
-	else {
+	} else {
 		assert(0); /* can't assign RgbQuad to dib */
 	}
 }
@@ -459,12 +451,12 @@ bool Dib::crop(Dib &src, unsigned x0, unsigned y0, unsigned x1, unsigned y1) {
 	*infoHeader = *src.infoHeader;
 	bytesPerPixel = src.bytesPerPixel;
 
-	if ((y0 >= infoHeader->height) || (y1 >= infoHeader->height)
-		|| (x0 >= infoHeader->width) || (x1 >= infoHeader->width)) {
-			return false;
+	if ((y0 >= infoHeader->height) || (y1 >= infoHeader->height) || (x0
+			>= infoHeader->width) || (x1 >= infoHeader->width)) {
+		return false;
 	}
 
-	infoHeader->width  = x1 - x0;
+	infoHeader->width = x1 - x0;
 	infoHeader->height = y1 - y0;
 
 	rowBytes = getRowBytes(infoHeader->width, infoHeader->bitCount);
@@ -475,12 +467,12 @@ bool Dib::crop(Dib &src, unsigned x0, unsigned y0, unsigned x1, unsigned y1) {
 	isAllocated = true;
 	pixels = new unsigned char[infoHeader->imageSize];
 
-	unsigned char * srcRowPtr =
-		src.pixels + (src.infoHeader->height - y1) * src.rowBytes + x0 * bytesPerPixel;
+	unsigned char * srcRowPtr = src.pixels + (src.infoHeader->height - y1)
+			* src.rowBytes + x0 * bytesPerPixel;
 	unsigned char * destRowPtr = pixels;
 
-	for (unsigned row = 0; row < infoHeader->height;
-	++row, srcRowPtr += src.rowBytes, destRowPtr += rowBytes) {
+	for (unsigned row = 0; row < infoHeader->height; ++row, srcRowPtr
+			+= src.rowBytes, destRowPtr += rowBytes) {
 		memcpy(destRowPtr, srcRowPtr, infoHeader->width * bytesPerPixel);
 	}
 	return true;
@@ -490,32 +482,31 @@ bool Dib::crop(Dib &src, unsigned x0, unsigned y0, unsigned x1, unsigned y1) {
 Dib * Dib::convertGrayscale(Dib & src) {
 	UA_ASSERT(src.getBitsPerPixel() == 24 || src.getBitsPerPixel() == 8);
 
-	if(src.getBitsPerPixel() == 8){
+	if (src.getBitsPerPixel() == 8) {
 
-		UA_DOUT(9, 9, "convertGrayscale: Already grayscale image.");
-		Dib * dibBuffer = new Dib(src);
-		memcpy(dibBuffer->pixels,src.pixels,src.infoHeader->imageSize);
-		return dibBuffer;
+		UA_DOUT(4, 9, "convertGrayscale: Already grayscale image.");
+		return new Dib(src);
 	}
-	UA_DOUT(9, 9, "convertGrayscale: Converting from 24 bit to 8 bit.");
+
+	UA_DOUT(4, 9, "convertGrayscale: Converting from 24 bit to 8 bit.");
 
 	// 24bpp -> 8bpp
-	Dib * dibBuffer = new Dib(src.getHeight(),src.getWidth(),8);
+	Dib * dibBuffer = new Dib(src.getHeight(), src.getWidth(), 8);
 
 	dibBuffer->infoHeader->hPixelsPerMeter = src.infoHeader->hPixelsPerMeter;
 	dibBuffer->infoHeader->vPixelsPerMeter = src.infoHeader->vPixelsPerMeter;
 
-	UA_DOUT(9, 9, "convertGrayscale: Made dib");
-
+	UA_DOUT(4, 9, "convertGrayscale: Made dib");
 
 	for (unsigned row = 0; row < src.getHeight(); ++row) {
 		for (unsigned col = 0; col < src.getWidth(); ++col) {
-			dibBuffer->setPixelGrayscale(row, col,	src.getPixelGrayscale(row, col));
+			dibBuffer->setPixelGrayscale(row, col, src.getPixelGrayscale(row,
+					col));
 			//dibBuffer.setPixelGrayscale(row, col,	src.getPixelAvgGrayscale(row, col));
 		}
 	}
 
-	UA_DOUT(9, 9, "convertGrayscale: Generated 8 bit grayscale image.");
+	UA_DOUT(4, 9, "convertGrayscale: Generated 8 bit grayscale image.");
 
 	return dibBuffer;
 }
@@ -530,39 +521,38 @@ void Dib::sobelEdgeDetectionWithMask(Dib & src, int mask1[3][3],
 	unsigned width = src.infoHeader->width;
 	unsigned height = src.infoHeader->height;
 
-	unsigned char * srcRowPtr = src.pixels, * destRowPtr = pixels;
-	unsigned char * pixel, * pixelStart, pixelValue;
+	unsigned char * srcRowPtr = src.pixels, *destRowPtr = pixels;
+	unsigned char * pixel, *pixelStart, pixelValue;
 
 	assert(mask1 != NULL);
 
-	for (Y = 0; Y <= height - 1; ++Y, srcRowPtr += rowBytes, destRowPtr += rowBytes)  {
+	for (Y = 0; Y <= height - 1; ++Y, srcRowPtr += rowBytes, destRowPtr
+			+= rowBytes) {
 		pixelStart = srcRowPtr;
-		for (X = 0; X <= width - 1 ; ++X, pixelStart += bytesPerPixel)  {
+		for (X = 0; X <= width - 1; ++X, pixelStart += bytesPerPixel) {
 			sum1 = 0;
 			sum2 = 0;
 
 			/* image boundaries */
-			if ((Y == 0) || (Y == height - 1)
-					|| (X == 0) || (X == width - 1)) {
+			if ((Y == 0) || (Y == height - 1) || (X == 0) || (X == width - 1)) {
 				SUM = 0;
-			}
-			else {
+			} else {
 				/* Convolution starts here */
-				for (J = -1; J <= 1; ++J, pixel += rowBytes)  {
+				for (J = -1; J <= 1; ++J, pixel += rowBytes) {
 					pixel = pixelStart;
-					for (I = -1; I <= 1; ++I, pixel += bytesPerPixel)  {
-						if ((infoHeader->bitCount == 24) || (infoHeader->bitCount == 32)) {
+					for (I = -1; I <= 1; ++I, pixel += bytesPerPixel) {
+						if ((infoHeader->bitCount == 24)
+								|| (infoHeader->bitCount == 32)) {
 							// convert to grayscale
-							pixelValue = (unsigned char)(
-									0.3 * pixel[0] + 0.59 * pixel[1] + 0.11 * pixel[2]);
-						}
-						else {
+							pixelValue = (unsigned char) (0.3 * pixel[0] + 0.59
+									* pixel[1] + 0.11 * pixel[2]);
+						} else {
 							pixelValue = pixel[0];
 						}
 
-						sum1 += pixelValue * mask1[I+1][J+1];
+						sum1 += pixelValue * mask1[I + 1][J + 1];
 						if (mask2 != NULL) {
-							sum2 += pixelValue * mask2[I+1][J+1];
+							sum2 += pixelValue * mask2[I + 1][J + 1];
 
 						}
 					}
@@ -572,11 +562,13 @@ void Dib::sobelEdgeDetectionWithMask(Dib & src, int mask1[3][3],
 				SUM = abs(sum1) + abs(sum2);
 			}
 
-			if (SUM > 255) SUM = 255;
-			if (SUM < 0) SUM = 0;
+			if (SUM > 255)
+				SUM = 255;
+			if (SUM < 0)
+				SUM = 0;
 
 			pixel = destRowPtr + X * bytesPerPixel;
-			pixel[0] = (unsigned char)(255 - SUM);
+			pixel[0] = (unsigned char) (255 - SUM);
 			if ((infoHeader->bitCount == 24) || (infoHeader->bitCount == 32)) {
 				pixel[1] = pixel[2] = pixel[0];
 			}
@@ -593,14 +585,26 @@ void Dib::sobelEdgeDetection(Dib & src) {
 	int GX[3][3], GY[3][3];
 
 	/* 3x3 GX Sobel mask.  Ref: www.cee.hw.ac.uk/hipr/html/sobel.html */
-	GX[0][0] = -1; GX[0][1] = 0; GX[0][2] = 1;
-	GX[1][0] = -2; GX[1][1] = 0; GX[1][2] = 2;
-	GX[2][0] = -1; GX[2][1] = 0; GX[2][2] = 1;
+	GX[0][0] = -1;
+	GX[0][1] = 0;
+	GX[0][2] = 1;
+	GX[1][0] = -2;
+	GX[1][1] = 0;
+	GX[1][2] = 2;
+	GX[2][0] = -1;
+	GX[2][1] = 0;
+	GX[2][2] = 1;
 
 	/* 3x3 GY Sobel mask.  Ref: www.cee.hw.ac.uk/hipr/html/sobel.html */
-	GY[0][0] =  1; GY[0][1] =  2; GY[0][2] =  1;
-	GY[1][0] =  0; GY[1][1] =  0; GY[1][2] =  0;
-	GY[2][0] = -1; GY[2][1] = -2; GY[2][2] = -1;
+	GY[0][0] = 1;
+	GY[0][1] = 2;
+	GY[0][2] = 1;
+	GY[1][0] = 0;
+	GY[1][1] = 0;
+	GY[1][2] = 0;
+	GY[2][0] = -1;
+	GY[2][1] = -2;
+	GY[2][2] = -1;
 
 	copyInternals(src);
 	sobelEdgeDetectionWithMask(src, GY, NULL); //GX, GY);
@@ -621,34 +625,55 @@ void Dib::laplaceEdgeDetection(Dib & src) {
 	copyInternals(src);
 
 	/* 5x5 Laplace mask.  Ref: Myler Handbook p. 135 */
-	MASK[0][0] = -1; MASK[0][1] = -1; MASK[0][2] = -1; MASK[0][3] = -1; MASK[0][4] = -1;
-	MASK[1][0] = -1; MASK[1][1] = -1; MASK[1][2] = -1; MASK[1][3] = -1; MASK[1][4] = -1;
-	MASK[2][0] = -1; MASK[2][1] = -1; MASK[2][2] = 24; MASK[2][3] = -1; MASK[2][4] = -1;
-	MASK[3][0] = -1; MASK[3][1] = -1; MASK[3][2] = -1; MASK[3][3] = -1; MASK[3][4] = -1;
-	MASK[4][0] = -1; MASK[4][1] = -1; MASK[4][2] = -1; MASK[4][3] = -1; MASK[4][4] = -1;
+	MASK[0][0] = -1;
+	MASK[0][1] = -1;
+	MASK[0][2] = -1;
+	MASK[0][3] = -1;
+	MASK[0][4] = -1;
+	MASK[1][0] = -1;
+	MASK[1][1] = -1;
+	MASK[1][2] = -1;
+	MASK[1][3] = -1;
+	MASK[1][4] = -1;
+	MASK[2][0] = -1;
+	MASK[2][1] = -1;
+	MASK[2][2] = 24;
+	MASK[2][3] = -1;
+	MASK[2][4] = -1;
+	MASK[3][0] = -1;
+	MASK[3][1] = -1;
+	MASK[3][2] = -1;
+	MASK[3][3] = -1;
+	MASK[3][4] = -1;
+	MASK[4][0] = -1;
+	MASK[4][1] = -1;
+	MASK[4][2] = -1;
+	MASK[4][3] = -1;
+	MASK[4][4] = -1;
 
-	for (Y = 0; Y <= height - 1; ++Y)  {
-		for (X = 0; X <= width - 1; ++X)  {
+	for (Y = 0; Y <= height - 1; ++Y) {
+		for (X = 0; X <= width - 1; ++X) {
 			SUM = 0;
 
 			/* image boundaries */
 			if ((Y <= 1) || (Y >= height - 2) || (X <= 1) || (X >= width - 2)) {
 				SUM = 0;
-			}
-			else {
+			} else {
 				/* Convolution starts here */
-				for (I = -2; I <= 2; ++I)  {
-					for (J = -2; J <= 2; ++J)  {
+				for (I = -2; I <= 2; ++I) {
+					for (J = -2; J <= 2; ++J) {
 						SUM = SUM + src.getPixelGrayscale(Y + J, X + I)
-						* MASK[I+2][J+2];
+								* MASK[I + 2][J + 2];
 					}
 				}
 			}
 
-			if (SUM > 255)  SUM = 255;
-			if (SUM < 0)    SUM = 0;
+			if (SUM > 255)
+				SUM = 255;
+			if (SUM < 0)
+				SUM = 0;
 
-			setPixelGrayscale(Y, X, (unsigned char)(255 - SUM));
+			setPixelGrayscale(Y, X, (unsigned char) (255 - SUM));
 		}
 	}
 }
@@ -659,12 +684,14 @@ void Dib::laplaceEdgeDetection(Dib & src) {
 void Dib::histEqualization(Dib & src) {
 	UA_ASSERT_NOT_NULL(src.infoHeader);
 
-	unsigned char * srcRowPtr, * destRowPtr, * srcPixel, * destPixel, pixelValue;
+	unsigned char * srcRowPtr, *destRowPtr, *srcPixel, *destPixel, pixelValue;
 	unsigned histogram[256];
-	double totPixels = static_cast<double>(src.infoHeader->height *  src.infoHeader->width);
+	double totPixels = static_cast<double> (src.infoHeader->height
+			* src.infoHeader->width);
 	double sum[256], runningSum;
 	unsigned row, col, i;
-	bool isRgb = (src.infoHeader->bitCount == 24) || (src.infoHeader->bitCount == 32);
+	bool isRgb = (src.infoHeader->bitCount == 24) || (src.infoHeader->bitCount
+			== 32);
 
 	copyInternals(src);
 
@@ -673,18 +700,17 @@ void Dib::histEqualization(Dib & src) {
 
 	srcRowPtr = src.pixels;
 	destRowPtr = pixels;
-	for (row = 0; row < infoHeader->height; ++row,
-		srcRowPtr += src.rowBytes, destRowPtr += rowBytes) {
+	for (row = 0; row < infoHeader->height; ++row, srcRowPtr += src.rowBytes, destRowPtr
+			+= rowBytes) {
 		srcPixel = srcRowPtr;
 		destPixel = destRowPtr;
-		for (col = 0; col < infoHeader->width; ++col,
-			srcPixel += src.bytesPerPixel, destPixel += bytesPerPixel) {
+		for (col = 0; col < infoHeader->width; ++col, srcPixel
+				+= src.bytesPerPixel, destPixel += bytesPerPixel) {
 			if (isRgb) {
 				// convert to grayscale
-				pixelValue = static_cast<unsigned char>(
-						0.3 * srcPixel[0] + 0.59 * srcPixel[1] + 0.11 * srcPixel[2]);
-			}
-			else {
+				pixelValue = static_cast<unsigned char> (0.3 * srcPixel[0]
+						+ 0.59 * srcPixel[1] + 0.11 * srcPixel[2]);
+			} else {
 				pixelValue = srcPixel[0];
 			}
 			histogram[pixelValue]++;
@@ -702,8 +728,9 @@ void Dib::histEqualization(Dib & src) {
 	destRowPtr = pixels;
 	for (row = 0; row < infoHeader->height; ++row, destRowPtr += rowBytes) {
 		destPixel = destRowPtr;
-		for (col = 0; col < infoHeader->width; ++col, destPixel += bytesPerPixel) {
-			destPixel[0] = static_cast<unsigned char>(256 * sum[destPixel[0]]);
+		for (col = 0; col < infoHeader->width; ++col, destPixel
+				+= bytesPerPixel) {
+			destPixel[0] = static_cast<unsigned char> (256 * sum[destPixel[0]]);
 			if (isRgb) {
 				destPixel[1] = destPixel[2] = destPixel[0];
 			}
@@ -720,7 +747,8 @@ void Dib::histEqualization(Dib & src) {
  *
  * Taken from: http://en.wikipedia.org/wiki/Bresenham's_line_algorithm
  */
-void Dib::line(unsigned x0, unsigned y0, unsigned x1, unsigned y1, RgbQuad & quad) {
+void Dib::line(unsigned x0, unsigned y0, unsigned x1, unsigned y1,
+		RgbQuad & quad) {
 	UA_ASSERT_NOT_NULL(infoHeader);
 	UA_ASSERT(y0 < infoHeader->height);
 	UA_ASSERT(y1 < infoHeader->height);
@@ -730,38 +758,51 @@ void Dib::line(unsigned x0, unsigned y0, unsigned x1, unsigned y1, RgbQuad & qua
 	unsigned x, deltax, y, deltay, st;
 	int cx, cy, error, xstep, ystep;
 
-	y0 =  infoHeader->height - y0 - 1;
-	y1 =  infoHeader->height - y1 - 1;
+	y0 = infoHeader->height - y0 - 1;
+	y1 = infoHeader->height - y1 - 1;
 
 	// find largest delta for pixel steps
-	deltax = abs(static_cast<int>(x1) - static_cast<int>(x0));
-	deltay = abs(static_cast<int>(y1) - static_cast<int>(y0));
+	deltax = abs(static_cast<int> (x1) - static_cast<int> (x0));
+	deltay = abs(static_cast<int> (y1) - static_cast<int> (y0));
 
 	st = deltay > deltax;
 
 	// if deltay > deltax then swap x,y
 	if (st) {
-		x0 ^= y0; y0 ^= x0; x0 ^= y0; // swap(x0, y0);
-		x1 ^= y1; y1 ^= x1; x1 ^= y1; // swap(x1, y1);
+		x0 ^= y0;
+		y0 ^= x0;
+		x0 ^= y0; // swap(x0, y0);
+		x1 ^= y1;
+		y1 ^= x1;
+		x1 ^= y1; // swap(x1, y1);
 	}
 
-	deltax = abs(static_cast<int>(x1) - static_cast<int>(x0));
-	deltay = abs(static_cast<int>(y1) - static_cast<int>(y0));
-	error  = (deltax / 2);
+	deltax = abs(static_cast<int> (x1) - static_cast<int> (x0));
+	deltay = abs(static_cast<int> (y1) - static_cast<int> (y0));
+	error = (deltax / 2);
 	y = y0;
 
-	if (x0 > x1) { xstep = -1; }
-	else         { xstep =  1; }
+	if (x0 > x1) {
+		xstep = -1;
+	} else {
+		xstep = 1;
+	}
 
-	if (y0 > y1) { ystep = -1; }
-	else         { ystep =  1; }
+	if (y0 > y1) {
+		ystep = -1;
+	} else {
+		ystep = 1;
+	}
 
 	for (x = x0; x != x1 + xstep; x += xstep) {
-		cx = x; cy = y; // copy of x, copy of y
+		cx = x;
+		cy = y; // copy of x, copy of y
 
 		// if x,y swapped above, swap them back now
 		if (st) {
-			cx ^= cy; cy ^= cx; cx ^= cy;
+			cx ^= cy;
+			cy ^= cx;
+			cx ^= cy;
 		}
 
 		setPixel(cx, cy, quad);
@@ -774,303 +815,283 @@ void Dib::line(unsigned x0, unsigned y0, unsigned x1, unsigned y1, RgbQuad & qua
 	}
 }
 
-void Dib::tpPresetFilter(Dib * img){
-	switch (img->getDpi()) {
+void Dib::tpPresetFilter() {
+	switch (getDpi()) {
 
-		case 400:
-			UA_DOUT(9, 9, "tpPresetFilter: Applying DPI_400_KERNEL");
-			convolve2DFast(img, Dib::DPI_400_KERNEL, 3,3);
-			break;
+	case 400:
+		UA_DOUT(4, 9, "tpPresetFilter: Applying DPI_400_KERNEL");
+		convolve2DFast(Dib::DPI_400_KERNEL, 3, 3);
+		break;
 
-		case 300:
-			UA_DOUT(9, 9, "tpPresetFilter: No filter applied (300 dpi)");
-			break;
+	case 300:
+		UA_DOUT(4, 9, "tpPresetFilter: No filter applied (300 dpi)");
+		break;
 
-		default:
-			UA_DOUT(9, 9, "tpPresetFilter: Applying BLANK_KERNEL");
-			convolve2DFast(img, Dib::BLANK_KERNEL, 3,3);
-			UA_DOUT(9, 9, "tpPresetFilter: Applying BLUR_KERNEL");
-			convolve2DFast(img, Dib::BLUR_KERNEL, 3,3);
-			break;
+	default:
+		UA_DOUT(4, 9, "tpPresetFilter: Applying BLANK_KERNEL");
+		convolve2DFast(Dib::BLANK_KERNEL, 3, 3);
+		UA_DOUT(4, 9, "tpPresetFilter: Applying BLUR_KERNEL");
+		convolve2DFast(Dib::BLUR_KERNEL, 3, 3);
+		break;
 	}
 }
 
-
 // 8 bit convolve2D
-// only works on grayscale
-void Dib::convolve2DFast(Dib * img, const float(&kernel) [9], int kernelSizeX, int kernelSizeY){
+// only works on grayscale DIBs
+void Dib::convolve2DFast(const float(&kernel)[9], int kernelSizeX,
+		int kernelSizeY) {
 
-	UA_ASSERT_NOT_NULL(img);
-	UA_ASSERT(img->infoHeader->imageSize > 0);
-	UA_ASSERT(kernelSizeX > 0 && img->infoHeader->width > 0);
-	UA_ASSERT(img->getBitsPerPixel() == 8);
+	UA_ASSERT(getBitsPerPixel() == 8);
+	UA_ASSERT(infoHeader->imageSize > 0);
+	UA_ASSERT((kernelSizeX > 0) && (infoHeader->width > 0));
 
 	unsigned char *outputBuffer;
 
-    int i, j, m, n, x, y, t;
-    unsigned char **inPtr, *outPtr, *ptr;
-    int kCenterX, kCenterY;
-    int rowEnd, colEnd;                             // ending indice for section divider
-    float sum;                                      // temp accumulation buffer
-    int k, kSize;
+	int i, j, m, n, x, y, t;
+	unsigned char **inPtr, *outPtr, *ptr;
+	int kCenterX, kCenterY;
+	int rowEnd, colEnd; // ending indice for section divider
+	float sum; // temp accumulation buffer
+	int k, kSize;
 
-    // find center position of kernel (half of kernel size)
-    kCenterX = kernelSizeX >> 1;
-    kCenterY = kernelSizeY >> 1;
-    kSize = kernelSizeX * kernelSizeY;              // total kernel size
+	// find center position of kernel (half of kernel size)
+	kCenterX = kernelSizeX >> 1;
+	kCenterY = kernelSizeY >> 1;
+	kSize = kernelSizeX * kernelSizeY; // total kernel size
 
-    // allocate memeory for multi-cursor
-    inPtr = new unsigned char*[kSize];
-    outputBuffer = new unsigned char[img->infoHeader->imageSize];
+	// allocate memeory for multi-cursor
+	inPtr = new unsigned char*[kSize];
+	outputBuffer = new unsigned char[infoHeader->imageSize];
 
+	// set initial position of multi-cursor, NOTE: it is swapped instead of kernel
+	ptr = pixels + ((int) infoHeader->width * kCenterY + kCenterX); // the first cursor is shifted (kCenterX, kCenterY)
+	for (m = 0, t = 0; m < kernelSizeY; ++m) {
+		for (n = 0; n < kernelSizeX; ++n, ++t) {
+			inPtr[t] = ptr - n;
+		}
+		ptr -= (int) infoHeader->width;
+	}
 
-    // set initial position of multi-cursor, NOTE: it is swapped instead of kernel
-    ptr = img->pixels + ((int) img->infoHeader->width * kCenterY + kCenterX); // the first cursor is shifted (kCenterX, kCenterY)
-    for(m=0, t=0; m < kernelSizeY; ++m)
-    {
-        for(n=0; n < kernelSizeX; ++n, ++t)
-        {
-            inPtr[t] = ptr - n;
-        }
-        ptr -= (int) img->infoHeader->width;
-    }
+	// init working  pointers
+	outPtr = outputBuffer;
 
-    // init working  pointers
-    outPtr = outputBuffer;
+	rowEnd = (int) infoHeader->height - kCenterY; // bottom row partition divider
+	colEnd = (int) infoHeader->width - kCenterX; // right column partition divider
 
-    rowEnd = (int) img->infoHeader->height - kCenterY;                  // bottom row partition divider
-    colEnd = (int) img->infoHeader->width - kCenterX;                  // right column partition divider
+	// convolve rows from index=0 to index=kCenterY-1
+	y = kCenterY;
+	for (i = 0; i < kCenterY; ++i) {
+		// partition #1 ***********************************
+		x = kCenterX;
+		for (j = 0; j < kCenterX; ++j) // column from index=0 to index=kCenterX-1
+		{
+			sum = 0;
+			t = 0;
+			for (m = 0; m <= y; ++m) {
+				for (n = 0; n <= x; ++n) {
+					sum += *inPtr[t] * kernel[t];
+					++t;
+				}
+				t += (kernelSizeX - x - 1); // jump to next row
+			}
 
-    // convolve rows from index=0 to index=kCenterY-1
-    y = kCenterY;
-    for(i=0; i < kCenterY; ++i)
-    {
-        // partition #1 ***********************************
-        x = kCenterX;
-        for(j=0; j < kCenterX; ++j)                 // column from index=0 to index=kCenterX-1
-        {
-            sum = 0;
-            t = 0;
-            for(m=0; m <= y; ++m)
-            {
-                for(n=0; n <= x; ++n)
-                {
-                    sum += *inPtr[t] * kernel[t];
-                    ++t;
-                }
-                t += (kernelSizeX - x - 1);         // jump to next row
-            }
+			// store output
+			*outPtr = (unsigned char) ((float) fabs(sum) + 0.5f);
+			++outPtr;
+			++x;
+			for (k = 0; k < kSize; ++k)
+				++inPtr[k]; // move all cursors to next
+		}
 
-            // store output
-            *outPtr = (unsigned char)((float)fabs(sum) + 0.5f);
-            ++outPtr;
-            ++x;
-            for(k=0; k < kSize; ++k) ++inPtr[k];    // move all cursors to next
-        }
+		// partition #2 ***********************************
+		for (j = kCenterX; j < colEnd; ++j) // column from index=kCenterX to index=((int) src.infoHeader->width-kCenterX-1)
+		{
+			sum = 0;
+			t = 0;
+			for (m = 0; m <= y; ++m) {
+				for (n = 0; n < kernelSizeX; ++n) {
+					sum += *inPtr[t] * kernel[t];
+					++t;
+				}
+			}
 
-        // partition #2 ***********************************
-        for(j=kCenterX; j < colEnd; ++j)            // column from index=kCenterX to index=((int) src.infoHeader->width-kCenterX-1)
-        {
-            sum = 0;
-            t = 0;
-            for(m=0; m <= y; ++m)
-            {
-                for(n=0; n < kernelSizeX; ++n)
-                {
-                    sum += *inPtr[t] * kernel[t];
-                    ++t;
-                }
-            }
+			// store output
+			*outPtr = (unsigned char) ((float) fabs(sum) + 0.5f);
+			++outPtr;
+			++x;
+			for (k = 0; k < kSize; ++k)
+				++inPtr[k]; // move all cursors to next
+		}
 
-            // store output
-            *outPtr = (unsigned char)((float)fabs(sum) + 0.5f);
-            ++outPtr;
-            ++x;
-            for(k=0; k < kSize; ++k) ++inPtr[k];    // move all cursors to next
-        }
+		// partition #3 ***********************************
+		x = 1;
+		for (j = colEnd; j < (int) infoHeader->width; ++j) // column from index=((int) src.infoHeader->width-kCenter) to index=((int) src.infoHeader->width-1)
+		{
+			sum = 0;
+			t = x;
+			for (m = 0; m <= y; ++m) {
+				for (n = x; n < kernelSizeX; ++n) {
+					sum += *inPtr[t] * kernel[t];
+					++t;
+				}
+				t += x; // jump to next row
+			}
 
-        // partition #3 ***********************************
-        x = 1;
-        for(j=colEnd; j < (int) img->infoHeader->width; ++j)           // column from index=((int) src.infoHeader->width-kCenter) to index=((int) src.infoHeader->width-1)
-        {
-            sum = 0;
-            t = x;
-            for(m=0; m <= y; ++m)
-            {
-                for(n=x; n < kernelSizeX; ++n)
-                {
-                    sum += *inPtr[t] * kernel[t];
-                    ++t;
-                }
-                t += x;                             // jump to next row
-            }
+			// store output
+			*outPtr = (unsigned char) ((float) fabs(sum) + 0.5f);
+			++outPtr;
+			++x;
+			for (k = 0; k < kSize; ++k)
+				++inPtr[k]; // move all cursors to next
+		}
 
-            // store output
-            *outPtr = (unsigned char)((float)fabs(sum) + 0.5f);
-            ++outPtr;
-            ++x;
-            for(k=0; k < kSize; ++k) ++inPtr[k];    // move all cursors to next
-        }
+		++y; // add one more row to convolve for next run
+	}
 
-        ++y;                                        // add one more row to convolve for next run
-    }
+	// convolve rows from index=kCenterY to index=((int) src.infoHeader->height-kCenterY-1)
+	for (i = kCenterY; i < rowEnd; ++i) // number of rows
+	{
+		// partition #4 ***********************************
+		x = kCenterX;
+		for (j = 0; j < kCenterX; ++j) // column from index=0 to index=kCenterX-1
+		{
+			sum = 0;
+			t = 0;
+			for (m = 0; m < kernelSizeY; ++m) {
+				for (n = 0; n <= x; ++n) {
+					sum += *inPtr[t] * kernel[t];
+					++t;
+				}
+				t += (kernelSizeX - x - 1);
+			}
 
-    // convolve rows from index=kCenterY to index=((int) src.infoHeader->height-kCenterY-1)
-    for(i= kCenterY; i < rowEnd; ++i)               // number of rows
-    {
-        // partition #4 ***********************************
-        x = kCenterX;
-        for(j=0; j < kCenterX; ++j)                 // column from index=0 to index=kCenterX-1
-        {
-            sum = 0;
-            t = 0;
-            for(m=0; m < kernelSizeY; ++m)
-            {
-                for(n=0; n <= x; ++n)
-                {
-                    sum += *inPtr[t] * kernel[t];
-                    ++t;
-                }
-                t += (kernelSizeX - x - 1);
-            }
+			// store output
+			*outPtr = (unsigned char) ((float) fabs(sum) + 0.5f);
+			++outPtr;
+			++x;
+			for (k = 0; k < kSize; ++k)
+				++inPtr[k]; // move all cursors to next
+		}
 
-            // store output
-            *outPtr = (unsigned char)((float)fabs(sum) + 0.5f);
-            ++outPtr;
-            ++x;
-            for(k=0; k < kSize; ++k) ++inPtr[k];    // move all cursors to next
-        }
+		// partition #5 ***********************************
+		for (j = kCenterX; j < colEnd; ++j) // column from index=kCenterX to index=((int) src.infoHeader->width-kCenterX-1)
+		{
+			sum = 0;
+			t = 0;
+			for (m = 0; m < kernelSizeY; ++m) {
+				for (n = 0; n < kernelSizeX; ++n) {
+					sum += *inPtr[t] * kernel[t];
+					++inPtr[t]; // in this partition, all cursors are used to convolve. moving cursors to next is safe here
+					++t;
+				}
+			}
 
-        // partition #5 ***********************************
-        for(j = kCenterX; j < colEnd; ++j)          // column from index=kCenterX to index=((int) src.infoHeader->width-kCenterX-1)
-        {
-            sum = 0;
-            t = 0;
-            for(m=0; m < kernelSizeY; ++m)
-            {
-                for(n=0; n < kernelSizeX; ++n)
-                {
-                    sum += *inPtr[t] * kernel[t];
-                    ++inPtr[t]; // in this partition, all cursors are used to convolve. moving cursors to next is safe here
-                    ++t;
-                }
-            }
+			// store output
+			*outPtr = (unsigned char) ((float) fabs(sum) + 0.5f);
+			++outPtr;
+			++x;
+		}
 
-            // store output
-            *outPtr = (unsigned char)((float)fabs(sum) + 0.5f);
-            ++outPtr;
-            ++x;
-        }
+		// partition #6 ***********************************
+		x = 1;
+		for (j = colEnd; j < (int) infoHeader->width; ++j) // column from index=((int) src.infoHeader->width-kCenter) to index=((int) src.infoHeader->width-1)
+		{
+			sum = 0;
+			t = x;
+			for (m = 0; m < kernelSizeY; ++m) {
+				for (n = x; n < kernelSizeX; ++n) {
+					sum += *inPtr[t] * kernel[t];
+					++t;
+				}
+				t += x;
+			}
 
-        // partition #6 ***********************************
-        x = 1;
-        for(j=colEnd; j < (int) img->infoHeader->width; ++j)           // column from index=((int) src.infoHeader->width-kCenter) to index=((int) src.infoHeader->width-1)
-        {
-            sum = 0;
-            t = x;
-            for(m=0; m < kernelSizeY; ++m)
-            {
-                for(n=x; n < kernelSizeX; ++n)
-                {
-                    sum += *inPtr[t] * kernel[t];
-                    ++t;
-                }
-                t += x;
-            }
+			// store output
+			*outPtr = (unsigned char) ((float) fabs(sum) + 0.5f);
+			++outPtr;
+			++x;
+			for (k = 0; k < kSize; ++k)
+				++inPtr[k]; // move all cursors to next
+		}
+	}
 
-            // store output
-            *outPtr = (unsigned char)((float)fabs(sum) + 0.5f);
-            ++outPtr;
-            ++x;
-            for(k=0; k < kSize; ++k) ++inPtr[k];    // move all cursors to next
-        }
-    }
+	// convolve rows from index=((int) src.infoHeader->height-kCenterY) to index=((int) src.infoHeader->height-1)
+	y = 1;
+	for (i = rowEnd; i < (int) infoHeader->height; ++i) // number of rows
+	{
+		// partition #7 ***********************************
+		x = kCenterX;
+		for (j = 0; j < kCenterX; ++j) // column from index=0 to index=kCenterX-1
+		{
+			sum = 0;
+			t = kernelSizeX * y;
 
-    // convolve rows from index=((int) src.infoHeader->height-kCenterY) to index=((int) src.infoHeader->height-1)
-    y = 1;
-    for(i= rowEnd; i < (int) img->infoHeader->height; ++i)               // number of rows
-    {
-        // partition #7 ***********************************
-        x = kCenterX;
-        for(j=0; j < kCenterX; ++j)                 // column from index=0 to index=kCenterX-1
-        {
-            sum = 0;
-            t = kernelSizeX * y;
+			for (m = y; m < kernelSizeY; ++m) {
+				for (n = 0; n <= x; ++n) {
+					sum += *inPtr[t] * kernel[t];
+					++t;
+				}
+				t += (kernelSizeX - x - 1);
+			}
 
-            for(m=y; m < kernelSizeY; ++m)
-            {
-                for(n=0; n <= x; ++n)
-                {
-                    sum += *inPtr[t] * kernel[t];
-                    ++t;
-                }
-                t += (kernelSizeX - x - 1);
-            }
+			// store output
+			*outPtr = (unsigned char) ((float) fabs(sum) + 0.5f);
+			++outPtr;
+			++x;
+			for (k = 0; k < kSize; ++k)
+				++inPtr[k]; // move all cursors to next
+		}
 
-            // store output
-            *outPtr = (unsigned char)((float)fabs(sum) + 0.5f);
-            ++outPtr;
-            ++x;
-            for(k=0; k < kSize; ++k) ++inPtr[k];    // move all cursors to next
-        }
+		// partition #8 ***********************************
+		for (j = kCenterX; j < colEnd; ++j) // column from index=kCenterX to index=((int) src.infoHeader->width-kCenterX-1)
+		{
+			sum = 0;
+			t = kernelSizeX * y;
+			for (m = y; m < kernelSizeY; ++m) {
+				for (n = 0; n < kernelSizeX; ++n) {
+					sum += *inPtr[t] * kernel[t];
+					++t;
+				}
+			}
 
-        // partition #8 ***********************************
-        for(j=kCenterX; j < colEnd; ++j)            // column from index=kCenterX to index=((int) src.infoHeader->width-kCenterX-1)
-        {
-            sum = 0;
-            t = kernelSizeX * y;
-            for(m=y; m < kernelSizeY; ++m)
-            {
-                for(n=0; n < kernelSizeX; ++n)
-                {
-                    sum += *inPtr[t] * kernel[t];
-                    ++t;
-                }
-            }
+			// store output
+			*outPtr = (unsigned char) ((float) fabs(sum) + 0.5f);
+			++outPtr;
+			++x;
+			for (k = 0; k < kSize; ++k)
+				++inPtr[k];
+		}
 
-            // store output
-            *outPtr = (unsigned char)((float)fabs(sum) + 0.5f);
-            ++outPtr;
-            ++x;
-            for(k=0; k < kSize; ++k) ++inPtr[k];
-        }
+		// partition #9 ***********************************
+		x = 1;
+		for (j = colEnd; j < (int) infoHeader->width; ++j) // column from index=((int) src.infoHeader->width-kCenter) to index=((int) src.infoHeader->width-1)
+		{
+			sum = 0;
+			t = kernelSizeX * y + x;
+			for (m = y; m < kernelSizeY; ++m) {
+				for (n = x; n < kernelSizeX; ++n) {
+					sum += *inPtr[t] * kernel[t];
+					++t;
+				}
+				t += x;
+			}
 
-        // partition #9 ***********************************
-        x = 1;
-        for(j=colEnd; j < (int) img->infoHeader->width; ++j)           // column from index=((int) src.infoHeader->width-kCenter) to index=((int) src.infoHeader->width-1)
-        {
-            sum = 0;
-            t = kernelSizeX * y + x;
-            for(m=y; m < kernelSizeY; ++m)
-            {
-                for(n=x; n < kernelSizeX; ++n)
-                {
-                    sum += *inPtr[t] * kernel[t];
-                    ++t;
-                }
-                t += x;
-            }
+			// store output
+			*outPtr = (unsigned char) ((float) fabs(sum) + 0.5f);
+			++outPtr;
+			++x;
+			for (k = 0; k < kSize; ++k)
+				++inPtr[k]; // move all cursors to next
+		}
 
-            // store output
-            *outPtr = (unsigned char)((float)fabs(sum) + 0.5f);
-            ++outPtr;
-            ++x;
-            for(k=0; k < kSize; ++k) ++inPtr[k];    // move all cursors to next
-        }
+		++y; // the starting row index is increased
+	}
 
-        ++y;                                        // the starting row index is increased
-    }
+	memcpy(pixels, outputBuffer, infoHeader->imageSize);
 
-    for(int i=0; i < (int) img->infoHeader->imageSize;i++)
-    	img->pixels[i] = outputBuffer[i];
-
-    delete [] outputBuffer;
-    delete [] inPtr;
+	delete[] outputBuffer;
+	delete[] inPtr;
 }
-
-
-
-
 
 void Dib::gaussianBlur(Dib & src) {
 	UA_ASSERT_NOT_NULL(src.infoHeader);
@@ -1079,15 +1100,15 @@ void Dib::gaussianBlur(Dib & src) {
 	unsigned char * tmpPixels = new unsigned char[infoHeader->imageSize];
 	UA_ASSERT_NOT_NULL(tmpPixels);
 
-	unsigned char * srcRowPtr, * destRowPtr;
+	unsigned char * srcRowPtr, *destRowPtr;
 	unsigned i, j, k, x, y, sumr, sumg, sumb;
 	unsigned char * pixel;
 
 	for (i = 0; i < infoHeader->width - 1; ++i) {
 		srcRowPtr = src.pixels;
 		destRowPtr = tmpPixels;
-		for (j = 0; j < infoHeader->height - 1; ++j,
-			srcRowPtr += src.rowBytes, destRowPtr += rowBytes) {
+		for (j = 0; j < infoHeader->height - 1; ++j, srcRowPtr += src.rowBytes, destRowPtr
+				+= rowBytes) {
 			sumr = 0;
 			sumg = 0;
 			sumb = 0;
@@ -1097,7 +1118,8 @@ void Dib::gaussianBlur(Dib & src) {
 				if ((x >= 0) && (x < infoHeader->width)) {
 					pixel = &srcRowPtr[x * bytesPerPixel];
 					sumr += pixel[0] * GAUSS_FACTORS[k];
-					if ((infoHeader->bitCount == 24) || (infoHeader->bitCount == 32)) {
+					if ((infoHeader->bitCount == 24) || (infoHeader->bitCount
+							== 32)) {
 						sumg += pixel[1] * GAUSS_FACTORS[k];
 						sumb += pixel[2] * GAUSS_FACTORS[k];
 					}
@@ -1126,7 +1148,8 @@ void Dib::gaussianBlur(Dib & src) {
 				if ((y >= 0) && (y < infoHeader->height)) {
 					pixel = &tmpPixels[y * rowBytes + i * bytesPerPixel];
 					sumr += pixel[0] * GAUSS_FACTORS[k];
-					if ((infoHeader->bitCount == 24) || (infoHeader->bitCount == 32)) {
+					if ((infoHeader->bitCount == 24) || (infoHeader->bitCount
+							== 32)) {
 						sumg += pixel[1] * GAUSS_FACTORS[k];
 						sumb += pixel[2] * GAUSS_FACTORS[k];
 					}
@@ -1159,7 +1182,7 @@ void Dib::blur(Dib & src) {
 	copyInternals(src);
 
 	// SetRadius
-	d |= 1;		// must be odd
+	d |= 1; // must be odd
 	m_Dim = d;
 
 	m_FilterVector = new int[m_Dim];
@@ -1172,7 +1195,7 @@ void Dib::blur(Dib & src) {
 	m_FilterVector[d] = m_Denominator;
 
 	for (unsigned i = 1; i <= d; i++) {
-		i2 = - (int)(i * i);
+		i2 = -(int) (i * i);
 		v = (int) (f * exp(i2 / num));
 		m_FilterVector[d - i] = v;
 		m_FilterVector[d + i] = v;
@@ -1197,17 +1220,19 @@ void Dib::blur(Dib & src) {
 	unsigned char * pPixelSrc;
 	unsigned x;
 
-	unsigned nLines;		// number of lines (horizontal or vertical)
-	unsigned nPixels;		// number of pixels per line
-	unsigned dPixelSrc;		// pixel step in source
-	unsigned dPixelDest;	// pixel step in destination
-	unsigned dLineSrc;		// line step in source
-	unsigned dLineDest;		// line step in destination
+	unsigned nLines; // number of lines (horizontal or vertical)
+	unsigned nPixels; // number of pixels per line
+	unsigned dPixelSrc; // pixel step in source
+	unsigned dPixelDest; // pixel step in destination
+	unsigned dLineSrc; // line step in source
+	unsigned dLineDest; // line step in destination
 	unsigned char srcPixelValue;
 
 	for (k = 0; k < 2; k++) {
-		if (k == 0) bHorizontal = true;
-		else bHorizontal = false;
+		if (k == 0)
+			bHorizontal = true;
+		else
+			bHorizontal = false;
 
 		if (bHorizontal) {
 			nLines = infoHeader->height - 1;
@@ -1216,8 +1241,7 @@ void Dib::blur(Dib & src) {
 			dPixelDest = 3;
 			dLineSrc = src.rowBytes;
 			dLineDest = rowBytes;
-		}
-		else {
+		} else {
 			nLines = infoHeader->width;
 			nPixels = infoHeader->height - 1;
 			dPixelSrc = src.rowBytes;
@@ -1233,35 +1257,41 @@ void Dib::blur(Dib & src) {
 		pLineSrc = pStartSrc;
 		pLineDest = pStartDest;
 
-		for (line = 0; line < nLines; line++, pLineSrc += dLineSrc, pLineDest += dLineDest) {
+		for (line = 0; line < nLines; line++, pLineSrc += dLineSrc, pLineDest
+				+= dLineDest) {
 			// loop through lines
 			pPixelDest = pLineDest;
 
-			for (pxl = 0, pPixelSrc = pLineSrc; pxl < d; pxl++, pPixelDest += dPixelDest) {
+			for (pxl = 0, pPixelSrc = pLineSrc; pxl < d; pxl++, pPixelDest
+					+= dPixelDest) {
 				// loop through pixels in left/top margin
 				pFactors = m_FilterVector + d - pxl;
 
 				xEnd = pxl + d;
-				if (xEnd > nPixels) xEnd = nPixels;
+				if (xEnd > nPixels)
+					xEnd = nPixels;
 
 				denom = 0;
 				sum = 0;
 
 				for (x = 0; x < xEnd; x++, pPixelSrc += dPixelSrc) {
 					denom += *pFactors;
-					if ((infoHeader->bitCount == 24) || (infoHeader->bitCount == 32)) {
-						srcPixelValue = static_cast<unsigned char>(
-							0.3 * pPixelSrc[0] + 0.59 * pPixelSrc[1] + 0.11 * pPixelSrc[2]);
-					}
-					else {
+					if ((infoHeader->bitCount == 24) || (infoHeader->bitCount
+							== 32)) {
+						srcPixelValue = static_cast<unsigned char> (0.3
+								* pPixelSrc[0] + 0.59 * pPixelSrc[1] + 0.11
+								* pPixelSrc[2]);
+					} else {
 						srcPixelValue = pPixelSrc[0];
 					}
 					sum += *pFactors++ * srcPixelValue;
 				}
 
-				if (denom) sum /= denom;
-				pPixelDest[0] = static_cast<unsigned char>(sum);
-				if ((infoHeader->bitCount == 24) || (infoHeader->bitCount == 32)) {
+				if (denom)
+					sum /= denom;
+				pPixelDest[0] = static_cast<unsigned char> (sum);
+				if ((infoHeader->bitCount == 24)
+						|| (infoHeader->bitCount == 32)) {
 					pPixelDest[1] = pPixelDest[2] = pPixelDest[0];
 				}
 			}
@@ -1271,53 +1301,62 @@ void Dib::blur(Dib & src) {
 				pFactors = m_FilterVector;
 				sum = 0;
 
-				for (x = pxl - d, pPixelSrc = &pLineSrc[x * dPixelSrc]; x <= pxl + d; x++, pPixelSrc += dPixelSrc) {
-					if ((infoHeader->bitCount == 24) || (infoHeader->bitCount == 32)) {
-						srcPixelValue = static_cast<unsigned char>(
-							0.3 * pPixelSrc[0] + 0.59 * pPixelSrc[1] + 0.11 * pPixelSrc[2]);
-					}
-					else {
+				for (x = pxl - d, pPixelSrc = &pLineSrc[x * dPixelSrc]; x
+						<= pxl + d; x++, pPixelSrc += dPixelSrc) {
+					if ((infoHeader->bitCount == 24) || (infoHeader->bitCount
+							== 32)) {
+						srcPixelValue = static_cast<unsigned char> (0.3
+								* pPixelSrc[0] + 0.59 * pPixelSrc[1] + 0.11
+								* pPixelSrc[2]);
+					} else {
 						srcPixelValue = pPixelSrc[0];
 					}
 					sum += *pFactors++ * srcPixelValue;
 				}
 
 				sum /= m_Denominator;
-				pPixelDest[0] = static_cast<unsigned char>(sum);
-				if ((infoHeader->bitCount == 24) || (infoHeader->bitCount == 32)) {
+				pPixelDest[0] = static_cast<unsigned char> (sum);
+				if ((infoHeader->bitCount == 24)
+						|| (infoHeader->bitCount == 32)) {
 					pPixelDest[1] = pPixelDest[2] = pPixelDest[0];
 				}
 			}
 
-			for (pxl = nPixels - d; pxl < nPixels; pxl++, pPixelDest += dPixelDest) {
+			for (pxl = nPixels - d; pxl < nPixels; pxl++, pPixelDest
+					+= dPixelDest) {
 				// loop through pixels in right/bottom margin
 				pFactors = m_FilterVector;
 				denom = 0;
 				sum = 0;
 
 				xBegin = pxl - d;
-				if (xBegin < 0) xBegin = 0;
+				if (xBegin < 0)
+					xBegin = 0;
 
-				for (x = xBegin, pPixelSrc = & pLineSrc[x * dPixelSrc]; x < nPixels; x++, pPixelSrc += dPixelSrc) {
+				for (x = xBegin, pPixelSrc = &pLineSrc[x * dPixelSrc]; x
+						< nPixels; x++, pPixelSrc += dPixelSrc) {
 					denom += *pFactors;
-					if ((infoHeader->bitCount == 24) || (infoHeader->bitCount == 32)) {
-						srcPixelValue = static_cast<unsigned char>(
-							0.3 * pPixelSrc[0] + 0.59 * pPixelSrc[1] + 0.11 * pPixelSrc[2]);
-					}
-					else {
+					if ((infoHeader->bitCount == 24) || (infoHeader->bitCount
+							== 32)) {
+						srcPixelValue = static_cast<unsigned char> (0.3
+								* pPixelSrc[0] + 0.59 * pPixelSrc[1] + 0.11
+								* pPixelSrc[2]);
+					} else {
 						srcPixelValue = pPixelSrc[0];
 					}
 					srcPixelValue = pPixelSrc[0];
 					sum += *pFactors++ * srcPixelValue;
 				}
 
-				if (denom) sum /= denom;
-				pPixelDest[0] = static_cast<unsigned char>(sum);
-				if ((infoHeader->bitCount == 24) || (infoHeader->bitCount == 32)) {
+				if (denom)
+					sum /= denom;
+				pPixelDest[0] = static_cast<unsigned char> (sum);
+				if ((infoHeader->bitCount == 24)
+						|| (infoHeader->bitCount == 32)) {
 					pPixelDest[1] = pPixelDest[2] = pPixelDest[0];
 				}
 			}
-		}	// next line
+		} // next line
 
 		pStartSrc++;
 		pStartDest++;
@@ -1331,7 +1370,7 @@ void Dib::unsharp(Dib & src) {
 	double depth = UNSHARP_DEPTH;
 	int denom;
 
-	denom = 10000;	// use an arbitrary denominator, not too small
+	denom = 10000; // use an arbitrary denominator, not too small
 	int dpt = (int) ((double) denom * depth);
 	int v, dptplus = dpt + denom;
 
@@ -1340,21 +1379,22 @@ void Dib::unsharp(Dib & src) {
 	unsigned width = src.infoHeader->width;
 	unsigned height = src.infoHeader->height;
 	unsigned Y, X;
-	unsigned char * srcRowPtr = src.pixels, * destRowPtr = pixels;
-	unsigned char * srcPixel, * destPixel, srcPixelValue, destPixelValue;
+	unsigned char * srcRowPtr = src.pixels, *destRowPtr = pixels;
+	unsigned char * srcPixel, *destPixel, srcPixelValue, destPixelValue;
 
-	for (Y = 0; Y <= height - 1; ++Y, srcRowPtr += rowBytes, destRowPtr += rowBytes)  {
+	for (Y = 0; Y <= height - 1; ++Y, srcRowPtr += rowBytes, destRowPtr
+			+= rowBytes) {
 		srcPixel = srcRowPtr;
 		destPixel = destRowPtr;
 
-		for (X = 0; X <= width - 1 ; ++X, srcPixel += bytesPerPixel, destPixel += bytesPerPixel)  {
+		for (X = 0; X <= width - 1; ++X, srcPixel += bytesPerPixel, destPixel
+				+= bytesPerPixel) {
 			if ((infoHeader->bitCount == 24) || (infoHeader->bitCount == 32)) {
-				srcPixelValue = (unsigned char)(
-						0.3 * srcPixel[0] + 0.59 * srcPixel[1] + 0.11 * srcPixel[2]);
-				destPixelValue = (unsigned char)(
-						0.3 * destPixel[0] + 0.59 * destPixel[1] + 0.11 * destPixel[2]);
-			}
-			else {
+				srcPixelValue = (unsigned char) (0.3 * srcPixel[0] + 0.59
+						* srcPixel[1] + 0.11 * srcPixel[2]);
+				destPixelValue = (unsigned char) (0.3 * destPixel[0] + 0.59
+						* destPixel[1] + 0.11 * destPixel[2]);
+			} else {
 				srcPixelValue = srcPixel[0];
 				destPixelValue = destPixel[0];
 			}
@@ -1364,8 +1404,10 @@ void Dib::unsharp(Dib & src) {
 
 			// Clipping is very essential here. for large values of depth
 			// (> 5.0f) more than half of the pixel values are clipped.
-			if (v > 255) v = 255;
-			if (v < 0) v = 0;
+			if (v > 255)
+				v = 255;
+			if (v < 0)
+				v = 0;
 			destPixel[0] = (unsigned char) v;
 			if ((infoHeader->bitCount == 24) || (infoHeader->bitCount == 32)) {
 				destPixel[1] = destPixel[2] = destPixel[0];
@@ -1376,5 +1418,5 @@ void Dib::unsharp(Dib & src) {
 
 unsigned Dib::getDpi() {
 	// 1 inch = 0.0254 meters
-	return static_cast<unsigned>(infoHeader->hPixelsPerMeter * 0.0254 + 0.5);
+	return static_cast<unsigned> (infoHeader->hPixelsPerMeter * 0.0254 + 0.5);
 }

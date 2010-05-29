@@ -42,7 +42,10 @@ struct RgbQuad {
 		rgbRed = rgbGreen = rgbBlue = 0;
 	}
 	RgbQuad(unsigned char r, unsigned char g, unsigned char b) {
-		rgbRed = r; rgbGreen = g; rgbBlue = b;
+		set(r, g, b);
+	}
+	void set(unsigned char r, unsigned char g, unsigned char b) {
+		rgbRed = r; rgbGreen = g; rgbBlue = b; rgbReserved = 0;
 	}
 	unsigned char rgbRed;
 	unsigned char rgbGreen;
@@ -63,8 +66,7 @@ public:
 
 
 	static Dib * convertGrayscale(Dib & src);
-	static void tpPresetFilter(Dib * img);
-	static void convolve2DFast( Dib * img, const float(&kernel) [9], int kernelSizeX, int kernelSizeY);
+	void tpPresetFilter();
 
 #ifdef WIN32
 	void readFromHandle(HANDLE handle);
@@ -126,6 +128,7 @@ private:
 	void setPalette();
 	void setPalette(RgbQuad * palette);
 	unsigned getRowBytes(unsigned width, unsigned bitCount);
+	void convolve2DFast(const float(&kernel) [9], int kernelSizeX, int kernelSizeY);
 };
 
 

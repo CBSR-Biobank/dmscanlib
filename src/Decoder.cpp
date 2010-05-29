@@ -130,7 +130,7 @@ bool Decoder::processImage(Dib & dib) {
 		if (!decode(dec, 1, barcodeInfos)) {
 			break;
 		}
-		UA_DOUT(4, 5, "retrieved message from region " << regionCount++);
+		UA_DOUT(3, 5, "retrieved message from region " << regionCount++);
 	}
 
 	// save image to a PNM file
@@ -153,7 +153,7 @@ bool Decoder::processImage(Dib & dib) {
 	dmtxImageDestroy(&image);
 
 	if (barcodeInfos.size() == 0) {
-		UA_DOUT(4, 1, "processImage: no barcodes found");
+		UA_DOUT(3, 1, "processImage: no barcodes found");
 		return false;
 	}
 	return true;
@@ -201,11 +201,11 @@ void Decoder::calcRowsAndColumns() {
 		DmtxPixelLoc & tlCorner = barcodeInfos[i]->getTopLeftCorner();
 		DmtxPixelLoc & brCorner = barcodeInfos[i]->getBotRightCorner();
 
-		UA_DOUT(4, 9, "tag " << i << " : tlCorner/" << tlCorner.X << "," << tlCorner.Y
+		UA_DOUT(3, 9, "tag " << i << " : tlCorner/" << tlCorner.X << "," << tlCorner.Y
 				<< "  brCorner/" << brCorner.X << "," << brCorner.Y);
 
 		if (tlCorner.X == 669) {
-			UA_DOUT(4, 1, "here");
+			UA_DOUT(3, 1, "here");
 		}
 
 		for (unsigned c = 0, cn = colBinRegions.size(); c < cn; ++c) {
@@ -221,22 +221,22 @@ void Decoder::calcRowsAndColumns() {
 							+ BIN_THRESH))) {
 				insideColBin = true;
 				barcodeInfos[i]->setColBinRegion(&bin);
-				UA_DOUT(4, 9, "overlaps col " << c);
+				UA_DOUT(3, 9, "overlaps col " << c);
 				if (left < min) {
 					bin.setMin(left);
-					UA_DOUT(4, 9, "col " << c << " update min " << bin.getMin());
+					UA_DOUT(3, 9, "col " << c << " update min " << bin.getMin());
 				}
 				if (left > max) {
 					bin.setMax(left);
-					UA_DOUT(4, 9, "col " << c << " update max " << bin.getMax());
+					UA_DOUT(3, 9, "col " << c << " update max " << bin.getMax());
 				}
 				if (right < min) {
 					bin.setMin(right);
-					UA_DOUT(4, 9, "col " << c << " update min " << bin.getMin());
+					UA_DOUT(3, 9, "col " << c << " update min " << bin.getMin());
 				}
 				if (right > max) {
 					bin.setMax(right);
-					UA_DOUT(4, 9, "col " << c << " update max " << bin.getMax());
+					UA_DOUT(3, 9, "col " << c << " update max " << bin.getMax());
 				}
 				break;
 			}
@@ -255,22 +255,22 @@ void Decoder::calcRowsAndColumns() {
 							+ BIN_THRESH))) {
 				insideRowBin = true;
 				barcodeInfos[i]->setRowBinRegion(&bin);
-				UA_DOUT(4, 9, "overlaps row " << r);
+				UA_DOUT(3, 9, "overlaps row " << r);
 				if (top < min) {
 					bin.setMin(top);
-					UA_DOUT(4, 9, "row " << r << " update min " << bin.getMin());
+					UA_DOUT(3, 9, "row " << r << " update min " << bin.getMin());
 				}
 				if (top > max) {
 					bin.setMax(top);
-					UA_DOUT(4, 9, "row " << r << " update max " << bin.getMax());
+					UA_DOUT(3, 9, "row " << r << " update max " << bin.getMax());
 				}
 				if (bottom < min) {
 					bin.setMin(bottom);
-					UA_DOUT(4, 9, "row " << r << " update min " << bin.getMin());
+					UA_DOUT(3, 9, "row " << r << " update min " << bin.getMin());
 				}
 				if (bottom > max) {
 					bin.setMax(bottom);
-					UA_DOUT(4, 9, "row " << r << " update max " << bin.getMax());
+					UA_DOUT(3, 9, "row " << r << " update max " << bin.getMax());
 				}
 				break;
 			}
@@ -282,7 +282,7 @@ void Decoder::calcRowsAndColumns() {
 					static_cast<unsigned> (tlCorner.X),
 					static_cast<unsigned> (brCorner.X));
 			UA_ASSERT_NOT_NULL(newBinRegion);
-			UA_DOUT(4, 9, "new col " << colBinRegions.size() << ": " << *newBinRegion);
+			UA_DOUT(3, 9, "new col " << colBinRegions.size() << ": " << *newBinRegion);
 			colBinRegions.push_back(newBinRegion);
 			barcodeInfos[i]->setColBinRegion(newBinRegion);
 		}
@@ -293,7 +293,7 @@ void Decoder::calcRowsAndColumns() {
 					static_cast<unsigned> (tlCorner.Y),
 					static_cast<unsigned> (brCorner.Y));
 			UA_ASSERT_NOT_NULL(newBinRegion);
-			UA_DOUT(4, 9, "new row " << rowBinRegions.size() << ": " << *newBinRegion);
+			UA_DOUT(3, 9, "new row " << rowBinRegions.size() << ": " << *newBinRegion);
 			rowBinRegions.push_back(newBinRegion);
 			barcodeInfos[i]->setRowBinRegion(newBinRegion);
 		}
@@ -304,7 +304,7 @@ void Decoder::calcRowsAndColumns() {
 			msg << c << " (" << region.getMin() << ", " << region.getMax()
 					<< "), ";
 		}
-		UA_DOUT(4, 9, "columns " << msg.str());
+		UA_DOUT(3, 9, "columns " << msg.str());
 
 		msg.str("");
 		for (unsigned r = 0, rn = rowBinRegions.size(); r < rn; ++r) {
@@ -312,7 +312,7 @@ void Decoder::calcRowsAndColumns() {
 			msg << r << " (" << region.getMin() << ", " << region.getMax()
 					<< "), ";
 		}
-		UA_DOUT(4, 9, "rows " << msg.str());
+		UA_DOUT(3, 9, "rows " << msg.str());
 	}
 
 	sort(rowBinRegions.begin(), rowBinRegions.end(), BinRegionSort());
@@ -329,7 +329,7 @@ void Decoder::calcRowsAndColumns() {
 		c.setMax(max < width - BIN_MARGIN - 1 ? max + BIN_MARGIN : width - 1);
 
 		c.setRank(i);
-		UA_DOUT(4, 5, "col BinRegion " << i << ": " << c);
+		UA_DOUT(3, 5, "col BinRegion " << i << ": " << c);
 	}
 	for (unsigned i = 0, n = rowBinRegions.size(); i < n; ++i) {
 		BinRegion & c = *rowBinRegions[i];
@@ -341,11 +341,11 @@ void Decoder::calcRowsAndColumns() {
 		c.setMax(max < height - BIN_MARGIN - 1 ? max + BIN_MARGIN : height - 1);
 
 		c.setRank(i);
-		UA_DOUT(4, 5, "row BinRegion " << i << ": " << c);
+		UA_DOUT(3, 5, "row BinRegion " << i << ": " << c);
 	}
 
-	UA_DOUT(4, 3, "number of columns: " << colBinRegions.size());
-	UA_DOUT(4, 3, "number of rows: " << rowBinRegions.size());
+	UA_DOUT(3, 3, "number of columns: " << colBinRegions.size());
+	UA_DOUT(3, 3, "number of rows: " << rowBinRegions.size());
 
 	sort(barcodeInfos.begin(), barcodeInfos.end(), BarcodeInfoSort());
 }
@@ -362,10 +362,10 @@ Decoder::ProcessResult Decoder::calculateSlots(double dpi) {
 		// the bounds of the image. If not then the column is not really the
 		// first one.
 		double edgeDist = 11.0 * cellDistance * dpi;
-		UA_DOUT(4, 5, "first_col_center/" << region.getCenter()
+		UA_DOUT(3, 5, "first_col_center/" << region.getCenter()
 				<< " edge_distance/" << edgeDist);
 		if (region.getCenter() <= static_cast<unsigned> (edgeDist)) {
-			UA_DOUT(4, 5, "out of bounds");
+			UA_DOUT(3, 5, "out of bounds");
 			return POS_CALC_ERROR;
 		}
 
@@ -379,10 +379,10 @@ Decoder::ProcessResult Decoder::calculateSlots(double dpi) {
 		// the bounds of the image. If not then the column is not really the
 		// first one.
 		double edgeDist = 7.0 * cellDistance * dpi;
-		UA_DOUT(4, 5, "first_row_center/" << region.getCenter()
+		UA_DOUT(3, 5, "first_row_center/" << region.getCenter()
 				<< " edge_distance/" << edgeDist << " height/" << height);
 		if (region.getCenter() + static_cast<unsigned> (edgeDist) >= height) {
-			UA_DOUT(4, 5, "out of bounds");
+			UA_DOUT(3, 5, "out of bounds");
 			return POS_CALC_ERROR;
 		}
 		rowBinRegions[0]->setId(0);
@@ -391,7 +391,7 @@ Decoder::ProcessResult Decoder::calculateSlots(double dpi) {
 	unsigned interval;
 	double cellDistError = cellDistance * 0.4;
 
-	UA_DOUT(4, 5, "cellDistError/" << cellDistError);
+	UA_DOUT(3, 5, "cellDistError/" << cellDistError);
 
 	if (numCols > 1) {
 		for (int c = numCols - 1; c > 0; --c) {
@@ -404,7 +404,7 @@ Decoder::ProcessResult Decoder::calculateSlots(double dpi) {
 			interval = 0;
 			for (unsigned i = 1; i < 12; ++i) {
 				double diff = abs(dist - i * cellDistance);
-				UA_DOUT(4, 5, "col region " << c << "-" << c - 1 << " distance/"
+				UA_DOUT(3, 5, "col region " << c << "-" << c - 1 << " distance/"
 						<< dist << " diff/" << diff << " inteval/" << i);
 				if (diff < cellDistError) {
 					interval = i;
@@ -412,11 +412,11 @@ Decoder::ProcessResult Decoder::calculateSlots(double dpi) {
 				}
 			}
 			if (interval == 0) {
-				UA_DOUT(4, 1, "could not determine column intervals");
+				UA_DOUT(3, 1, "could not determine column intervals");
 				return POS_CALC_ERROR;
 			}
 
-			UA_DOUT(4, 5, "col region " << c << "-" << c - 1 << " distance/"
+			UA_DOUT(3, 5, "col region " << c << "-" << c - 1 << " distance/"
 					<< dist << " inteval/" << interval);
 
 			region1.setId(region2.getId() + interval);
@@ -434,7 +434,7 @@ Decoder::ProcessResult Decoder::calculateSlots(double dpi) {
 			interval = 0;
 			for (unsigned i = 1; i < 8; ++i) {
 				double diff = abs(dist - i * cellDistance);
-				UA_DOUT(4, 5, "row region " << r << "-" << r - 1 << " distance/"
+				UA_DOUT(3, 5, "row region " << r << "-" << r - 1 << " distance/"
 						<< dist << " diff/" << diff << " inteval/" << i);
 				if (abs(dist - i * cellDistance) < cellDistError) {
 					interval = i;
@@ -442,11 +442,11 @@ Decoder::ProcessResult Decoder::calculateSlots(double dpi) {
 				}
 			}
 			if (interval == 0) {
-				UA_DOUT(4, 1, "could not determine row intervals");
+				UA_DOUT(3, 1, "could not determine row intervals");
 				return POS_CALC_ERROR;
 			}
 
-			UA_DOUT(4, 5, "row region " << r << "-" << r - 1 << " distance/"
+			UA_DOUT(3, 5, "row region " << r << "-" << r - 1 << " distance/"
 					<< dist << " inteval/" << interval);
 
 			region2.setId(region1.getId() + interval);
@@ -481,11 +481,11 @@ Decoder::ProcessResult Decoder::calculateSlots(double dpi) {
 		unsigned row = info.getRowBinRegion().getId();
 		unsigned col = info.getColBinRegion().getId();
 
-		UA_DOUT(4, 5, "barcode " << i << " (" << (char)('A' + row) << ", "
+		UA_DOUT(3, 5, "barcode " << i << " (" << (char)('A' + row) << ", "
 				<< col + 1 << ")");
 
 		if (cells[row][col].length() > 0) {
-			UA_DOUT(4, 5, "position (" << (char)('A' + row) << ", "
+			UA_DOUT(3, 5, "position (" << (char)('A' + row) << ", "
 					<< col + 1 << ") already occupied");
 			return POS_CALC_ERROR;
 		}
@@ -576,20 +576,23 @@ DmtxImage * Decoder::createDmtxImageFromDib(Dib & dib) {
 }
 
 void Decoder::imageShowBarcodes(Dib & dib) {
-	UA_DOUT(4, 3, "marking tags ");
+	UA_DOUT(3, 3, "marking tags ");
 
-	RgbQuad quadGreen(255, 255, 255); // change to white (shows up better in grayscale)
+	RgbQuad quadWhite(255, 255, 255); // change to white (shows up better in grayscale)
+	RgbQuad quadGreen(0, 255, 0); // change to white (shows up better in grayscale)
 	RgbQuad quadRed(255, 0, 0);
+
+	RgbQuad & highlightQuad = (dib.getBitsPerPixel() == 8 ? quadWhite : quadGreen);
 
 	for (unsigned i = 0, n = barcodeInfos.size(); i < n; ++i) {
 		BarcodeInfo & info = *barcodeInfos[i];
 		DmtxPixelLoc & tlCorner = info.getTopLeftCorner();
 		DmtxPixelLoc & brCorner = info.getBotRightCorner();
 
-		dib.line(tlCorner.X, tlCorner.Y, tlCorner.X, brCorner.Y, quadGreen);
-		dib.line(tlCorner.X, brCorner.Y, brCorner.X, brCorner.Y, quadGreen);
-		dib.line(brCorner.X, brCorner.Y, brCorner.X, tlCorner.Y, quadGreen);
-		dib.line(brCorner.X, tlCorner.Y, tlCorner.X, tlCorner.Y, quadGreen);
+		dib.line(tlCorner.X, tlCorner.Y, tlCorner.X, brCorner.Y, highlightQuad);
+		dib.line(tlCorner.X, brCorner.Y, brCorner.X, brCorner.Y, highlightQuad);
+		dib.line(brCorner.X, brCorner.Y, brCorner.X, tlCorner.Y, highlightQuad);
+		dib.line(brCorner.X, tlCorner.Y, tlCorner.X, tlCorner.Y, highlightQuad);
 	}
 
 	unsigned height = dib.getHeight() - 1;
@@ -607,10 +610,10 @@ void Decoder::imageShowBarcodes(Dib & dib) {
 		unsigned max = region.getMax();
 		//unsigned center = region.getCenter();
 
-		dib.line(0, min, width, min, quadGreen);
-		dib.line(0, min, 0, max, quadGreen);
-		dib.line(0, max, width, max, quadGreen);
-		dib.line(width, min, width, max, quadGreen);
+		dib.line(0, min, width, min, highlightQuad);
+		dib.line(0, min, 0, max, highlightQuad);
+		dib.line(0, max, width, max, highlightQuad);
+		dib.line(width, min, width, max, highlightQuad);
 		//dib.line(0, center, width, center, quadRed);
 	}
 
@@ -621,10 +624,10 @@ void Decoder::imageShowBarcodes(Dib & dib) {
 		unsigned max = region.getMax();
 		//unsigned center = region.getCenter();
 
-		dib.line(min, 0, max, 0, quadGreen);
-		dib.line(min, height, max, height, quadGreen);
-		dib.line(min, 0, min, height, quadGreen);
-		dib.line(max, 0, max, height, quadGreen);
+		dib.line(min, 0, max, 0, highlightQuad);
+		dib.line(min, height, max, height, highlightQuad);
+		dib.line(min, 0, min, height, highlightQuad);
+		dib.line(max, 0, max, height, highlightQuad);
 		//dib.line(center, 0, center, height, quadRed);
 	}
 }
