@@ -7,7 +7,6 @@
  * changes to this file unless you know what you are doing--modify the SWIG 
  * interface file instead. 
  * ----------------------------------------------------------------------------- */
-#ifdef BUILD_DLL
 
 #define SWIGJAVA
 
@@ -389,6 +388,4 @@ SWIGEXPORT jint JNICALL Java_edu_ualberta_med_scannerconfig_scanlib_ScanLibWin32
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif
