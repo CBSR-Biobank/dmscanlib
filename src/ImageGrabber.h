@@ -46,6 +46,7 @@ public:
 	void freeImage(HANDLE handle);
 
 private:
+
 	unsigned invokeTwain(TW_IDENTITY * srcId, unsigned long dg, unsigned dat,
 			unsigned msg, void * data);
 
@@ -56,13 +57,13 @@ private:
 
 	//BOOL setCapability(TW_IDENTITY * srcId, TW_UINT16 cap,TW_UINT16 value,BOOL sign);
 
-	BOOL setCapOneValue(TW_IDENTITY * srcId, unsigned Cap, unsigned ItemType, long ItemVal);
+	BOOL setCapOneValue(TW_IDENTITY * srcId, unsigned Cap, unsigned ItemType, unsigned long ItemVal);
 
 	bool getCapability(TW_IDENTITY * srcId, TW_CAPABILITY & twCap);
 
-	bool getDpiCapability(TW_IDENTITY * srcId);
+	bool getDpiCapabilityRange(TW_IDENTITY * srcId, double & minDpi, double & maxDpi, double & stepDpi);
 
-	double fix32ToFloat(TW_FIX32 fix32);
+	inline double uint32ToFloat(TW_UINT32 uint32);
 
 	void getCustomDsData(TW_IDENTITY * srcId);
 
@@ -90,9 +91,6 @@ private:
 
 	int brightness;
 	int contrast;
-
-	int minDpi;
-	int maxDpi;
 };
 
 #endif /* __INCLUDE_IMAGE_GRABBER_H */

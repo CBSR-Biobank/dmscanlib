@@ -223,12 +223,15 @@ Application::Application(int argc, char ** argv) {
    unsigned numDpis = options.dpis.size();
 
    if (options.decode) {
+cout << "SLDECODEPLATER DPI: " << options.dpis[0] << endl;
+
       if (options.infile != NULL) {
          result = slDecodeImage(options.debugLevel, options.plateNum,
                                 options.infile, options.gap, options.squareDev,
                                 options.threshold, options.corrections,
                                 options.cellDistance);
       } else if (numDpis == 1) {
+		  
     	  result = slDecodePlate(options.debugLevel, options.dpis[0],
     			  options.brightness, options.contrast, options.plateNum,
     			  options.left, options.top, options.right, options.bottom,

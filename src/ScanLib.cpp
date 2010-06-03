@@ -143,7 +143,6 @@ int slScanImage(unsigned verbose, unsigned dpi, int brightness, int contrast,
 int slDecodeCommon(unsigned plateNum, Dib & dib, Decoder & decoder,
 		const char * markedDibFilename, vector<vector<string> > & cellsRef) {
 	string msg;
-
 	Dib * grayscaleDib = NULL;
 	grayscaleDib = Dib::convertGrayscale(dib);
 	UA_ASSERT_NOT_NULL(grayscaleDib);
@@ -179,6 +178,9 @@ int slDecodeCommon(unsigned plateNum, Dib & dib, Decoder & decoder,
 	UA_DOUT(1, 1, "slDecodeCommon: time taken: " << timediff);
 	return SC_SUCCESS;
 }
+
+
+
 
 int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
 		unsigned plateNum, double left, double top, double right,
@@ -224,7 +226,11 @@ int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
 
 	dib.readFromHandle(h);
 	dib.writeToFile("scanned.bmp");
-	result = slDecodeCommon(plateNum, dib, decoder, "decode.bmp", cells);
+
+	if(dib.getDpi() != dpi)
+		result = SC_INCORRECT_DPI_SCANNED;
+	else
+		result = slDecodeCommon(plateNum, dib, decoder, "decode.bmp", cells);
 
 	if (result == SC_SUCCESS) {
 		string msg;
@@ -303,8 +309,12 @@ int slDecodePlateMultipleDpi(unsigned verbose, unsigned dpi1, unsigned dpi2,
 		dib.writeToFile(filename.str().c_str());
 		filename.str("");
 		filename << "decoded" << i+1 << ".bmp";
-		result = slDecodeCommon(plateNum, dib, *decoder, filename.str().c_str(), newCells);
-
+		
+		if(dib.getDpi() != dpis[i])
+			result = SC_INCORRECT_DPI_SCANNED;
+		else
+			result = slDecodeCommon(plateNum, dib, *decoder, filename.str().c_str(), newCells);
+		
 		if (result != SC_SUCCESS) {
 			return result;
 		}
@@ -373,6 +383,8 @@ int slDecodeImage(unsigned verbose, unsigned plateNum, char * filename,
 	Decoder decoder(scanGap, squareDev, edgeThresh, corrections, cellDistance);
 
 	dib.readFromFile(filename);
+
+
 	int result = slDecodeCommon(plateNum, dib, decoder, "decode.bmp", cells);
 
 	if (result == SC_SUCCESS) {

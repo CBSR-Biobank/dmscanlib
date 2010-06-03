@@ -134,6 +134,9 @@ HANDLE ImageGrabber::acquireImage(unsigned dpi, int brightness, int contrast,
 	TW_UINT32 handle = 0;
 	TW_IDENTITY srcID;
 	TW_FIX32 value;
+	double minDpi;
+	double maxDpi;
+	double stepDpi;
 	UA_ASSERT(sizeof(TW_FIX32) == sizeof(long));
 	value.Frac = 0;
 
@@ -163,20 +166,33 @@ HANDLE ImageGrabber::acquireImage(unsigned dpi, int brightness, int contrast,
 		return NULL;
 	}
 
-	getDpiCapability(&srcID);
+	getDpiCapabilityRange(&srcID,minDpi,maxDpi,stepDpi);
+
+	/*
+	if(dpi < minDpi || dpi > maxDpi){
+		//BAD
+	}
+
+	//XXX DEBUG CODE
+	if (true) {
+		exit(0);
+		return NULL;
+	}
+	*/
 
 	value.Whole = dpi;
-	setCapOneValue(&srcID, ICAP_XRESOLUTION, TWTY_FIX32, *(long*) &value);
-	setCapOneValue(&srcID, ICAP_YRESOLUTION, TWTY_FIX32, *(long*) &value);
+	value.Frac = 0; 
+	setCapOneValue(&srcID, ICAP_XRESOLUTION, TWTY_FIX32, *(unsigned long*) &value);
+	setCapOneValue(&srcID, ICAP_YRESOLUTION, TWTY_FIX32, *(unsigned long*) &value);
 
 	setCapOneValue(&srcID, ICAP_PIXELTYPE, TWTY_UINT16, TWPT_RGB);
 	//SetCapOneValue(&srcID, ICAP_BITDEPTH, TWTY_UINT16, 8);
 
 	value.Whole = brightness;
-	setCapOneValue(&srcID, ICAP_BRIGHTNESS, TWTY_FIX32, *(long*) &value);
+	setCapOneValue(&srcID, ICAP_BRIGHTNESS, TWTY_FIX32, *(unsigned long*) &value);
 
 	value.Whole = contrast;
-	setCapOneValue(&srcID, ICAP_CONTRAST, TWTY_FIX32, *(long*) &value);
+	setCapOneValue(&srcID, ICAP_CONTRAST, TWTY_FIX32, *(unsigned long*) &value);
 
 	UA_DOUT(2, 3, "acquireImage: source/\"" << srcID.ProductName << "\""
 			<< " brightness/" << brightness
@@ -334,7 +350,7 @@ DmtxImage* ImageGrabber::acquireDmtxImage(unsigned dpi, int brightness,
 }
 
 BOOL ImageGrabber::setCapOneValue(TW_IDENTITY * srcId, unsigned Cap,
-		unsigned ItemType, long ItemVal) {
+		unsigned ItemType, unsigned long ItemVal) {
 	BOOL ret_value = FALSE;
 	TW_CAPABILITY cap;
 	pTW_ONEVALUE pv;
@@ -362,7 +378,111 @@ bool ImageGrabber::getCapability(TW_IDENTITY * srcId, TW_CAPABILITY & twCap) {
 	return (rc == TWRC_SUCCESS);
 }
 
-bool ImageGrabber::getDpiCapability(TW_IDENTITY * srcId) {
+//XXX Code below needs to be tested.
+bool ImageGrabber::getDpiCapabilityRange(TW_IDENTITY * srcId, double & minDpi, double & maxDpi, double & stepDpi) {
+
+	pTW_RANGE pvalRange;
+	TW_CAPABILITY twCapX, twCapY;
+	bool xResult, yResult, returnCode;
+
+	setCapOneValue(srcId, ICAP_UNITS, TWTY_UINT16, TWUN_INCHES);
+
+	twCapX.Cap = ICAP_XRESOLUTION;
+	twCapX.ConType = TWON_RANGE;
+	twCapX.hContainer = NULL;
+	xResult = getCapability(srcId, twCapX);
+	returnCode = false;
+
+	UA_DOUT(4, 5, "Polling scanner capbility");
+	if(xResult){
+		switch(twCapX.ConType){
+
+			case TWON_RANGE:
+				pvalRange = (pTW_RANGE) GlobalLock(twCapX.hContainer);
+				if (pvalRange->ItemType == TWTY_FIX32) {
+					minDpi = uint32ToFloat(pvalRange->MinValue);
+					maxDpi = uint32ToFloat(pvalRange->MaxValue);
+					stepDpi = uint32ToFloat(pvalRange->StepSize);
+					UA_DOUT(4, 6, "Supports DPI Range {" << " Min:" << minDpi << " Max:" << maxDpi << " Step:" << stepDpi << " }");
+					returnCode = true;
+				}
+				break;
+			case TWON_ENUMERATION:
+			case TWON_ONEVALUE:
+			default:
+				returnCode = false;
+				break;
+		}
+		GlobalUnlock(twCapX.hContainer);
+		GlobalFree(twCapX.hContainer);
+	}
+
+	/* sanity check  X-Y res should be the same*/
+	twCapX.Cap = ICAP_YRESOLUTION;
+	yResult = getCapability(srcId, twCapY);
+	if (yResult && (twCapY.ConType == TWON_RANGE)) {
+		pvalRange = (pTW_RANGE) GlobalLock(twCapY.hContainer);
+		if (pvalRange->ItemType == TWTY_FIX32) {
+			UA_ASSERTS(minDpi == uint32ToFloat(pvalRange->MinValue),
+					"X and Y min values for DPI do not match");
+			UA_ASSERTS(maxDpi == uint32ToFloat(pvalRange->MaxValue),
+					"X and Y max values for DPI do not match");
+			UA_ASSERTS(stepDpi == uint32ToFloat(pvalRange->StepSize),
+					"X and Y max values for DPI do not match");
+		}
+		GlobalUnlock(twCapX.hContainer);
+		GlobalFree(twCapX.hContainer);
+	}
+
+	return returnCode;
+}
+/*
+//untested 
+			case TWON_ENUMERATION:
+				UA_DOUT(4, 5, "ConType = Enumeration");
+
+				pTW_ENUMERATION pvalEnum;
+				TW_UINT32 NumItems;
+				TW_UINT16 index;
+				TW_UINT16 valueU16;
+				TW_BOOL valueBool;
+
+				pvalEnum = (pTW_ENUMERATION) GlobalLock(twCapX.hContainer);
+				UA_ASSERT_NOT_NULL(pvalEnum);
+
+				NumItems = pvalEnum->NumItems;
+
+				for(index =0; index < pvalEnum->NumItems; index++){
+					if(pvalEnum->ItemType == TWTY_UINT16){
+						valueU16 = (TW_UINT16)(pvalEnum->ItemList[index*2]);
+						UA_DOUT(4, 6, "Supports DPI (16bit): " << valueU16);
+
+					}
+					else if(pvalEnum->ItemType == TWTY_BOOL){ // assuming typo in spec? pg 84
+						valueBool = (TW_BOOL)(pvalEnum->ItemList[index]);
+						UA_DOUT(4, 6, "Supports DPI (8bit): " << valueBool);
+					}
+				}
+				break;
+
+
+			case TWON_ONEVALUE:
+				UA_DOUT(4, 5, "ConType = Onevalue");
+
+				pTW_ONEVALUE pvalOneValue;
+				TW_BOOL	boolOneValue;
+
+				pvalOneValue = (pTW_ONEVALUE)GlobalLock(twCapX.hContainer);
+				if(pvalOneValue->ItemType == TWTY_BOOL){
+					boolOneValue = (TW_BOOL)(pvalOneValue->Item);
+					UA_DOUT(4, 6, "Supports DPI (8bit): " << boolOneValue);
+				}
+				break;
+*/
+
+
+/*
+bool getDpiCapability(TW_IDENTITY * srcId) {
 	TW_CAPABILITY twCapX, twCapY;
 	pTW_RANGE r;
 	bool xResult, yResult;
@@ -370,10 +490,9 @@ bool ImageGrabber::getDpiCapability(TW_IDENTITY * srcId) {
 	setCapOneValue(srcId, ICAP_UNITS, TWTY_UINT16, TWUN_INCHES);
 
 	twCapX.Cap = ICAP_XRESOLUTION;
-	twCapX.ConType = TWON_ENUMERATION;
 	xResult = getCapability(srcId, twCapX);
 
-	if (xResult && (twCapX.ConType == TWON_ENUMERATION)) {
+	if (xResult && (twCapX.ConType == TWON_RANGE)) {
 		r = (pTW_RANGE) GlobalLock(twCapX.hContainer);
 		if (r->ItemType == TWTY_FIX32) {
 			minDpi = static_cast<int> (fix32ToFloat(
@@ -387,11 +506,10 @@ bool ImageGrabber::getDpiCapability(TW_IDENTITY * srcId) {
 		GlobalFree(twCapX.hContainer);
 	}
 
-	twCapY.Cap = ICAP_YRESOLUTION;
-	twCapY.ConType = TWON_ENUMERATION;
+	twCapX.Cap = ICAP_YRESOLUTION;
 	yResult = getCapability(srcId, twCapY);
 
-	if (yResult && (twCapY.ConType == TWON_ENUMERATION)) {
+	if (yResult && (twCapY.ConType == TWON_RANGE)) {
 		r = (pTW_RANGE) GlobalLock(twCapY.hContainer);
 		if (r->ItemType == TWTY_FIX32) {
 			UA_ASSERTS(minDpi == static_cast<int>(fix32ToFloat(
@@ -401,12 +519,13 @@ bool ImageGrabber::getDpiCapability(TW_IDENTITY * srcId) {
 									*reinterpret_cast<TW_FIX32*> (&r->MaxValue))),
 					"X and Y max values for DPI do not match");
 		}
-		GlobalUnlock(twCapY.hContainer);
-		GlobalFree(twCapY.hContainer);
+		GlobalUnlock(twCapX.hContainer);
+		GlobalFree(twCapX.hContainer);
 	}
 
 	return true;
 }
+*/
 
 void ImageGrabber::getCustomDsData(TW_IDENTITY * srcId) {
 	TW_UINT16 rc;
@@ -420,10 +539,12 @@ void ImageGrabber::getCustomDsData(TW_IDENTITY * srcId) {
 	}
 }
 
-double ImageGrabber::fix32ToFloat(TW_FIX32 fix32) {
+inline double ImageGrabber::uint32ToFloat(TW_UINT32 uint32) {
+	TW_FIX32 fix32 =  *((pTW_FIX32)(void *)(&uint32));
 	return static_cast<double> (fix32.Whole) + static_cast<double> (fix32.Frac)
 			/ 65536.0;
 }
+
 
 /*
  *	freeHandle()

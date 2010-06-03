@@ -41,7 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="src;src/libdmtx;src/loki;src/utils"
+				AdditionalIncludeDirectories="src;src/libdmtx;src/loki;src/utils;$(JAVA_HOME)\include;$(JAVA_HOME)\include\win32;"
 				PreprocessorDefinitions="_VISUALC_;WIN32;_DEBUG;_CONSOLE;UA_LOGGER;STANDALONE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"

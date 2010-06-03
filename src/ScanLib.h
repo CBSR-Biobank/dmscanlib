@@ -34,6 +34,7 @@ const int SC_INVALID_VALUE = -5;
 const int SC_INVALID_IMAGE = -6;
 const int SC_INVALID_POSITION = -7;
 const int SC_POS_CALC_ERROR = -8;
+const int SC_INCORRECT_DPI_SCANNED = -9;
 
 /**
  * Queries the availability of the TWAIN driver.

@@ -199,7 +199,7 @@ void Dib::readFromHandle(HANDLE handle) {
 	rowPaddingBytes = rowBytes - (infoHeader->width * bytesPerPixel);
 
 	UA_DOUT(4, 5, "readFromHandle: rowBytes/" << rowBytes
-			<< " paddingBytes/" << rowPaddingBytes);
+			<< " paddingBytes/" << rowPaddingBytes << " dpi/" << getDpi());
 }
 #endif
 
@@ -819,18 +819,18 @@ void Dib::tpPresetFilter() {
 	switch (getDpi()) {
 
 	case 400:
-		UA_DOUT(4, 9, "tpPresetFilter: Applying DPI_400_KERNEL");
+		UA_DOUT(4, 6, "tpPresetFilter: Applying DPI_400_KERNEL");
 		convolve2DFast(Dib::DPI_400_KERNEL, 3, 3);
 		break;
 
 	case 300:
-		UA_DOUT(4, 9, "tpPresetFilter: No filter applied (300 dpi)");
+		UA_DOUT(4, 6, "tpPresetFilter: No filter applied (300 dpi)");
 		break;
 
 	default:
-		UA_DOUT(4, 9, "tpPresetFilter: Applying BLANK_KERNEL");
+		UA_DOUT(4, 6, "tpPresetFilter: Applying BLANK_KERNEL");
 		convolve2DFast(Dib::BLANK_KERNEL, 3, 3);
-		UA_DOUT(4, 9, "tpPresetFilter: Applying BLUR_KERNEL");
+		UA_DOUT(4, 6, "tpPresetFilter: Applying BLUR_KERNEL");
 		convolve2DFast(Dib::BLUR_KERNEL, 3, 3);
 		break;
 	}
