@@ -166,19 +166,15 @@ HANDLE ImageGrabber::acquireImage(unsigned dpi, int brightness, int contrast,
 		return NULL;
 	}
 
-	getDpiCapabilityRange(&srcID,minDpi,maxDpi,stepDpi);
-
-	/*
-	if(dpi < minDpi || dpi > maxDpi){
-		//BAD
+	if (getDpiCapabilityRange(&srcID,minDpi,maxDpi,stepDpi)){
+		if(dpi < minDpi || dpi > maxDpi || (int)(dpi-minDpi)%(int)stepDpi != 0){
+			UA_WARN("User choose incorrect Ddpi setting");
+			return NULL;
+		}
 	}
-
-	//XXX DEBUG CODE
-	if (true) {
-		exit(0);
-		return NULL;
+	else{
+		UA_WARN("Unable to obtain resolution capability");
 	}
-	*/
 
 	value.Whole = dpi;
 	value.Frac = 0; 
@@ -403,7 +399,13 @@ bool ImageGrabber::getDpiCapabilityRange(TW_IDENTITY * srcId, double & minDpi, d
 					minDpi = uint32ToFloat(pvalRange->MinValue);
 					maxDpi = uint32ToFloat(pvalRange->MaxValue);
 					stepDpi = uint32ToFloat(pvalRange->StepSize);
+
+					UA_ASSERTS(stepDpi > 0, "TWON_RANGE stepSize was was not greater than zero.");
+					UA_ASSERTS(minDpi > 0, "TWON_RANGE minDpi was was not greater than zero.");
+					UA_ASSERTS(maxDpi >= minDpi, "TWON_RANGE minDpi > naxDpi");
+
 					UA_DOUT(4, 6, "Supports DPI Range {" << " Min:" << minDpi << " Max:" << maxDpi << " Step:" << stepDpi << " }");
+					
 					returnCode = true;
 				}
 				break;
