@@ -36,6 +36,12 @@ const int SC_INVALID_POSITION = -7;
 const int SC_POS_CALC_ERROR = -8;
 const int SC_INCORRECT_DPI_SCANNED = -9;
 
+
+const UINT8 DPI_300 = 0x02;
+const UINT8 DPI_400 = 0x04;
+const UINT8 DPI_600 = 0x08;
+
+
 /**
  * Queries the availability of the TWAIN driver.
  *

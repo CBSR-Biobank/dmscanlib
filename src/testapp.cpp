@@ -160,24 +160,23 @@ struct Options {
       contrast = numeric_limits<int>::max();
 #endif 
 
-      corrections = 0;
+      corrections = 10;
       cellDistance = 0.33;
       decode = false;
       debugLevel = 0;
       debugfile = false;
-      gap = 0.0;
+      gap = 0.085;
       help = false;
       infile = NULL;
       plateNum = 0;
       outfile = NULL;
       scan = false;
       select = false;
-      squareDev = 10;
-      threshold = 50;
+      squareDev = 15;
+      threshold = 5;
       left = 0.0;
       top = 0.0;
       right = 0.0;
-      bottom = 0.0;
    }
 };
 
@@ -259,7 +258,41 @@ cout << "SLDECODEPLATER DPI: " << options.dpis[0] << endl;
       result = slSelectSourceAsDefault();
    }
 
-   cout << "return code is: " << result << endl;
+
+   switch(result){
+	
+		case SC_SUCCESS:
+			cout << "return code is: SC_SUCCESS"<< endl;
+			break;
+		case SC_FAIL:
+			cout << "return code is: SC_FAIL"<< endl;
+			break;
+		case SC_TWAIN_UAVAIL:
+			cout << "return code is: SC_TWAIN_UAVAIL"<< endl;
+			break;
+		case SC_INVALID_DPI:
+			cout << "return code is: SC_INVALID_DPI"<< endl;
+			break;
+		case SC_INVALID_PLATE_NUM:
+			cout << "return code is: SC_INVALID_PLATE_NUM"<< endl;
+			break;
+		case SC_INVALID_VALUE:
+			cout << "return code is: SC_INVALID_VALUE"<< endl;
+			break;
+		case SC_INVALID_IMAGE:
+			cout << "return code is: SC_INVALID_IMAGE"<< endl;
+			break;
+		case SC_INVALID_POSITION:
+			cout << "return code is: SC_INVALID_POSITION"<< endl;
+			break;
+		case SC_POS_CALC_ERROR:
+			cout << "return code is: SC_POS_CALC_ERROR"<< endl;
+			break;
+		case SC_INCORRECT_DPI_SCANNED:
+			cout << "return code is: SC_INCORRECT_DPI_SCANNED"<< endl;
+			break;
+   }
+   cout << "return int-code is: " << result << endl;
 }
 
 Application::~Application() {

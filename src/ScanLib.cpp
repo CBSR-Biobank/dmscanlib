@@ -108,6 +108,16 @@ void formatCellMessages(unsigned plateNum, vector<vector<string> > & cells,
 	msg = out.str();
 }
 
+
+bool slIsValidDpi(int dpi){
+	ImageGrabber ig;
+	UINT8 dpiCap = ig.dpiCapability();
+	return ((dpiCap & DPI_300) && dpi == 300) || 
+			((dpiCap & DPI_400) && dpi == 400) || 
+			((dpiCap & DPI_600) && dpi == 600);
+}
+
+
 int slScanImage(unsigned verbose, unsigned dpi, int brightness, int contrast,
 		double left, double top, double right, double bottom, char * filename) {
 	configLogging(verbose);
@@ -124,7 +134,11 @@ int slScanImage(unsigned verbose, unsigned dpi, int brightness, int contrast,
 		return SC_FAIL;
 	}
 
+	if(!slIsValidDpi(dpi)){
+		return SC_INVALID_DPI; 
+	}
 	ImageGrabber ig;
+	
 	HANDLE h = ig.acquireImage(dpi, brightness, contrast, left, top, right,
 			bottom);
 	if (h == NULL) {
@@ -143,6 +157,7 @@ int slScanImage(unsigned verbose, unsigned dpi, int brightness, int contrast,
 int slDecodeCommon(unsigned plateNum, Dib & dib, Decoder & decoder,
 		const char * markedDibFilename, vector<vector<string> > & cellsRef) {
 	string msg;
+
 	Dib * grayscaleDib = NULL;
 	grayscaleDib = Dib::convertGrayscale(dib);
 	UA_ASSERT_NOT_NULL(grayscaleDib);
@@ -209,6 +224,10 @@ int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
 	if ((plateNum < MIN_PLATE_NUM) || (plateNum > MAX_PLATE_NUM)) {
 		return SC_INVALID_PLATE_NUM;
 	}
+	
+	if(!slIsValidDpi(dpi)){
+		return SC_INVALID_DPI; 
+	}
 
 	ImageGrabber ig;
 	HANDLE h;
@@ -217,6 +236,8 @@ int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
 	vector<vector<string> > cells;
 	Util::getTime(starttime);
 	Decoder decoder(scanGap, squareDev, edgeThresh, corrections, cellDistance);
+
+
 
 	h = ig.acquireImage(dpi, brightness, contrast, left, top, right, bottom);
 	if (h == NULL) {
@@ -292,11 +313,15 @@ int slDecodePlateMultipleDpi(unsigned verbose, unsigned dpi1, unsigned dpi2,
 	for (unsigned i = 0; i < 3; ++i) {
 		if (dpis[i] == 0) continue;
 
+		if(!slIsValidDpi(dpis[i])){
+			return SC_INVALID_DPI; 
+		}
+
 		Decoder * decoder = new Decoder(scanGap, squareDev, edgeThresh, corrections, cellDistance);
 		UA_ASSERT_NOT_NULL(decoder);
 
-		h
-		= ig.acquireImage(dpis[i], brightness, contrast, left, top, right,
+
+		h = ig.acquireImage(dpis[i], brightness, contrast, left, top, right,
 				bottom);
 		if (h == NULL) {
 			UA_DOUT(1, 1, "could not acquire plate image: " << plateNum);

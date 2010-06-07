@@ -40,10 +40,13 @@ public:
 	 */
 	bool selectSourceAsDefault();
 
+	UINT8 dpiCapability();
+
 	HANDLE acquireImage(unsigned dpi, int brightness, int contrast,
 		double top, double left, double bottom, double right);
 	DmtxImage* acquireDmtxImage(unsigned dpi, int brightness, int contrast);
 	void freeImage(HANDLE handle);
+
 
 private:
 
@@ -61,11 +64,12 @@ private:
 
 	bool getCapability(TW_IDENTITY * srcId, TW_CAPABILITY & twCap);
 
-	bool getDpiCapabilityRange(TW_IDENTITY * srcId, double & minDpi, double & maxDpi, double & stepDpi);
-
 	inline double uint32ToFloat(TW_UINT32 uint32);
+	inline double twfix32ToFloat(TW_FIX32 fix32);
 
 	void getCustomDsData(TW_IDENTITY * srcId);
+
+	void initializeScannerSource(HWND & hwnd, TW_IDENTITY & srcID);
 
 	static const char * TWAIN_DLL_FILENAME;
 
@@ -84,6 +88,7 @@ private:
 	// this address is 0, either TWAIN_32.DLL could not be loaded or there is no
 	// DSM_Entry() function in TWAIN_32.DLL.
 	DSMENTRYPROC g_pDSM_Entry;
+
 
 	// g_AppID serves as a TWAIN identity structure that uniquely identifies the
 	// application process responsible for making calls to function DSM_Entry().

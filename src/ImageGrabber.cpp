@@ -12,6 +12,7 @@
 #include "UaLogger.h"
 #include "UaAssert.h"
 #include "Util.h"
+#include <math.h>
 
 using namespace std;
 
@@ -134,47 +135,14 @@ HANDLE ImageGrabber::acquireImage(unsigned dpi, int brightness, int contrast,
 	TW_UINT32 handle = 0;
 	TW_IDENTITY srcID;
 	TW_FIX32 value;
-	double minDpi;
-	double maxDpi;
-	double stepDpi;
+	HWND hwnd;
+
+
 	UA_ASSERT(sizeof(TW_FIX32) == sizeof(long));
+
 	value.Frac = 0;
 
-	HWND hwnd = CreateWindowA("STATIC", "", WS_POPUPWINDOW, CW_USEDEFAULT,
-			CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, HWND_DESKTOP,
-			0, 0 /* g_hinstDLL */, 0);
-
-	UA_ASSERTS(hwnd != 0, "Unable to create private window");
-
-	SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE);
-
-	// Open the data source manager.
-	rc = invokeTwain(NULL, DG_CONTROL, DAT_PARENT, MSG_OPENDSM, &hwnd);
-	UA_ASSERTS(rc == TWRC_SUCCESS, "Unable to open data source manager");
-
-	// get the default source
-	rc = invokeTwain(NULL, DG_CONTROL, DAT_IDENTITY, MSG_GETDEFAULT, &srcID);
-	if (rc != TWRC_SUCCESS) {
-		if (!selectSourceAsDefault()) {
-			return NULL;
-		}
-	}
-
-	rc = invokeTwain(NULL, DG_CONTROL, DAT_IDENTITY, MSG_OPENDS, &srcID);
-	if (rc != TWRC_SUCCESS) {
-		// Unable to open default data source
-		return NULL;
-	}
-
-	if (getDpiCapabilityRange(&srcID,minDpi,maxDpi,stepDpi)){
-		if(dpi < minDpi || dpi > maxDpi || (int)(dpi-minDpi)%(int)stepDpi != 0){
-			UA_WARN("User choose incorrect Ddpi setting");
-			return NULL;
-		}
-	}
-	else{
-		UA_WARN("Unable to obtain resolution capability");
-	}
+	initializeScannerSource(hwnd,srcID);
 
 	value.Whole = dpi;
 	value.Frac = 0; 
@@ -374,69 +342,259 @@ bool ImageGrabber::getCapability(TW_IDENTITY * srcId, TW_CAPABILITY & twCap) {
 	return (rc == TWRC_SUCCESS);
 }
 
-//XXX Code below needs to be tested.
-bool ImageGrabber::getDpiCapabilityRange(TW_IDENTITY * srcId, double & minDpi, double & maxDpi, double & stepDpi) {
+void ImageGrabber::initializeScannerSource(HWND & hwnd, TW_IDENTITY & srcID){
+	TW_UINT16 rc;
+	hwnd = CreateWindowA("STATIC", "", WS_POPUPWINDOW, CW_USEDEFAULT,
+			CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, HWND_DESKTOP,
+			0, 0 /* g_hinstDLL */, 0);
+
+	UA_ASSERTS(hwnd != 0, "Unable to create private window");
+
+	SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE);
+
+	// Open the data source manager.
+	rc = invokeTwain(NULL, DG_CONTROL, DAT_PARENT, MSG_OPENDSM, &hwnd);
+	UA_ASSERTS(rc == TWRC_SUCCESS, "Unable to open data source manager");
+	
+	// get the default source
+	rc = invokeTwain(NULL, DG_CONTROL, DAT_IDENTITY, MSG_GETDEFAULT, &srcID);
+	if (rc != TWRC_SUCCESS) {
+		if (!selectSourceAsDefault()) {
+			return;
+		}
+	}
+
+	rc = invokeTwain(NULL, DG_CONTROL, DAT_IDENTITY, MSG_OPENDS, &srcID);
+	if (rc != TWRC_SUCCESS) {
+		// Unable to open default data source
+		return;
+	}
+}
+
+/* Assuming x-y resolution are the same*/
+UINT8 ImageGrabber::dpiCapability() {
 
 	pTW_RANGE pvalRange;
-	TW_CAPABILITY twCapX, twCapY;
-	bool xResult, yResult, returnCode;
+	TW_CAPABILITY twCapX;
+	TW_IDENTITY srcID;
+	HWND hwnd;
+	UINT8 supportedDpi = 0x00;
+	bool xResult;	
 
-	setCapOneValue(srcId, ICAP_UNITS, TWTY_UINT16, TWUN_INCHES);
+	initializeScannerSource(hwnd,srcID);
+
+
+	setCapOneValue(&srcID, ICAP_UNITS, TWTY_UINT16, TWUN_INCHES);
 
 	twCapX.Cap = ICAP_XRESOLUTION;
-	twCapX.ConType = TWON_RANGE;
+	twCapX.ConType = TWON_DONTCARE16;
 	twCapX.hContainer = NULL;
-	xResult = getCapability(srcId, twCapX);
-	returnCode = false;
+	xResult = getCapability(&srcID, twCapX);
 
 	UA_DOUT(4, 5, "Polling scanner capbility");
 	if(xResult){
+		UA_DOUT(4, 5, "twCap.ConType = " << twCapX.ConType);
+
 		switch(twCapX.ConType){
 
 			case TWON_RANGE:
-				pvalRange = (pTW_RANGE) GlobalLock(twCapX.hContainer);
-				if (pvalRange->ItemType == TWTY_FIX32) {
-					minDpi = uint32ToFloat(pvalRange->MinValue);
-					maxDpi = uint32ToFloat(pvalRange->MaxValue);
-					stepDpi = uint32ToFloat(pvalRange->StepSize);
+				{
+					double minDpi, maxDpi, stepDpi;
 
-					UA_ASSERTS(stepDpi > 0, "TWON_RANGE stepSize was was not greater than zero.");
-					UA_ASSERTS(minDpi > 0, "TWON_RANGE minDpi was was not greater than zero.");
-					UA_ASSERTS(maxDpi >= minDpi, "TWON_RANGE minDpi > naxDpi");
+					UA_DOUT(4, 5, "ConType = Range");
 
-					UA_DOUT(4, 6, "Supports DPI Range {" << " Min:" << minDpi << " Max:" << maxDpi << " Step:" << stepDpi << " }");
-					
-					returnCode = true;
+					pvalRange = (pTW_RANGE) GlobalLock(twCapX.hContainer);
+					if (pvalRange->ItemType == TWTY_FIX32) {
+						minDpi = uint32ToFloat(pvalRange->MinValue);
+						maxDpi = uint32ToFloat(pvalRange->MaxValue);
+						stepDpi = uint32ToFloat(pvalRange->StepSize);
+				
+						UA_ASSERTS(stepDpi > 0, "TWON_RANGE stepSize was was not greater than zero.");
+						UA_ASSERTS(minDpi > 0, "TWON_RANGE minDpi was was not greater than zero.");
+						UA_ASSERTS(maxDpi >= minDpi, "TWON_RANGE minDpi > naxDpi");
+						UA_DOUT(4, 6, "Supports DPI Range {" << " Min:" << minDpi << " Max:" << maxDpi << " Step:" << stepDpi << " }");
+
+						
+						if(300-minDpi >= 0 && 300 <= maxDpi &&  (int)(300-minDpi)%(int)stepDpi == 0)
+							supportedDpi |= DPI_300;
+						
+						if(400-minDpi >= 0 && 400 <= maxDpi && (int)(400-minDpi)%(int)stepDpi == 0)
+							supportedDpi |= DPI_400;
+
+						if(600-minDpi >= 0 && 600 <= maxDpi && (int)(600-minDpi)%(int)stepDpi == 0)
+							supportedDpi |= DPI_600;
+					}
 				}
 				break;
+
 			case TWON_ENUMERATION:
+				{
+					UA_DOUT(4, 5, "ConType = Enumeration");
+
+					pTW_ENUMERATION pvalEnum;
+					TW_UINT16 index;
+					unsigned int tempDpi = 0;
+
+					
+					pvalEnum = (pTW_ENUMERATION) GlobalLock(twCapX.hContainer);
+					UA_ASSERT_NOT_NULL(pvalEnum);
+					
+					UA_DOUT(4, 6, "Number of supported Dpi: " << pvalEnum->NumItems);
+					UA_DOUT(4, 6, "Dpi ItemType: " << pvalEnum->ItemType);
+
+					for(index = 0; index < pvalEnum->NumItems; index++){
+
+						switch(pvalEnum->ItemType){
+							
+							case TWTY_FIX32:
+								tempDpi = (unsigned int)twfix32ToFloat(*(TW_FIX32 *)(void *)(&pvalEnum->ItemList[index*4]));
+								UA_DOUT(4, 6, "Supports DPI (f32bit): " << tempDpi);
+								break;
+
+							case TWTY_INT32:
+							case TWTY_UINT32:
+								tempDpi = (unsigned int)(pvalEnum->ItemList[index*4]);
+								UA_DOUT(4, 6, "Supports DPI (32bit): " << tempDpi);
+								break;
+
+							case TWTY_INT16:
+							case TWTY_UINT16:
+								tempDpi = (unsigned int)(pvalEnum->ItemList[index*2]);
+								UA_DOUT(4, 6, "Supports DPI (16bit): " << tempDpi);
+								break;
+
+							case TWTY_INT8:
+							case TWTY_UINT8:
+							case TWTY_BOOL:
+								UA_WARN("ItemType is 8 bit");
+								break;
+						}
+						if(tempDpi == 300)
+							supportedDpi |= DPI_300;
+
+						if(tempDpi == 400)
+							supportedDpi |= DPI_400;
+
+						if(tempDpi == 600)
+							supportedDpi |= DPI_600;
+					}
+				}
+				break;
+
+			//XXX Untested
 			case TWON_ONEVALUE:
+				{
+					UA_DOUT(4, 5, "ConType = OneValue");
+
+					pTW_ONEVALUE pvalOneValue;
+					unsigned int tempDpi = 0;
+
+					pvalOneValue = (pTW_ONEVALUE) GlobalLock(twCapX.hContainer);
+
+					switch(pvalOneValue->ItemType){
+						
+						case TWTY_FIX32:
+							tempDpi = (unsigned int)twfix32ToFloat(*(TW_FIX32 *)(void *)(&pvalOneValue->Item));
+							UA_DOUT(4, 6, "Supports DPI (f32bit): " << tempDpi);
+							break;
+
+						case TWTY_INT32:
+						case TWTY_UINT32:
+							tempDpi = (unsigned int)(pvalOneValue->Item);
+							UA_DOUT(4, 6, "Supports DPI (32bit): " << tempDpi);
+							break;
+
+						case TWTY_INT16:
+						case TWTY_UINT16:
+							tempDpi = (unsigned int)(pvalOneValue->Item);
+							UA_DOUT(4, 6, "Supports DPI (16bit): " << tempDpi);
+							break;
+
+						case TWTY_INT8:
+						case TWTY_UINT8:
+						case TWTY_BOOL:
+							UA_WARN("ItemType is 8 bit");
+							break;
+					}
+					if(tempDpi == 300)
+						supportedDpi |= DPI_300;
+
+					if(tempDpi == 400)
+						supportedDpi |= DPI_400;
+
+					if(tempDpi == 600)
+						supportedDpi |= DPI_600;
+				}
+				break;
+
+			//XXX Untested
+			case TWON_ARRAY:
+				{
+					UA_DOUT(4, 5, "ConType = Array");
+					pTW_ARRAY pvalArray;
+					TW_UINT16 index;
+					unsigned int tempDpi = 0;
+				
+					pvalArray = (pTW_ARRAY)GlobalLock(twCapX.hContainer);
+					UA_ASSERT_NOT_NULL(pvalArray);
+
+					UA_DOUT(4, 6, "Number of supported Dpi: " << pvalArray->NumItems);
+
+
+					for(index = 0; index < pvalArray->NumItems; index++){
+						
+						switch(pvalArray->ItemType){
+							
+							case TWTY_FIX32:
+								tempDpi = (unsigned int)twfix32ToFloat(*(TW_FIX32 *)(void *)(&pvalArray->ItemList[index*4]));
+								UA_DOUT(4, 6, "Supports DPI (f32bit): " << tempDpi);
+								break;
+
+							case TWTY_INT32:
+							case TWTY_UINT32:
+								tempDpi = (unsigned int)(pvalArray->ItemList[index*4]);
+								UA_DOUT(4, 6, "Supports DPI (32bit): " << tempDpi);
+								break;
+
+							case TWTY_INT16:
+							case TWTY_UINT16:
+								tempDpi = (unsigned int)(pvalArray->ItemList[index*2]);
+								UA_DOUT(4, 6, "Supports DPI (16bit): " << tempDpi);
+								break;
+
+							case TWTY_INT8:
+							case TWTY_UINT8:
+							case TWTY_BOOL:
+								UA_WARN("ItemType is 8 bit");
+								break;
+						}
+
+						if(tempDpi == 300)
+							supportedDpi |= DPI_300;
+
+						if(tempDpi == 400)
+							supportedDpi |= DPI_400;
+
+						if(tempDpi == 600)
+							supportedDpi |= DPI_600;
+						}
+				}
+				break;
+
 			default:
-				returnCode = false;
+				UA_WARN("Unexpected dpi contype");
 				break;
 		}
 		GlobalUnlock(twCapX.hContainer);
 		GlobalFree(twCapX.hContainer);
 	}
-
-	/* sanity check  X-Y res should be the same*/
-	twCapX.Cap = ICAP_YRESOLUTION;
-	yResult = getCapability(srcId, twCapY);
-	if (yResult && (twCapY.ConType == TWON_RANGE)) {
-		pvalRange = (pTW_RANGE) GlobalLock(twCapY.hContainer);
-		if (pvalRange->ItemType == TWTY_FIX32) {
-			UA_ASSERTS(minDpi == uint32ToFloat(pvalRange->MinValue),
-					"X and Y min values for DPI do not match");
-			UA_ASSERTS(maxDpi == uint32ToFloat(pvalRange->MaxValue),
-					"X and Y max values for DPI do not match");
-			UA_ASSERTS(stepDpi == uint32ToFloat(pvalRange->StepSize),
-					"X and Y max values for DPI do not match");
-		}
-		GlobalUnlock(twCapX.hContainer);
-		GlobalFree(twCapX.hContainer);
+	else{
+		UA_WARN("Failed to obtain valid dpi values");
 	}
+	
+	UA_DOUT(4, 5, "Supported dpi code: " << (int)supportedDpi);
 
-	return returnCode;
+	return supportedDpi;
 }
 /*
 //untested 
@@ -543,10 +701,13 @@ void ImageGrabber::getCustomDsData(TW_IDENTITY * srcId) {
 
 inline double ImageGrabber::uint32ToFloat(TW_UINT32 uint32) {
 	TW_FIX32 fix32 =  *((pTW_FIX32)(void *)(&uint32));
+	return twfix32ToFloat(fix32);
+}
+
+inline double ImageGrabber::twfix32ToFloat(TW_FIX32 fix32) {
 	return static_cast<double> (fix32.Whole) + static_cast<double> (fix32.Frac)
 			/ 65536.0;
 }
-
 
 /*
  *	freeHandle()
