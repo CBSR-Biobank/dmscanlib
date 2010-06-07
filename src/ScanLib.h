@@ -37,9 +37,9 @@ const int SC_POS_CALC_ERROR = -8;
 const int SC_INCORRECT_DPI_SCANNED = -9;
 
 
-const UINT8 DPI_300 = 0x02;
-const UINT8 DPI_400 = 0x04;
-const UINT8 DPI_600 = 0x08;
+const unsigned char DPI_300 = 0x02;
+const unsigned char DPI_400 = 0x04;
+const unsigned char DPI_600 = 0x08;
 
 
 /**
@@ -61,6 +61,17 @@ typedef int (*SL_IS_TWAIN_AVAILABLE)();
 EXPORT int slSelectSourceAsDefault();
 
 typedef int (*SL_SELECT_SOURCE_AS_DEFAULT)();
+
+/**
+ * Queries the selected scanner if it supports the dpi.
+ *
+ * @param dpi the dpi value to verify
+ *
+ * @return true if the dpi is supported and false otherwise.
+ */
+bool slIsValidDpi(int dpi);
+
+typedef bool (*SL_IS_VALID_DPI)(int dpi);
 
 /**
  * Scans an image for the specified dimensions. The image is in Windows BMP

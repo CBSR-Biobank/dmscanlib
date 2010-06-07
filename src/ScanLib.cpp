@@ -111,7 +111,7 @@ void formatCellMessages(unsigned plateNum, vector<vector<string> > & cells,
 
 bool slIsValidDpi(int dpi){
 	ImageGrabber ig;
-	UINT8 dpiCap = ig.dpiCapability();
+	unsigned char dpiCap = ig.dpiCapability();
 	return ((dpiCap & DPI_300) && dpi == 300) || 
 			((dpiCap & DPI_400) && dpi == 400) || 
 			((dpiCap & DPI_600) && dpi == 600);

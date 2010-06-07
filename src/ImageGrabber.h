@@ -40,7 +40,7 @@ public:
 	 */
 	bool selectSourceAsDefault();
 
-	UINT8 dpiCapability();
+	unsigned char dpiCapability();
 
 	HANDLE acquireImage(unsigned dpi, int brightness, int contrast,
 		double top, double left, double bottom, double right);

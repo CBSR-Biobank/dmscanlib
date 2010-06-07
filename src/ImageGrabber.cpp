@@ -372,13 +372,13 @@ void ImageGrabber::initializeScannerSource(HWND & hwnd, TW_IDENTITY & srcID){
 }
 
 /* Assuming x-y resolution are the same*/
-UINT8 ImageGrabber::dpiCapability() {
+unsigned char ImageGrabber::dpiCapability() {
 
 	pTW_RANGE pvalRange;
 	TW_CAPABILITY twCapX;
 	TW_IDENTITY srcID;
 	HWND hwnd;
-	UINT8 supportedDpi = 0x00;
+	unsigned char supportedDpi = 0x00;
 	bool xResult;	
 
 	initializeScannerSource(hwnd,srcID);
