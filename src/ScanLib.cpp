@@ -110,11 +110,15 @@ void formatCellMessages(unsigned plateNum, vector<vector<string> > & cells,
 
 
 int slIsValidDpi(int dpi){
+#ifdef WIN32
 	ImageGrabber ig;
 	unsigned char dpiCap = ig.dpiCapability();
 	return ((dpiCap & DPI_300) && dpi == 300) || 
 			((dpiCap & DPI_400) && dpi == 400) || 
 			((dpiCap & DPI_600) && dpi == 600);
+#endif
+
+	return 1;
 }
 
 

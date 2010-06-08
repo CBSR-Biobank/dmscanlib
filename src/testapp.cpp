@@ -28,24 +28,27 @@ const char
 * USAGE_FMT =
    "Usage: %s [OPTIONS]\n"
    "Test tool for scanlib library."
-   "\n"
-   "  --brightness NUM     The brightness setting to be used for scanning.\n"
    "  --debug NUM          Sets debugging level. Debugging messages are output\n"
    "                       to stdout. Only when built UA_HAVE_DEBUG on.\n"
    "  --debugfile          Send debugging output to file named scanlib.log.\n"
-   "  --celldist NUM       Distance between tube cells in inches.\n"
-   "  --corrections NUM    The number of corrections to make.\n"
-   "  --contrast NUM       The contrast setting to be used for scanning.\n"
+   "  --select             Opens the default scanner dialog.\n"
+   "  -h, --help           Displays this text.\n"
+
+   "\n"
+   "Scanner/Decoding Settings\n"
    "  -d, --decode         Acquires an image from the scanner and Decodes the 2D barcodes.\n"
    "                       Use with --plate option.\n"
-   "  --dpi NUM            Dots per inch to use with scanner.\n"
-   "  --gap NUM            Use scan grid with gap of NUM inches (or less) between lines.\n"
-   "  -h, --help           Displays this text.\n"
-   "  -i, --input FILE     Use the specified DIB image file instead of scanner.\n"
-   "  -p, --plate NUM      The plate number to use.\n"
-   "  --processImage       Perform image processing on image before decoding.\n"
-   "  -o, --output FILE    Saves the image to the specified file name.\n"
    "  -s, --scan           Scans an image.\n"
+   "  --processImage       Perform image processing on image before decoding.\n"
+
+   "  -p, --plate NUM      The plate number to use.\n"
+   "  -i, --input FILE     Use the specified DIB image file instead of scanner.\n"
+   "  -o, --output FILE    Saves the image to the specified file name.\n"
+
+   "\n"
+   "  --dpi NUM            Dots per inch to use with scanner.\n"
+   "  --brightness NUM     The brightness setting to be used for scanning.\n"
+   "  --contrast NUM       The contrast setting to be used for scanning.\n"
    "  --square-dev NUM     Maximum  deviation  (degrees)  from  squareness between adjacent\n"
    "                       barcode sides. Default value is N=40, but  N=10  is  recommended\n"
    "                       for  flat  applications  like faxes and other scanned documents.\n"
@@ -57,6 +60,9 @@ const char
    "                       indicated threshold will be ignored  by  the  decoding  process.\n"
    "                       Lowering  the  threshold  will increase the amount of work to be\n"
    "                       done, but may be necessary for low contrast or blurry images.\n"
+   "  --corrections NUM    The number of corrections to make.\n"
+   "  --celldist NUM       Distance between tube cells in inches.\n"
+   "  --gap NUM            Use scan grid with gap of NUM inches (or less) between lines.\n"
    "\n"
    "Scanning Coordinates\n"
    "  -l, --left NUM       The left coordinate, in inches, for the scanning window.\n"
@@ -128,6 +134,10 @@ CSimpleOptA::SOption longOptions[] = {
 #endif
 
 struct Options {
+   std::vector<unsigned> dpis;
+   char * infile;
+   char * outfile;
+
    int brightness;
    double cellDistance;
    int corrections;
@@ -135,12 +145,9 @@ struct Options {
    bool decode;
    unsigned debugLevel;
    bool debugfile;
-   std::vector<unsigned> dpis;
    double gap;
    bool help;
-   char * infile;
    unsigned plateNum;
-   char * outfile;
    bool scan;
    bool select;
    unsigned squareDev;
@@ -151,32 +158,39 @@ struct Options {
    double bottom;
 
    Options() {
-       #ifdef WIN32
+/*
+#ifdef WIN32
       brightness = 9999;
-      corrections = 0;
       contrast = 9999;
 #else
       brightness = numeric_limits<int>::max();
       contrast = numeric_limits<int>::max();
 #endif 
-
-      corrections = 10;
-      cellDistance = 0.33;
+*/
       decode = false;
+	  debugfile = false;
       debugLevel = 0;
-      debugfile = false;
-      gap = 0.085;
+
       help = false;
-      infile = NULL;
-      plateNum = 0;
-      outfile = NULL;
       scan = false;
       select = false;
-      squareDev = 15;
+
+	  infile = NULL;
+      outfile = NULL;
+	  plateNum = 0;
+
+      brightness = 0;
+      contrast = 500;
+	  cellDistance = 0.345;
+	  gap = 0.085;
+	  corrections = 10;
+	  squareDev = 15;
       threshold = 5;
+
       left = 0.0;
       top = 0.0;
       right = 0.0;
+	  bottom = 0.0;
    }
 };
 
@@ -221,42 +235,83 @@ Application::Application(int argc, char ** argv) {
    int result = SC_FAIL;
    unsigned numDpis = options.dpis.size();
 
-   if (options.decode) {
-cout << "SLDECODEPLATER DPI: " << options.dpis[0] << endl;
+   if (options.decode ) {
 
-      if (options.infile != NULL) {
-         result = slDecodeImage(options.debugLevel, options.plateNum,
-                                options.infile, options.gap, options.squareDev,
-                                options.threshold, options.corrections,
-                                options.cellDistance);
-      } else if (numDpis == 1) {
-		  
-    	  result = slDecodePlate(options.debugLevel, options.dpis[0],
-    			  options.brightness, options.contrast, options.plateNum,
-    			  options.left, options.top, options.right, options.bottom,
-    			  options.gap, options.squareDev, options.threshold,
-    			  options.corrections, options.cellDistance);
-      } else if ((numDpis == 2) || (numDpis == 3)) {
-    	  if (numDpis == 2) {
-    		  options.dpis.push_back(0);
-    	  }
-    	  result = slDecodePlateMultipleDpi(options.debugLevel, options.dpis[0],
-    			  options.dpis[1], options.dpis[2],
-    			  options.brightness, options.contrast, options.plateNum,
-    			  options.left, options.top, options.right, options.bottom,
-    			  options.gap, options.squareDev, options.threshold,
-    			  options.corrections, options.cellDistance);
-      }
-   } else if (options.scan) {
-      if ((options.plateNum < 1) || (options.plateNum > 5)) {
-         result = slScanImage(options.debugLevel, options.dpis[0],
-                              options.brightness, options.contrast, options.left, options.top,
-                              options.right, options.bottom,
-                              options.outfile);
-      }
-   } else if (options.select) {
-      result = slSelectSourceAsDefault();
-   }
+	   if (options.infile != NULL) {
+		   result = slDecodeImage(options.debugLevel, 
+								  options.plateNum,
+								  options.infile, 
+								  options.gap, 
+								  options.squareDev,
+								  options.threshold, 
+								  options.corrections,
+								  options.cellDistance);
+	   } 
+	   else if (numDpis == 1) {
+
+		   result = slDecodePlate(options.debugLevel, 
+								  options.dpis[0],
+								  options.brightness, 
+								  options.contrast, 
+								  options.plateNum,
+								  options.left, 
+								  options.top, 
+								  options.right, 
+								  options.bottom,
+								  options.gap, 
+								  options.squareDev, 
+								  options.threshold,
+								  options.corrections, 
+								  options.cellDistance);
+
+	   } 
+	   else if ((numDpis == 2) || (numDpis == 3)) {
+
+		   if (numDpis == 2) 
+			   options.dpis.push_back(0);
+		   
+		   result = slDecodePlateMultipleDpi(options.debugLevel, 
+											 options.dpis[0],
+											 options.dpis[1], 
+											 options.dpis[2],
+											 options.brightness, 
+											 options.contrast, 
+											 options.plateNum,
+											 options.left, 
+											 options.top, 
+											 options.right, 
+											 options.bottom,
+											 options.gap, 
+											 options.squareDev, 
+											 options.threshold,
+											 options.corrections, 
+											 options.cellDistance);
+		}
+
+   }/* Decode */
+
+   else if (options.scan) {
+
+	   if ((options.plateNum < 1) || (options.plateNum > 5)) {
+		   result = slScanImage(options.debugLevel, 
+								options.dpis[0],
+								options.brightness, 
+								options.contrast, 
+								options.left, 
+								options.top,
+								options.right, 
+								options.bottom,
+								options.outfile);
+	   }
+
+
+   }/* Scan */
+
+   else if (options.select) {
+
+	   result = slSelectSourceAsDefault();
+
+   }/* Select */
 
 
    switch(result){

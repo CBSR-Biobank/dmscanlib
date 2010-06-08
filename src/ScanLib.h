@@ -69,7 +69,7 @@ typedef int (*SL_SELECT_SOURCE_AS_DEFAULT)();
  *
  * @return true if the dpi is supported and false otherwise.
  */
-int slIsValidDpi(int dpi);
+EXPORT int slIsValidDpi(int dpi);
 
 typedef bool (*SL_IS_VALID_DPI)(int dpi);
 

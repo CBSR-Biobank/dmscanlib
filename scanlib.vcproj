@@ -89,81 +89,6 @@
 			/>
 		</Configuration>
 		<Configuration
-			Name="Release|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
-			ConfigurationType="2"
-			CharacterSet="1"
-			WholeProgramOptimization="1"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				Optimization="2"
-				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="src;src/libdmtx;src/loki;src/utils"
-				PreprocessorDefinitions="_VISUALC_;WIN32;_CONSOLE;UA_LOGGER;STANDALONE"
-				RuntimeLibrary="2"
-				EnableFunctionLevelLinking="true"
-				UsePrecompiledHeader="0"
-				WarningLevel="3"
-				DebugInformationFormat="3"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLinkerTool"
-				LinkIncremental="1"
-				GenerateDebugInformation="true"
-				SubSystem="1"
-				OptimizeReferences="2"
-				EnableCOMDATFolding="2"
-				TargetMachine="1"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-			/>
-		</Configuration>
-		<Configuration
 			Name="DebugDLL|Win32"
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
@@ -198,7 +123,7 @@
 				MinimalRebuild="false"
 				ExceptionHandling="1"
 				BasicRuntimeChecks="0"
-				RuntimeLibrary="3"
+				RuntimeLibrary="1"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
@@ -216,6 +141,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				LinkLibraryDependencies="true"
 				LinkIncremental="2"
 				ModuleDefinitionFile="scanlib.def"
 				GenerateDebugInformation="true"
@@ -273,11 +199,11 @@
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
-				AdditionalIncludeDirectories="src;src/libdmtx;src/loki;src/utils"
+				AdditionalIncludeDirectories="src;src/libdmtx;src/loki;src/utils;$(JAVA_HOME)\include;$(JAVA_HOME)\include\win32;"
 				PreprocessorDefinitions="_VISUALC_;_WIN32;__WIN32__;WIN32;_CONSOLE;UA_LOGGER;BUILD_DLL"
 				MinimalRebuild="false"
 				BasicRuntimeChecks="0"
-				RuntimeLibrary="2"
+				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
@@ -294,7 +220,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				LinkLibraryDependencies="false"
+				ShowProgress="2"
 				LinkIncremental="2"
+				ModuleDefinitionFile="scanlib.def"
 				GenerateDebugInformation="false"
 				SubSystem="1"
 				LinkTimeCodeGeneration="1"
