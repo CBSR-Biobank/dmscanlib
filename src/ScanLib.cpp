@@ -109,7 +109,7 @@ void formatCellMessages(unsigned plateNum, vector<vector<string> > & cells,
 }
 
 
-bool slIsValidDpi(int dpi){
+int slIsValidDpi(int dpi){
 	ImageGrabber ig;
 	unsigned char dpiCap = ig.dpiCapability();
 	return ((dpiCap & DPI_300) && dpi == 300) || 
@@ -161,6 +161,8 @@ int slDecodeCommon(unsigned plateNum, Dib & dib, Decoder & decoder,
 	Dib * grayscaleDib = NULL;
 	grayscaleDib = Dib::convertGrayscale(dib);
 	UA_ASSERT_NOT_NULL(grayscaleDib);
+
+	//grayscaleDib->writeToFile("grayscale.bmp");
 
 	grayscaleDib->tpPresetFilter();
 

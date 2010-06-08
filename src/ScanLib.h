@@ -37,9 +37,9 @@ const int SC_POS_CALC_ERROR = -8;
 const int SC_INCORRECT_DPI_SCANNED = -9;
 
 
-const unsigned char DPI_300 = 0x02;
-const unsigned char DPI_400 = 0x04;
-const unsigned char DPI_600 = 0x08;
+const unsigned DPI_300 = 0x02;
+const unsigned DPI_400 = 0x04;
+const unsigned DPI_600 = 0x08;
 
 
 /**
@@ -69,7 +69,7 @@ typedef int (*SL_SELECT_SOURCE_AS_DEFAULT)();
  *
  * @return true if the dpi is supported and false otherwise.
  */
-bool slIsValidDpi(int dpi);
+int slIsValidDpi(int dpi);
 
 typedef bool (*SL_IS_VALID_DPI)(int dpi);
 
