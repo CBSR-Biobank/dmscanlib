@@ -66,6 +66,150 @@ unsigned ImageGrabber::invokeTwain(TW_IDENTITY * srcId, unsigned long dg,
 	return r;
 }
 
+bool ImageGrabber::isDriverWia() {
+	TW_IDENTITY srcId;
+	HWND hwnd;
+	bool returnCode = true;
+
+	initializeScannerSource(hwnd,srcId);
+
+	UA_DOUT(4, 5, "Polling driver for driver type");
+
+	if(srcId.ProductName != NULL){
+		string productnameStr = srcId.ProductName;
+		
+		transform(productnameStr.begin(), productnameStr.end(),productnameStr.begin(), tolower );
+		if( productnameStr.find("twain") != string::npos){
+			UA_DOUT(4, 6, "Driver type is TWAIN: ProductName/" << productnameStr);
+			returnCode = false;
+		}
+		else if( productnameStr.find("wia") != string::npos ){
+			UA_DOUT(4, 6, "Driver type is WIA: ProductName/" << productnameStr);
+			returnCode = true;
+		}
+		else{
+			UA_DOUT(4, 6, "Driver type is WIA (default)");
+			returnCode = true;
+		}
+	
+	}
+	else{
+		returnCode = true;
+		UA_DOUT(4, 6, "Driver type is WIA (default)");
+	}
+
+	invokeTwain(&srcId, DG_CONTROL, DAT_IDENTITY, MSG_CLOSEDS, &srcId);
+	invokeTwain(NULL, DG_CONTROL, DAT_PARENT, MSG_CLOSEDSM, &hwnd);
+	DestroyWindow(hwnd);
+	
+	return returnCode;
+}
+/*
+else{
+
+			twCap.Cap = ICAP_XFERMECH;
+			twCap.ConType = TWON_ENUMERATION;
+			twCap.hContainer = NULL;
+			capResult = getCapability(&srcId, twCap);
+			
+			if(capResult){
+				switch(twCap.ConType){
+
+						case TWON_ENUMERATION:
+							{
+								UA_DOUT(4, 5, "ConType = Enumeration");
+
+								pTW_ENUMERATION pvalEnum;
+								TW_UINT16 index;
+								unsigned int supportedTransferType = -1;
+
+								
+								pvalEnum = (pTW_ENUMERATION) GlobalLock(twCap.hContainer);
+								UA_ASSERT_NOT_NULL(pvalEnum);
+								
+								UA_DOUT(4, 6, "Number of supported transfer modes: " << pvalEnum->NumItems);
+
+								for(index = 0; index < pvalEnum->NumItems; index++){
+
+									switch(pvalEnum->ItemType){
+
+										case TWTY_INT16:
+										case TWTY_UINT16:
+											supportedTransferType = (unsigned int)(pvalEnum->ItemList[index*2]);
+											UA_DOUT(4, 6, "Supports mode (16bit): " << supportedTransferType);
+											break;
+
+										case TWTY_INT8:
+										case TWTY_UINT8:
+										case TWTY_BOOL:
+											supportedTransferType = (unsigned int)(pvalEnum->ItemList[index]);
+											UA_DOUT(4, 6, "Supports mode (8bit): " << supportedTransferType);
+											break;
+
+										default:
+											UA_WARN("Unexpected Itemtype");
+											break;
+									}
+									if(supportedTransferType == TWSX_NATIVE){ //only TWAIN should support this
+										UA_DOUT(4, 5, "Driver type is probably TWAIN (assuming wia does not have mode: TWSX_NATIVE )");
+										returnCode = false; 
+									}
+								}	
+							}
+							break;
+
+						case TWON_ONEVALUE:
+							{
+								UA_DOUT(4, 5, "ConType = OneValue");
+
+								pTW_ONEVALUE pvalOneValue;
+								unsigned int supportedTransferType = -1;
+
+								pvalOneValue = (pTW_ONEVALUE) GlobalLock(twCap.hContainer);
+
+								switch(pvalOneValue->ItemType){
+
+									case TWTY_INT16:
+									case TWTY_UINT16:
+										supportedTransferType = (unsigned int)(pvalOneValue->Item);
+										UA_DOUT(4, 6, "Supports mode (16bit): " << supportedTransferType);
+										break;
+
+									case TWTY_INT8:
+									case TWTY_UINT8:
+									case TWTY_BOOL:
+										supportedTransferType = (unsigned int)(pvalOneValue->Item);
+										UA_DOUT(4, 6, "Supports mode (8bit): " << supportedTransferType);
+										break;
+
+									default:
+										UA_WARN("Unexpected Itemtype");
+										break;
+								}
+
+								if(supportedTransferType == TWSX_NATIVE){ //only TWAIN should support this
+									UA_DOUT(4, 5, "Driver type is probably TWAIN (assuming wia does not have mode: TWSX_NATIVE )");
+									returnCode = false;
+								}
+							}
+							break;
+
+
+						default:
+							UA_WARN("Unexpected dpi contype");
+							break;
+
+				}// switch
+
+				GlobalUnlock(twCap.hContainer);
+				GlobalFree(twCap.hContainer);
+
+			} //if result
+
+		}//else did not match "twain" || "wia"
+*/
+
+
 /*
  *	selectSourceAsDefault()
  *	@params - none
@@ -369,6 +513,7 @@ void ImageGrabber::initializeScannerSource(HWND & hwnd, TW_IDENTITY & srcID){
 		// Unable to open default data source
 		return;
 	}
+
 }
 
 /* Assuming x-y resolution are the same*/
@@ -591,101 +736,15 @@ unsigned char ImageGrabber::dpiCapability() {
 	else{
 		UA_WARN("Failed to obtain valid dpi values");
 	}
+
+	invokeTwain(&srcID, DG_CONTROL, DAT_IDENTITY, MSG_CLOSEDS, &srcID);
+	invokeTwain(NULL, DG_CONTROL, DAT_PARENT, MSG_CLOSEDSM, &hwnd);
+	DestroyWindow(hwnd);
 	
 	UA_DOUT(4, 5, "Supported dpi code: " << (int)supportedDpi);
 
 	return supportedDpi;
 }
-/*
-//untested 
-			case TWON_ENUMERATION:
-				UA_DOUT(4, 5, "ConType = Enumeration");
-
-				pTW_ENUMERATION pvalEnum;
-				TW_UINT32 NumItems;
-				TW_UINT16 index;
-				TW_UINT16 valueU16;
-				TW_BOOL valueBool;
-
-				pvalEnum = (pTW_ENUMERATION) GlobalLock(twCapX.hContainer);
-				UA_ASSERT_NOT_NULL(pvalEnum);
-
-				NumItems = pvalEnum->NumItems;
-
-				for(index =0; index < pvalEnum->NumItems; index++){
-					if(pvalEnum->ItemType == TWTY_UINT16){
-						valueU16 = (TW_UINT16)(pvalEnum->ItemList[index*2]);
-						UA_DOUT(4, 6, "Supports DPI (16bit): " << valueU16);
-
-					}
-					else if(pvalEnum->ItemType == TWTY_BOOL){ // assuming typo in spec? pg 84
-						valueBool = (TW_BOOL)(pvalEnum->ItemList[index]);
-						UA_DOUT(4, 6, "Supports DPI (8bit): " << valueBool);
-					}
-				}
-				break;
-
-
-			case TWON_ONEVALUE:
-				UA_DOUT(4, 5, "ConType = Onevalue");
-
-				pTW_ONEVALUE pvalOneValue;
-				TW_BOOL	boolOneValue;
-
-				pvalOneValue = (pTW_ONEVALUE)GlobalLock(twCapX.hContainer);
-				if(pvalOneValue->ItemType == TWTY_BOOL){
-					boolOneValue = (TW_BOOL)(pvalOneValue->Item);
-					UA_DOUT(4, 6, "Supports DPI (8bit): " << boolOneValue);
-				}
-				break;
-*/
-
-
-/*
-bool getDpiCapability(TW_IDENTITY * srcId) {
-	TW_CAPABILITY twCapX, twCapY;
-	pTW_RANGE r;
-	bool xResult, yResult;
-
-	setCapOneValue(srcId, ICAP_UNITS, TWTY_UINT16, TWUN_INCHES);
-
-	twCapX.Cap = ICAP_XRESOLUTION;
-	xResult = getCapability(srcId, twCapX);
-
-	if (xResult && (twCapX.ConType == TWON_RANGE)) {
-		r = (pTW_RANGE) GlobalLock(twCapX.hContainer);
-		if (r->ItemType == TWTY_FIX32) {
-			minDpi = static_cast<int> (fix32ToFloat(
-					*reinterpret_cast<TW_FIX32*> (&r->MinValue)));
-			maxDpi = static_cast<int> (fix32ToFloat(
-					*reinterpret_cast<TW_FIX32*> (&r->MaxValue)));
-			UA_ASSERTS(fix32ToFloat(*reinterpret_cast<TW_FIX32*>(&r->StepSize)) == 1,
-					"invalid step size");
-		}
-		GlobalUnlock(twCapX.hContainer);
-		GlobalFree(twCapX.hContainer);
-	}
-
-	twCapX.Cap = ICAP_YRESOLUTION;
-	yResult = getCapability(srcId, twCapY);
-
-	if (yResult && (twCapY.ConType == TWON_RANGE)) {
-		r = (pTW_RANGE) GlobalLock(twCapY.hContainer);
-		if (r->ItemType == TWTY_FIX32) {
-			UA_ASSERTS(minDpi == static_cast<int>(fix32ToFloat(
-									*reinterpret_cast<TW_FIX32*> (&r->MinValue))),
-					"X and Y min values for DPI do not match");
-			UA_ASSERTS(maxDpi = static_cast<int>(fix32ToFloat(
-									*reinterpret_cast<TW_FIX32*> (&r->MaxValue))),
-					"X and Y max values for DPI do not match");
-		}
-		GlobalUnlock(twCapX.hContainer);
-		GlobalFree(twCapX.hContainer);
-	}
-
-	return true;
-}
-*/
 
 void ImageGrabber::getCustomDsData(TW_IDENTITY * srcId) {
 	TW_UINT16 rc;

@@ -28,6 +28,7 @@ const char
 * USAGE_FMT =
    "Usage: %s [OPTIONS]\n"
    "Test tool for scanlib library."
+   "\n"
    "  --debug NUM          Sets debugging level. Debugging messages are output\n"
    "                       to stdout. Only when built UA_HAVE_DEBUG on.\n"
    "  --debugfile          Send debugging output to file named scanlib.log.\n"
@@ -236,7 +237,6 @@ Application::Application(int argc, char ** argv) {
    unsigned numDpis = options.dpis.size();
 
    if (options.decode ) {
-
 	   if (options.infile != NULL) {
 		   result = slDecodeImage(options.debugLevel, 
 								  options.plateNum,
@@ -308,10 +308,11 @@ Application::Application(int argc, char ** argv) {
    }/* Scan */
 
    else if (options.select) {
-
 	   result = slSelectSourceAsDefault();
-
+	    
    }/* Select */
+
+
 
 
    switch(result){

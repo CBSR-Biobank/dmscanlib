@@ -41,6 +41,7 @@ public:
 	bool selectSourceAsDefault();
 
 	unsigned char dpiCapability();
+	bool isDriverWia();
 
 	HANDLE acquireImage(unsigned dpi, int brightness, int contrast,
 		double top, double left, double bottom, double right);

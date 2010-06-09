@@ -92,6 +92,18 @@ int slSelectSourceAsDefault() {
 	return SC_FAIL;
 }
 
+
+int slIsDriverWia() {
+#ifdef WIN32
+	ImageGrabber ig;
+	if (ig.isDriverWia()) {
+		return 1;
+	}
+#endif
+	return 0;
+}
+
+
 void formatCellMessages(unsigned plateNum, vector<vector<string> > & cells,
 		string & msg) {
 	ostringstream out;

@@ -73,6 +73,12 @@ EXPORT int slIsValidDpi(int dpi);
 
 typedef bool (*SL_IS_VALID_DPI)(int dpi);
 
+
+
+EXPORT int slIsDriverWia();
+typedef bool (*SL_IS_DRIVER_WIA)();
+
+
 /**
  * Scans an image for the specified dimensions. The image is in Windows BMP
  * format.
