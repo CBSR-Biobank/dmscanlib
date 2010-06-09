@@ -487,7 +487,10 @@ bool ImageGrabber::getCapability(TW_IDENTITY * srcId, TW_CAPABILITY & twCap) {
 }
 
 void ImageGrabber::initializeScannerSource(HWND & hwnd, TW_IDENTITY & srcID){
+
+
 	TW_UINT16 rc;
+	
 	hwnd = CreateWindowA("STATIC", "", WS_POPUPWINDOW, CW_USEDEFAULT,
 			CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, HWND_DESKTOP,
 			0, 0 /* g_hinstDLL */, 0);
@@ -500,6 +503,7 @@ void ImageGrabber::initializeScannerSource(HWND & hwnd, TW_IDENTITY & srcID){
 	rc = invokeTwain(NULL, DG_CONTROL, DAT_PARENT, MSG_OPENDSM, &hwnd);
 	UA_ASSERTS(rc == TWRC_SUCCESS, "Unable to open data source manager");
 	
+
 	// get the default source
 	rc = invokeTwain(NULL, DG_CONTROL, DAT_IDENTITY, MSG_GETDEFAULT, &srcID);
 	if (rc != TWRC_SUCCESS) {
