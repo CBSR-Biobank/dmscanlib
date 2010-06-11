@@ -7,6 +7,26 @@
  *
  ******************************************************************************/
 
+#ifdef _VISUALC_
+// disable warnings about fopen
+#pragma warning(disable : 4996)
+
+#ifdef _DEBUG
+
+//Scan for memory leaks in visual studio
+#include <stdlib.h>
+#include <crtdbg.h>
+
+#define _CRTDBG_MAP_ALLOC
+#define DEBUG_NEW new(_NORMAL_BLOCK, __FILE__, __LINE__)
+#define new DEBUG_NEW
+#endif
+
+#endif
+
+#ifdef WIN32
+
+
 #include "ScanLib.h"
 #include "UaAssert.h"
 #include "UaLogger.h"
@@ -17,10 +37,13 @@
 #include "SimpleOpt.h"
 
 #include <iostream>
+#include <bitset>
 
-#ifdef WIN32
+
 #include "ImageGrabber.h"
 #endif
+
+
 
 using namespace std;
 
@@ -33,6 +56,8 @@ const char
    "                       to stdout. Only when built UA_HAVE_DEBUG on.\n"
    "  --debugfile          Send debugging output to file named scanlib.log.\n"
    "  --select             Opens the default scanner dialog.\n"
+   "  --capability         Query selected scanner for dpi and driver type settings.\n"
+   "  --test			   Tests most functions in this project.\n"
    "  -h, --help           Displays this text.\n"
 
    "\n"
@@ -83,6 +108,8 @@ enum longOptID {
 			OPT_ID_GAP,
 			OPT_ID_PROCESS_IMAGE,
 			OPT_ID_SELECT,
+			OPT_ID_CAPABILITY,
+			OPT_ID_TEST,
 			OPT_ID_SQUARE_DEV,
 			OPT_ID_THRESHOLD,
 			OPT_ID_LEFT,
@@ -114,6 +141,8 @@ CSimpleOptA::SOption longOptions[] = {
    { 'o', "-o", SO_REQ_SEP },
    { 's', "--scan", SO_NONE },
    { 's', "-s", SO_NONE },
+   { OPT_ID_CAPABILITY, "--capability", SO_NONE },
+   { OPT_ID_TEST, "--test", SO_NONE },
    { OPT_ID_SELECT, "--select", SO_NONE },
    { OPT_ID_SQUARE_DEV, "--square-dev", SO_REQ_SEP },
    { OPT_ID_THRESHOLD, "--threshold", SO_REQ_SEP },
@@ -148,6 +177,8 @@ struct Options {
    bool debugfile;
    double gap;
    bool help;
+   bool capability;
+   bool test;
    unsigned plateNum;
    bool scan;
    bool select;
@@ -159,7 +190,7 @@ struct Options {
    double bottom;
 
    Options() {
-/*
+
 #ifdef WIN32
       brightness = 9999;
       contrast = 9999;
@@ -167,7 +198,7 @@ struct Options {
       brightness = numeric_limits<int>::max();
       contrast = numeric_limits<int>::max();
 #endif 
-*/
+
       decode = false;
 	  debugfile = false;
       debugLevel = 0;
@@ -175,13 +206,13 @@ struct Options {
       help = false;
       scan = false;
       select = false;
+	  capability = false;
+	  test = false;
 
 	  infile = NULL;
       outfile = NULL;
 	  plateNum = 0;
 
-      brightness = 0;
-      contrast = 500;
 	  cellDistance = 0.345;
 	  gap = 0.085;
 	  corrections = 10;
@@ -218,6 +249,15 @@ private:
 const char * Application::INI_FILE_NAME = "scanlib.ini";
 
 Application::Application(int argc, char ** argv) {
+
+	#ifdef _VISUALC_
+	#ifdef _DEBUG
+
+	 _CrtSetDbgFlag ( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_REPORT_FLAG | _CRTDBG_LEAK_CHECK_DF );
+
+	#endif
+	#endif
+
    progname = strrchr((char *) argv[0], DIR_SEP_CHR) + 1;
 
    getCmdOptions(argc, argv);
@@ -312,7 +352,134 @@ Application::Application(int argc, char ** argv) {
 	    
    }/* Select */
 
+   else if (options.capability){
+		
+	   bitset<sizeof(int)> bits(slGetScannerCapability());
+		
+	    cout << "Capability code: " << bits.to_string<char,char_traits<char>,allocator<char> >() << endl;
+		result = SC_SUCCESS;
+   }
 
+   else if (options.test) {
+
+	   if(options.dpis.size() < 3 ||
+		  (options.left == 0.0 && options.right == 0.0 && options.top == 0.0 && options.bottom == 0.0)){
+		
+		  cout << "Must provide 3 dpi values and plate offsets."<< endl;
+		  result =  SC_FAIL;
+		  goto STOP;
+	   }
+
+
+	   cout << "Initializing Test Procedure" << endl << endl;
+
+
+	   cout << "==============Select Source================" << endl;
+	   result = slSelectSourceAsDefault();
+	   if(result != SC_SUCCESS){
+			cout << "Failed to select source."<< endl;
+			goto STOP;
+	   }
+	   cout << "===========================================" << endl;
+
+
+
+	   cout << "==============Scan Image to File================" << endl;
+	   result = slScanImage(options.debugLevel, 
+								options.dpis[0],
+								options.brightness, 
+								options.contrast, 
+								options.left, 
+								options.top,
+								options.right, 
+								options.bottom,
+								"test.bmp");
+
+	   if(result != SC_SUCCESS){
+			cout << "Failed to scan image to file."<< endl;
+			goto STOP;
+	   }
+	   cout << "===========================================" << endl;
+
+
+	   cout << "==============Decode image from file================" << endl;
+	   result = slDecodeImage(options.debugLevel, 
+								  1,
+								  "test.bmp", 
+								  options.gap, 
+								  options.squareDev,
+								  options.threshold, 
+								  options.corrections,
+								  options.cellDistance);
+
+	   if(result != SC_SUCCESS){
+			cout << "Failed to decode scanned image file."<< endl;
+			goto STOP;
+	   }
+
+	   cout << "===========================================" << endl;
+	    
+
+
+	   cout << "==============Scan & Decode Image================" << endl;
+	   result = slDecodePlate(options.debugLevel, 
+								  options.dpis[0],
+								  options.brightness, 
+								  options.contrast, 
+								  1,
+								  options.left, 
+								  options.top, 
+								  options.right, 
+								  options.bottom,
+								  options.gap, 
+								  options.squareDev, 
+								  options.threshold,
+								  options.corrections, 
+								  options.cellDistance);
+
+	   if(result != SC_SUCCESS){
+			cout << "Failed to scan & decode image."<< endl;
+			goto STOP;
+	   }
+
+	   cout << "===========================================" << endl;
+
+
+	   /*
+	   cout << "==============Scan & Decode Multiple Dpi Image================" << endl;
+	   result = slDecodePlateMultipleDpi(options.debugLevel, 
+											 options.dpis[0],
+											 options.dpis[1], 
+											 options.dpis[2],
+											 options.brightness, 
+											 options.contrast, 
+											 1,
+											 options.left, 
+											 options.top, 
+											 options.right, 
+											 options.bottom,
+											 options.gap, 
+											 options.squareDev, 
+											 options.threshold,
+											 options.corrections, 
+											 options.cellDistance);
+
+	   if(result != SC_SUCCESS){
+			cout << "Failed to scan & decode multiple dpi imaeg"<< endl;
+			goto STOP;
+	   }
+
+	   cout << "===========================================" << endl;
+
+	   */
+
+
+STOP:
+	   #ifdef _VISUALC_
+			_CrtDumpMemoryLeaks();
+	   #endif
+
+   }
 
 
    switch(result){
@@ -431,6 +598,14 @@ bool Application::getCmdOptions(int argc, char ** argv) {
 
             case OPT_ID_SELECT:
                options.select = true;
+               break;
+
+		    case OPT_ID_CAPABILITY:
+				options.capability = true;
+               break;
+
+			case OPT_ID_TEST:
+				options.test = true;
                break;
 
             case OPT_ID_CONTRAST:

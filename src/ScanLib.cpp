@@ -23,6 +23,7 @@
 #ifdef _VISUALC_
 // disable warnings about fopen
 #pragma warning(disable : 4996)
+
 #endif
 
 #include <iostream>
@@ -92,16 +93,29 @@ int slSelectSourceAsDefault() {
 	return SC_FAIL;
 }
 
-
-int slIsDriverWia() {
+/*
+Please note that the 32nd bit should be ignored.
+*/
+int slGetScannerCapability() {
 #ifdef WIN32
 	ImageGrabber ig;
-	if (ig.isDriverWia()) {
-		return 1;
-	}
+	return ig.getScannerCapability(); 
 #endif
-	return 0;
+	return 0xFF; //supports WIA and DPI: 300,400,600
 }
+
+
+int isValidDpi(int dpi){
+#ifdef WIN32
+	ImageGrabber ig;
+	unsigned char dpiCap = ig.getScannerCapability();
+	return ((dpiCap & CAP_DPI_300) && dpi == 300) || 
+			((dpiCap & CAP_DPI_400) && dpi == 400) || 
+			((dpiCap & CAP_DPI_600) && dpi == 600);
+#endif
+	return 1;
+}
+
 
 
 void formatCellMessages(unsigned plateNum, vector<vector<string> > & cells,
@@ -121,19 +135,6 @@ void formatCellMessages(unsigned plateNum, vector<vector<string> > & cells,
 }
 
 
-int slIsValidDpi(int dpi){
-#ifdef WIN32
-	ImageGrabber ig;
-	unsigned char dpiCap = ig.dpiCapability();
-	return ((dpiCap & DPI_300) && dpi == 300) || 
-			((dpiCap & DPI_400) && dpi == 400) || 
-			((dpiCap & DPI_600) && dpi == 600);
-#endif
-
-	return 1;
-}
-
-
 int slScanImage(unsigned verbose, unsigned dpi, int brightness, int contrast,
 		double left, double top, double right, double bottom, char * filename) {
 	configLogging(verbose);
@@ -150,7 +151,7 @@ int slScanImage(unsigned verbose, unsigned dpi, int brightness, int contrast,
 		return SC_FAIL;
 	}
 
-	if(!slIsValidDpi(dpi)){
+	if(!isValidDpi(dpi)){
 		return SC_INVALID_DPI; 
 	}
 	ImageGrabber ig;
@@ -243,7 +244,7 @@ int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
 		return SC_INVALID_PLATE_NUM;
 	}
 	
-	if(!slIsValidDpi(dpi)){
+	if(!isValidDpi(dpi)){
 		return SC_INVALID_DPI; 
 	}
 
@@ -331,7 +332,7 @@ int slDecodePlateMultipleDpi(unsigned verbose, unsigned dpi1, unsigned dpi2,
 	for (unsigned i = 0; i < 3; ++i) {
 		if (dpis[i] == 0) continue;
 
-		if(!slIsValidDpi(dpis[i])){
+		if(!isValidDpi(dpis[i])){
 			return SC_INVALID_DPI; 
 		}
 

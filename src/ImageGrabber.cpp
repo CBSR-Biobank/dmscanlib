@@ -65,45 +65,6 @@ unsigned ImageGrabber::invokeTwain(TW_IDENTITY * srcId, unsigned long dg,
 	}
 	return r;
 }
-
-bool ImageGrabber::isDriverWia() {
-	TW_IDENTITY srcId;
-	HWND hwnd;
-	bool returnCode = true;
-
-	initializeScannerSource(hwnd,srcId);
-
-	UA_DOUT(4, 5, "Polling driver for driver type");
-
-	if(srcId.ProductName != NULL){
-		string productnameStr = srcId.ProductName;
-		
-		transform(productnameStr.begin(), productnameStr.end(),productnameStr.begin(), tolower );
-		if( productnameStr.find("twain") != string::npos){
-			UA_DOUT(4, 6, "Driver type is TWAIN: ProductName/" << productnameStr);
-			returnCode = false;
-		}
-		else if( productnameStr.find("wia") != string::npos ){
-			UA_DOUT(4, 6, "Driver type is WIA: ProductName/" << productnameStr);
-			returnCode = true;
-		}
-		else{
-			UA_DOUT(4, 6, "Driver type is WIA (default)");
-			returnCode = true;
-		}
-	
-	}
-	else{
-		returnCode = true;
-		UA_DOUT(4, 6, "Driver type is WIA (default)");
-	}
-
-	invokeTwain(&srcId, DG_CONTROL, DAT_IDENTITY, MSG_CLOSEDS, &srcId);
-	invokeTwain(NULL, DG_CONTROL, DAT_PARENT, MSG_CLOSEDSM, &hwnd);
-	DestroyWindow(hwnd);
-	
-	return returnCode;
-}
 /*
 else{
 
@@ -411,7 +372,6 @@ HANDLE ImageGrabber::acquireImage(unsigned dpi, int brightness, int contrast,
 			}
 		}
 	}
-
 	// Close the data source.
 	invokeTwain(&srcID, DG_CONTROL, DAT_IDENTITY, MSG_CLOSEDS, &srcID);
 
@@ -488,12 +448,13 @@ bool ImageGrabber::getCapability(TW_IDENTITY * srcId, TW_CAPABILITY & twCap) {
 
 void ImageGrabber::initializeScannerSource(HWND & hwnd, TW_IDENTITY & srcID){
 
-
 	TW_UINT16 rc;
 	
 	hwnd = CreateWindowA("STATIC", "", WS_POPUPWINDOW, CW_USEDEFAULT,
 			CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, HWND_DESKTOP,
 			0, 0 /* g_hinstDLL */, 0);
+
+	ShowWindow(hwnd, SW_HIDE);
 
 	UA_ASSERTS(hwnd != 0, "Unable to create private window");
 
@@ -521,13 +482,13 @@ void ImageGrabber::initializeScannerSource(HWND & hwnd, TW_IDENTITY & srcID){
 }
 
 /* Assuming x-y resolution are the same*/
-unsigned char ImageGrabber::dpiCapability() {
+int ImageGrabber::getScannerCapability() {
 
 	pTW_RANGE pvalRange;
 	TW_CAPABILITY twCapX;
 	TW_IDENTITY srcID;
 	HWND hwnd;
-	unsigned char supportedDpi = 0x00;
+	int capabilityCode = 0x00;
 	bool xResult;	
 
 	initializeScannerSource(hwnd,srcID);
@@ -565,13 +526,13 @@ unsigned char ImageGrabber::dpiCapability() {
 
 						
 						if(300-minDpi >= 0 && 300 <= maxDpi &&  (int)(300-minDpi)%(int)stepDpi == 0)
-							supportedDpi |= DPI_300;
+							capabilityCode |= CAP_DPI_300;
 						
 						if(400-minDpi >= 0 && 400 <= maxDpi && (int)(400-minDpi)%(int)stepDpi == 0)
-							supportedDpi |= DPI_400;
+							capabilityCode |= CAP_DPI_400;
 
 						if(600-minDpi >= 0 && 600 <= maxDpi && (int)(600-minDpi)%(int)stepDpi == 0)
-							supportedDpi |= DPI_600;
+							capabilityCode |= CAP_DPI_600;
 					}
 				}
 				break;
@@ -619,13 +580,13 @@ unsigned char ImageGrabber::dpiCapability() {
 								break;
 						}
 						if(tempDpi == 300)
-							supportedDpi |= DPI_300;
+							capabilityCode |= CAP_DPI_300;
 
 						if(tempDpi == 400)
-							supportedDpi |= DPI_400;
+							capabilityCode |= CAP_DPI_400;
 
 						if(tempDpi == 600)
-							supportedDpi |= DPI_600;
+							capabilityCode |= CAP_DPI_600;
 					}
 				}
 				break;
@@ -666,13 +627,13 @@ unsigned char ImageGrabber::dpiCapability() {
 							break;
 					}
 					if(tempDpi == 300)
-						supportedDpi |= DPI_300;
+						capabilityCode |= CAP_DPI_300;
 
 					if(tempDpi == 400)
-						supportedDpi |= DPI_400;
+						capabilityCode |= CAP_DPI_400;
 
 					if(tempDpi == 600)
-						supportedDpi |= DPI_600;
+						capabilityCode |= CAP_DPI_600;
 				}
 				break;
 
@@ -719,13 +680,13 @@ unsigned char ImageGrabber::dpiCapability() {
 						}
 
 						if(tempDpi == 300)
-							supportedDpi |= DPI_300;
+							capabilityCode |= CAP_DPI_300;
 
 						if(tempDpi == 400)
-							supportedDpi |= DPI_400;
+							capabilityCode |= CAP_DPI_400;
 
 						if(tempDpi == 600)
-							supportedDpi |= DPI_600;
+							capabilityCode |= CAP_DPI_600;
 						}
 				}
 				break;
@@ -741,13 +702,55 @@ unsigned char ImageGrabber::dpiCapability() {
 		UA_WARN("Failed to obtain valid dpi values");
 	}
 
+
+	//-------------------------Driver Type----------------------------//
+
+	UA_DOUT(4, 5, "Polling driver for driver type");
+
+	if(srcID.ProductName != NULL){
+		string productnameStr = srcID.ProductName;
+		
+		transform(productnameStr.begin(), productnameStr.end(),productnameStr.begin(), tolower );
+		if( productnameStr.find("twain") != string::npos){
+			UA_DOUT(4, 6, "Driver type is TWAIN: ProductName/" << productnameStr);
+		}
+		else if( productnameStr.find("wia") != string::npos ){
+			UA_DOUT(4, 6, "Driver type is WIA: ProductName/" << productnameStr);
+			capabilityCode |= CAP_IS_WIA;
+			
+		}
+		else{
+			UA_DOUT(4, 6, "Driver type is WIA (default)");
+			capabilityCode |= CAP_IS_WIA;
+		}
+	}
+	else{
+		capabilityCode |= CAP_IS_WIA;
+		UA_DOUT(4, 6, "Driver type is WIA (default)");
+	}
+	//-------------------------Driver Type----------------------------//
+
+
+
+	//-------------------------Scanner Selected----------------------------//
+
+	//TODO CAP_IS_SCANNER: use twain specific calls to determine if a source is selected 
+
+	if((capabilityCode & CAP_DPI_300) || (capabilityCode  & CAP_DPI_400) || (capabilityCode & CAP_DPI_600)){
+		capabilityCode |= CAP_IS_SCANNER;
+	}
+
+	//-------------------------Scanner Selected----------------------------//
+
+
+
 	invokeTwain(&srcID, DG_CONTROL, DAT_IDENTITY, MSG_CLOSEDS, &srcID);
 	invokeTwain(NULL, DG_CONTROL, DAT_PARENT, MSG_CLOSEDSM, &hwnd);
 	DestroyWindow(hwnd);
 	
-	UA_DOUT(4, 5, "Supported dpi code: " << (int)supportedDpi);
+	UA_DOUT(4, 5, "Capabability code: " << (int)capabilityCode);
 
-	return supportedDpi;
+	return capabilityCode;
 }
 
 void ImageGrabber::getCustomDsData(TW_IDENTITY * srcId) {

@@ -2,8 +2,7 @@
 %{
 extern int slIsTwainAvailable();
 extern int slSelectSourceAsDefault();
-extern int slIsValidDpi(int dpi);
-extern int slIsValidDpi();
+extern int slGetScannerCapability();
 extern int slScanImage(unsigned verbose, unsigned dpi, int brightness,
         int contrast, double left, double top, double right, double bottom,
         char * filename);
@@ -23,8 +22,7 @@ extern int slDecodeImage(unsigned verbose, unsigned plateNum, char * filename,
 
 extern int slIsTwainAvailable();
 extern int slSelectSourceAsDefault();
-extern int slIsValidDpi(int dpi);
-extern int slIsDriverWia();
+extern int slGetScannerCapability();
 extern int slScanImage(unsigned verbose, unsigned dpi, int brightness,
         int contrast, double left, double top, double right, double bottom,
         char * filename);

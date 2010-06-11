@@ -40,14 +40,14 @@ public:
 	 */
 	bool selectSourceAsDefault();
 
-	unsigned char dpiCapability();
-	bool isDriverWia();
+	int getScannerCapability();
 
 	HANDLE acquireImage(unsigned dpi, int brightness, int contrast,
 		double top, double left, double bottom, double right);
 	DmtxImage* acquireDmtxImage(unsigned dpi, int brightness, int contrast);
 	void freeImage(HANDLE handle);
-
+	
+	
 
 private:
 
@@ -64,6 +64,8 @@ private:
 	BOOL setCapOneValue(TW_IDENTITY * srcId, unsigned Cap, unsigned ItemType, unsigned long ItemVal);
 
 	bool getCapability(TW_IDENTITY * srcId, TW_CAPABILITY & twCap);
+
+	
 
 	inline double uint32ToFloat(TW_UINT32 uint32);
 	inline double twfix32ToFloat(TW_FIX32 fix32);

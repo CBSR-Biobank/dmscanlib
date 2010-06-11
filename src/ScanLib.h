@@ -37,10 +37,11 @@ const int SC_POS_CALC_ERROR = -8;
 const int SC_INCORRECT_DPI_SCANNED = -9;
 
 
-const unsigned DPI_300 = 0x02;
-const unsigned DPI_400 = 0x04;
-const unsigned DPI_600 = 0x08;
-
+const unsigned CAP_IS_WIA  = 0x01;
+const unsigned CAP_DPI_300 = 0x02;
+const unsigned CAP_DPI_400 = 0x04;
+const unsigned CAP_DPI_600 = 0x08;
+const unsigned CAP_IS_SCANNER = 0x10;
 
 /**
  * Queries the availability of the TWAIN driver.
@@ -63,20 +64,12 @@ EXPORT int slSelectSourceAsDefault();
 typedef int (*SL_SELECT_SOURCE_AS_DEFAULT)();
 
 /**
- * Queries the selected scanner if it supports the dpi.
+ * Queries the selected scanner for the driver type and supported dpis
  *
- * @param dpi the dpi value to verify
- *
- * @return true if the dpi is supported and false otherwise.
+ * @return Bit 1: Is set if driver type is WIA, Bits 2,3,4: Is set if driver supports 300,400,600 dpi
  */
-EXPORT int slIsValidDpi(int dpi);
-
-typedef bool (*SL_IS_VALID_DPI)(int dpi);
-
-
-
-EXPORT int slIsDriverWia();
-typedef bool (*SL_IS_DRIVER_WIA)();
+EXPORT int slGetScannerCapability();
+typedef int (*SL_GET_SCANNER_CAPABILITY)();
 
 
 /**

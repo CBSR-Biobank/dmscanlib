@@ -189,8 +189,7 @@ static void SWIGUNUSED SWIG_JavaThrowException(JNIEnv *jenv, SWIG_JavaExceptionC
 
 extern int slIsTwainAvailable();
 extern int slSelectSourceAsDefault();
-extern int slIsValidDpi(int dpi);
-extern int slIsValidDpi();
+extern int slGetScannerCapability();
 extern int slScanImage(unsigned verbose, unsigned dpi, int brightness,
         int contrast, double left, double top, double right, double bottom,
         char * filename);
@@ -236,27 +235,13 @@ SWIGEXPORT jint JNICALL Java_edu_ualberta_med_scannerconfig_scanlib_ScanLibWin32
 }
 
 
-SWIGEXPORT jint JNICALL Java_edu_ualberta_med_scannerconfig_scanlib_ScanLibWin32WrapperJNI_slIsValidDpi(JNIEnv *jenv, jclass jcls, jint jarg1) {
-  jint jresult = 0 ;
-  int arg1 ;
-  int result;
-  
-  (void)jenv;
-  (void)jcls;
-  arg1 = (int)jarg1; 
-  result = (int)slIsValidDpi(arg1);
-  jresult = (jint)result; 
-  return jresult;
-}
-
-
-SWIGEXPORT jint JNICALL Java_edu_ualberta_med_scannerconfig_scanlib_ScanLibWin32WrapperJNI_slIsDriverWia(JNIEnv *jenv, jclass jcls) {
+SWIGEXPORT jint JNICALL Java_edu_ualberta_med_scannerconfig_scanlib_ScanLibWin32WrapperJNI_slGetScannerCapability(JNIEnv *jenv, jclass jcls) {
   jint jresult = 0 ;
   int result;
   
   (void)jenv;
   (void)jcls;
-  result = (int)slIsDriverWia();
+  result = (int)slGetScannerCapability();
   jresult = (jint)result; 
   return jresult;
 }
