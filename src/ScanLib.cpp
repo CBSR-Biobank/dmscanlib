@@ -108,7 +108,7 @@ int slGetScannerCapability() {
 int isValidDpi(int dpi){
 #ifdef WIN32
 	ImageGrabber ig;
-	unsigned char dpiCap = ig.getScannerCapability();
+	int dpiCap = ig.getScannerCapability();
 	return ((dpiCap & CAP_DPI_300) && dpi == 300) || 
 			((dpiCap & CAP_DPI_400) && dpi == 400) || 
 			((dpiCap & CAP_DPI_600) && dpi == 600);
@@ -147,14 +147,20 @@ int slScanImage(unsigned verbose, unsigned dpi, int brightness, int contrast,
 			<< " bottom/"<< bottom);
 
 #ifdef WIN32
-	if (filename == NULL) {
+	ImageGrabber ig;
+
+	int scannerCapability = ig.getScannerCapability();
+
+	if ( !(scannerCapability & CAP_IS_SCANNER) || filename == NULL) {
 		return SC_FAIL;
 	}
-
-	if(!isValidDpi(dpi)){
-		return SC_INVALID_DPI; 
+	if(!(((scannerCapability & CAP_DPI_300) && dpi == 300) || 
+		((scannerCapability & CAP_DPI_400) && dpi == 400) || 
+		((scannerCapability & CAP_DPI_600) && dpi == 600))){
+			return SC_INVALID_DPI; 
 	}
-	ImageGrabber ig;
+
+	
 	
 	HANDLE h = ig.acquireImage(dpi, brightness, contrast, left, top, right,
 			bottom);
@@ -236,19 +242,23 @@ int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
 			<< " cellDistance/" << cellDistance);
 
 #ifdef WIN32
-	if (dpi < 0 || dpi > 2400) {
-		return SC_INVALID_DPI;
-	}
+	ImageGrabber ig;
 
 	if ((plateNum < MIN_PLATE_NUM) || (plateNum > MAX_PLATE_NUM)) {
 		return SC_INVALID_PLATE_NUM;
+	}	
+
+	int scannerCapability = ig.getScannerCapability();
+
+	if (!(scannerCapability & CAP_IS_SCANNER)) {
+		return SC_FAIL;
 	}
-	
-	if(!isValidDpi(dpi)){
-		return SC_INVALID_DPI; 
+	if(!(((scannerCapability & CAP_DPI_300) && dpi == 300) || 
+		((scannerCapability & CAP_DPI_400) && dpi == 400) || 
+		((scannerCapability & CAP_DPI_600) && dpi == 600))){
+			return SC_INVALID_DPI; 
 	}
 
-	ImageGrabber ig;
 	HANDLE h;
 	int result;
 	Dib dib;
@@ -308,7 +318,15 @@ int slDecodePlateMultipleDpi(unsigned verbose, unsigned dpi1, unsigned dpi2,
 			<< " cellDistance/" << cellDistance);
 
 #ifdef WIN32
+	ImageGrabber ig;
+
 	Util::getTime(starttime);
+
+	int scannerCapability = ig.getScannerCapability();
+
+	if (!(scannerCapability & CAP_IS_SCANNER)) {
+              return SC_FAIL;
+     }
 
 	unsigned dpis[] = {dpi1, dpi2, dpi3};
 	for (unsigned i = 0; i < 3; ++i) {
@@ -317,12 +335,23 @@ int slDecodePlateMultipleDpi(unsigned verbose, unsigned dpi1, unsigned dpi2,
 		}
 	}
 
+
 	if ((plateNum < MIN_PLATE_NUM) || (plateNum > MAX_PLATE_NUM)) {
 		return SC_INVALID_PLATE_NUM;
 	}
 
+	
+
+	for (unsigned i = 0; i < 3; ++i) {
+		if(!(((scannerCapability & CAP_DPI_300) && dpis[i] == 300) || 
+				((scannerCapability & CAP_DPI_400) && dpis[i] == 400) || 
+				((scannerCapability & CAP_DPI_600) && dpis[i] == 600))){
+			return SC_INVALID_DPI; 
+		}
+	}
+
 	std::ostringstream filename;
-	ImageGrabber ig;
+	
 	HANDLE h;
 	int result = SC_FAIL;
 	Dib dib;
@@ -331,10 +360,6 @@ int slDecodePlateMultipleDpi(unsigned verbose, unsigned dpi1, unsigned dpi2,
 
 	for (unsigned i = 0; i < 3; ++i) {
 		if (dpis[i] == 0) continue;
-
-		if(!isValidDpi(dpis[i])){
-			return SC_INVALID_DPI; 
-		}
 
 		Decoder * decoder = new Decoder(scanGap, squareDev, edgeThresh, corrections, cellDistance);
 		UA_ASSERT_NOT_NULL(decoder);

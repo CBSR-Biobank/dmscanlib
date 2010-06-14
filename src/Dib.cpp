@@ -26,18 +26,22 @@ const unsigned Dib::GAUSS_FACTORS[GAUSS_WIDTH] = { 1, 11, 55, 165, 330, 462,
 		462, 330, 165, 55, 11, 1 };
 const unsigned Dib::GAUSS_SUM = 2048;
 
-const float Dib::BLUR_KERNEL[9] = { 0.0f, 0.2f, 0.0f, 0.2f, 0.2f, 0.2f, 0.0f,
-		0.2f, 0.0f, };
-
-const float Dib::BLANK_KERNEL[9] = { 0.06185567f, 0.12371134f, 0.06185567f,
-		0.12371134f, 0.257731959f, 0.12371134f, 0.06185567f, 0.12371134f,
-		0.06185567f, };
+// expects sharp image
+const float Dib::BLUR_KERNEL[9] = { 0.0f, 0.2f, 0.0f, 
+									0.2f, 0.2f, 0.2f, 
+									0.0f, 0.2f, 0.0f, };
+// expects sharp image
+const float Dib::BLANK_KERNEL[9] = {
+				0.06185567f, 0.12371134f,  0.06185567f,
+				0.12371134f, 0.257731959f, 0.12371134f, 
+				0.06185567f, 0.12371134f,  0.06185567f, };
 
 // performs poorly on black 2d barcodes on white
 const float
-		Dib::DPI_400_KERNEL[9] = { 0.0587031f, 0.1222315f, 0.0587031f,
-				0.1222315f, 0.2762618f, 0.1222315f, 0.0587031f, 0.1222315f,
-				0.0587031f, };
+		Dib::DPI_400_KERNEL[9] = { 
+			0.0587031f, 0.1222315f, 0.0587031f,
+			0.1222315f, 0.2762618f, 0.1222315f, 
+			0.0587031f, 0.1222315f, 0.0587031f, };
 
 Dib::Dib() :
 	fileHeader(NULL), infoHeader(NULL), colorPalette(NULL), pixels(NULL),
@@ -819,19 +823,23 @@ void Dib::tpPresetFilter() {
 	switch (getDpi()) {
 
 	case 400:
-		UA_DOUT(4, 6, "tpPresetFilter: Applying DPI_400_KERNEL");
+		UA_DOUT(4, 5, "tpPresetFilter: Applying DPI_400_KERNEL");
 		convolve2DFast(Dib::DPI_400_KERNEL, 3, 3);
 		break;
 
+	case 600:
+		UA_DOUT(4, 5, "tpPresetFilter: Applying BLANK_KERNEL");
+		convolve2DFast(Dib::BLANK_KERNEL, 3, 3);
+		UA_DOUT(4, 5, "tpPresetFilter: Applying BLUR_KERNEL");
+		convolve2DFast(Dib::BLUR_KERNEL, 3, 3);
+		break;
+	
 	case 300:
-		UA_DOUT(4, 6, "tpPresetFilter: No filter applied (300 dpi)");
+		UA_DOUT(4, 5, "tpPresetFilter: No filter applied (300 dpi)");
 		break;
 
 	default:
-		UA_DOUT(4, 6, "tpPresetFilter: Applying BLANK_KERNEL");
-		convolve2DFast(Dib::BLANK_KERNEL, 3, 3);
-		UA_DOUT(4, 6, "tpPresetFilter: Applying BLUR_KERNEL");
-		convolve2DFast(Dib::BLUR_KERNEL, 3, 3);
+		UA_DOUT(4, 5, "tpPresetFilter: No filter applied (default)");
 		break;
 	}
 }
