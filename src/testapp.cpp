@@ -8,21 +8,31 @@
  ******************************************************************************/
 
 #ifdef _VISUALC_
-// disable warnings about fopen
+#define _CRTDBG_MAP_ALLOC
 #pragma warning(disable : 4996)
-
-#ifdef _DEBUG
+#endif
 
 //Scan for memory leaks in visual studio
+#ifdef _VISUALC_
+#ifdef _DEBUG
+/*
+#include <xdebug>
 #include <stdlib.h>
 #include <crtdbg.h>
 
-#define _CRTDBG_MAP_ALLOC
-#endif
+
+#define DEBUG_NEW new(_NORMAL_BLOCK,__FILE__, __LINE__)
+#define new DEBUG_NEW
+*/
 
 #endif
+#endif
+
+
+
 
 #ifdef WIN32
+
 
 
 #include "ScanLib.h"
@@ -40,6 +50,11 @@
 
 #include "ImageGrabber.h"
 #endif
+
+
+
+
+
 
 
 
@@ -251,7 +266,7 @@ Application::Application(int argc, char ** argv) {
 	#ifdef _VISUALC_
 	#ifdef _DEBUG
 
-	 _CrtSetDbgFlag ( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_REPORT_FLAG | _CRTDBG_LEAK_CHECK_DF );
+	 //_CrtSetDbgFlag ( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_REPORT_FLAG | _CRTDBG_LEAK_CHECK_DF );
 
 	#endif
 	#endif
