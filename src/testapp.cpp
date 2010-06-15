@@ -15,15 +15,11 @@
 //Scan for memory leaks in visual studio
 #ifdef _VISUALC_
 #ifdef _DEBUG
-/*
-#include <xdebug>
+
+
+#define _CRTDBG_MAP_ALLOC
 #include <stdlib.h>
 #include <crtdbg.h>
-
-
-#define DEBUG_NEW new(_NORMAL_BLOCK,__FILE__, __LINE__)
-#define new DEBUG_NEW
-*/
 
 #endif
 #endif
@@ -259,17 +255,11 @@ private:
    Options options;
 };
 
+int location = 0;
+
 const char * Application::INI_FILE_NAME = "scanlib.ini";
 
 Application::Application(int argc, char ** argv) {
-
-	#ifdef _VISUALC_
-	#ifdef _DEBUG
-
-	 //_CrtSetDbgFlag ( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_REPORT_FLAG | _CRTDBG_LEAK_CHECK_DF );
-
-	#endif
-	#endif
 
    progname = strrchr((char *) argv[0], DIR_SEP_CHR) + 1;
 
@@ -288,6 +278,7 @@ Application::Application(int argc, char ** argv) {
 
    int result = SC_FAIL;
    unsigned numDpis = options.dpis.size();
+
 
    if (options.decode ) {
 	   if (options.infile != NULL) {
@@ -382,8 +373,6 @@ Application::Application(int argc, char ** argv) {
 		  result =  SC_FAIL;
 		  goto STOP;
 	   }
-
-
 	   cout << "Initializing Test Procedure" << endl << endl;
 
 
@@ -394,8 +383,6 @@ Application::Application(int argc, char ** argv) {
 			goto STOP;
 	   }
 	   cout << "===========================================" << endl;
-
-
 
 	   cout << "==============Scan Image to File================" << endl;
 	   result = slScanImage(options.debugLevel, 
@@ -414,7 +401,6 @@ Application::Application(int argc, char ** argv) {
 	   }
 	   cout << "===========================================" << endl;
 
-
 	   cout << "==============Decode image from file================" << endl;
 	   result = slDecodeImage(options.debugLevel, 
 								  1,
@@ -431,8 +417,6 @@ Application::Application(int argc, char ** argv) {
 	   }
 
 	   cout << "===========================================" << endl;
-	    
-
 
 	   cout << "==============Scan & Decode Image================" << endl;
 	   result = slDecodePlate(options.debugLevel, 
@@ -457,8 +441,7 @@ Application::Application(int argc, char ** argv) {
 
 	   cout << "===========================================" << endl;
 
-
-	   /*
+	   
 	   cout << "==============Scan & Decode Multiple Dpi Image================" << endl;
 	   result = slDecodePlateMultipleDpi(options.debugLevel, 
 											 options.dpis[0],
@@ -484,14 +467,16 @@ Application::Application(int argc, char ** argv) {
 
 	   cout << "===========================================" << endl;
 
-	   */
+	   
+	   
+   		#ifdef _VISUALC_
+		#ifdef _DEBUG
+		_CrtDumpMemoryLeaks();
+		#endif
+		#endif
 
 
-STOP:
-	   #ifdef _VISUALC_
-			_CrtDumpMemoryLeaks();
-	   #endif
-
+STOP: ;
    }
 
 

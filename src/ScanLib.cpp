@@ -403,10 +403,10 @@ int slDecodePlateMultipleDpi(unsigned verbose, unsigned dpi1, unsigned dpi2,
 				}
 			}
 		}
-
 		ig.freeImage(h);
 		delete decoder;
 	}
+
 
 	if (result == SC_SUCCESS) {
 		string msg;
