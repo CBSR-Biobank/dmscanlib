@@ -93,10 +93,10 @@ typedef int (*SL_GET_SCANNER_CAPABILITY)();
  */
 EXPORT int slScanImage(unsigned verbose, unsigned dpi, int brightness,
 		int contrast, double left, double top, double right, double bottom,
-		char * filename);
+		const char * filename);
 
 typedef int (*SL_SCAN_IMAGE)(unsigned verbose, unsigned dpi, double left,
-		double top, double right, double bottom, char * filename);
+		double top, double right, double bottom, const char * filename);
 
 /**
  * From the regions specified in the INI file for the corresponding plate,
@@ -206,12 +206,12 @@ typedef int (*SL_DECODE_PLATE_MULTIPLE_DPI)(unsigned verbose, unsigned dpi1,
  * A or column 1 of the pallet. SC_POS_CALC_ERROR if sample positions could
  *  not be determined.
  */
-EXPORT int slDecodeImage(unsigned verbose, unsigned plateNum, char * filename,
+EXPORT int slDecodeImage(unsigned verbose, unsigned plateNum, const char * filename,
 		double scanGap, unsigned squareDev, unsigned edgeThresh,
 		unsigned corrections, double cellDistance);
 
 typedef int (*SL_DECODE_IMAGE)(unsigned verbose, unsigned plateNum,
-		char * filename, double scanGap, unsigned squareDev,
+		const char * filename, double scanGap, unsigned squareDev,
 		unsigned edgeThresh, unsigned corrections, double cellDistance);
 
 #ifdef __cplusplus
