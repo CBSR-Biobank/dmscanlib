@@ -136,7 +136,8 @@ void formatCellMessages(unsigned plateNum, vector<vector<string> > & cells,
 
 
 int slScanImage(unsigned verbose, unsigned dpi, int brightness, int contrast,
-		double left, double top, double right, double bottom, char * filename) {
+		double left, double top, double right, double bottom,
+		const char * filename) {
 	configLogging(verbose);
 	UA_DOUT(1, 3, "slScanImage: dpi/" << dpi
 			<< " brightness/" << brightness
@@ -425,7 +426,7 @@ int slDecodePlateMultipleDpi(unsigned verbose, unsigned dpi1, unsigned dpi2,
 
 }
 
-int slDecodeImage(unsigned verbose, unsigned plateNum, char * filename,
+int slDecodeImage(unsigned verbose, unsigned plateNum, const char * filename,
 		double scanGap, unsigned squareDev, unsigned edgeThresh,
 		unsigned corrections, double cellDistance) {
 	configLogging(verbose);

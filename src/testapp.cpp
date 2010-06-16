@@ -14,50 +14,37 @@
 
 //Scan for memory leaks in visual studio
 #ifdef _VISUALC_
-#ifdef _DEBUG
-
-
-#define _CRTDBG_MAP_ALLOC
-#include <stdlib.h>
-#include <crtdbg.h>
-
+#   ifdef _DEBUG
+#      define _CRTDBG_MAP_ALLOC
+#      include <stdlib.h>
+#      include <crtdbg.h>
+#   endif
 #endif
-#endif
-
-
 
 
 #ifdef WIN32
-
-
-
-#include "ScanLib.h"
-#include "UaAssert.h"
-#include "UaLogger.h"
-#include "Decoder.h"
-#include "Dib.h"
-#include "Util.h"
-#include "BarcodeInfo.h"
-#include "SimpleOpt.h"
-
-#include <iostream>
-#include <bitset>
-
-
-#include "ImageGrabber.h"
+#   include "UaAssert.h"
+#   include "Decoder.h"
+#   include "Dib.h"
+#   include "Util.h"
+#   include "BarcodeInfo.h"
+#   include "ImageGrabber.h"
+#else
+#   include <limits>
+#   include <bitset>
+#   include <vector>
+#   include <stdio.h>
 #endif
 
+#include "ScanLib.h"
+#include "SimpleOpt.h"
+#include "UaLogger.h"
 
-
-
-
-
-
+#include <iostream>
 
 using namespace std;
 
-const char
-* USAGE_FMT =
+const char * USAGE_FMT =
    "Usage: %s [OPTIONS]\n"
    "Test tool for scanlib library."
    "\n"
@@ -404,7 +391,7 @@ Application::Application(int argc, char ** argv) {
 	   cout << "==============Decode image from file================" << endl;
 	   result = slDecodeImage(options.debugLevel, 
 								  1,
-								  "test.bmp", 
+								  "test.bmp",
 								  options.gap, 
 								  options.squareDev,
 								  options.threshold, 
