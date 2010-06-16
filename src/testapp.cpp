@@ -41,6 +41,7 @@
 #include "UaLogger.h"
 
 #include <iostream>
+#include <bitset>
 
 using namespace std;
 
@@ -448,16 +449,16 @@ Application::Application(int argc, char ** argv) {
 
 	   cout << "===========================================" << endl;
 
-	   
+
+
+
+STOP: ;
 	   
    		#ifdef _VISUALC_
 		#ifdef _DEBUG
 		_CrtDumpMemoryLeaks();
 		#endif
 		#endif
-
-
-STOP: ;
    }
 
 

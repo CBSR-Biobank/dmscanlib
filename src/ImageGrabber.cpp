@@ -708,9 +708,16 @@ int ImageGrabber::getScannerCapability() {
 	UA_DOUT(4, 5, "Polling driver for driver type");
 
 	if(srcID.ProductName != NULL){
-		string productnameStr = srcID.ProductName;
+		char buf[256];
+
+		unsigned n = strlen(srcID.ProductName);
+		for (unsigned i = 0; i < n; ++i) {
+			buf[i] = tolower(srcID.ProductName[i]);
+		}
+		buf[n] = 0;
+
+		string productnameStr = buf;
 		
-		transform(productnameStr.begin(), productnameStr.end(),productnameStr.begin(), tolower );
 		if( productnameStr.find("twain") != string::npos){
 			UA_DOUT(4, 6, "Driver type is TWAIN: ProductName/" << productnameStr);
 		}
