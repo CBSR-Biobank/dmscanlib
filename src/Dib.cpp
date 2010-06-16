@@ -1381,7 +1381,8 @@ void detectBlobs(Dib & frame, Dib & finalFrame)
 		if(size > 0)
 		{
 
-			RgbQuad & highlightQuad = RgbQuad(255, 255, 255);
+			RgbQuad highlightQuad;
+			highlightQuad.set(255, 255, 255);
 
 			finalFrame.line((*i).second.min.x, frame.getHeight()-(*i).second.min.y, (*i).second.max.x, frame.getHeight()-(*i).second.min.y , highlightQuad);
 			finalFrame.line((*i).second.min.x, frame.getHeight()-(*i).second.max.y, (*i).second.max.x, frame.getHeight()-(*i).second.max.y , highlightQuad);
