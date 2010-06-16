@@ -8,8 +8,8 @@
  ******************************************************************************/
 
 #ifdef _VISUALC_
-#define _CRTDBG_MAP_ALLOC
-#pragma warning(disable : 4996)
+#   define _CRTDBG_MAP_ALLOC
+#   pragma warning(disable : 4996)
 #endif
 
 //Scan for memory leaks in visual studio
@@ -55,18 +55,14 @@ const char * USAGE_FMT =
    "  --capability         Query selected scanner for dpi and driver type settings.\n"
    "  --test			   Tests most functions in this project.\n"
    "  -h, --help           Displays this text.\n"
-
    "\n"
    "Scanner/Decoding Settings\n"
    "  -d, --decode         Acquires an image from the scanner and Decodes the 2D barcodes.\n"
    "                       Use with --plate option.\n"
    "  -s, --scan           Scans an image.\n"
-   "  --processImage       Perform image processing on image before decoding.\n"
-
    "  -p, --plate NUM      The plate number to use.\n"
    "  -i, --input FILE     Use the specified DIB image file instead of scanner.\n"
    "  -o, --output FILE    Saves the image to the specified file name.\n"
-
    "\n"
    "  --dpi NUM            Dots per inch to use with scanner.\n"
    "  --brightness NUM     The brightness setting to be used for scanning.\n"
@@ -102,7 +98,6 @@ enum longOptID {
 			OPT_ID_DEBUG_FILE,
 			OPT_ID_DPI,
 			OPT_ID_GAP,
-			OPT_ID_PROCESS_IMAGE,
 			OPT_ID_SELECT,
 			OPT_ID_CAPABILITY,
 			OPT_ID_TEST,
@@ -132,7 +127,6 @@ CSimpleOptA::SOption longOptions[] = {
    { 'i', "-i", SO_REQ_SEP },
    { 'p', "--plate", SO_REQ_SEP },
    { 'p', "-p", SO_REQ_SEP },
-   { OPT_ID_PROCESS_IMAGE, "--processImage", SO_NONE },
    { 'o', "--output", SO_REQ_SEP },
    { 'o', "-o", SO_REQ_SEP },
    { 's', "--scan", SO_NONE },
