@@ -128,9 +128,10 @@ private:
 	void setPalette();
 	void setPalette(RgbQuad * palette);
 	unsigned getRowBytes(unsigned width, unsigned bitCount);
-	void convolve2DFast(const float(&kernel) [9], int kernelSizeX, int kernelSizeY);
+	void convolve2DSlow(const float(&kernel) [9], int kernelSizeX, int kernelSizeY);
 };
 
+void detectBlobs(Dib & frame, Dib & finalFrame);
 
 
 #endif /* __INCLUDE_DIB_H */

@@ -185,9 +185,13 @@ int slDecodeCommon(unsigned plateNum, Dib & dib, Decoder & decoder,
 	grayscaleDib = Dib::convertGrayscale(dib);
 	UA_ASSERT_NOT_NULL(grayscaleDib);
 
-	//grayscaleDib->writeToFile("grayscale.bmp");
-
 	grayscaleDib->tpPresetFilter();
+
+
+	//Dib dibBlobs(*grayscaleDib);
+	//detectBlobs(*grayscaleDib,dibBlobs);
+	//dibBlobs.writeToFile("BLOBS.bmp");
+	//exit(0)
 
 	Decoder::ProcessResult result = decoder.processImageRegions(plateNum,
 			*grayscaleDib, cellsRef);
