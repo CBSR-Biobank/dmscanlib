@@ -11,6 +11,12 @@
 #include <assert.h>
 #include <string.h>
 #include <math.h>
+#include <string>
+#include <vector>
+#include <map>
+#include <ctime>
+using namespace std;
+
 
 #if defined(USE_MPATROL)
 #   include "mpatrol.h"
@@ -358,6 +364,7 @@ unsigned char * Dib::getPixelBuffer() {
 	UA_ASSERT_NOT_NULL(pixels);
 	return pixels;
 }
+
 
 unsigned char * Dib::getRowPtr(unsigned row) {
 	UA_ASSERT(row < infoHeader->height);
@@ -828,14 +835,14 @@ void Dib::tpPresetFilter() {
 
 	case 400:
 		UA_DOUT(4, 5, "tpPresetFilter: Applying DPI_400_KERNEL");
-		convolve2DFast(Dib::DPI_400_KERNEL, 3, 3);
+		convolve2DSlow(Dib::DPI_400_KERNEL, 3, 3);
 		break;
 
 	case 600:
 		UA_DOUT(4, 5, "tpPresetFilter: Applying BLANK_KERNEL");
-		convolve2DFast(Dib::BLANK_KERNEL, 3, 3);
+		convolve2DSlow(Dib::BLANK_KERNEL, 3, 3);
 		UA_DOUT(4, 5, "tpPresetFilter: Applying BLUR_KERNEL");
-		convolve2DFast(Dib::BLUR_KERNEL, 3, 3);
+		convolve2DSlow(Dib::BLUR_KERNEL, 3, 3);
 		break;
 	
 	case 300:
@@ -848,262 +855,56 @@ void Dib::tpPresetFilter() {
 	}
 }
 
-// 8 bit convolve2D
-// only works on grayscale DIBs
-void Dib::convolve2DFast(const float(&kernel)[9], int kernelSizeX,
-		int kernelSizeY) {
+
+// actually slow version
+void Dib::convolve2DSlow(const float(&kernel)[9], int kernelSizeX, int kernelSizeY) 
+{
+    int i, j, m, n, mm, nn;
+    int kCenterX, kCenterY;                         // center index of kernel
+    float sum;                                      // temp accumulation buffer
+    int rowIndex, colIndex;
 
 	UA_ASSERT(getBitsPerPixel() == 8);
 	UA_ASSERT(infoHeader->imageSize > 0);
-	UA_ASSERT((kernelSizeX > 0) && (infoHeader->width > 0));
 
-	unsigned char *outputBuffer;
+	int dataSizeX = (int) infoHeader->width ;
+	int dataSizeY = (int) infoHeader->height ;
 
-	int i, j, m, n, x, y, t;
-	unsigned char **inPtr, *outPtr, *ptr;
-	int kCenterX, kCenterY;
-	int rowEnd, colEnd; // ending indice for section divider
-	float sum; // temp accumulation buffer
-	int k, kSize;
+	unsigned char * buffer = new unsigned char[infoHeader->imageSize];
+	
+    // find center position of kernel (half of kernel size)
+    kCenterX = kernelSizeX / 2;
+    kCenterY = kernelSizeY / 2;
 
-	// find center position of kernel (half of kernel size)
-	kCenterX = kernelSizeX >> 1;
-	kCenterY = kernelSizeY >> 1;
-	kSize = kernelSizeX * kernelSizeY; // total kernel size
+    for(i=0; i < dataSizeY; ++i)                // rows
+    {
+        for(j=0; j < dataSizeX; ++j)            // columns
+        {
+            sum = 0;                            // init to 0 before sum
+            for(m=0; m < kernelSizeY; ++m)      // kernel rows
+            {
+                mm = kernelSizeY - 1 - m;       // row index of flipped kernel
 
-	// allocate memeory for multi-cursor
-	inPtr = new unsigned char*[kSize];
-	outputBuffer = new unsigned char[infoHeader->imageSize];
+                for(n=0; n < kernelSizeX; ++n)  // kernel columns
+                {
+                    nn = kernelSizeX - 1 - n;   // column index of flipped kernel
 
-	// set initial position of multi-cursor, NOTE: it is swapped instead of kernel
-	ptr = pixels + ((int) infoHeader->width * kCenterY + kCenterX); // the first cursor is shifted (kCenterX, kCenterY)
-	for (m = 0, t = 0; m < kernelSizeY; ++m) {
-		for (n = 0; n < kernelSizeX; ++n, ++t) {
-			inPtr[t] = ptr - n;
-		}
-		ptr -= (int) infoHeader->width;
-	}
+                    // index of input signal, used for checking boundary
+                    rowIndex = i + m - kCenterY;
+                    colIndex = j + n - kCenterX;
 
-	// init working  pointers
-	outPtr = outputBuffer;
-
-	rowEnd = (int) infoHeader->height - kCenterY; // bottom row partition divider
-	colEnd = (int) infoHeader->width - kCenterX; // right column partition divider
-
-	// convolve rows from index=0 to index=kCenterY-1
-	y = kCenterY;
-	for (i = 0; i < kCenterY; ++i) {
-		// partition #1 ***********************************
-		x = kCenterX;
-		for (j = 0; j < kCenterX; ++j) // column from index=0 to index=kCenterX-1
-		{
-			sum = 0;
-			t = 0;
-			for (m = 0; m <= y; ++m) {
-				for (n = 0; n <= x; ++n) {
-					sum += *inPtr[t] * kernel[t];
-					++t;
-				}
-				t += (kernelSizeX - x - 1); // jump to next row
-			}
-
-			// store output
-			*outPtr = (unsigned char) ((float) fabs(sum) + 0.5f);
-			++outPtr;
-			++x;
-			for (k = 0; k < kSize; ++k)
-				++inPtr[k]; // move all cursors to next
-		}
-
-		// partition #2 ***********************************
-		for (j = kCenterX; j < colEnd; ++j) // column from index=kCenterX to index=((int) src.infoHeader->width-kCenterX-1)
-		{
-			sum = 0;
-			t = 0;
-			for (m = 0; m <= y; ++m) {
-				for (n = 0; n < kernelSizeX; ++n) {
-					sum += *inPtr[t] * kernel[t];
-					++t;
-				}
-			}
-
-			// store output
-			*outPtr = (unsigned char) ((float) fabs(sum) + 0.5f);
-			++outPtr;
-			++x;
-			for (k = 0; k < kSize; ++k)
-				++inPtr[k]; // move all cursors to next
-		}
-
-		// partition #3 ***********************************
-		x = 1;
-		for (j = colEnd; j < (int) infoHeader->width; ++j) // column from index=((int) src.infoHeader->width-kCenter) to index=((int) src.infoHeader->width-1)
-		{
-			sum = 0;
-			t = x;
-			for (m = 0; m <= y; ++m) {
-				for (n = x; n < kernelSizeX; ++n) {
-					sum += *inPtr[t] * kernel[t];
-					++t;
-				}
-				t += x; // jump to next row
-			}
-
-			// store output
-			*outPtr = (unsigned char) ((float) fabs(sum) + 0.5f);
-			++outPtr;
-			++x;
-			for (k = 0; k < kSize; ++k)
-				++inPtr[k]; // move all cursors to next
-		}
-
-		++y; // add one more row to convolve for next run
-	}
-
-	// convolve rows from index=kCenterY to index=((int) src.infoHeader->height-kCenterY-1)
-	for (i = kCenterY; i < rowEnd; ++i) // number of rows
-	{
-		// partition #4 ***********************************
-		x = kCenterX;
-		for (j = 0; j < kCenterX; ++j) // column from index=0 to index=kCenterX-1
-		{
-			sum = 0;
-			t = 0;
-			for (m = 0; m < kernelSizeY; ++m) {
-				for (n = 0; n <= x; ++n) {
-					sum += *inPtr[t] * kernel[t];
-					++t;
-				}
-				t += (kernelSizeX - x - 1);
-			}
-
-			// store output
-			*outPtr = (unsigned char) ((float) fabs(sum) + 0.5f);
-			++outPtr;
-			++x;
-			for (k = 0; k < kSize; ++k)
-				++inPtr[k]; // move all cursors to next
-		}
-
-		// partition #5 ***********************************
-		for (j = kCenterX; j < colEnd; ++j) // column from index=kCenterX to index=((int) src.infoHeader->width-kCenterX-1)
-		{
-			sum = 0;
-			t = 0;
-			for (m = 0; m < kernelSizeY; ++m) {
-				for (n = 0; n < kernelSizeX; ++n) {
-					sum += *inPtr[t] * kernel[t];
-					++inPtr[t]; // in this partition, all cursors are used to convolve. moving cursors to next is safe here
-					++t;
-				}
-			}
-
-			// store output
-			*outPtr = (unsigned char) ((float) fabs(sum) + 0.5f);
-			++outPtr;
-			++x;
-		}
-
-		// partition #6 ***********************************
-		x = 1;
-		for (j = colEnd; j < (int) infoHeader->width; ++j) // column from index=((int) src.infoHeader->width-kCenter) to index=((int) src.infoHeader->width-1)
-		{
-			sum = 0;
-			t = x;
-			for (m = 0; m < kernelSizeY; ++m) {
-				for (n = x; n < kernelSizeX; ++n) {
-					sum += *inPtr[t] * kernel[t];
-					++t;
-				}
-				t += x;
-			}
-
-			// store output
-			*outPtr = (unsigned char) ((float) fabs(sum) + 0.5f);
-			++outPtr;
-			++x;
-			for (k = 0; k < kSize; ++k)
-				++inPtr[k]; // move all cursors to next
-		}
-	}
-
-	// convolve rows from index=((int) src.infoHeader->height-kCenterY) to index=((int) src.infoHeader->height-1)
-	y = 1;
-	for (i = rowEnd; i < (int) infoHeader->height; ++i) // number of rows
-	{
-		// partition #7 ***********************************
-		x = kCenterX;
-		for (j = 0; j < kCenterX; ++j) // column from index=0 to index=kCenterX-1
-		{
-			sum = 0;
-			t = kernelSizeX * y;
-
-			for (m = y; m < kernelSizeY; ++m) {
-				for (n = 0; n <= x; ++n) {
-					sum += *inPtr[t] * kernel[t];
-					++t;
-				}
-				t += (kernelSizeX - x - 1);
-			}
-
-			// store output
-			*outPtr = (unsigned char) ((float) fabs(sum) + 0.5f);
-			++outPtr;
-			++x;
-			for (k = 0; k < kSize; ++k)
-				++inPtr[k]; // move all cursors to next
-		}
-
-		// partition #8 ***********************************
-		for (j = kCenterX; j < colEnd; ++j) // column from index=kCenterX to index=((int) src.infoHeader->width-kCenterX-1)
-		{
-			sum = 0;
-			t = kernelSizeX * y;
-			for (m = y; m < kernelSizeY; ++m) {
-				for (n = 0; n < kernelSizeX; ++n) {
-					sum += *inPtr[t] * kernel[t];
-					++t;
-				}
-			}
-
-			// store output
-			*outPtr = (unsigned char) ((float) fabs(sum) + 0.5f);
-			++outPtr;
-			++x;
-			for (k = 0; k < kSize; ++k)
-				++inPtr[k];
-		}
-
-		// partition #9 ***********************************
-		x = 1;
-		for (j = colEnd; j < (int) infoHeader->width; ++j) // column from index=((int) src.infoHeader->width-kCenter) to index=((int) src.infoHeader->width-1)
-		{
-			sum = 0;
-			t = kernelSizeX * y + x;
-			for (m = y; m < kernelSizeY; ++m) {
-				for (n = x; n < kernelSizeX; ++n) {
-					sum += *inPtr[t] * kernel[t];
-					++t;
-				}
-				t += x;
-			}
-
-			// store output
-			*outPtr = (unsigned char) ((float) fabs(sum) + 0.5f);
-			++outPtr;
-			++x;
-			for (k = 0; k < kSize; ++k)
-				++inPtr[k]; // move all cursors to next
-		}
-
-		++y; // the starting row index is increased
-	}
-
-	memcpy(pixels, outputBuffer, infoHeader->imageSize);
-
-	delete[] outputBuffer;
-	delete[] inPtr;
+                    // ignore input samples which are out of bound
+                    if(rowIndex >= 0 && rowIndex < dataSizeY && colIndex >= 0 && colIndex < dataSizeX)
+                        sum += pixels[rowBytes * rowIndex + colIndex] * kernel[kernelSizeX * mm + nn];
+                }
+            }
+            buffer[i*rowBytes + j] = (unsigned char)((float)fabs(sum) + 0.5f);
+        }
+    }
+	memcpy(pixels,buffer,infoHeader->imageSize);
+	delete [] buffer;
 }
+
 
 void Dib::gaussianBlur(Dib & src) {
 	UA_ASSERT_NOT_NULL(src.infoHeader);
@@ -1431,4 +1232,163 @@ void Dib::unsharp(Dib & src) {
 unsigned Dib::getDpi() {
 	// 1 inch = 0.0254 meters
 	return static_cast<unsigned> (infoHeader->hPixelsPerMeter * 0.0254 + 0.5);
+}
+
+
+struct coordinate
+{
+	unsigned int x, y;
+	void * data;
+};
+
+struct lineBlob
+{
+	unsigned int min, max;
+	unsigned int blobId;
+
+	bool attached;
+};
+
+struct blob
+{
+	//unsigned int blobId;
+	coordinate min, max;
+
+	coordinate center;
+};
+
+
+void detectBlobs(Dib & frame, Dib & finalFrame)
+{
+	int blobCounter = 0;
+	map<unsigned int, blob> blobs;
+
+    unsigned char threshold = 120;
+
+
+	UA_DOUT(4, 5, "DETECT BLOBS");
+
+	UA_DOUT(4, 5, "frame : " << "width/"  << (int)frame.getWidth() << " height/"  << (int)frame.getHeight());
+	vector< vector<lineBlob> > imgData(frame.getWidth());
+
+	for(int row = 0; row < (int)frame.getHeight(); ++row)
+	{
+
+		for(int column = 0; column < (int)frame.getWidth(); ++column)
+		{
+
+			//unsigned char byte = (unsigned char) imgStream.get();
+			unsigned char byte = (unsigned char) frame.getPixelBuffer()[(row*frame.getWidth())+ column];
+
+			if(byte >= threshold)
+			{
+				
+				int start = column;
+
+				for(;byte >= threshold; byte = (unsigned char) frame.getPixelBuffer()[(row*frame.getWidth())+ column], ++column);
+
+				int stop = column-1;
+				lineBlob lineBlobData = {start, stop, blobCounter, false};
+
+				imgData[row].push_back(lineBlobData);
+				blobCounter++;
+			}
+		}
+	}
+	UA_DOUT(4, 5, "imgdata : " << "size/"  << (int)imgData[0].size());
+
+	/* Check lineBlobs for a touching lineblob on the next row */
+
+	for(int row = 0; row <  (int) imgData.size(); ++row)
+	{
+
+		for(int entryLine1 = 0; entryLine1 < (int) imgData[row].size(); ++entryLine1)
+		{
+
+			for(int entryLine2 = 0; entryLine2 <(int)  imgData[row+1].size(); ++entryLine2)
+			{
+
+				if(!((imgData[row][entryLine1].max < imgData[row+1][entryLine2].min) || (imgData[row][entryLine1].min > imgData[row+1][entryLine2].max)))
+				{
+
+					if(imgData[row+1][entryLine2].attached == false)
+					{
+
+						imgData[row+1][entryLine2].blobId = imgData[row][entryLine1].blobId;
+
+						imgData[row+1][entryLine2].attached = true;
+					}
+					else
+
+					{
+						imgData[row][entryLine1].blobId = imgData[row+1][entryLine2].blobId;
+
+						imgData[row][entryLine1].attached = true;
+					}
+				}
+			}
+		}
+	}
+
+	// Sort and group blobs
+
+	for(int row = 0; row < (int) imgData.size(); ++row)
+	{
+
+		for(int entry = 0; entry < (int) imgData[row].size(); ++entry)
+		{
+
+			if(blobs.find(imgData[row][entry].blobId) == blobs.end()) // Blob does not exist yet
+
+			{
+				blob blobData = {{imgData[row][entry].min, row}, {imgData[row][entry].max, row}, {0,0}};
+
+				blobs[imgData[row][entry].blobId] = blobData;
+			}
+			else
+
+			{
+				if(imgData[row][entry].min < blobs[imgData[row][entry].blobId].min.x)
+
+					blobs[imgData[row][entry].blobId].min.x = imgData[row][entry].min;
+
+				else if(imgData[row][entry].max > blobs[imgData[row][entry].blobId].max.x)
+
+					blobs[imgData[row][entry].blobId].max.x = imgData[row][entry].max;
+
+				if((unsigned)row < blobs[imgData[row][entry].blobId].min.y)
+
+					blobs[imgData[row][entry].blobId].min.y = row;
+
+				else if((unsigned)row > blobs[imgData[row][entry].blobId].max.y)
+
+					blobs[imgData[row][entry].blobId].max.y = row;
+			}
+		}
+	}
+
+	UA_DOUT(4, 5, "Blobs found: " << blobs.size());
+
+	// Calculate center
+	for(map<unsigned int, blob>::iterator i = blobs.begin(); i != blobs.end(); ++i)
+	{
+		(*i).second.center.x = (*i).second.min.x + ((*i).second.max.x - (*i).second.min.x) / 2;
+		(*i).second.center.y = (*i).second.min.y + ((*i).second.max.y - (*i).second.min.y) / 2;
+
+		int size = ((*i).second.max.x - (*i).second.min.x) * ((*i).second.max.y - (*i).second.min.y);
+
+		// Print coordinates on image, if it is large enough
+		if(size > 0)
+		{
+
+			RgbQuad & highlightQuad = RgbQuad(255, 255, 255);
+
+			finalFrame.line((*i).second.min.x, frame.getHeight()-(*i).second.min.y, (*i).second.max.x, frame.getHeight()-(*i).second.min.y , highlightQuad);
+			finalFrame.line((*i).second.min.x, frame.getHeight()-(*i).second.max.y, (*i).second.max.x, frame.getHeight()-(*i).second.max.y , highlightQuad);
+			finalFrame.line((*i).second.min.x, frame.getHeight()-(*i).second.min.y, (*i).second.min.x, frame.getHeight()-(*i).second.max.y, highlightQuad);
+			finalFrame.line((*i).second.max.x, frame.getHeight()-(*i).second.min.y, (*i).second.max.x, frame.getHeight()-(*i).second.max.y, highlightQuad);
+			//char textBuffer[128];
+			//sprintf(textBuffer, "(%d, %d)", (*i).second.center.x, (*i).second.center.y);
+		}
+	}
 }
