@@ -20,6 +20,10 @@
 #include <vector>
 #include <cmath>
 
+#if defined(USE_MPATROL)
+#   include "mpatrol.h"
+#endif
+
 #ifdef _VISUALC_
 // disable fopen warnings
 #pragma warning(disable : 4996)

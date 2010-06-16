@@ -36,6 +36,10 @@
 #   include <stdio.h>
 #endif
 
+#if defined(USE_MPATROL)
+#   include "mpatrol.h"
+#endif
+
 #include "ScanLib.h"
 #include "SimpleOpt.h"
 #include "UaLogger.h"
@@ -317,8 +321,8 @@ Application::Application(int argc, char ** argv) {
    }/* Decode */
 
    else if (options.scan) {
+	   if ((options.plateNum >= 1) && (options.plateNum <= 5) && (options.dpis.size() > 0)) {
 
-	   if ((options.plateNum < 1) || (options.plateNum > 5)) {
 		   result = slScanImage(options.debugLevel, 
 								options.dpis[0],
 								options.brightness, 

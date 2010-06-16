@@ -14,6 +14,10 @@
 #include "Util.h"
 #include <math.h>
 
+#if defined(USE_MPATROL)
+#   include "mpatrol.h"
+#endif
+
 using namespace std;
 
 // Initialize g_AppID. This structure is passed to DSM_Entry() in each

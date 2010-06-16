@@ -9,6 +9,11 @@
 
 #include <limits>
 
+#if defined(USE_MPATROL)
+#   include "mpatrol.h"
+#endif
+
+
 BinRegion::BinRegion(unsigned o, unsigned min, unsigned max) :
 	orientation(o), minimum(min), maximum(max), center(
 			numeric_limits<unsigned>::max()), rank(

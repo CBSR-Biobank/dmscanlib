@@ -149,7 +149,7 @@ namespace ua {
     private:
         static const unsigned maxLevel_m = 9;
         unsigned levels_am[maxSubSys_m];
-        std::string headers_am[maxSubSys_m];
+        std::vector<std::string> headers_m;
     };
 
     typedef Loki::SingletonHolder<LoggerImpl> Logger;

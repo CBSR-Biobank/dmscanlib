@@ -2551,6 +2551,7 @@
 <listOptionValue builtIn="false" value="STANDALONE"/>
 </option>
 <option id="gnu.cpp.compiler.option.include.paths.984466343" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
+<listOptionValue builtIn="false" value="&quot;D:\MinGW\includel&quot;"/>
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/src/libdmtx}&quot;"/>
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/src}&quot;"/>
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/src/loki}&quot;"/>
@@ -2559,12 +2560,16 @@
 <option id="gnu.cpp.compiler.option.warnings.toerrors.1081079232" name="Warnings as errors (-Werror)" superClass="gnu.cpp.compiler.option.warnings.toerrors" value="false" valueType="boolean"/>
 <option id="gnu.cpp.compiler.option.warnings.pedantic.error.414662719" name="Pedantic warnings as errors (-pedantic-errors)" superClass="gnu.cpp.compiler.option.warnings.pedantic.error" value="false" valueType="boolean"/>
 <option id="gnu.cpp.compiler.option.warnings.pedantic.130414134" name="Pedantic (-pedantic)" superClass="gnu.cpp.compiler.option.warnings.pedantic" value="true" valueType="boolean"/>
+<option id="gnu.cpp.compiler.option.other.other.1660390352" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0" valueType="string"/>
 <inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.481463911" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 </tool>
 <tool id="cdt.managedbuild.tool.gnu.c.compiler.mingw.so.debug.2070197088" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.mingw.so.debug">
 <option defaultValue="gnu.c.optimization.level.none" id="gnu.c.compiler.mingw.so.debug.option.optimization.level.1828221140" name="Optimization Level" superClass="gnu.c.compiler.mingw.so.debug.option.optimization.level" valueType="enumerated"/>
 <option id="gnu.c.compiler.mingw.so.debug.option.debugging.level.1509408609" name="Debug Level" superClass="gnu.c.compiler.mingw.so.debug.option.debugging.level" value="gnu.c.debugging.level.max" valueType="enumerated"/>
-<option id="gnu.c.compiler.option.include.paths.1058547818" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths"/>
+<option id="gnu.c.compiler.option.include.paths.1058547818" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
+<listOptionValue builtIn="false" value="&quot;D:\MinGW\include&quot;"/>
+</option>
+<option id="gnu.c.compiler.option.misc.other.1176201908" name="Other flags" superClass="gnu.c.compiler.option.misc.other" value="-c -fmessage-length=0" valueType="string"/>
 <inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.2044811628" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 </tool>
 <tool id="cdt.managedbuild.tool.gnu.c.linker.mingw.so.debug.1156567785" name="MinGW C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.mingw.so.debug">
@@ -2572,6 +2577,13 @@
 </tool>
 <tool id="cdt.managedbuild.tool.gnu.cpp.linker.mingw.so.debug.400428622" name="MinGW C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.mingw.so.debug">
 <option id="gnu.cpp.link.mingw.so.debug.option.shared.925176249" name="Shared (-shared)" superClass="gnu.cpp.link.mingw.so.debug.option.shared"/>
+<option id="gnu.cpp.link.option.paths.1358448275" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
+<listOptionValue builtIn="false" value="&quot;D:\MinGW\bin&quot;"/>
+</option>
+<option id="gnu.cpp.link.option.libs.360692839" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
+<listOptionValue builtIn="false" value="mpatrol"/>
+</option>
+<option id="gnu.cpp.link.option.other.1240844828" name="Other options (-Xlinker [option])" superClass="gnu.cpp.link.option.other"/>
 <inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.2050489778" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 <additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 <additionalInput kind="additionalinput" paths="$(LIBS)"/>

@@ -10,6 +10,10 @@
 #include "UaAssert.h"
 #include "BinRegion.h"
 
+#if defined(USE_MPATROL)
+#   include "mpatrol.h"
+#endif
+
 
 BarcodeInfo::BarcodeInfo(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg) :
 	colBinRegion(NULL), rowBinRegion(NULL) {

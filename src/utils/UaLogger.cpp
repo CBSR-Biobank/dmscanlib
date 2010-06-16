@@ -51,10 +51,12 @@ std::ostream ua::cdebug (&ua::logstream);
 LoggerImpl::LoggerImpl() {
     std::ostringstream header;
 
+    headers_m.resize(maxSubSys_m);
+
     for (unsigned i = 0; i < maxSubSys_m; ++i) {
         levels_am[i] = 0;
         header << "SYS_" << i;
-        headers_am[i] = header.str();
+        headers_m[i] = header.str();
         header.str("");
     }
 }
@@ -111,12 +113,12 @@ unsigned LoggerImpl::levelGet(unsigned subsys) {
 
 void LoggerImpl::subSysHeaderSet(unsigned subsys, std::string header) {
     assert(subsys < allSubSys_m);
-    headers_am[subsys] = header;
+    headers_m[subsys] = header;
 }
 
 std::string & LoggerImpl::subSysHeaderGet(unsigned subsys) {
     assert(subsys < allSubSys_m);
-    return headers_am[subsys];
+    return headers_m[subsys];
 }
 
 

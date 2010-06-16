@@ -36,6 +36,10 @@
 #include <cstdlib>
 #include <math.h>
 
+#if defined(USE_MPATROL)
+#   include "mpatrol.h"
+#endif
+
 using namespace std;
 
 const char * INI_FILE_NAME = "scanlib.ini";
