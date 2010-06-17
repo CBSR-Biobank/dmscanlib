@@ -18,8 +18,8 @@
 using namespace std;
 
 
-#if defined(USE_MPATROL)
-#   include "mpatrol.h"
+#if defined(USE_NVWA)
+#   include "debug_new.h"
 #endif
 
 #ifdef _VISUALC_

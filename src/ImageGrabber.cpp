@@ -14,8 +14,8 @@
 #include "Util.h"
 #include <math.h>
 
-#if defined(USE_MPATROL)
-#   include "mpatrol.h"
+#if defined(USE_NVWA)
+#   include "debug_new.h"
 #endif
 
 using namespace std;
