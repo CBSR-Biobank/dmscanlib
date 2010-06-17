@@ -30,11 +30,16 @@
  * When an ASSERT fails, an error message is generated and the program exits.
  */
 
-#include "Singleton.h"
 #include <assert.h>
 #include <iostream>
 #include <sstream>
 #include <vector>
+
+#ifdef USE_NVWA
+#   include "debug_new.h"
+#endif
+
+#include "Singleton.h"
 
 namespace ua {
     class LoggerSink {

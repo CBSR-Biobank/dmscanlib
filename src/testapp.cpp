@@ -10,10 +10,7 @@
 #ifdef _VISUALC_
 #   define _CRTDBG_MAP_ALLOC
 #   pragma warning(disable : 4996)
-#endif
-
-//Scan for memory leaks in visual studio
-#ifdef _VISUALC_
+     //Scan for memory leaks in visual studio
 #   ifdef _DEBUG
 #      define _CRTDBG_MAP_ALLOC
 #      include <stdlib.h>
@@ -31,7 +28,6 @@
 #   include <vector>
 #   include <stdio.h>
 #endif
-
 
 
 #ifdef USE_NVWA

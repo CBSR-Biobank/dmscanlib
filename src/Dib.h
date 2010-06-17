@@ -123,6 +123,7 @@ private:
 
 	unsigned idx, dupe; // used by line drawing
 
+	void deallocate();
 	void copyInternals(Dib & src);
 	unsigned getPaletteSize(unsigned bitCount);
 	void setPalette();
