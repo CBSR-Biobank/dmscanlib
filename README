@@ -1,11 +1,6 @@
 Call test app as follows:
-  Linux-Debug/scanlib -p 1 --square-dev 10 --threshold 10 --gap 0.08 --celldist 0.345 --corrections 10 -d -i A2_problem.bmp 
+  scanlib.exe --debug 9 --debugfile -d -p 1 --dpi 600 -l 0.287367 -t 0.101386 -r 4.41637 -b 3.04159 -gap 0.085 --square-dev 15 --threshold 5 --corrections 10 --celldis 0.345
   
-  Debug-standalone/scanlib.exe -l 2.1 -t 0.725 -r 4.3 -b 2.9 -p 1 --square-dev 10 --threshold 30 --gap 30 --dpi 400 -d --debug 9
-  
-  Debug-standalone/scanlib.exe -l 2.1 -t 0.725 -r 4.3 -b 2.9 -p 1 --square-dev 10 --threshold 30 --gap 30 --dpi 400 -d --debug 9 -i scanned.bmp
-  
-  Debug-standalone/scanlib.exe -l 0.3 -t 0.2 -r 4.4 -b 3.0 -p 1 --square-dev 10 --threshold 30 --gap 30 --dpi 300 -d --debug 9 --corrections 10 
   
   
 SCAN MULTIPLE  

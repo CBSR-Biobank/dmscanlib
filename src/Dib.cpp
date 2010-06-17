@@ -108,6 +108,10 @@ Dib::Dib(char * filename) :
 }
 
 Dib::~Dib() {
+	deallocate();
+}
+
+void Dib::deallocate() {
 	if (fileHeader != NULL) {
 		delete fileHeader;
 	}
@@ -184,6 +188,10 @@ unsigned Dib::getPaletteSize(unsigned bitCount) {
 void Dib::readFromHandle(HANDLE handle) {
 	BITMAPINFOHEADER * dibHeaderPtr = (BITMAPINFOHEADER *) GlobalLock(handle);
 
+	if (infoHeader != NULL) {
+		delete infoHeader;
+	}
+
 	infoHeader = new BitmapInfoHeader;
 
 	infoHeader->size = dibHeaderPtr->biSize;
@@ -222,6 +230,8 @@ void Dib::readFromHandle(HANDLE handle) {
  */
 void Dib::readFromFile(const char * filename) {
 	UA_ASSERT_NOT_NULL(filename);
+
+	deallocate();
 
 	FILE * fh = fopen(filename, "rb"); // C4996
 	if (fh == NULL) {

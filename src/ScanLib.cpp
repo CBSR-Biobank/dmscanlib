@@ -97,29 +97,25 @@ int slSelectSourceAsDefault() {
 }
 
 /*
-Please note that the 32nd bit should be ignored.
-*/
+ Please note that the 32nd bit should be ignored.
+ */
 int slGetScannerCapability() {
 #ifdef WIN32
 	ImageGrabber ig;
-	return ig.getScannerCapability(); 
+	return ig.getScannerCapability();
 #endif
 	return 0xFF; //supports WIA and DPI: 300,400,600
 }
 
-
-int isValidDpi(int dpi){
+int isValidDpi(int dpi) {
 #ifdef WIN32
 	ImageGrabber ig;
 	int dpiCap = ig.getScannerCapability();
-	return ((dpiCap & CAP_DPI_300) && dpi == 300) || 
-			((dpiCap & CAP_DPI_400) && dpi == 400) || 
-			((dpiCap & CAP_DPI_600) && dpi == 600);
+	return ((dpiCap & CAP_DPI_300) && dpi == 300) || ((dpiCap & CAP_DPI_400)
+			&& dpi == 400) || ((dpiCap & CAP_DPI_600) && dpi == 600);
 #endif
 	return 1;
 }
-
-
 
 void formatCellMessages(unsigned plateNum, vector<vector<string> > & cells,
 		string & msg) {
@@ -136,7 +132,6 @@ void formatCellMessages(unsigned plateNum, vector<vector<string> > & cells,
 	}
 	msg = out.str();
 }
-
 
 int slScanImage(unsigned verbose, unsigned dpi, int brightness, int contrast,
 		double left, double top, double right, double bottom,
@@ -155,17 +150,15 @@ int slScanImage(unsigned verbose, unsigned dpi, int brightness, int contrast,
 
 	int scannerCapability = ig.getScannerCapability();
 
-	if ( !(scannerCapability & CAP_IS_SCANNER) || filename == NULL) {
+	if (!(scannerCapability & CAP_IS_SCANNER) || filename == NULL) {
 		return SC_FAIL;
 	}
-	if(!(((scannerCapability & CAP_DPI_300) && dpi == 300) || 
-		((scannerCapability & CAP_DPI_400) && dpi == 400) || 
-		((scannerCapability & CAP_DPI_600) && dpi == 600))){
-			return SC_INVALID_DPI; 
+	if (!(((scannerCapability & CAP_DPI_300) && dpi == 300)
+			|| ((scannerCapability & CAP_DPI_400) && dpi == 400)
+			|| ((scannerCapability & CAP_DPI_600) && dpi == 600))) {
+		return SC_INVALID_DPI;
 	}
 
-	
-	
 	HANDLE h = ig.acquireImage(dpi, brightness, contrast, left, top, right,
 			bottom);
 	if (h == NULL) {
@@ -190,7 +183,6 @@ int slDecodeCommon(unsigned plateNum, Dib & dib, Decoder & decoder,
 	UA_ASSERT_NOT_NULL(grayscaleDib);
 
 	grayscaleDib->tpPresetFilter();
-
 
 	//Dib dibBlobs(*grayscaleDib);
 	//detectBlobs(*grayscaleDib,dibBlobs);
@@ -227,9 +219,6 @@ int slDecodeCommon(unsigned plateNum, Dib & dib, Decoder & decoder,
 	return SC_SUCCESS;
 }
 
-
-
-
 int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
 		unsigned plateNum, double left, double top, double right,
 		double bottom, double scanGap, unsigned squareDev, unsigned edgeThresh,
@@ -254,17 +243,17 @@ int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
 
 	if ((plateNum < MIN_PLATE_NUM) || (plateNum > MAX_PLATE_NUM)) {
 		return SC_INVALID_PLATE_NUM;
-	}	
+	}
 
 	int scannerCapability = ig.getScannerCapability();
 
 	if (!(scannerCapability & CAP_IS_SCANNER)) {
 		return SC_FAIL;
 	}
-	if(!(((scannerCapability & CAP_DPI_300) && dpi == 300) || 
-		((scannerCapability & CAP_DPI_400) && dpi == 400) || 
-		((scannerCapability & CAP_DPI_600) && dpi == 600))){
-			return SC_INVALID_DPI; 
+	if (!(((scannerCapability & CAP_DPI_300) && dpi == 300)
+			|| ((scannerCapability & CAP_DPI_400) && dpi == 400)
+			|| ((scannerCapability & CAP_DPI_600) && dpi == 600))) {
+		return SC_INVALID_DPI;
 	}
 
 	HANDLE h;
@@ -273,8 +262,6 @@ int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
 	vector<vector<string> > cells;
 	Util::getTime(starttime);
 	Decoder decoder(scanGap, squareDev, edgeThresh, corrections, cellDistance);
-
-
 
 	h = ig.acquireImage(dpi, brightness, contrast, left, top, right, bottom);
 	if (h == NULL) {
@@ -285,7 +272,7 @@ int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
 	dib.readFromHandle(h);
 	dib.writeToFile("scanned.bmp");
 
-	if(dib.getDpi() != dpi)
+	if (dib.getDpi() != dpi)
 		result = SC_INCORRECT_DPI_SCANNED;
 	else
 		result = slDecodeCommon(plateNum, dib, decoder, "decode.bmp", cells);
@@ -333,33 +320,29 @@ int slDecodePlateMultipleDpi(unsigned verbose, unsigned dpi1, unsigned dpi2,
 	int scannerCapability = ig.getScannerCapability();
 
 	if (!(scannerCapability & CAP_IS_SCANNER)) {
-              return SC_FAIL;
-     }
+		return SC_FAIL;
+	}
 
-	unsigned dpis[] = {dpi1, dpi2, dpi3};
+	unsigned dpis[] = { dpi1, dpi2, dpi3 };
 	for (unsigned i = 0; i < 3; ++i) {
-		if (dpis[i] < 0 || dpis[i] > 2400) {
+		if (dpis[i] == 0)
+			continue;
+
+		if (!(((scannerCapability & CAP_DPI_300) && (dpis[i] == 300))
+				|| ((scannerCapability & CAP_DPI_400) && (dpis[i] == 400))
+				|| ((scannerCapability & CAP_DPI_600) && (dpis[i] == 600)))) {
+
+			UA_DOUT(1, 3, "invalid dpi " << dpis[i]);
 			return SC_INVALID_DPI;
 		}
 	}
-
 
 	if ((plateNum < MIN_PLATE_NUM) || (plateNum > MAX_PLATE_NUM)) {
 		return SC_INVALID_PLATE_NUM;
 	}
 
-	
-
-	for (unsigned i = 0; i < 3; ++i) {
-		if(!(((scannerCapability & CAP_DPI_300) && dpis[i] == 300) || 
-				((scannerCapability & CAP_DPI_400) && dpis[i] == 400) || 
-				((scannerCapability & CAP_DPI_600) && dpis[i] == 600))){
-			return SC_INVALID_DPI; 
-		}
-	}
-
 	std::ostringstream filename;
-	
+
 	HANDLE h;
 	int result = SC_FAIL;
 	Dib dib;
@@ -367,11 +350,12 @@ int slDecodePlateMultipleDpi(unsigned verbose, unsigned dpi1, unsigned dpi2,
 	vector<vector<string> > newCells;
 
 	for (unsigned i = 0; i < 3; ++i) {
-		if (dpis[i] == 0) continue;
+		if (dpis[i] == 0)
+			continue;
 
-		Decoder * decoder = new Decoder(scanGap, squareDev, edgeThresh, corrections, cellDistance);
+		Decoder * decoder = new Decoder(scanGap, squareDev, edgeThresh,
+				corrections, cellDistance);
 		UA_ASSERT_NOT_NULL(decoder);
-
 
 		h = ig.acquireImage(dpis[i], brightness, contrast, left, top, right,
 				bottom);
@@ -382,16 +366,17 @@ int slDecodePlateMultipleDpi(unsigned verbose, unsigned dpi1, unsigned dpi2,
 
 		dib.readFromHandle(h);
 		filename.str("");
-		filename << "scanned" << i+1 << ".bmp";
+		filename << "scanned" << i + 1 << ".bmp";
 		dib.writeToFile(filename.str().c_str());
 		filename.str("");
-		filename << "decoded" << i+1 << ".bmp";
-		
-		if(dib.getDpi() != dpis[i])
+		filename << "decoded" << i + 1 << ".bmp";
+
+		if (dib.getDpi() != dpis[i])
 			result = SC_INCORRECT_DPI_SCANNED;
 		else
-			result = slDecodeCommon(plateNum, dib, *decoder, filename.str().c_str(), newCells);
-		
+			result = slDecodeCommon(plateNum, dib, *decoder,
+					filename.str().c_str(), newCells);
+
 		if (result != SC_SUCCESS) {
 			return result;
 		}
@@ -400,8 +385,11 @@ int slDecodePlateMultipleDpi(unsigned verbose, unsigned dpi1, unsigned dpi2,
 			cells = newCells;
 		} else {
 			for (unsigned row = 0, numRows = cells.size(); row < numRows; ++row) {
-				for (unsigned col = 0, numCols = newCells[row].size(); col < numCols; ++col) {
-					if ((cells[row][col].length() > 0) && (newCells[row][col].length() > 0) && (cells[row][col] != newCells[row][col])) {
+				for (unsigned col = 0, numCols = newCells[row].size(); col
+						< numCols; ++col) {
+					if ((cells[row][col].length() > 0)
+							&& (newCells[row][col].length() > 0)
+							&& (cells[row][col] != newCells[row][col])) {
 						UA_WARN("current cell and new cell do not match: row/"
 								<< row << " col/" << col << " current/" << cells[row][col]
 								<< " new/" << newCells[row][col]);
@@ -414,7 +402,6 @@ int slDecodePlateMultipleDpi(unsigned verbose, unsigned dpi1, unsigned dpi2,
 		ig.freeImage(h);
 		delete decoder;
 	}
-
 
 	if (result == SC_SUCCESS) {
 		string msg;
@@ -460,7 +447,6 @@ int slDecodeImage(unsigned verbose, unsigned plateNum, const char * filename,
 	Decoder decoder(scanGap, squareDev, edgeThresh, corrections, cellDistance);
 
 	dib.readFromFile(filename);
-
 
 	int result = slDecodeCommon(plateNum, dib, decoder, "decode.bmp", cells);
 

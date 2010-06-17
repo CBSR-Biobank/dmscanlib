@@ -486,7 +486,7 @@ Decoder::ProcessResult Decoder::calculateSlots(double dpi) {
 		unsigned col = info.getColBinRegion().getId();
 
 		UA_DOUT(3, 5, "barcode " << i << " (" << (char)('A' + row) << ", "
-				<< col + 1 << ")");
+				<< col + 1 << "): " << info.getMsg());
 
 		if (cells[row][col].length() > 0) {
 			UA_DOUT(3, 5, "position (" << (char)('A' + row) << ", "
