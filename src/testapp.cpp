@@ -206,10 +206,10 @@ struct Options {
 // this function defined in ScanLib.cpp and is only used by test application
 void configLogging(unsigned level, bool useFile);
 
-class Application {
+class TestApp {
 public:
-	Application(int argc, char ** argv);
-	~Application();
+	TestApp(int argc, char ** argv);
+	~TestApp();
 
 private:
 	void usage();
@@ -229,9 +229,9 @@ private:
 
 int location = 0;
 
-const char * Application::INI_FILE_NAME = "scanlib.ini";
+const char * TestApp::INI_FILE_NAME = "scanlib.ini";
 
-Application::Application(int argc, char ** argv) {
+TestApp::TestApp(int argc, char ** argv) {
 
 	progname = strrchr((char *) argv[0], DIR_SEP_CHR) + 1;
 
@@ -298,11 +298,11 @@ Application::Application(int argc, char ** argv) {
 	cout << "return int-code is: " << result << endl;
 }
 
-Application::~Application() {
+TestApp::~TestApp() {
 
 }
 
-int Application::decode() {
+int TestApp::decode() {
 	if (options.infile != NULL) {
 		return slDecodeImage(options.debugLevel, options.plateNum,
 				options.infile, options.gap, options.squareDev,
@@ -340,7 +340,7 @@ int Application::decode() {
 			options.threshold, options.corrections, options.cellDistance);
 }
 
-int Application::scan() {
+int TestApp::scan() {
 	unsigned numDpis = options.dpis.size();
 
 	if (numDpis != 1) {
@@ -357,7 +357,7 @@ int Application::scan() {
 			options.bottom, options.outfile);
 }
 
-int Application::capability() {
+int TestApp::capability() {
 	unsigned caps = slGetScannerCapability();
 
 	if ((caps & 0x01) == 0) {
@@ -394,7 +394,7 @@ int Application::capability() {
 	return SC_SUCCESS;
 }
 
-int Application::test() {
+int TestApp::test() {
 	if (options.dpis.size() < 3) {
 		cout << "ERROR: Must provide 3 dpi values and plate offsets." << endl;
 		return SC_FAIL;
@@ -480,11 +480,11 @@ int Application::test() {
 	return result;
 }
 
-void Application::usage() {
+void TestApp::usage() {
 	printf(USAGE_FMT, progname);
 }
 
-bool Application::getCmdOptions(int argc, char ** argv) {
+bool TestApp::getCmdOptions(int argc, char ** argv) {
 	char * end = 0;
 
 	CSimpleOptA args(argc, argv, longOptions, SO_O_NOERR | SO_O_EXACT);
@@ -659,6 +659,6 @@ bool Application::getCmdOptions(int argc, char ** argv) {
 }
 
 int main(int argc, char ** argv) {
-	Application app(argc, argv);
+	TestApp app(argc, argv);
 }
 
