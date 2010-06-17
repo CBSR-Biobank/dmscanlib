@@ -23,7 +23,6 @@
 #ifdef _VISUALC_
 // disable warnings about fopen
 #pragma warning(disable : 4996)
-
 #endif
 
 #include <iostream>
