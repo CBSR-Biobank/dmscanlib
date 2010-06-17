@@ -21,7 +21,7 @@
 </extensions>
 </storageModule>
 <storageModule moduleId="cdtBuildSystem" version="4.0.0">
-<configuration artifactExtension="dll" artifactName="scanlib" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.sharedLib" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug,org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.sharedLib" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.mingw.so.debug.409171940" name="Debug" parent="cdt.managedbuild.config.gnu.mingw.so.debug" postbuildStep="cmd.exe /c &quot;copy ${workspace_loc:/scanlib/Debug/libscanlib.dll}&quot; &quot;${workspace_loc:/testscanlib/Debug}&quot;">
+<configuration artifactExtension="dll" artifactName="scanlib" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.sharedLib" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug,org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.sharedLib" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.mingw.so.debug.409171940" name="Debug" parent="cdt.managedbuild.config.gnu.mingw.so.debug" postbuildStep="">
 <folderInfo id="cdt.managedbuild.config.gnu.mingw.so.debug.409171940." name="/" resourcePath="">
 <toolChain id="cdt.managedbuild.toolchain.gnu.mingw.so.debug.241221763" name="MinGW GCC" superClass="cdt.managedbuild.toolchain.gnu.mingw.so.debug">
 <targetPlatform binaryParser="org.eclipse.cdt.core.PE;org.eclipse.cdt.core.GNU_ELF;org.eclipse.cdt.core.ELF" id="cdt.managedbuild.target.gnu.platform.mingw.so.debug.474882489" name="Debug Platform" superClass="cdt.managedbuild.target.gnu.platform.mingw.so.debug"/>
@@ -35,12 +35,14 @@
 <option id="gnu.cpp.compiler.mingw.so.debug.option.debugging.level.1250068434" name="Debug Level" superClass="gnu.cpp.compiler.mingw.so.debug.option.debugging.level" value="gnu.cpp.compiler.debugging.level.max" valueType="enumerated"/>
 <option id="gnu.cpp.compiler.option.preprocessor.def.483079313" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
 <listOptionValue builtIn="false" value="UA_LOGGER"/>
+<listOptionValue builtIn="false" value="USE_NVWA"/>
 <listOptionValue builtIn="false" value="__WIN32__"/>
 <listOptionValue builtIn="false" value="BUILD_DLL"/>
 <listOptionValue builtIn="false" value="_DEBUG"/>
 </option>
 <option id="gnu.cpp.compiler.option.include.paths.838515367" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/src/libdmtx}&quot;"/>
+<listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/src/nvwa}&quot;"/>
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/src}&quot;"/>
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/src/loki}&quot;"/>
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/src/utils}&quot;"/>
@@ -52,7 +54,11 @@
 <option id="gnu.c.compiler.mingw.so.debug.option.debugging.level.417285214" name="Debug Level" superClass="gnu.c.compiler.mingw.so.debug.option.debugging.level" value="gnu.c.debugging.level.max" valueType="enumerated"/>
 <option id="gnu.c.compiler.option.include.paths.2023817480" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
 <listOptionValue builtIn="false" value="&quot;${JAVA_HOME}\include&quot;"/>
+<listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/src/nvwa}&quot;"/>
 <listOptionValue builtIn="false" value="&quot;${JAVA_HOME}\include\win32&quot;"/>
+</option>
+<option id="gnu.c.compiler.option.preprocessor.def.symbols.1158273949" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" valueType="definedSymbols">
+<listOptionValue builtIn="false" value="USE_NVWA"/>
 </option>
 <inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.688091711" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 </tool>
@@ -908,7 +914,7 @@
 </toolChain>
 </folderInfo>
 <sourceEntries>
-<entry excluding="src/libdmtx/dmtxvector2.c|src/libdmtx/dmtxtime.c|src/libdmtx/dmtxsymbol.c|src/libdmtx/dmtxstatic.h|src/libdmtx/dmtxscangrid.c|src/libdmtx/dmtxregion.c|src/libdmtx/dmtxreedsol.c|src/libdmtx/dmtxplacemod.c|src/libdmtx/dmtxmessage.c|src/libdmtx/dmtxmatrix3.c|src/libdmtx/dmtximage.c|src/libdmtx/dmtxfec.c|src/libdmtx/dmtxencode.c|src/libdmtx/dmtxdecode.c|src/testapp.cpp|libdmtx/dmtxvector2.c|libdmtx/dmtxtime.c|libdmtx/dmtxsymbol.c|libdmtx/dmtxstatic.h|libdmtx/dmtxscangrid.c|libdmtx/dmtxregion.c|libdmtx/dmtxreedsol.c|libdmtx/dmtxplacemod.c|libdmtx/dmtxmessage.c|libdmtx/dmtxmatrix3.c|libdmtx/dmtximage.c|libdmtx/dmtxfec.c|libdmtx/dmtxencode.c|libdmtx/dmtxdecode.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+<entry excluding="src/nvwa/static_mem_pool.h|src/nvwa/static_mem_pool.cpp|src/nvwa/static_assert.h|src/nvwa/set_assign.h|src/nvwa/pctimer.h|src/nvwa/object_level_lock.h|src/nvwa/mem_pool_base.h|src/nvwa/mem_pool_base.cpp|src/nvwa/fixed_mem_pool.h|src/nvwa/fast_mutex.h|src/nvwa/debug_new.h|src/nvwa/debug_new.cpp|src/nvwa/cont_ptr_utils.h|src/nvwa/class_level_lock.h|src/nvwa/bool_array.h|src/nvwa/bool_array.cpp|src/libdmtx/dmtxvector2.c|src/libdmtx/dmtxtime.c|src/libdmtx/dmtxsymbol.c|src/libdmtx/dmtxstatic.h|src/libdmtx/dmtxscangrid.c|src/libdmtx/dmtxregion.c|src/libdmtx/dmtxreedsol.c|src/libdmtx/dmtxplacemod.c|src/libdmtx/dmtxmessage.c|src/libdmtx/dmtxmatrix3.c|src/libdmtx/dmtximage.c|src/libdmtx/dmtxfec.c|src/libdmtx/dmtxencode.c|src/libdmtx/dmtxdecode.c|src/testapp.cpp|libdmtx/dmtxvector2.c|libdmtx/dmtxtime.c|libdmtx/dmtxsymbol.c|libdmtx/dmtxstatic.h|libdmtx/dmtxscangrid.c|libdmtx/dmtxregion.c|libdmtx/dmtxreedsol.c|libdmtx/dmtxplacemod.c|libdmtx/dmtxmessage.c|libdmtx/dmtxmatrix3.c|libdmtx/dmtximage.c|libdmtx/dmtxfec.c|libdmtx/dmtxencode.c|libdmtx/dmtxdecode.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 </sourceEntries>
 </configuration>
 </storageModule>
@@ -2612,8 +2618,8 @@
 </tool>
 <tool id="cdt.managedbuild.tool.gnu.cpp.linker.mingw.so.debug.400428622" name="MinGW C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.mingw.so.debug">
 <option id="gnu.cpp.link.mingw.so.debug.option.shared.925176249" name="Shared (-shared)" superClass="gnu.cpp.link.mingw.so.debug.option.shared"/>
-<option id="gnu.cpp.link.option.paths.1358448275" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths"/>
-<option id="gnu.cpp.link.option.libs.360692839" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs"/>
+<option id="gnu.cpp.link.option.paths.1358448275" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths"/>
+<option id="gnu.cpp.link.option.libs.360692839" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs"/>
 <option id="gnu.cpp.link.option.other.1240844828" name="Other options (-Xlinker [option])" superClass="gnu.cpp.link.option.other"/>
 <inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.2050489778" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 <additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
@@ -3460,7 +3466,7 @@
 </toolChain>
 </folderInfo>
 <sourceEntries>
-<entry excluding="src/libdmtx/dmtxvector2.c|src/libdmtx/dmtxtime.c|src/libdmtx/dmtxsymbol.c|src/libdmtx/dmtxstatic.h|src/libdmtx/dmtxscangrid.c|src/libdmtx/dmtxregion.c|src/libdmtx/dmtxreedsol.c|src/libdmtx/dmtxplacemod.c|src/libdmtx/dmtxmessage.c|src/libdmtx/dmtxmatrix3.c|src/libdmtx/dmtximage.c|src/libdmtx/dmtxfec.c|src/libdmtx/dmtxencode.c|src/libdmtx/dmtxdecode.c|src/ScanLib_wrap.c|libdmtx/dmtxvector2.c|libdmtx/dmtxtime.c|libdmtx/dmtxsymbol.c|libdmtx/dmtxstatic.h|libdmtx/dmtxscangrid.c|libdmtx/dmtxregion.c|libdmtx/dmtxreedsol.c|libdmtx/dmtxplacemod.c|libdmtx/dmtxmessage.c|libdmtx/dmtxmatrix3.c|libdmtx/dmtximage.c|libdmtx/dmtxfec.c|libdmtx/dmtxencode.c|libdmtx/dmtxdecode.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+<entry excluding="src/nvwa/static_mem_pool.h|src/nvwa/static_mem_pool.cpp|src/nvwa/static_assert.h|src/nvwa/set_assign.h|src/nvwa/pctimer.h|src/nvwa/object_level_lock.h|src/nvwa/mem_pool_base.h|src/nvwa/mem_pool_base.cpp|src/nvwa/fixed_mem_pool.h|src/nvwa/fast_mutex.h|src/nvwa/debug_new.h|src/nvwa/debug_new.cpp|src/nvwa/cont_ptr_utils.h|src/nvwa/class_level_lock.h|src/nvwa/bool_array.h|src/nvwa/bool_array.cpp|src/libdmtx/dmtxvector2.c|src/libdmtx/dmtxtime.c|src/libdmtx/dmtxsymbol.c|src/libdmtx/dmtxstatic.h|src/libdmtx/dmtxscangrid.c|src/libdmtx/dmtxregion.c|src/libdmtx/dmtxreedsol.c|src/libdmtx/dmtxplacemod.c|src/libdmtx/dmtxmessage.c|src/libdmtx/dmtxmatrix3.c|src/libdmtx/dmtximage.c|src/libdmtx/dmtxfec.c|src/libdmtx/dmtxencode.c|src/libdmtx/dmtxdecode.c|src/ScanLib_wrap.c|libdmtx/dmtxvector2.c|libdmtx/dmtxtime.c|libdmtx/dmtxsymbol.c|libdmtx/dmtxstatic.h|libdmtx/dmtxscangrid.c|libdmtx/dmtxregion.c|libdmtx/dmtxreedsol.c|libdmtx/dmtxplacemod.c|libdmtx/dmtxmessage.c|libdmtx/dmtxmatrix3.c|libdmtx/dmtximage.c|libdmtx/dmtxfec.c|libdmtx/dmtxencode.c|libdmtx/dmtxdecode.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 </sourceEntries>
 </configuration>
 </storageModule>
