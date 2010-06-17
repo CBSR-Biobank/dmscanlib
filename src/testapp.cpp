@@ -21,6 +21,22 @@
 #   endif
 #endif
 
+#include <iostream>
+#include <bitset>
+
+
+#ifndef WIN32
+#   include <limits>
+#   include <bitset>
+#   include <vector>
+#   include <stdio.h>
+#endif
+
+
+
+#ifdef USE_NVWA
+#   include "debug_new.h"
+#endif
 
 #ifdef WIN32
 #   include "UaAssert.h"
@@ -29,23 +45,11 @@
 #   include "Util.h"
 #   include "BarcodeInfo.h"
 #   include "ImageGrabber.h"
-#else
-#   include <limits>
-#   include <bitset>
-#   include <vector>
-#   include <stdio.h>
 #endif
 
 #include "ScanLib.h"
 #include "SimpleOpt.h"
 #include "UaLogger.h"
-
-#include <iostream>
-#include <bitset>
-
-#if defined(USE_NVWA)
-#   include "debug_new.h"
-#endif
 
 using namespace std;
 
