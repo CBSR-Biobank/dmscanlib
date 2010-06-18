@@ -70,112 +70,6 @@ unsigned ImageGrabber::invokeTwain(TW_IDENTITY * srcId, unsigned long dg,
 	return r;
 }
 /*
-else{
-
-			twCap.Cap = ICAP_XFERMECH;
-			twCap.ConType = TWON_ENUMERATION;
-			twCap.hContainer = NULL;
-			capResult = getCapability(&srcId, twCap);
-			
-			if(capResult){
-				switch(twCap.ConType){
-
-						case TWON_ENUMERATION:
-							{
-								UA_DOUT(4, 5, "ConType = Enumeration");
-
-								pTW_ENUMERATION pvalEnum;
-								TW_UINT16 index;
-								unsigned int supportedTransferType = -1;
-
-								
-								pvalEnum = (pTW_ENUMERATION) GlobalLock(twCap.hContainer);
-								UA_ASSERT_NOT_NULL(pvalEnum);
-								
-								UA_DOUT(4, 6, "Number of supported transfer modes: " << pvalEnum->NumItems);
-
-								for(index = 0; index < pvalEnum->NumItems; index++){
-
-									switch(pvalEnum->ItemType){
-
-										case TWTY_INT16:
-										case TWTY_UINT16:
-											supportedTransferType = (unsigned int)(pvalEnum->ItemList[index*2]);
-											UA_DOUT(4, 6, "Supports mode (16bit): " << supportedTransferType);
-											break;
-
-										case TWTY_INT8:
-										case TWTY_UINT8:
-										case TWTY_BOOL:
-											supportedTransferType = (unsigned int)(pvalEnum->ItemList[index]);
-											UA_DOUT(4, 6, "Supports mode (8bit): " << supportedTransferType);
-											break;
-
-										default:
-											UA_WARN("Unexpected Itemtype");
-											break;
-									}
-									if(supportedTransferType == TWSX_NATIVE){ //only TWAIN should support this
-										UA_DOUT(4, 5, "Driver type is probably TWAIN (assuming wia does not have mode: TWSX_NATIVE )");
-										returnCode = false; 
-									}
-								}	
-							}
-							break;
-
-						case TWON_ONEVALUE:
-							{
-								UA_DOUT(4, 5, "ConType = OneValue");
-
-								pTW_ONEVALUE pvalOneValue;
-								unsigned int supportedTransferType = -1;
-
-								pvalOneValue = (pTW_ONEVALUE) GlobalLock(twCap.hContainer);
-
-								switch(pvalOneValue->ItemType){
-
-									case TWTY_INT16:
-									case TWTY_UINT16:
-										supportedTransferType = (unsigned int)(pvalOneValue->Item);
-										UA_DOUT(4, 6, "Supports mode (16bit): " << supportedTransferType);
-										break;
-
-									case TWTY_INT8:
-									case TWTY_UINT8:
-									case TWTY_BOOL:
-										supportedTransferType = (unsigned int)(pvalOneValue->Item);
-										UA_DOUT(4, 6, "Supports mode (8bit): " << supportedTransferType);
-										break;
-
-									default:
-										UA_WARN("Unexpected Itemtype");
-										break;
-								}
-
-								if(supportedTransferType == TWSX_NATIVE){ //only TWAIN should support this
-									UA_DOUT(4, 5, "Driver type is probably TWAIN (assuming wia does not have mode: TWSX_NATIVE )");
-									returnCode = false;
-								}
-							}
-							break;
-
-
-						default:
-							UA_WARN("Unexpected dpi contype");
-							break;
-
-				}// switch
-
-				GlobalUnlock(twCap.hContainer);
-				GlobalFree(twCap.hContainer);
-
-			} //if result
-
-		}//else did not match "twain" || "wia"
-*/
-
-
-/*
  *	selectSourceAsDefault()
  *	@params - none
  *	@return - none
@@ -246,23 +140,40 @@ HANDLE ImageGrabber::acquireImage(unsigned dpi, int brightness, int contrast,
 	TW_FIX32 value;
 	HWND hwnd;
 
+	errorCode = SC_SUCCESS;
 
 	UA_ASSERT(sizeof(TW_FIX32) == sizeof(long));
 
 	value.Frac = 0;
 
-	initializeScannerSource(hwnd,srcID);
+	initializeScannerSource(hwnd, srcID);
+
+	int scannerCapability = getScannerCapabilityInternal(srcID);
+
+	if (!(scannerCapability & CAP_IS_SCANNER)) {
+		errorCode = SC_FAIL;
+		return NULL;
+	}
+	if (!(((scannerCapability & CAP_DPI_300) && dpi == 300)
+			|| ((scannerCapability & CAP_DPI_400) && dpi == 400)
+			|| ((scannerCapability & CAP_DPI_600) && dpi == 600))) {
+		errorCode = SC_INVALID_DPI;
+		return NULL;
+	}
 
 	value.Whole = dpi;
-	value.Frac = 0; 
-	setCapOneValue(&srcID, ICAP_XRESOLUTION, TWTY_FIX32, *(unsigned long*) &value);
-	setCapOneValue(&srcID, ICAP_YRESOLUTION, TWTY_FIX32, *(unsigned long*) &value);
+	value.Frac = 0;
+	setCapOneValue(&srcID, ICAP_XRESOLUTION, TWTY_FIX32,
+			*(unsigned long*) &value);
+	setCapOneValue(&srcID, ICAP_YRESOLUTION, TWTY_FIX32,
+			*(unsigned long*) &value);
 
 	setCapOneValue(&srcID, ICAP_PIXELTYPE, TWTY_UINT16, TWPT_RGB);
 	//SetCapOneValue(&srcID, ICAP_BITDEPTH, TWTY_UINT16, 8);
 
 	value.Whole = brightness;
-	setCapOneValue(&srcID, ICAP_BRIGHTNESS, TWTY_FIX32, *(unsigned long*) &value);
+	setCapOneValue(&srcID, ICAP_BRIGHTNESS, TWTY_FIX32,
+			*(unsigned long*) &value);
 
 	value.Whole = contrast;
 	setCapOneValue(&srcID, ICAP_CONTRAST, TWTY_FIX32, *(unsigned long*) &value);
@@ -296,6 +207,11 @@ HANDLE ImageGrabber::acquireImage(unsigned dpi, int brightness, int contrast,
 	rc = invokeTwain(&srcID, DG_CONTROL, DAT_USERINTERFACE, MSG_ENABLEDS, &ui);
 	UA_ASSERTS(rc == TWRC_SUCCESS, "Unable to enable default data source");
 
+	if (rc == TWRC_FAILURE) {
+		errorCode = SC_FAIL;
+		return NULL;
+	}
+
 	MSG msg;
 	TW_EVENT event;
 	TW_PENDINGXFERS pxfers;
@@ -315,6 +231,7 @@ HANDLE ImageGrabber::acquireImage(unsigned dpi, int brightness, int contrast,
 		if (event.TWMessage == MSG_CLOSEDSREQ) {
 			rc = invokeTwain(&srcID, DG_CONTROL, DAT_USERINTERFACE,
 					MSG_DISABLEDS, &ui);
+			UA_DOUT(2, 1, "got MSG_CLOSEDSREQ: sending DG_CONTROL / DAT_USERINTERFACE / MSG_DISABLEDS");
 			break;
 		}
 
@@ -332,8 +249,8 @@ HANDLE ImageGrabber::acquireImage(unsigned dpi, int brightness, int contrast,
 
 			// If image is compressed or is not 8-bit color and not 24-bit
 			// color ...
-			if ((rc != TWRC_CANCEL) && ((ii.Compression != TWCP_NONE) || ((ii.BitsPerPixel != 8)
-					&& (ii.BitsPerPixel != 24)))) {
+			if ((rc != TWRC_CANCEL) && ((ii.Compression != TWCP_NONE)
+					|| ((ii.BitsPerPixel != 8) && (ii.BitsPerPixel != 24)))) {
 				invokeTwain(&srcID, DG_CONTROL, DAT_PENDINGXFERS, MSG_RESET,
 						&pxfers);
 				UA_WARN("Image compressed or not 8-bit/24-bit ");
@@ -363,24 +280,31 @@ HANDLE ImageGrabber::acquireImage(unsigned dpi, int brightness, int contrast,
 			// acknowledge end of transfer.
 			rc = invokeTwain(&srcID, DG_CONTROL, DAT_PENDINGXFERS, MSG_ENDXFER,
 					&pxfers);
+			UA_DOUT(2, 1, "DG_CONTROL / DAT_PENDINGXFERS / MSG_ENDXFER");
+
 			if (rc == TWRC_SUCCESS) {
 				if (pxfers.Count != 0) {
 					// Cancel all remaining transfers.
 					invokeTwain(&srcID, DG_CONTROL, DAT_PENDINGXFERS,
 							MSG_RESET, &pxfers);
+					UA_DOUT(2, 1, "DG_CONTROL / DAT_PENDINGXFERS / MSG_RESET");
 				} else {
 					rc = invokeTwain(&srcID, DG_CONTROL, DAT_USERINTERFACE,
 							MSG_DISABLEDS, &ui);
+					UA_DOUT(2, 1, "DG_CONTROL / DAT_USERINTERFACE / MSG_DISABLEDS");
 					break;
 				}
 			}
 		}
 	}
+
 	// Close the data source.
 	invokeTwain(&srcID, DG_CONTROL, DAT_IDENTITY, MSG_CLOSEDS, &srcID);
+	UA_DOUT(2, 1, "DG_CONTROL / DAT_IDENTITY / MSG_CLOSEDS");
 
 	// Close the data source manager.
 	invokeTwain(NULL, DG_CONTROL, DAT_PARENT, MSG_CLOSEDSM, &hwnd);
+	UA_DOUT(2, 1, "DG_CONTROL / DAT_PARENT / MSG_CLOSEDSM");
 
 	// Destroy window.
 	DestroyWindow(hwnd);
@@ -450,10 +374,10 @@ bool ImageGrabber::getCapability(TW_IDENTITY * srcId, TW_CAPABILITY & twCap) {
 	return (rc == TWRC_SUCCESS);
 }
 
-void ImageGrabber::initializeScannerSource(HWND & hwnd, TW_IDENTITY & srcID){
+void ImageGrabber::initializeScannerSource(HWND & hwnd, TW_IDENTITY & srcID) {
 
 	TW_UINT16 rc;
-	
+
 	hwnd = CreateWindowA("STATIC", "", WS_POPUPWINDOW, CW_USEDEFAULT,
 			CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, HWND_DESKTOP,
 			0, 0 /* g_hinstDLL */, 0);
@@ -467,7 +391,6 @@ void ImageGrabber::initializeScannerSource(HWND & hwnd, TW_IDENTITY & srcID){
 	// Open the data source manager.
 	rc = invokeTwain(NULL, DG_CONTROL, DAT_PARENT, MSG_OPENDSM, &hwnd);
 	UA_ASSERTS(rc == TWRC_SUCCESS, "Unable to open data source manager");
-	
 
 	// get the default source
 	rc = invokeTwain(NULL, DG_CONTROL, DAT_IDENTITY, MSG_GETDEFAULT, &srcID);
@@ -488,15 +411,27 @@ void ImageGrabber::initializeScannerSource(HWND & hwnd, TW_IDENTITY & srcID){
 /* Assuming x-y resolution are the same*/
 int ImageGrabber::getScannerCapability() {
 
-	pTW_RANGE pvalRange;
-	TW_CAPABILITY twCapX;
 	TW_IDENTITY srcID;
 	HWND hwnd;
+
+	initializeScannerSource(hwnd, srcID);
+
+	int capabilityCode = getScannerCapabilityInternal(srcID);
+
+	invokeTwain(&srcID, DG_CONTROL, DAT_IDENTITY, MSG_CLOSEDS, &srcID);
+	invokeTwain(NULL, DG_CONTROL, DAT_PARENT, MSG_CLOSEDSM, &hwnd);
+	DestroyWindow(hwnd);
+
+	UA_DOUT(2, 5, "Capability code: " << capabilityCode);
+
+	return capabilityCode;
+}
+
+int ImageGrabber::getScannerCapabilityInternal(TW_IDENTITY & srcID) {
+	pTW_RANGE pvalRange;
+	TW_CAPABILITY twCapX;
+	bool xResult;
 	int capabilityCode = 0x00;
-	bool xResult;	
-
-	initializeScannerSource(hwnd,srcID);
-
 
 	setCapOneValue(&srcID, ICAP_UNITS, TWTY_UINT16, TWUN_INCHES);
 
@@ -505,213 +440,212 @@ int ImageGrabber::getScannerCapability() {
 	twCapX.hContainer = NULL;
 	xResult = getCapability(&srcID, twCapX);
 
-	UA_DOUT(4, 5, "Polling scanner capbility");
-	if(xResult){
-		UA_DOUT(4, 5, "twCap.ConType = " << twCapX.ConType);
+	UA_DOUT(2, 5, "Polling scanner capbility");
+	if (xResult) {
+		UA_DOUT(2, 5, "twCap.ConType = " << twCapX.ConType);
 
-		switch(twCapX.ConType){
+		switch (twCapX.ConType) {
 
-			case TWON_RANGE:
-				{
-					double minDpi, maxDpi, stepDpi;
+		case TWON_RANGE: {
+			double minDpi, maxDpi, stepDpi;
 
-					UA_DOUT(4, 5, "ConType = Range");
+			UA_DOUT(2, 5, "ConType = Range");
 
-					pvalRange = (pTW_RANGE) GlobalLock(twCapX.hContainer);
-					if (pvalRange->ItemType == TWTY_FIX32) {
-						minDpi = uint32ToFloat(pvalRange->MinValue);
-						maxDpi = uint32ToFloat(pvalRange->MaxValue);
-						stepDpi = uint32ToFloat(pvalRange->StepSize);
-				
-						UA_ASSERTS(stepDpi > 0, "TWON_RANGE stepSize was was not greater than zero.");
-						UA_ASSERTS(minDpi > 0, "TWON_RANGE minDpi was was not greater than zero.");
-						UA_ASSERTS(maxDpi >= minDpi, "TWON_RANGE minDpi > naxDpi");
-						UA_DOUT(4, 6, "Supports DPI Range {" << " Min:" << minDpi << " Max:" << maxDpi << " Step:" << stepDpi << " }");
+			pvalRange = (pTW_RANGE) GlobalLock(twCapX.hContainer);
+			if (pvalRange->ItemType == TWTY_FIX32) {
+				minDpi = uint32ToFloat(pvalRange->MinValue);
+				maxDpi = uint32ToFloat(pvalRange->MaxValue);
+				stepDpi = uint32ToFloat(pvalRange->StepSize);
 
-						
-						if(300-minDpi >= 0 && 300 <= maxDpi &&  (int)(300-minDpi)%(int)stepDpi == 0)
-							capabilityCode |= CAP_DPI_300;
-						
-						if(400-minDpi >= 0 && 400 <= maxDpi && (int)(400-minDpi)%(int)stepDpi == 0)
-							capabilityCode |= CAP_DPI_400;
+				UA_ASSERTS(stepDpi > 0, "TWON_RANGE stepSize was was not greater than zero.");
+				UA_ASSERTS(minDpi > 0, "TWON_RANGE minDpi was was not greater than zero.");
+				UA_ASSERTS(maxDpi >= minDpi, "TWON_RANGE minDpi > naxDpi");
+				UA_DOUT(2, 6, "Supports DPI Range {" << " Min:" << minDpi << " Max:" << maxDpi << " Step:" << stepDpi << " }");
 
-						if(600-minDpi >= 0 && 600 <= maxDpi && (int)(600-minDpi)%(int)stepDpi == 0)
-							capabilityCode |= CAP_DPI_600;
-					}
+				if (300 - minDpi >= 0 && 300 <= maxDpi && (int) (300 - minDpi)
+						% (int) stepDpi == 0)
+					capabilityCode |= CAP_DPI_300;
+
+				if (400 - minDpi >= 0 && 400 <= maxDpi && (int) (400 - minDpi)
+						% (int) stepDpi == 0)
+					capabilityCode |= CAP_DPI_400;
+
+				if (600 - minDpi >= 0 && 600 <= maxDpi && (int) (600 - minDpi)
+						% (int) stepDpi == 0)
+					capabilityCode |= CAP_DPI_600;
+			}
+		}
+			break;
+
+		case TWON_ENUMERATION: {
+			UA_DOUT(2, 5, "ConType = Enumeration");
+
+			pTW_ENUMERATION pvalEnum;
+			TW_UINT16 index;
+			unsigned int tempDpi = 0;
+
+			pvalEnum = (pTW_ENUMERATION) GlobalLock(twCapX.hContainer);
+			UA_ASSERT_NOT_NULL(pvalEnum);
+
+			UA_DOUT(2, 6, "Number of supported Dpi: " << pvalEnum->NumItems);
+			UA_DOUT(2, 6, "Dpi ItemType: " << pvalEnum->ItemType);
+
+			for (index = 0; index < pvalEnum->NumItems; index++) {
+
+				switch (pvalEnum->ItemType) {
+
+				case TWTY_FIX32:
+					tempDpi = (unsigned int) twfix32ToFloat(
+							*(TW_FIX32 *) (void *) (&pvalEnum->ItemList[index
+									* 4]));
+					UA_DOUT(2, 6, "Supports DPI (f32bit): " << tempDpi);
+					break;
+
+				case TWTY_INT32:
+				case TWTY_UINT32:
+					tempDpi = (unsigned int) (pvalEnum->ItemList[index * 4]);
+					UA_DOUT(2, 6, "Supports DPI (32bit): " << tempDpi);
+					break;
+
+				case TWTY_INT16:
+				case TWTY_UINT16:
+					tempDpi = (unsigned int) (pvalEnum->ItemList[index * 2]);
+					UA_DOUT(2, 6, "Supports DPI (16bit): " << tempDpi);
+					break;
+
+				case TWTY_INT8:
+				case TWTY_UINT8:
+				case TWTY_BOOL:
+					UA_WARN("ItemType is 8 bit");
+					break;
 				}
-				break;
+				if (tempDpi == 300)
+					capabilityCode |= CAP_DPI_300;
 
-			case TWON_ENUMERATION:
-				{
-					UA_DOUT(4, 5, "ConType = Enumeration");
+				if (tempDpi == 400)
+					capabilityCode |= CAP_DPI_400;
 
-					pTW_ENUMERATION pvalEnum;
-					TW_UINT16 index;
-					unsigned int tempDpi = 0;
-
-					
-					pvalEnum = (pTW_ENUMERATION) GlobalLock(twCapX.hContainer);
-					UA_ASSERT_NOT_NULL(pvalEnum);
-					
-					UA_DOUT(4, 6, "Number of supported Dpi: " << pvalEnum->NumItems);
-					UA_DOUT(4, 6, "Dpi ItemType: " << pvalEnum->ItemType);
-
-					for(index = 0; index < pvalEnum->NumItems; index++){
-
-						switch(pvalEnum->ItemType){
-							
-							case TWTY_FIX32:
-								tempDpi = (unsigned int)twfix32ToFloat(*(TW_FIX32 *)(void *)(&pvalEnum->ItemList[index*4]));
-								UA_DOUT(4, 6, "Supports DPI (f32bit): " << tempDpi);
-								break;
-
-							case TWTY_INT32:
-							case TWTY_UINT32:
-								tempDpi = (unsigned int)(pvalEnum->ItemList[index*4]);
-								UA_DOUT(4, 6, "Supports DPI (32bit): " << tempDpi);
-								break;
-
-							case TWTY_INT16:
-							case TWTY_UINT16:
-								tempDpi = (unsigned int)(pvalEnum->ItemList[index*2]);
-								UA_DOUT(4, 6, "Supports DPI (16bit): " << tempDpi);
-								break;
-
-							case TWTY_INT8:
-							case TWTY_UINT8:
-							case TWTY_BOOL:
-								UA_WARN("ItemType is 8 bit");
-								break;
-						}
-						if(tempDpi == 300)
-							capabilityCode |= CAP_DPI_300;
-
-						if(tempDpi == 400)
-							capabilityCode |= CAP_DPI_400;
-
-						if(tempDpi == 600)
-							capabilityCode |= CAP_DPI_600;
-					}
-				}
-				break;
+				if (tempDpi == 600)
+					capabilityCode |= CAP_DPI_600;
+			}
+		}
+			break;
 
 			//XXX Untested
-			case TWON_ONEVALUE:
-				{
-					UA_DOUT(4, 5, "ConType = OneValue");
+		case TWON_ONEVALUE: {
+			UA_DOUT(2, 5, "ConType = OneValue");
 
-					pTW_ONEVALUE pvalOneValue;
-					unsigned int tempDpi = 0;
+			pTW_ONEVALUE pvalOneValue;
+			unsigned int tempDpi = 0;
 
-					pvalOneValue = (pTW_ONEVALUE) GlobalLock(twCapX.hContainer);
+			pvalOneValue = (pTW_ONEVALUE) GlobalLock(twCapX.hContainer);
 
-					switch(pvalOneValue->ItemType){
-						
-						case TWTY_FIX32:
-							tempDpi = (unsigned int)twfix32ToFloat(*(TW_FIX32 *)(void *)(&pvalOneValue->Item));
-							UA_DOUT(4, 6, "Supports DPI (f32bit): " << tempDpi);
-							break;
+			switch (pvalOneValue->ItemType) {
 
-						case TWTY_INT32:
-						case TWTY_UINT32:
-							tempDpi = (unsigned int)(pvalOneValue->Item);
-							UA_DOUT(4, 6, "Supports DPI (32bit): " << tempDpi);
-							break;
-
-						case TWTY_INT16:
-						case TWTY_UINT16:
-							tempDpi = (unsigned int)(pvalOneValue->Item);
-							UA_DOUT(4, 6, "Supports DPI (16bit): " << tempDpi);
-							break;
-
-						case TWTY_INT8:
-						case TWTY_UINT8:
-						case TWTY_BOOL:
-							UA_WARN("ItemType is 8 bit");
-							break;
-					}
-					if(tempDpi == 300)
-						capabilityCode |= CAP_DPI_300;
-
-					if(tempDpi == 400)
-						capabilityCode |= CAP_DPI_400;
-
-					if(tempDpi == 600)
-						capabilityCode |= CAP_DPI_600;
-				}
+			case TWTY_FIX32:
+				tempDpi = (unsigned int) twfix32ToFloat(
+						*(TW_FIX32 *) (void *) (&pvalOneValue->Item));
+				UA_DOUT(2, 6, "Supports DPI (f32bit): " << tempDpi);
 				break;
+
+			case TWTY_INT32:
+			case TWTY_UINT32:
+				tempDpi = (unsigned int) (pvalOneValue->Item);
+				UA_DOUT(2, 6, "Supports DPI (32bit): " << tempDpi);
+				break;
+
+			case TWTY_INT16:
+			case TWTY_UINT16:
+				tempDpi = (unsigned int) (pvalOneValue->Item);
+				UA_DOUT(2, 6, "Supports DPI (16bit): " << tempDpi);
+				break;
+
+			case TWTY_INT8:
+			case TWTY_UINT8:
+			case TWTY_BOOL:
+				UA_WARN("ItemType is 8 bit");
+				break;
+			}
+			if (tempDpi == 300)
+				capabilityCode |= CAP_DPI_300;
+
+			if (tempDpi == 400)
+				capabilityCode |= CAP_DPI_400;
+
+			if (tempDpi == 600)
+				capabilityCode |= CAP_DPI_600;
+		}
+			break;
 
 			//XXX Untested
-			case TWON_ARRAY:
-				{
-					UA_DOUT(4, 5, "ConType = Array");
-					pTW_ARRAY pvalArray;
-					TW_UINT16 index;
-					unsigned int tempDpi = 0;
-				
-					pvalArray = (pTW_ARRAY)GlobalLock(twCapX.hContainer);
-					UA_ASSERT_NOT_NULL(pvalArray);
+		case TWON_ARRAY: {
+			UA_DOUT(2, 5, "ConType = Array");
+			pTW_ARRAY pvalArray;
+			TW_UINT16 index;
+			unsigned int tempDpi = 0;
 
-					UA_DOUT(4, 6, "Number of supported Dpi: " << pvalArray->NumItems);
+			pvalArray = (pTW_ARRAY) GlobalLock(twCapX.hContainer);
+			UA_ASSERT_NOT_NULL(pvalArray);
 
+			UA_DOUT(2, 6, "Number of supported Dpi: " << pvalArray->NumItems);
 
-					for(index = 0; index < pvalArray->NumItems; index++){
-						
-						switch(pvalArray->ItemType){
-							
-							case TWTY_FIX32:
-								tempDpi = (unsigned int)twfix32ToFloat(*(TW_FIX32 *)(void *)(&pvalArray->ItemList[index*4]));
-								UA_DOUT(4, 6, "Supports DPI (f32bit): " << tempDpi);
-								break;
+			for (index = 0; index < pvalArray->NumItems; index++) {
 
-							case TWTY_INT32:
-							case TWTY_UINT32:
-								tempDpi = (unsigned int)(pvalArray->ItemList[index*4]);
-								UA_DOUT(4, 6, "Supports DPI (32bit): " << tempDpi);
-								break;
+				switch (pvalArray->ItemType) {
 
-							case TWTY_INT16:
-							case TWTY_UINT16:
-								tempDpi = (unsigned int)(pvalArray->ItemList[index*2]);
-								UA_DOUT(4, 6, "Supports DPI (16bit): " << tempDpi);
-								break;
+				case TWTY_FIX32:
+					tempDpi = (unsigned int) twfix32ToFloat(
+							*(TW_FIX32 *) (void *) (&pvalArray->ItemList[index
+									* 4]));
+					UA_DOUT(2, 6, "Supports DPI (f32bit): " << tempDpi);
+					break;
 
-							case TWTY_INT8:
-							case TWTY_UINT8:
-							case TWTY_BOOL:
-								UA_WARN("ItemType is 8 bit");
-								break;
-						}
+				case TWTY_INT32:
+				case TWTY_UINT32:
+					tempDpi = (unsigned int) (pvalArray->ItemList[index * 4]);
+					UA_DOUT(2, 6, "Supports DPI (32bit): " << tempDpi);
+					break;
 
-						if(tempDpi == 300)
-							capabilityCode |= CAP_DPI_300;
+				case TWTY_INT16:
+				case TWTY_UINT16:
+					tempDpi = (unsigned int) (pvalArray->ItemList[index * 2]);
+					UA_DOUT(2, 6, "Supports DPI (16bit): " << tempDpi);
+					break;
 
-						if(tempDpi == 400)
-							capabilityCode |= CAP_DPI_400;
-
-						if(tempDpi == 600)
-							capabilityCode |= CAP_DPI_600;
-						}
+				case TWTY_INT8:
+				case TWTY_UINT8:
+				case TWTY_BOOL:
+					UA_WARN("ItemType is 8 bit");
+					break;
 				}
-				break;
 
-			default:
-				UA_WARN("Unexpected dpi contype");
-				break;
+				if (tempDpi == 300)
+					capabilityCode |= CAP_DPI_300;
+
+				if (tempDpi == 400)
+					capabilityCode |= CAP_DPI_400;
+
+				if (tempDpi == 600)
+					capabilityCode |= CAP_DPI_600;
+			}
+		}
+			break;
+
+		default:
+			UA_WARN("Unexpected dpi contype");
+			break;
 		}
 		GlobalUnlock(twCapX.hContainer);
 		GlobalFree(twCapX.hContainer);
-	}
-	else{
+	} else {
 		UA_WARN("Failed to obtain valid dpi values");
 	}
 
-
 	//-------------------------Driver Type----------------------------//
 
-	UA_DOUT(4, 5, "Polling driver for driver type");
+	UA_DOUT(2, 5, "Polling driver for driver type");
 
-	if(srcID.ProductName != NULL){
+	if (srcID.ProductName != NULL) {
 		char buf[256];
 
 		unsigned n = strlen(srcID.ProductName);
@@ -721,46 +655,34 @@ int ImageGrabber::getScannerCapability() {
 		buf[n] = 0;
 
 		string productnameStr = buf;
-		
-		if( productnameStr.find("twain") != string::npos){
-			UA_DOUT(4, 6, "Driver type is TWAIN: ProductName/" << productnameStr);
-		}
-		else if( productnameStr.find("wia") != string::npos ){
-			UA_DOUT(4, 6, "Driver type is WIA: ProductName/" << productnameStr);
+
+		if (productnameStr.find("twain") != string::npos) {
+			UA_DOUT(2, 6, "Driver type is TWAIN: ProductName/" << productnameStr);
+		} else if (productnameStr.find("wia") != string::npos) {
+			UA_DOUT(2, 6, "Driver type is WIA: ProductName/" << productnameStr);
 			capabilityCode |= CAP_IS_WIA;
-			
-		}
-		else{
-			UA_DOUT(4, 6, "Driver type is WIA (default)");
+
+		} else {
+			UA_DOUT(2, 6, "Driver type is WIA (default)");
 			capabilityCode |= CAP_IS_WIA;
 		}
-	}
-	else{
+	} else {
 		capabilityCode |= CAP_IS_WIA;
-		UA_DOUT(4, 6, "Driver type is WIA (default)");
+		UA_DOUT(2, 6, "Driver type is WIA (default)");
 	}
 	//-------------------------Driver Type----------------------------//
 
 
-
 	//-------------------------Scanner Selected----------------------------//
 
-	//TODO CAP_IS_SCANNER: use twain specific calls to determine if a source is selected 
+	//TODO CAP_IS_SCANNER: use twain specific calls to determine if a source is selected
 
-	if((capabilityCode & CAP_DPI_300) || (capabilityCode  & CAP_DPI_400) || (capabilityCode & CAP_DPI_600)){
+	if ((capabilityCode & CAP_DPI_300) || (capabilityCode & CAP_DPI_400)
+			|| (capabilityCode & CAP_DPI_600)) {
 		capabilityCode |= CAP_IS_SCANNER;
 	}
 
 	//-------------------------Scanner Selected----------------------------//
-
-
-
-	invokeTwain(&srcID, DG_CONTROL, DAT_IDENTITY, MSG_CLOSEDS, &srcID);
-	invokeTwain(NULL, DG_CONTROL, DAT_PARENT, MSG_CLOSEDSM, &hwnd);
-	DestroyWindow(hwnd);
-	
-	UA_DOUT(4, 5, "Capabability code: " << (int)capabilityCode);
-
 	return capabilityCode;
 }
 
@@ -777,7 +699,7 @@ void ImageGrabber::getCustomDsData(TW_IDENTITY * srcId) {
 }
 
 inline double ImageGrabber::uint32ToFloat(TW_UINT32 uint32) {
-	TW_FIX32 fix32 =  *((pTW_FIX32)(void *)(&uint32));
+	TW_FIX32 fix32 = *((pTW_FIX32) (void *) (&uint32));
 	return twfix32ToFloat(fix32);
 }
 

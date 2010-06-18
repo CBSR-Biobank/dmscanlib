@@ -149,21 +149,14 @@ int slScanImage(unsigned verbose, unsigned dpi, int brightness, int contrast,
 #ifdef WIN32
 	ImageGrabber ig;
 
-	int scannerCapability = ig.getScannerCapability();
-
-	if (!(scannerCapability & CAP_IS_SCANNER) || filename == NULL) {
+	if (filename == NULL) {
 		return SC_FAIL;
-	}
-	if (!(((scannerCapability & CAP_DPI_300) && dpi == 300)
-			|| ((scannerCapability & CAP_DPI_400) && dpi == 400)
-			|| ((scannerCapability & CAP_DPI_600) && dpi == 600))) {
-		return SC_INVALID_DPI;
 	}
 
 	HANDLE h = ig.acquireImage(dpi, brightness, contrast, left, top, right,
 			bottom);
 	if (h == NULL) {
-		return SC_FAIL;
+		return ig.getErrorCode();
 	}
 	Dib dib;
 	dib.readFromHandle(h);
@@ -185,10 +178,12 @@ int slDecodeCommon(unsigned plateNum, Dib & dib, Decoder & decoder,
 
 	grayscaleDib->tpPresetFilter();
 
-	//Dib dibBlobs(*grayscaleDib);
-	//detectBlobs(*grayscaleDib,dibBlobs);
-	//dibBlobs.writeToFile("BLOBS.bmp");
-	//exit(0)
+	UA_DEBUG(
+			grayscaleDib->writeToFile("filtered.bmp");
+			//Dib dibBlobs(*grayscaleDib);
+			//detectBlobs(*grayscaleDib,dibBlobs);
+			//dibBlobs.writeToFile("BLOBS.bmp");
+	);
 
 	Decoder::ProcessResult result = decoder.processImageRegions(plateNum,
 			*grayscaleDib, cellsRef);
@@ -246,17 +241,6 @@ int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
 		return SC_INVALID_PLATE_NUM;
 	}
 
-	int scannerCapability = ig.getScannerCapability();
-
-	if (!(scannerCapability & CAP_IS_SCANNER)) {
-		return SC_FAIL;
-	}
-	if (!(((scannerCapability & CAP_DPI_300) && dpi == 300)
-			|| ((scannerCapability & CAP_DPI_400) && dpi == 400)
-			|| ((scannerCapability & CAP_DPI_600) && dpi == 600))) {
-		return SC_INVALID_DPI;
-	}
-
 	HANDLE h;
 	int result;
 	Dib dib;
@@ -267,7 +251,7 @@ int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
 	h = ig.acquireImage(dpi, brightness, contrast, left, top, right, bottom);
 	if (h == NULL) {
 		UA_DOUT(1, 1, "could not acquire plate image: " << plateNum);
-		return SC_FAIL;
+		return ig.getErrorCode();
 	}
 
 	dib.readFromHandle(h);
@@ -317,30 +301,7 @@ int slDecodePlateMultipleDpi(unsigned verbose, unsigned dpi1, unsigned dpi2,
 	ImageGrabber ig;
 
 	Util::getTime(starttime);
-
-	int scannerCapability = ig.getScannerCapability();
-
-	if (!(scannerCapability & CAP_IS_SCANNER)) {
-		return SC_FAIL;
-	}
-
 	unsigned dpis[] = { dpi1, dpi2, dpi3 };
-	for (unsigned i = 0; i < 3; ++i) {
-		if (dpis[i] == 0)
-			continue;
-
-		if (!(((scannerCapability & CAP_DPI_300) && (dpis[i] == 300))
-				|| ((scannerCapability & CAP_DPI_400) && (dpis[i] == 400))
-				|| ((scannerCapability & CAP_DPI_600) && (dpis[i] == 600)))) {
-
-			UA_DOUT(1, 3, "invalid dpi " << dpis[i]);
-			return SC_INVALID_DPI;
-		}
-	}
-
-	if ((plateNum < MIN_PLATE_NUM) || (plateNum > MAX_PLATE_NUM)) {
-		return SC_INVALID_PLATE_NUM;
-	}
 
 	std::ostringstream filename;
 
@@ -362,7 +323,7 @@ int slDecodePlateMultipleDpi(unsigned verbose, unsigned dpi1, unsigned dpi2,
 				bottom);
 		if (h == NULL) {
 			UA_DOUT(1, 1, "could not acquire plate image: " << plateNum);
-			return SC_FAIL;
+			return ig.getErrorCode();
 		}
 
 		dib.readFromHandle(h);
