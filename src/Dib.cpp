@@ -37,20 +37,20 @@ const unsigned Dib::GAUSS_FACTORS[GAUSS_WIDTH] = { 1, 11, 55, 165, 330, 462,
 const unsigned Dib::GAUSS_SUM = 2048;
 
 // expects sharp image
-const float Dib::BLUR_KERNEL[9] = { 0.0f, 0.2f, 0.0f, 
-									0.2f, 0.2f, 0.2f, 
+const float Dib::BLUR_KERNEL[9] = { 0.0f, 0.2f, 0.0f,
+									0.2f, 0.2f, 0.2f,
 									0.0f, 0.2f, 0.0f, };
 // expects sharp image
 const float Dib::BLANK_KERNEL[9] = {
 				0.06185567f, 0.12371134f,  0.06185567f,
-				0.12371134f, 0.257731959f, 0.12371134f, 
+				0.12371134f, 0.257731959f, 0.12371134f,
 				0.06185567f, 0.12371134f,  0.06185567f, };
 
 // performs poorly on black 2d barcodes on white
 const float
-		Dib::DPI_400_KERNEL[9] = { 
+		Dib::DPI_400_KERNEL[9] = {
 			0.0587031f, 0.1222315f, 0.0587031f,
-			0.1222315f, 0.2762618f, 0.1222315f, 
+			0.1222315f, 0.2762618f, 0.1222315f,
 			0.0587031f, 0.1222315f, 0.0587031f, };
 
 Dib::Dib() :
@@ -220,7 +220,13 @@ void Dib::readFromHandle(HANDLE handle) {
 	rowBytes = getRowBytes(infoHeader->width, infoHeader->bitCount);
 	rowPaddingBytes = rowBytes - (infoHeader->width * bytesPerPixel);
 
-	UA_DOUT(4, 5, "readFromHandle: rowBytes/" << rowBytes
+	UA_DOUT(4, 5, "readFromHandle: "
+			<< " size/" << infoHeader->size
+			<< " width/" << infoHeader->width
+			<< " height/" << infoHeader->height
+			<< " bitCount/" << infoHeader->bitCount
+			<< " imageSize/" << infoHeader->imageSize
+			<< " rowBytes/" << rowBytes
 			<< " paddingBytes/" << rowPaddingBytes << " dpi/" << getDpi());
 }
 #endif
@@ -854,7 +860,7 @@ void Dib::tpPresetFilter() {
 		UA_DOUT(4, 5, "tpPresetFilter: Applying BLUR_KERNEL");
 		convolve2DSlow(Dib::BLUR_KERNEL, 3, 3);
 		break;
-	
+
 	case 300:
 		UA_DOUT(4, 5, "tpPresetFilter: No filter applied (300 dpi)");
 		break;
@@ -867,7 +873,7 @@ void Dib::tpPresetFilter() {
 
 
 // actually slow version
-void Dib::convolve2DSlow(const float(&kernel)[9], int kernelSizeX, int kernelSizeY) 
+void Dib::convolve2DSlow(const float(&kernel)[9], int kernelSizeX, int kernelSizeY)
 {
     int i, j, m, n, mm, nn;
     int kCenterX, kCenterY;                         // center index of kernel
@@ -881,7 +887,7 @@ void Dib::convolve2DSlow(const float(&kernel)[9], int kernelSizeX, int kernelSiz
 	int dataSizeY = (int) infoHeader->height ;
 
 	unsigned char * buffer = new unsigned char[infoHeader->imageSize];
-	
+
     // find center position of kernel (half of kernel size)
     kCenterX = kernelSizeX / 2;
     kCenterY = kernelSizeY / 2;
@@ -1292,7 +1298,7 @@ void detectBlobs(Dib & frame, Dib & finalFrame)
 
 			if(byte >= threshold)
 			{
-				
+
 				int start = column;
 
 				for(;byte >= threshold; byte = (unsigned char) frame.getPixelBuffer()[(row*frame.getWidth())+ column], ++column);

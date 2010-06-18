@@ -74,9 +74,11 @@ private:
 
 	void getCustomDsData(TW_IDENTITY * srcId);
 
-	void initializeScannerSource(HWND & hwnd, TW_IDENTITY & srcID);
+	bool scannerSourceInit(HWND & hwnd, TW_IDENTITY & srcID);
+	void scannerSourceDeinit(HWND & hwnd, TW_IDENTITY & srcID);
 
 	int getScannerCapabilityInternal(TW_IDENTITY & srcID);
+	int getResolutionCapability(TW_IDENTITY & srcID, TW_UINT16 cap);
 
 	static const char * TWAIN_DLL_FILENAME;
 
