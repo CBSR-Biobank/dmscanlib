@@ -46,8 +46,10 @@ public:
 		double top, double left, double bottom, double right);
 	DmtxImage* acquireDmtxImage(unsigned dpi, int brightness, int contrast);
 	void freeImage(HANDLE handle);
-	
-	
+
+	int getErrorCode() { return errorCode; }
+
+
 
 private:
 
@@ -65,14 +67,18 @@ private:
 
 	bool getCapability(TW_IDENTITY * srcId, TW_CAPABILITY & twCap);
 
-	
+
 
 	inline double uint32ToFloat(TW_UINT32 uint32);
 	inline double twfix32ToFloat(TW_FIX32 fix32);
 
 	void getCustomDsData(TW_IDENTITY * srcId);
 
-	void initializeScannerSource(HWND & hwnd, TW_IDENTITY & srcID);
+	bool scannerSourceInit(HWND & hwnd, TW_IDENTITY & srcID);
+	void scannerSourceDeinit(HWND & hwnd, TW_IDENTITY & srcID);
+
+	int getScannerCapabilityInternal(TW_IDENTITY & srcID);
+	int getResolutionCapability(TW_IDENTITY & srcID, TW_UINT16 cap);
 
 	static const char * TWAIN_DLL_FILENAME;
 
@@ -99,6 +105,7 @@ private:
 
 	int brightness;
 	int contrast;
+	int errorCode;
 };
 
 #endif /* __INCLUDE_IMAGE_GRABBER_H */

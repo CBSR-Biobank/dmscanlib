@@ -62,7 +62,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="cv210.lib cxcore210.lib highgui210d.lib cvblobslib.lib"
+				AdditionalDependencies="cv210.lib cxcore210.lib highgui210d.lib cvblobslib.lib user32.lib"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories=".\src\cvblob\lib;.\src\opencv\lib"
 				GenerateDebugInformation="true"
