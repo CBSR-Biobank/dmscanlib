@@ -160,6 +160,7 @@ bool Decoder::processImage(Dib & dib) {
 		UA_DOUT(3, 1, "processImage: no barcodes found");
 		return false;
 	}
+
 	return true;
 }
 

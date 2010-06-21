@@ -77,7 +77,6 @@ void on_trackbar( int dummy )
 		currentBlob = blobs.GetBlob(i);
 
 		//currentBlob->FillBlob( displayedImage, CV_RGB(255,0,0));
-		
 		//cvCircle(displayedImage, cvPoint((int)currentBlob->GetEllipse().center.x,(int)currentBlob->GetEllipse().center.y), (int)(currentBlob->GetEllipse().size.width+currentBlob->GetEllipse().size.height)/2,CV_RGB(0,255,255), 2, 8, 0);
 
 		int border = 0;
@@ -114,6 +113,8 @@ void applyPlateFilters(IplImage * img){
 		cvSmooth(tmp,img,CV_GAUSSIAN,11,11);
 	}
 	cvSmooth(img,tmp,CV_GAUSSIAN,11,11);
+
+	cvReleaseImage( &tmp );
 }
 
 
@@ -122,6 +123,7 @@ int main( int argc, char** argv )
 {
 	if(argc < 2){
 		exit(-1);
+		return 0;
 	}
 
 	param1 = 50;

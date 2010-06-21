@@ -497,7 +497,6 @@ int ImageGrabber::getScannerCapability() {
 
 	initializeScannerSource(hwnd,srcID);
 
-
 	setCapOneValue(&srcID, ICAP_UNITS, TWTY_UINT16, TWUN_INCHES);
 
 	twCapX.Cap = ICAP_XRESOLUTION;
