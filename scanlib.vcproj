@@ -43,7 +43,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories=".\src\cvblob\include;.\src\opencv\include;src;src/libdmtx;src/loki;src/utils;&quot;$(JAVA_HOME)\include&quot;;&quot;$(JAVA_HOME)\include\win32&quot;"
-				PreprocessorDefinitions="_VISUALC_;WIN32;_DEBUG;_CONSOLE;UA_LOGGER;STANDALONE"
+				PreprocessorDefinitions="_VISUALC_;WIN32;_DEBUG;_CONSOLE;UA_LOGGER;STANDALONE;_BLOB_;"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"

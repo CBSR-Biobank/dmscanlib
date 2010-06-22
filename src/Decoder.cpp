@@ -77,9 +77,7 @@ void Decoder::initCells(unsigned maxRows, unsigned maxCols) {
 	}
 }
 
-/*
- * Should only be called after regions are loaded from INI file.
- */
+
 Decoder::ProcessResult Decoder::processImageRegions(unsigned plateNum,
 		Dib & dib, vector<vector<string> > & cellsRef) {
 
