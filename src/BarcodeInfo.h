@@ -54,6 +54,7 @@ public:
 		UA_ASSERT_NOT_NULL(rowBinRegion);
 		return *rowBinRegion;
 	}
+	void alignCoordinates(int x, int y);
 
 	static void removeItems(vector<BarcodeInfo *>  & msgInfos);
 	static void debugShowItems(vector<BarcodeInfo *>  & msgInfos);

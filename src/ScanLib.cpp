@@ -179,9 +179,6 @@ int slDecodeCommon(unsigned plateNum, Dib & dib, Decoder & decoder,
 
 	UA_DEBUG(
 			grayscaleDib->writeToFile("filtered.bmp");
-			//Dib dibBlobs(*grayscaleDib);
-			//detectBlobs(*grayscaleDib,dibBlobs);
-			//dibBlobs.writeToFile("BLOBS.bmp");
 	);
 
 	Decoder::ProcessResult result = decoder.processImageRegions(plateNum,
@@ -418,3 +415,81 @@ int slDecodeImage(unsigned verbose, unsigned plateNum, const char * filename,
 	}
 	return result;
 }
+/*-------------------------super decode-------------------------------*/
+
+
+
+int slSuperDecodeCommon(unsigned plateNum, Dib & dib, Decoder & decoder,
+		const char * markedDibFilename, vector<vector<string> > & cellsRef) {
+
+	Decoder::ProcessResult result = decoder.superProcessImageRegions(dib, cellsRef);
+
+	if (result == Decoder::OK) {
+		decoder.imageShowBarcodes(dib);
+	}
+	dib.writeToFile(markedDibFilename);
+
+	switch (result) {
+	case Decoder::IMG_INVALID:
+		return SC_INVALID_IMAGE;
+
+	case Decoder::POS_INVALID:
+		return SC_INVALID_POSITION;
+
+	case Decoder::POS_CALC_ERROR:
+		return SC_POS_CALC_ERROR;
+
+	default:
+		; // do nothing
+	}
+
+	// only get here if decoder returned Decoder::OK
+	Util::getTime(endtime);
+	Util::difftiime(starttime, endtime, timediff);
+	UA_DOUT(1, 1, "slSuperDecodeCommon: time taken: " << timediff);
+	return SC_SUCCESS;
+}
+
+
+
+
+int slSuperDecode(unsigned verbose, unsigned plateNum, const char * filename,
+		double scanGap, unsigned squareDev, unsigned edgeThresh,
+		unsigned corrections, double cellDistance) {
+	configLogging(verbose);
+	UA_DOUT(1, 3, "slSuperDecode: plateNum/" << plateNum
+			<< " filename/"<< filename
+			<< " scanGap/" << scanGap
+			<< " squareDev/" << squareDev
+			<< " edgeThresh/" << edgeThresh
+			<< " corrections/" << corrections
+			<< " cellDistance/" << cellDistance);
+
+	if ((plateNum < MIN_PLATE_NUM) || (plateNum > MAX_PLATE_NUM)) {
+		return SC_INVALID_PLATE_NUM;
+	}
+
+	if (filename == NULL) {
+		return SC_FAIL;
+	}
+
+	Util::getTime(starttime);
+
+	Dib dib;
+	vector<vector<string> > cells;
+	Decoder decoder(scanGap, squareDev, edgeThresh, corrections, cellDistance);
+	dib.readFromFile(filename);
+	
+	int result = slSuperDecodeCommon(plateNum, dib, decoder, "decode.bmp", cells);
+
+	//processing done below depends only on cells.
+
+	if (result == SC_SUCCESS) {
+		string msg;
+		formatCellMessages(plateNum, cells, msg);
+		saveResults(msg);
+	}
+	return result;
+}
+
+/*-------------------------super decode-------------------------------*/

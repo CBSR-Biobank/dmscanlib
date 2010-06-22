@@ -10,6 +10,10 @@
 
 #include "dmtx.h"
 
+#include "cv.h"
+#include "highgui.h"
+#include "cvblob/include/BlobResult.h"
+
 #include <vector>
 #include <string>
 
@@ -35,6 +39,9 @@ public:
 
 	ProcessResult processImageRegions(unsigned plateNum, Dib & dib,
 			vector<vector<string> > & cells);
+	
+	ProcessResult superProcessImageRegions(Dib & dib, vector<vector<string> > & cells);
+
 	void imageShowBarcodes(Dib & dib);
 
 protected:
@@ -48,14 +55,16 @@ protected:
 	unsigned squareDev;
 	unsigned edgeThresh;
 	unsigned corrections;
+	double cellDistance;
+	unsigned width;
+	unsigned height;
+	unsigned dpi;
 	vector<BarcodeInfo *> barcodeInfos;
 	vector<BinRegion *>   rowBinRegions;
 	vector<BinRegion *>   colBinRegions;
 	vector<vector<string> > cells;
-	unsigned width;
-	unsigned height;
-	unsigned dpi;
-	double cellDistance;
+
+	
 
 	unsigned char * imageBuf;
 
@@ -64,11 +73,14 @@ protected:
 	DmtxImage * createDmtxImageFromDib(Dib & dib);
 	void showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
 	bool processImage(Dib & dib);
+	bool superProcessImage(Dib & dib, CvRect croppedoffset);
 	void calcRowsAndColumns();
 	ProcessResult calculateSlots(double dpi);
 	void initCells(unsigned maxRow, unsigned maxCol);
 	bool decode(DmtxDecode *& dec, unsigned attempts,
 			vector<BarcodeInfo *> & barcodeInfos);
+	bool superDecode(DmtxDecode *& dec, unsigned attempts,
+			vector<BarcodeInfo *> & barcodeInfos,CvRect croppedoffset);
 };
 
 #endif /* DECODER_H_ */

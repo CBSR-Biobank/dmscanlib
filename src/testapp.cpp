@@ -191,6 +191,7 @@ const char
 					"Scanner/Decoding Settings\n"
 					"  -d, --decode         Acquires an image from the scanner and Decodes the 2D barcodes.\n"
 					"                       Use with --plate option.\n"
+					"  --super				Super decode common.\n"
 					"  -s, --scan           Scans an image.\n"
 					"  -p, --plate NUM      The plate number to use.\n"
 					"  -i, --input FILE     Use the specified DIB image file instead of scanner.\n"
@@ -231,6 +232,7 @@ enum longOptID {
 	OPT_ID_GAP,
 	OPT_ID_SELECT,
 	OPT_ID_CAPABILITY,
+	OPT_ID_SUPER,
 	OPT_ID_TEST,
 	OPT_ID_SQUARE_DEV,
 	OPT_ID_THRESHOLD,
@@ -252,7 +254,8 @@ CSimpleOptA::SOption longOptions[] = { { OPT_ID_BRIGHTNESS, "--brightness",
 		'i', "-i", SO_REQ_SEP }, { 'p', "--plate", SO_REQ_SEP }, { 'p', "-p",
 		SO_REQ_SEP }, { 'o', "--output", SO_REQ_SEP },
 		{ 'o', "-o", SO_REQ_SEP }, { 's', "--scan", SO_NONE }, { 's', "-s",
-				SO_NONE }, { OPT_ID_CAPABILITY, "--capability", SO_NONE }, {
+				SO_NONE }, { OPT_ID_CAPABILITY, "--capability", SO_NONE }, 
+				{ OPT_ID_SUPER, "--super", SO_NONE },{
 				OPT_ID_TEST, "--test", SO_NONE }, { OPT_ID_SELECT, "--select",
 				SO_NONE }, { OPT_ID_SQUARE_DEV, "--square-dev", SO_REQ_SEP }, {
 				OPT_ID_THRESHOLD, "--threshold", SO_REQ_SEP }, { OPT_ID_LEFT,
@@ -283,6 +286,7 @@ struct Options {
 	double gap;
 	bool help;
 	bool capability;
+	bool super;
 	bool test;
 	unsigned plateNum;
 	bool scan;
@@ -312,6 +316,7 @@ struct Options {
 		scan = false;
 		select = false;
 		capability = false;
+		super = false;
 		test = false;
 
 		infile = NULL;
@@ -380,7 +385,12 @@ TestApp::TestApp(int argc, char ** argv) {
 
 	if (options.decode) {
 		result = decode();
-	} else if (options.scan) {
+	}if (options.super) {
+		result = slSuperDecode(9, 1, "super.bmp",
+								options.gap, options.squareDev, 
+								options.threshold,options.corrections, 
+								options.cellDistance);
+	}  else if (options.scan) {
 		result = scan();
 	} else if (options.select) {
 		result = slSelectSourceAsDefault();
@@ -692,6 +702,9 @@ bool TestApp::getCmdOptions(int argc, char ** argv) {
 
 			case OPT_ID_TEST:
 				options.test = true;
+				break;
+			case OPT_ID_SUPER:
+				options.super = true;
 				break;
 
 			case OPT_ID_CONTRAST:

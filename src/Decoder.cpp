@@ -20,6 +20,55 @@
 #include <vector>
 #include <cmath>
 
+
+/*------------BLOB-----------*/
+
+void applyPlateFilters(IplImage * img){
+
+	int width     = img->width;
+	int height    = img->height;
+	int depth     = img->depth;
+	int nchannels = img->nChannels;
+
+	IplImage* tmp = cvCreateImage(cvSize( width, height ),depth, nchannels );
+
+	for(int i=0; i < 2*2; i++){
+		cvSmooth(img,tmp,CV_GAUSSIAN,11,11);
+		cvSmooth(tmp,img,CV_GAUSSIAN,11,11);
+	}
+	cvReleaseImage( &tmp );
+}
+
+vector<CvRect> getTubeBlobs(IplImage *original,int threshold, int blobsize)
+{
+	IplImage* originalThr;
+	IplImage* filtered;
+
+	vector<CvRect> blobVector;
+	CBlobResult blobs;
+
+	filtered = cvCreateImage(cvGetSize(original), original->depth,original->nChannels);
+	cvCopy(original, filtered, NULL);
+	applyPlateFilters(filtered);
+
+	originalThr = cvCreateImage(cvGetSize(filtered), IPL_DEPTH_8U,1);
+	cvThreshold( filtered, originalThr, threshold, 255, CV_THRESH_BINARY );
+
+	blobs = CBlobResult( originalThr, NULL, 0 );
+	blobs.Filter( blobs, B_EXCLUDE, CBlobGetArea(), B_LESS, blobsize );
+
+	for (int i = 0; i < blobs.GetNumBlobs(); i++ )
+	{
+		blobVector.push_back(blobs.GetBlob(i)->GetBoundingBox());
+	}
+	
+	cvReleaseImage( &originalThr );
+	cvReleaseImage( &filtered );
+
+	return blobVector;
+}
+
+
 #if defined(USE_NVWA)
 #   include "debug_new.h"
 #endif
@@ -94,6 +143,146 @@ Decoder::ProcessResult Decoder::processImageRegions(unsigned plateNum,
 	return OK;
 }
 
+
+
+Decoder::ProcessResult Decoder::superProcessImageRegions(Dib & dib, vector<vector<string> > & cellsRef) {
+
+	dib.writeToFile("TEMPDIB.bmp");
+	IplImage* original = cvLoadImage("TEMPDIB.bmp",0);
+	vector<CvRect> blobVector;
+	
+	switch(dib.getDpi()){
+	
+		case 600:
+			blobVector = getTubeBlobs(original,55,2000);
+			break;
+
+		case 400:
+			blobVector = getTubeBlobs(original,53,2000);
+			break;
+
+		case 300:
+		default:
+			blobVector = getTubeBlobs(original,45,2000);
+			break;
+	}
+	
+	cvReleaseImage( &original ); // MEMORY LEAK HERE (does not free from cvLoadImage)
+
+	Dib * filtered = NULL;
+	filtered = Dib::convertGrayscale(dib);
+	UA_ASSERT_NOT_NULL(filtered);
+
+	filtered->tpPresetFilter();
+
+	UA_DEBUG(
+			filtered->writeToFile("filtered.bmp");
+	);
+
+	Dib tmp;
+
+	for (int i =0 ;i<(int)blobVector.size();i++){
+		tmp.crop(*filtered,blobVector[i].x,blobVector[i].y,blobVector[i].x+blobVector[i].width,blobVector[i].y+blobVector[i].height);
+		superProcessImage(tmp,blobVector[i]);
+	}
+	delete filtered;
+
+	width = dib.getWidth();
+	height = dib.getHeight();
+	
+	calcRowsAndColumns();
+
+	Decoder::ProcessResult calcSlotResult = calculateSlots(static_cast<double> (dib.getDpi()));
+
+	if (calcSlotResult != OK) 
+		return calcSlotResult;
+	
+	cellsRef = this->cells;
+
+	return OK;
+}
+bool Decoder::superProcessImage(Dib & dib, CvRect croppedOffset) {
+	height = dib.getHeight();
+	width = dib.getWidth();
+	dpi = dib.getDpi();
+
+	DmtxImage * image = createDmtxImageFromDib(dib);
+	DmtxDecode * dec = NULL;
+
+	UA_DOUT(3, 5, "processImage: image width/" << width
+			<< " image height/" << height
+			<< " row padding/" << dmtxImageGetProp(image, DmtxPropRowPadBytes)
+			<< " image bits per pixel/"
+			<< dmtxImageGetProp(image, DmtxPropBitsPerPixel)
+			<< " image row size bytes/"
+			<< dmtxImageGetProp(image, DmtxPropRowSizeBytes));
+
+	dec = dmtxDecodeCreate(image, 1);
+	UA_ASSERT_NOT_NULL(dec);
+
+	// slightly smaller than the new tube edge
+	int minEdgeSize = static_cast<unsigned> (0.08 * dpi);
+
+	// slightly bigger than the Nunc edge
+	int maxEdgeSize = static_cast<unsigned> (0.18 * dpi);
+
+	dmtxDecodeSetProp(dec, DmtxPropEdgeMin, minEdgeSize);
+	dmtxDecodeSetProp(dec, DmtxPropEdgeMax, maxEdgeSize);
+	dmtxDecodeSetProp(dec, DmtxPropSymbolSize, DmtxSymbolSquareAuto);
+	dmtxDecodeSetProp(dec, DmtxPropScanGap, static_cast<unsigned> (scanGap
+			* dpi));
+	dmtxDecodeSetProp(dec, DmtxPropSquareDevn, squareDev);
+	dmtxDecodeSetProp(dec, DmtxPropEdgeThresh, edgeThresh);
+
+	unsigned regionCount = 0;
+	while (1) {
+		if (!superDecode(dec, 1, barcodeInfos,croppedOffset)) {
+			break;
+		}
+		UA_DOUT(3, 5, "retrieved message from region " << regionCount++);
+	}
+	dmtxDecodeDestroy(&dec);
+	dmtxImageDestroy(&image);
+
+	if (barcodeInfos.size() == 0) {
+		UA_DOUT(3, 1, "processImage: no barcodes found");
+		return false;
+	}
+
+	return true;
+}
+
+bool Decoder::superDecode(DmtxDecode *& dec, unsigned attempts,
+		vector<BarcodeInfo *> & barcodeInfos, CvRect croppedOffset) {
+	DmtxRegion * reg = NULL;
+	BarcodeInfo * info = NULL;
+
+	reg = dmtxRegionFindNext(dec, NULL);
+	if (reg == NULL)
+		return false;
+
+	DmtxMessage * msg = dmtxDecodeMatrixRegion(dec, reg, corrections);
+	if (msg != NULL) {
+		info = new BarcodeInfo(dec, reg, msg);
+		UA_ASSERT_NOT_NULL(info);
+
+		info->alignCoordinates(croppedOffset.x,croppedOffset.y);
+		barcodeInfos.push_back(info);
+
+		DmtxPixelLoc & tlCorner = info->getTopLeftCorner();
+		DmtxPixelLoc & brCorner = info->getBotRightCorner();
+
+		UA_DOUT(3, 5, "message " << barcodeInfos.size() - 1
+				<< ": " << info->getMsg()
+				<< " : tlCorner/" << tlCorner.X << "," << tlCorner.Y
+				<< "  brCorner/" << brCorner.X << "," << brCorner.Y);
+		//showStats(dec, reg, msg);
+		dmtxMessageDestroy(&msg);
+	}
+	dmtxRegionDestroy(&reg);
+	return true;
+}
+
 bool Decoder::processImage(Dib & dib) {
 	height = dib.getHeight();
 	width = dib.getWidth();
@@ -136,6 +325,8 @@ bool Decoder::processImage(Dib & dib) {
 	}
 
 	// save image to a PNM file
+
+	
 	UA_DEBUG(
 			FILE * fh;
 			unsigned char *pnm;
@@ -150,6 +341,7 @@ bool Decoder::processImage(Dib & dib) {
 				free(pnm);
 			}
 	);
+	
 
 	dmtxDecodeDestroy(&dec);
 	dmtxImageDestroy(&image);

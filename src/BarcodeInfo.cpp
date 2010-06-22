@@ -101,6 +101,21 @@ DmtxPixelLoc & BarcodeInfo::getBotRightCorner() {
 	return botRight;
 }
 
+void BarcodeInfo::alignCoordinates(int x, int y){
+	p00.X += x;
+	p00.Y += y;
+
+	p10.X += x;
+	p10.Y += y;
+
+	p11.X += x;
+	p11.Y += y;
+
+	p01.X += x;
+	p01.Y += y;
+	
+	getBoundingBox();
+}
 
 
 void BarcodeInfo::removeItems(vector<BarcodeInfo *>  & msgInfos) {
