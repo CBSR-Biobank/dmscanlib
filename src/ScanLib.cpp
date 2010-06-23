@@ -419,10 +419,28 @@ int slDecodeImage(unsigned verbose, unsigned plateNum, const char * filename,
 
 
 
+
 int slSuperDecodeCommon(unsigned plateNum, Dib & dib, Decoder & decoder,
 		const char * markedDibFilename, vector<vector<string> > & cellsRef) {
 
-	Decoder::ProcessResult result = decoder.superProcessImageRegions(dib, cellsRef);
+
+	Dib * filteredDib = NULL;
+	filteredDib = Dib::convertGrayscale(dib);
+	UA_ASSERT_NOT_NULL(filteredDib);
+
+	filteredDib->tpPresetFilter();
+
+	UA_DEBUG(
+			filteredDib->writeToFile("filtered.bmp");
+	);
+
+	IplImage *iplFilteredDib = filteredDib->generateIplImage();
+	UA_ASSERT_NOT_NULL(iplFilteredDib);
+
+	Decoder::ProcessResult result = decoder.superProcessImageRegions(*filteredDib,iplFilteredDib, cellsRef);
+
+	delete filteredDib;
+	cvReleaseImage(&iplFilteredDib);
 
 	if (result == Decoder::OK) {
 		decoder.imageShowBarcodes(dib);

@@ -11,7 +11,6 @@
 #include "dmtx.h"
 
 #include "cv.h"
-#include "highgui.h"
 #include "cvblob/include/BlobResult.h"
 
 #include <vector>
@@ -40,7 +39,7 @@ public:
 	ProcessResult processImageRegions(unsigned plateNum, Dib & dib,
 			vector<vector<string> > & cells);
 	
-	ProcessResult superProcessImageRegions(Dib & dib, vector<vector<string> > & cells);
+	ProcessResult superProcessImageRegions(Dib & dib,IplImage *opencvImg,vector<vector<string> > & cells);
 
 	void imageShowBarcodes(Dib & dib);
 

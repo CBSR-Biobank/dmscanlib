@@ -2,6 +2,8 @@
 #define __INCLUDE_DIB_H
 
 #include <stdio.h>
+#include "cv.h"
+#include "cvblob/include/BlobResult.h"
 
 #ifdef WIN32
 #include <windows.h>
@@ -75,6 +77,7 @@ public:
 	unsigned getHeight();
 	unsigned getWidth();
 	unsigned getRowPadBytes();
+	unsigned getInternalRowBytes();
 	unsigned getBitsPerPixel();
 	unsigned char * getPixelBuffer();
 	unsigned char * getRowPtr(unsigned row);
@@ -94,12 +97,15 @@ public:
 	void laplaceEdgeDetection(Dib & src);
 	void histEqualization(Dib & src);
 	void line(unsigned x0, unsigned y0, unsigned x1, unsigned y1, RgbQuad & quad);
+	void rectangle(unsigned x, unsigned y, unsigned width, unsigned height,RgbQuad & quad);
 	void grayscale(Dib & src);
 	void gaussianBlur(Dib & src);
 	void blur(Dib & src);
 	void unsharp(Dib & src);
 	void expandColours(int start, int end);
 	unsigned getDpi();
+
+	IplImage*  generateIplImage();
 
 private:
 	static const double UNSHARP_RAD;

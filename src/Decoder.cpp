@@ -24,19 +24,9 @@
 /*------------BLOB-----------*/
 
 void applyPlateFilters(IplImage * img){
-
-	int width     = img->width;
-	int height    = img->height;
-	int depth     = img->depth;
-	int nchannels = img->nChannels;
-
-	IplImage* tmp = cvCreateImage(cvSize( width, height ),depth, nchannels );
-
-	for(int i=0; i < 2*2; i++){
-		cvSmooth(img,tmp,CV_GAUSSIAN,11,11);
-		cvSmooth(tmp,img,CV_GAUSSIAN,11,11);
+	for(int i=0; i < 8; i++){
+		cvSmooth(img,img,CV_GAUSSIAN,11,11);
 	}
-	cvReleaseImage( &tmp );
 }
 
 vector<CvRect> getTubeBlobs(IplImage *original,int threshold, int blobsize)
@@ -130,6 +120,7 @@ void Decoder::initCells(unsigned maxRows, unsigned maxCols) {
 Decoder::ProcessResult Decoder::processImageRegions(unsigned plateNum,
 		Dib & dib, vector<vector<string> > & cellsRef) {
 
+
 	if (!processImage(dib))
 		return IMG_INVALID;
 
@@ -144,51 +135,49 @@ Decoder::ProcessResult Decoder::processImageRegions(unsigned plateNum,
 }
 
 
+Decoder::ProcessResult Decoder::superProcessImageRegions(Dib & dib,IplImage *opencvImg, vector<vector<string> > & cellsRef) {
 
-Decoder::ProcessResult Decoder::superProcessImageRegions(Dib & dib, vector<vector<string> > & cellsRef) {
+	
+	Dib tmp;
 
-	dib.writeToFile("TEMPDIB.bmp");
-	IplImage* original = cvLoadImage("TEMPDIB.bmp",0);
 	vector<CvRect> blobVector;
-	
+
 	switch(dib.getDpi()){
-	
 		case 600:
-			blobVector = getTubeBlobs(original,55,2000);
+			blobVector = getTubeBlobs(opencvImg,55,2000);
 			break;
 
 		case 400:
-			blobVector = getTubeBlobs(original,53,2000);
+			blobVector = getTubeBlobs(opencvImg,53,2000);
 			break;
 
 		case 300:
 		default:
-			blobVector = getTubeBlobs(original,45,2000);
+			blobVector = getTubeBlobs(opencvImg,45,2000);
 			break;
 	}
-	
-	cvReleaseImage( &original ); // MEMORY LEAK HERE (does not free from cvLoadImage)
 
-	Dib * filtered = NULL;
-	filtered = Dib::convertGrayscale(dib);
-	UA_ASSERT_NOT_NULL(filtered);
-
-	filtered->tpPresetFilter();
-
-	UA_DEBUG(
-			filtered->writeToFile("filtered.bmp");
-	);
-
-	Dib tmp;
+	#ifdef _DEBUG
+	Dib blobRegions(dib);
+	RgbQuad white(255,255,255);
+	#endif
 
 	for (int i =0 ;i<(int)blobVector.size();i++){
-		tmp.crop(*filtered,blobVector[i].x,blobVector[i].y,blobVector[i].x+blobVector[i].width,blobVector[i].y+blobVector[i].height);
+		tmp.crop(dib,blobVector[i].x,blobVector[i].y,blobVector[i].x+blobVector[i].width,blobVector[i].y+blobVector[i].height);
 		superProcessImage(tmp,blobVector[i]);
-	}
-	delete filtered;
 
-	width = dib.getWidth();
-	height = dib.getHeight();
+		#ifdef _DEBUG
+		blobRegions.rectangle(blobVector[i].x,blobVector[i].y,blobVector[i].width,blobVector[i].height,white);
+		#endif
+	}
+	
+
+	#ifdef _DEBUG
+	blobRegions.writeToFile("blobRegions.bmp");
+	#endif
+	
+	this->width = dib.getWidth();
+	this->height = dib.getHeight();
 	
 	calcRowsAndColumns();
 

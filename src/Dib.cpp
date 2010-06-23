@@ -301,6 +301,9 @@ void Dib::readFromFile(const char * filename) {
 unsigned Dib::getRowBytes(unsigned width, unsigned bitCount) {
 	return static_cast<unsigned> (ceil((width * bitCount) / 32.0)) << 2;
 }
+unsigned Dib::getInternalRowBytes() {
+	return rowBytes;
+}
 
 bool Dib::writeToFile(const char * filename) {
 	UA_ASSERT_NOT_NULL(filename);
@@ -768,6 +771,23 @@ void Dib::histEqualization(Dib & src) {
 		}
 	}
 }
+//TODO check for padding problems.
+IplImage*  Dib::generateIplImage(){
+	IplImage* image = NULL;
+	CvMat hdr, *matrix = NULL;
+	CvSize size;
+
+	UA_ASSERTS(this->getBitsPerPixel() == 8, "createImageFromDib8U requires an 8 bit image");
+
+	size.width = this->getWidth();
+	size.height = this->getHeight();
+	image = cvCreateImage( size, IPL_DEPTH_8U, 1 );
+	matrix = cvGetMat( image, &hdr );
+	memcpy(matrix->data.ptr,this->getPixelBuffer(),this->getWidth()*this->getHeight());
+	cvFlip(image,image,0);
+	return image;
+}
+
 
 /*
  * generate x,y coordinates to draw a line from x0,y0 to x1,y1 and output the
@@ -778,6 +798,18 @@ void Dib::histEqualization(Dib & src) {
  *
  * Taken from: http://en.wikipedia.org/wiki/Bresenham's_line_algorithm
  */
+void Dib::rectangle(unsigned x, unsigned y, unsigned width, unsigned height,
+		RgbQuad & quad) {
+	
+	this->line(x,y,x,y+height,quad);
+	this->line(x,y,x+width,y,quad);
+	this->line(x+width,y,x+width,y+height,quad);
+	this->line(x,y+height,x+width,y+height,quad);
+	
+}
+
+
+
 void Dib::line(unsigned x0, unsigned y0, unsigned x1, unsigned y1,
 		RgbQuad & quad) {
 	UA_ASSERT_NOT_NULL(infoHeader);

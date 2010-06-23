@@ -24,129 +24,6 @@
 using namespace std;
 
 
-#ifdef _BLOB_
-
-#include <afxwin.h>
-#include "cv.h"
-#include "highgui.h"
-
-// Main blob library include
-#include "cvblob/include/BlobResult.h"
-
-void applyPlateFilters(IplImage * img){
-
-	int width     = img->width;
-	int height    = img->height;
-	int depth     = img->depth;
-	int nchannels = img->nChannels;
-
-	IplImage* tmp = cvCreateImage(cvSize( width, height ),depth, nchannels );
-
-	for(int i=0; i < 2*2; i++){
-		cvSmooth(img,tmp,CV_GAUSSIAN,11,11);
-		cvSmooth(tmp,img,CV_GAUSSIAN,11,11);
-	}
-	cvReleaseImage( &tmp );
-}
-
-
-vector<CvRect> getTubeBlobs(IplImage *original,int threshold, int blobsize)
-{
-	IplImage* originalThr;
-	IplImage* filtered;
-
-	vector<CvRect> blobVector;
-	CBlobResult blobs;
-
-	filtered = cvCreateImage(cvGetSize(original), original->depth,original->nChannels);
-	cvCopy(original, filtered, NULL);
-	applyPlateFilters(filtered);
-
-	originalThr = cvCreateImage(cvGetSize(filtered), IPL_DEPTH_8U,1);
-	cvThreshold( filtered, originalThr, threshold, 255, CV_THRESH_BINARY );
-
-	blobs = CBlobResult( originalThr, NULL, 0 );
-	blobs.Filter( blobs, B_EXCLUDE, CBlobGetArea(), B_LESS, blobsize );
-
-	for (int i = 0; i < blobs.GetNumBlobs(); i++ )
-	{
-		blobVector.push_back(blobs.GetBlob(i)->GetBoundingBox());
-	}
-	
-	cvReleaseImage( &originalThr );
-	cvReleaseImage( &filtered );
-
-	return blobVector;
-}
-
-#include <time.h>
-
-int main( int argc, char** argv )
-{
-
-#ifdef _VISUALC_
-#ifdef _DEBUG
-	_CrtSetDbgFlag(_CRTDBG_LEAK_CHECK_DF | _CRTDBG_ALLOC_MEM_DF);
-#endif
-#endif
-
-	if(argc < 2){
-		exit(-1);
-		return 0;
-	}
-	SYSTEMTIME init,end;
-
-	IplImage* original = NULL;
-
-	for(int z=0; z < 1; z++){
-
-	if(original != NULL)
-		cvReleaseImage( &original ); /*MEMORY LEAK HERE*/
-	original = cvLoadImage(argv[1],0);
-
-	for(int y=0; y < 1; y++){
-		GetSystemTime(&init);
-
-		int threshold = 50;
-		int blobsize = 2000;
-
-		
-		vector<CvRect> blobVector = getTubeBlobs(original,threshold,blobsize);
-
-		char *buff = new char[256];
-
-		for (int i =0 ;i<(int)blobVector.size();i++){
-			printf("%i,%i,%i,%i\n",blobVector[i].x,blobVector[i].y,blobVector[i].width,blobVector[i].height);
-/*
-			cvSetImageROI(original,blobVector[i]);
-			IplImage *subImage = cvCreateImage(cvGetSize(original),original->depth,original->nChannels);
-			cvCopy(original, subImage, NULL);
-			sprintf(buff,"./tubes/%i.png",i);
-			cvSaveImage(buff,subImage);
-			cvReleaseImage( &subImage );
-			cvResetImageROI(original);
-
-			*/
-
-		}
-		delete [] buff;
-
-		GetSystemTime(&end);
-
-
-		//printf("time INIT: %d s, %d ms\n",init.wSecond,init.wMilliseconds);
-		//printf("time END: %d s, %d ms\n",end.wSecond,end.wMilliseconds);
-		
-		printf("time DIFF ms:%d ms\n",(end.wSecond*1000+end.wMilliseconds)- (init.wSecond*1000+init.wMilliseconds) );
-	}
-	
-	}
-
-    return 0;
-}
-#endif
-
-
 
 #ifndef WIN32
 #   include <limits>
@@ -386,10 +263,14 @@ TestApp::TestApp(int argc, char ** argv) {
 	if (options.decode) {
 		result = decode();
 	}if (options.super) {
-		result = slSuperDecode(9, 1, "super.bmp",
-								options.gap, options.squareDev, 
-								options.threshold,options.corrections, 
-								options.cellDistance);
+		if(options.infile != NULL)
+			result = slSuperDecode(9, 1, options.infile,
+									options.gap, options.squareDev, 
+									options.threshold,options.corrections, 
+									options.cellDistance);
+		else
+			result = SC_FAIL;
+
 	}  else if (options.scan) {
 		result = scan();
 	} else if (options.select) {
