@@ -771,19 +771,29 @@ void Dib::histEqualization(Dib & src) {
 		}
 	}
 }
-//TODO check for padding problems.
+
+//http://opencv.willowgarage.com/documentation/c/basic_structures.html
+//cvmat: Matrices are stored row by row. All of the rows are aligned by 4 bytes.
 IplImage*  Dib::generateIplImage(){
 	IplImage* image = NULL;
 	CvMat hdr, *matrix = NULL;
+	unsigned width,height,imgsize;
 	CvSize size;
 
-	UA_ASSERTS(this->getBitsPerPixel() == 8, "createImageFromDib8U requires an 8 bit image");
+	UA_ASSERTS(this->getBitsPerPixel() == 8, "createImageFromDib8U requires an unsigned 8bit image");
 
-	size.width = this->getWidth();
-	size.height = this->getHeight();
+	width = this->getWidth();
+	height = this->getHeight();
+	imgsize = width*height;
+
+	size.width = width;
+	size.height = height;
+
 	image = cvCreateImage( size, IPL_DEPTH_8U, 1 );
 	matrix = cvGetMat( image, &hdr );
-	memcpy(matrix->data.ptr,this->getPixelBuffer(),this->getWidth()*this->getHeight());
+	
+	memcpy(matrix->data.ptr,this->getPixelBuffer(),imgsize);
+
 	cvFlip(image,image,0);
 	return image;
 }

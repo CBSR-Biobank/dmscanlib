@@ -185,7 +185,7 @@ int slDecodeCommon(unsigned plateNum, Dib & dib, Decoder & decoder,
 			*grayscaleDib, cellsRef);
 
 	if (result == Decoder::OK) {
-		decoder.imageShowBarcodes(*grayscaleDib);
+		decoder.imageShowBarcodes(*grayscaleDib,1);
 		grayscaleDib->writeToFile(markedDibFilename);
 	}
 	delete grayscaleDib;
@@ -210,6 +210,60 @@ int slDecodeCommon(unsigned plateNum, Dib & dib, Decoder & decoder,
 	UA_DOUT(1, 1, "slDecodeCommon: time taken: " << timediff);
 	return SC_SUCCESS;
 }
+
+int slSuperDecodeCommon(unsigned plateNum, Dib & dib, Decoder & decoder,
+		const char * markedDibFilename, vector<vector<string> > & cellsRef) {
+
+	bool nuk = true;
+
+	if(nuk){
+		UA_DOUT(1, 4, "DecodeCommon: nuk mode is set");
+	}
+
+	Dib * filteredDib = NULL;
+	filteredDib = Dib::convertGrayscale(dib);
+	UA_ASSERT_NOT_NULL(filteredDib);
+
+	filteredDib->tpPresetFilter();
+
+	UA_DEBUG(
+			filteredDib->writeToFile("filtered.bmp");
+	);
+
+	IplImage *iplFilteredDib = filteredDib->generateIplImage();
+	UA_ASSERT_NOT_NULL(iplFilteredDib);
+
+	Decoder::ProcessResult result = decoder.superProcessImageRegions(*filteredDib,iplFilteredDib, cellsRef,nuk);
+
+	delete filteredDib;
+	cvReleaseImage(&iplFilteredDib);
+
+	if (result == Decoder::OK) {
+		decoder.imageShowBarcodes(dib,0);
+	}
+	dib.writeToFile(markedDibFilename);
+
+	switch (result) {
+	case Decoder::IMG_INVALID:
+		return SC_INVALID_IMAGE;
+
+	case Decoder::POS_INVALID:
+		return SC_INVALID_POSITION;
+
+	case Decoder::POS_CALC_ERROR:
+		return SC_POS_CALC_ERROR;
+
+	default:
+		; // do nothing
+	}
+
+	// only get here if decoder returned Decoder::OK
+	Util::getTime(endtime);
+	Util::difftiime(starttime, endtime, timediff);
+	UA_DOUT(1, 1, "slSuperDecodeCommon: time taken: " << timediff);
+	return SC_SUCCESS;
+}
+
 
 int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
 		unsigned plateNum, double left, double top, double right,
@@ -415,62 +469,9 @@ int slDecodeImage(unsigned verbose, unsigned plateNum, const char * filename,
 	}
 	return result;
 }
-/*-------------------------super decode-------------------------------*/
 
 
-
-
-int slSuperDecodeCommon(unsigned plateNum, Dib & dib, Decoder & decoder,
-		const char * markedDibFilename, vector<vector<string> > & cellsRef) {
-
-
-	Dib * filteredDib = NULL;
-	filteredDib = Dib::convertGrayscale(dib);
-	UA_ASSERT_NOT_NULL(filteredDib);
-
-	filteredDib->tpPresetFilter();
-
-	UA_DEBUG(
-			filteredDib->writeToFile("filtered.bmp");
-	);
-
-	IplImage *iplFilteredDib = filteredDib->generateIplImage();
-	UA_ASSERT_NOT_NULL(iplFilteredDib);
-
-	Decoder::ProcessResult result = decoder.superProcessImageRegions(*filteredDib,iplFilteredDib, cellsRef);
-
-	delete filteredDib;
-	cvReleaseImage(&iplFilteredDib);
-
-	if (result == Decoder::OK) {
-		decoder.imageShowBarcodes(dib);
-	}
-	dib.writeToFile(markedDibFilename);
-
-	switch (result) {
-	case Decoder::IMG_INVALID:
-		return SC_INVALID_IMAGE;
-
-	case Decoder::POS_INVALID:
-		return SC_INVALID_POSITION;
-
-	case Decoder::POS_CALC_ERROR:
-		return SC_POS_CALC_ERROR;
-
-	default:
-		; // do nothing
-	}
-
-	// only get here if decoder returned Decoder::OK
-	Util::getTime(endtime);
-	Util::difftiime(starttime, endtime, timediff);
-	UA_DOUT(1, 1, "slSuperDecodeCommon: time taken: " << timediff);
-	return SC_SUCCESS;
-}
-
-
-
-
+//only difference to slDecode is that slSuperDecodeCommon() is used.
 int slSuperDecode(unsigned verbose, unsigned plateNum, const char * filename,
 		double scanGap, unsigned squareDev, unsigned edgeThresh,
 		unsigned corrections, double cellDistance) {
@@ -498,7 +499,7 @@ int slSuperDecode(unsigned verbose, unsigned plateNum, const char * filename,
 	Decoder decoder(scanGap, squareDev, edgeThresh, corrections, cellDistance);
 	dib.readFromFile(filename);
 	
-	int result = slSuperDecodeCommon(plateNum, dib, decoder, "decode.bmp", cells);
+	int result = slSuperDecodeCommon(plateNum, dib, decoder, "decode.bmp", cells); // DIFFERENCE
 
 	//processing done below depends only on cells.
 

@@ -39,9 +39,9 @@ public:
 	ProcessResult processImageRegions(unsigned plateNum, Dib & dib,
 			vector<vector<string> > & cells);
 	
-	ProcessResult superProcessImageRegions(Dib & dib,IplImage *opencvImg,vector<vector<string> > & cells);
+	ProcessResult superProcessImageRegions(Dib & dib,IplImage *opencvImg,vector<vector<string> > & cells, bool matrical);
 
-	void imageShowBarcodes(Dib & dib);
+	void imageShowBarcodes(Dib & dib, bool regions);
 
 protected:
 
@@ -71,15 +71,12 @@ protected:
 	void messageAdd(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
 	DmtxImage * createDmtxImageFromDib(Dib & dib);
 	void showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
-	bool processImage(Dib & dib);
-	bool superProcessImage(Dib & dib, CvRect croppedoffset);
+	bool processImage(Dib & dib, CvRect croppedOffset);
 	void calcRowsAndColumns();
 	ProcessResult calculateSlots(double dpi);
 	void initCells(unsigned maxRow, unsigned maxCol);
 	bool decode(DmtxDecode *& dec, unsigned attempts,
-			vector<BarcodeInfo *> & barcodeInfos);
-	bool superDecode(DmtxDecode *& dec, unsigned attempts,
-			vector<BarcodeInfo *> & barcodeInfos,CvRect croppedoffset);
+			vector<BarcodeInfo *> & barcodeInfos, CvRect croppedOffset);
 };
 
 #endif /* DECODER_H_ */

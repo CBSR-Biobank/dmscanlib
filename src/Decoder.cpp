@@ -23,13 +23,13 @@
 
 /*------------BLOB-----------*/
 
-void applyPlateFilters(IplImage * img){
-	for(int i=0; i < 8; i++){
+void applyPlateFilters(IplImage * img, int rounds){
+	for(int i=0; i < rounds; i++){
 		cvSmooth(img,img,CV_GAUSSIAN,11,11);
 	}
 }
 
-vector<CvRect> getTubeBlobs(IplImage *original,int threshold, int blobsize)
+vector<CvRect> getTubeBlobs(IplImage *original,int threshold, int blobsize, int rounds, int border)
 {
 	IplImage* originalThr;
 	IplImage* filtered;
@@ -39,7 +39,7 @@ vector<CvRect> getTubeBlobs(IplImage *original,int threshold, int blobsize)
 
 	filtered = cvCreateImage(cvGetSize(original), original->depth,original->nChannels);
 	cvCopy(original, filtered, NULL);
-	applyPlateFilters(filtered);
+	applyPlateFilters(filtered,rounds);
 
 	originalThr = cvCreateImage(cvGetSize(filtered), IPL_DEPTH_8U,1);
 	cvThreshold( filtered, originalThr, threshold, 255, CV_THRESH_BINARY );
@@ -49,7 +49,27 @@ vector<CvRect> getTubeBlobs(IplImage *original,int threshold, int blobsize)
 
 	for (int i = 0; i < blobs.GetNumBlobs(); i++ )
 	{
-		blobVector.push_back(blobs.GetBlob(i)->GetBoundingBox());
+		CvRect box = blobs.GetBlob(i)->GetBoundingBox();
+		
+		UA_ASSERTS(box.x < filtered->width && box.y < filtered->height,"blob is out of bounds");
+
+		box.x -= border;
+		box.y -= border;
+		box.width += border*2;
+		box.height += border*2;
+		
+		box.x = box.x < 0 ? 0 : box.x;
+		box.y = box.y < 0 ? 0 : box.y;
+
+
+		if(box.x + box.width >= filtered->width)
+			box.width = (filtered->width-1)-box.x;
+
+		if(box.y + box.height >= filtered->height)
+			box.height = (filtered->height-1)-box.y;
+
+
+		blobVector.push_back(box);
 	}
 	
 	cvReleaseImage( &originalThr );
@@ -120,8 +140,11 @@ void Decoder::initCells(unsigned maxRows, unsigned maxCols) {
 Decoder::ProcessResult Decoder::processImageRegions(unsigned plateNum,
 		Dib & dib, vector<vector<string> > & cellsRef) {
 
+	CvRect noRect;
+	noRect.height=0;
+	noRect.width =0;
 
-	if (!processImage(dib))
+	if (!processImage(dib,noRect))
 		return IMG_INVALID;
 
 	calcRowsAndColumns();
@@ -135,26 +158,43 @@ Decoder::ProcessResult Decoder::processImageRegions(unsigned plateNum,
 }
 
 
-Decoder::ProcessResult Decoder::superProcessImageRegions(Dib & dib,IplImage *opencvImg, vector<vector<string> > & cellsRef) {
-
-	
+Decoder::ProcessResult Decoder::superProcessImageRegions(Dib & dib,IplImage *opencvImg, vector<vector<string> > & cellsRef, bool nuk) {
 	Dib tmp;
 
 	vector<CvRect> blobVector;
 
-	switch(dib.getDpi()){
-		case 600:
-			blobVector = getTubeBlobs(opencvImg,55,2000);
-			break;
+	if(!nuk){
+		switch(dib.getDpi()){
+			case 600:
+				blobVector = getTubeBlobs(opencvImg,54,2400,4,14);
+				break;
 
-		case 400:
-			blobVector = getTubeBlobs(opencvImg,53,2000);
-			break;
+			case 400:
+				blobVector = getTubeBlobs(opencvImg,50,1900,3,4);
+				break;
 
-		case 300:
-		default:
-			blobVector = getTubeBlobs(opencvImg,45,2000);
-			break;
+			case 300:
+			default:
+				blobVector = getTubeBlobs(opencvImg,55,840,2,3);
+				break;
+		}
+	}
+	else{
+		switch(dib.getDpi()){
+			case 600:
+				blobVector = getTubeBlobs(opencvImg,120,5000,10,0);
+				break;
+
+			case 400:
+				blobVector = getTubeBlobs(opencvImg,120,3000,10,0);
+				break;
+
+			case 300:
+			default:
+				blobVector = getTubeBlobs(opencvImg,110,2000,8,0);
+				break;
+		}
+		
 	}
 
 	#ifdef _DEBUG
@@ -164,7 +204,7 @@ Decoder::ProcessResult Decoder::superProcessImageRegions(Dib & dib,IplImage *ope
 
 	for (int i =0 ;i<(int)blobVector.size();i++){
 		tmp.crop(dib,blobVector[i].x,blobVector[i].y,blobVector[i].x+blobVector[i].width,blobVector[i].y+blobVector[i].height);
-		superProcessImage(tmp,blobVector[i]);
+		processImage(tmp,blobVector[i]);
 
 		#ifdef _DEBUG
 		blobRegions.rectangle(blobVector[i].x,blobVector[i].y,blobVector[i].width,blobVector[i].height,white);
@@ -190,58 +230,8 @@ Decoder::ProcessResult Decoder::superProcessImageRegions(Dib & dib,IplImage *ope
 
 	return OK;
 }
-bool Decoder::superProcessImage(Dib & dib, CvRect croppedOffset) {
-	height = dib.getHeight();
-	width = dib.getWidth();
-	dpi = dib.getDpi();
 
-	DmtxImage * image = createDmtxImageFromDib(dib);
-	DmtxDecode * dec = NULL;
-
-	UA_DOUT(3, 5, "processImage: image width/" << width
-			<< " image height/" << height
-			<< " row padding/" << dmtxImageGetProp(image, DmtxPropRowPadBytes)
-			<< " image bits per pixel/"
-			<< dmtxImageGetProp(image, DmtxPropBitsPerPixel)
-			<< " image row size bytes/"
-			<< dmtxImageGetProp(image, DmtxPropRowSizeBytes));
-
-	dec = dmtxDecodeCreate(image, 1);
-	UA_ASSERT_NOT_NULL(dec);
-
-	// slightly smaller than the new tube edge
-	int minEdgeSize = static_cast<unsigned> (0.08 * dpi);
-
-	// slightly bigger than the Nunc edge
-	int maxEdgeSize = static_cast<unsigned> (0.18 * dpi);
-
-	dmtxDecodeSetProp(dec, DmtxPropEdgeMin, minEdgeSize);
-	dmtxDecodeSetProp(dec, DmtxPropEdgeMax, maxEdgeSize);
-	dmtxDecodeSetProp(dec, DmtxPropSymbolSize, DmtxSymbolSquareAuto);
-	dmtxDecodeSetProp(dec, DmtxPropScanGap, static_cast<unsigned> (scanGap
-			* dpi));
-	dmtxDecodeSetProp(dec, DmtxPropSquareDevn, squareDev);
-	dmtxDecodeSetProp(dec, DmtxPropEdgeThresh, edgeThresh);
-
-	unsigned regionCount = 0;
-	while (1) {
-		if (!superDecode(dec, 1, barcodeInfos,croppedOffset)) {
-			break;
-		}
-		UA_DOUT(3, 5, "retrieved message from region " << regionCount++);
-	}
-	dmtxDecodeDestroy(&dec);
-	dmtxImageDestroy(&image);
-
-	if (barcodeInfos.size() == 0) {
-		UA_DOUT(3, 1, "processImage: no barcodes found");
-		return false;
-	}
-
-	return true;
-}
-
-bool Decoder::superDecode(DmtxDecode *& dec, unsigned attempts,
+bool Decoder::decode(DmtxDecode *& dec, unsigned attempts,
 		vector<BarcodeInfo *> & barcodeInfos, CvRect croppedOffset) {
 	DmtxRegion * reg = NULL;
 	BarcodeInfo * info = NULL;
@@ -255,7 +245,10 @@ bool Decoder::superDecode(DmtxDecode *& dec, unsigned attempts,
 		info = new BarcodeInfo(dec, reg, msg);
 		UA_ASSERT_NOT_NULL(info);
 
-		info->alignCoordinates(croppedOffset.x,croppedOffset.y);
+		//image is not aligned when croppedOffset width or height equal 0
+		if(croppedOffset.width !=0 && croppedOffset.height !=0)
+			info->alignCoordinates(croppedOffset.x,croppedOffset.y);
+
 		barcodeInfos.push_back(info);
 
 		DmtxPixelLoc & tlCorner = info->getTopLeftCorner();
@@ -272,7 +265,7 @@ bool Decoder::superDecode(DmtxDecode *& dec, unsigned attempts,
 	return true;
 }
 
-bool Decoder::processImage(Dib & dib) {
+bool Decoder::processImage(Dib & dib, CvRect croppedOffset) {
 	height = dib.getHeight();
 	width = dib.getWidth();
 	dpi = dib.getDpi();
@@ -307,29 +300,30 @@ bool Decoder::processImage(Dib & dib) {
 
 	unsigned regionCount = 0;
 	while (1) {
-		if (!decode(dec, 1, barcodeInfos)) {
+		if (!decode(dec, 1, barcodeInfos,croppedOffset)) {
 			break;
 		}
 		UA_DOUT(3, 5, "retrieved message from region " << regionCount++);
 	}
 
-	// save image to a PNM file
-
 	
-	UA_DEBUG(
-			FILE * fh;
-			unsigned char *pnm;
-			int totalBytes;
-			int headerBytes;
+	if(croppedOffset.width !=0 && croppedOffset.height !=0){
+		// save image to a PNM file
+		UA_DEBUG(
+				FILE * fh;
+				unsigned char *pnm;
+				int totalBytes;
+				int headerBytes;
 
-			pnm = dmtxDecodeCreateDiagnostic(dec, &totalBytes, &headerBytes, 0);
-			if (pnm != NULL) {
-				fh = fopen("out.pnm", "wb");
-				fwrite(pnm, sizeof(unsigned char), totalBytes, fh);
-				fclose(fh);
-				free(pnm);
-			}
-	);
+				pnm = dmtxDecodeCreateDiagnostic(dec, &totalBytes, &headerBytes, 0);
+				if (pnm != NULL) {
+					fh = fopen("out.pnm", "wb");
+					fwrite(pnm, sizeof(unsigned char), totalBytes, fh);
+					fclose(fh);
+					free(pnm);
+				}
+		);
+	}
 	
 
 	dmtxDecodeDestroy(&dec);
@@ -340,35 +334,6 @@ bool Decoder::processImage(Dib & dib) {
 		return false;
 	}
 
-	return true;
-}
-
-bool Decoder::decode(DmtxDecode *& dec, unsigned attempts,
-		vector<BarcodeInfo *> & barcodeInfos) {
-	DmtxRegion * reg = NULL;
-	BarcodeInfo * info = NULL;
-
-	reg = dmtxRegionFindNext(dec, NULL);
-	if (reg == NULL)
-		return false;
-
-	DmtxMessage * msg = dmtxDecodeMatrixRegion(dec, reg, corrections);
-	if (msg != NULL) {
-		info = new BarcodeInfo(dec, reg, msg);
-		UA_ASSERT_NOT_NULL(info);
-		barcodeInfos.push_back(info);
-
-		DmtxPixelLoc & tlCorner = info->getTopLeftCorner();
-		DmtxPixelLoc & brCorner = info->getBotRightCorner();
-
-		UA_DOUT(3, 5, "message " << barcodeInfos.size() - 1
-				<< ": " << info->getMsg()
-				<< " : tlCorner/" << tlCorner.X << "," << tlCorner.Y
-				<< "  brCorner/" << brCorner.X << "," << brCorner.Y);
-		//showStats(dec, reg, msg);
-		dmtxMessageDestroy(&msg);
-	}
-	dmtxRegionDestroy(&reg);
 	return true;
 }
 
@@ -759,7 +724,7 @@ DmtxImage * Decoder::createDmtxImageFromDib(Dib & dib) {
 	return image;
 }
 
-void Decoder::imageShowBarcodes(Dib & dib) {
+void Decoder::imageShowBarcodes(Dib & dib, bool regions) {
 	UA_DOUT(3, 3, "marking tags ");
 
 	RgbQuad quadWhite(255, 255, 255); // change to white (shows up better in grayscale)
@@ -781,8 +746,9 @@ void Decoder::imageShowBarcodes(Dib & dib) {
 
 	unsigned logLevel = ua::Logger::Instance().levelGet(3);
 
-	if (logLevel == 0)
+	if (logLevel == 0 || regions == 0)
 		return;
+	
 
 	unsigned height = dib.getHeight() - 1;
 	unsigned width = dib.getWidth() - 1;
