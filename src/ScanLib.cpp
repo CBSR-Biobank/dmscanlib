@@ -167,6 +167,7 @@ int slScanImage(unsigned verbose, unsigned dpi, int brightness, int contrast,
 #endif
 }
 
+//TODO replace this with slSuperDecodeCommon.
 int slDecodeCommon(unsigned plateNum, Dib & dib, Decoder & decoder,
 		const char * markedDibFilename, vector<vector<string> > & cellsRef) {
 	string msg;
@@ -207,14 +208,14 @@ int slDecodeCommon(unsigned plateNum, Dib & dib, Decoder & decoder,
 	// only get here if decoder returned Decoder::OK
 	Util::getTime(endtime);
 	Util::difftiime(starttime, endtime, timediff);
-	UA_DOUT(1, 1, "slDecodeCommon: time taken: " << timediff);
+	UA_DOUT(1, 1, "slSuperDecodeCommon: time taken: " << timediff);
 	return SC_SUCCESS;
 }
 
 int slSuperDecodeCommon(unsigned plateNum, Dib & dib, Decoder & decoder,
 		const char * markedDibFilename, vector<vector<string> > & cellsRef) {
 
-	bool nuk = true;
+	bool nuk = false;
 
 	if(nuk){
 		UA_DOUT(1, 4, "DecodeCommon: nuk mode is set");
@@ -471,6 +472,7 @@ int slDecodeImage(unsigned verbose, unsigned plateNum, const char * filename,
 }
 
 
+//TODO get rid of this
 //only difference to slDecode is that slSuperDecodeCommon() is used.
 int slSuperDecode(unsigned verbose, unsigned plateNum, const char * filename,
 		double scanGap, unsigned squareDev, unsigned edgeThresh,

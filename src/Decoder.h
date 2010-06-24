@@ -11,7 +11,6 @@
 #include "dmtx.h"
 
 #include "cv.h"
-#include "cvblob/include/BlobResult.h"
 
 #include <vector>
 #include <string>

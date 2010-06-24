@@ -21,62 +21,8 @@
 #include <cmath>
 
 
-/*------------BLOB-----------*/
-
-void applyPlateFilters(IplImage * img, int rounds){
-	for(int i=0; i < rounds; i++){
-		cvSmooth(img,img,CV_GAUSSIAN,11,11);
-	}
-}
-
-vector<CvRect> getTubeBlobs(IplImage *original,int threshold, int blobsize, int rounds, int border)
-{
-	IplImage* originalThr;
-	IplImage* filtered;
-
-	vector<CvRect> blobVector;
-	CBlobResult blobs;
-
-	filtered = cvCreateImage(cvGetSize(original), original->depth,original->nChannels);
-	cvCopy(original, filtered, NULL);
-	applyPlateFilters(filtered,rounds);
-
-	originalThr = cvCreateImage(cvGetSize(filtered), IPL_DEPTH_8U,1);
-	cvThreshold( filtered, originalThr, threshold, 255, CV_THRESH_BINARY );
-
-	blobs = CBlobResult( originalThr, NULL, 0 );
-	blobs.Filter( blobs, B_EXCLUDE, CBlobGetArea(), B_LESS, blobsize );
-
-	for (int i = 0; i < blobs.GetNumBlobs(); i++ )
-	{
-		CvRect box = blobs.GetBlob(i)->GetBoundingBox();
-		
-		UA_ASSERTS(box.x < filtered->width && box.y < filtered->height,"blob is out of bounds");
-
-		box.x -= border;
-		box.y -= border;
-		box.width += border*2;
-		box.height += border*2;
-		
-		box.x = box.x < 0 ? 0 : box.x;
-		box.y = box.y < 0 ? 0 : box.y;
 
 
-		if(box.x + box.width >= filtered->width)
-			box.width = (filtered->width-1)-box.x;
-
-		if(box.y + box.height >= filtered->height)
-			box.height = (filtered->height-1)-box.y;
-
-
-		blobVector.push_back(box);
-	}
-	
-	cvReleaseImage( &originalThr );
-	cvReleaseImage( &filtered );
-
-	return blobVector;
-}
 
 
 #if defined(USE_NVWA)
@@ -137,6 +83,7 @@ void Decoder::initCells(unsigned maxRows, unsigned maxCols) {
 }
 
 
+
 Decoder::ProcessResult Decoder::processImageRegions(unsigned plateNum,
 		Dib & dib, vector<vector<string> > & cellsRef) {
 
@@ -156,6 +103,62 @@ Decoder::ProcessResult Decoder::processImageRegions(unsigned plateNum,
 	cellsRef = cells;
 	return OK;
 }
+
+void applyPlateFilters(IplImage * img, int rounds){
+	for(int i=0; i < rounds; i++){
+		cvSmooth(img,img,CV_GAUSSIAN,11,11);
+	}
+}
+
+vector<CvRect> getTubeBlobs(IplImage *original,int threshold, int blobsize, int rounds, int border)
+{
+	IplImage* originalThr;
+	IplImage* filtered;
+
+	vector<CvRect> blobVector;
+	CBlobResult blobs;
+
+	filtered = cvCreateImage(cvGetSize(original), original->depth,original->nChannels);
+	cvCopy(original, filtered, NULL);
+	applyPlateFilters(filtered,rounds);
+
+	originalThr = cvCreateImage(cvGetSize(filtered), IPL_DEPTH_8U,1);
+	cvThreshold( filtered, originalThr, threshold, 255, CV_THRESH_BINARY );
+
+	blobs = CBlobResult( originalThr, NULL, 0 );
+	blobs.Filter( blobs, B_EXCLUDE, CBlobGetArea(), B_LESS, blobsize );
+
+	for (int i = 0; i < blobs.GetNumBlobs(); i++ )
+	{
+		CvRect box = blobs.GetBlob(i)->GetBoundingBox();
+		
+		UA_ASSERTS(box.x < filtered->width && box.y < filtered->height,"blob is out of bounds");
+
+		box.x -= border;
+		box.y -= border;
+		box.width += border*2;
+		box.height += border*2;
+		
+		box.x = box.x < 0 ? 0 : box.x;
+		box.y = box.y < 0 ? 0 : box.y;
+
+
+		if(box.x + box.width >= filtered->width)
+			box.width = (filtered->width-1)-box.x;
+
+		if(box.y + box.height >= filtered->height)
+			box.height = (filtered->height-1)-box.y;
+
+
+		blobVector.push_back(box);
+	}
+	
+	cvReleaseImage( &originalThr );
+	cvReleaseImage( &filtered );
+
+	return blobVector;
+}
+
 
 
 Decoder::ProcessResult Decoder::superProcessImageRegions(Dib & dib,IplImage *opencvImg, vector<vector<string> > & cellsRef, bool nuk) {
@@ -179,6 +182,7 @@ Decoder::ProcessResult Decoder::superProcessImageRegions(Dib & dib,IplImage *ope
 				break;
 		}
 	}
+	// nuk
 	else{
 		switch(dib.getDpi()){
 			case 600:

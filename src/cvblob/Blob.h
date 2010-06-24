@@ -21,6 +21,7 @@ MODIFICATIONS (Modification, Author, Date):
 #include "cxcore.h"
 #include "BlobLibraryConfiguration.h"
 #include "BlobContour.h"
+#include <list>
 
 
 #ifdef BLOB_OBJECT_FACTORY

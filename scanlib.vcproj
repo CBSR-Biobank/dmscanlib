@@ -42,7 +42,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories=".\src\cvblob\include;.\src\opencv\include;src;src/libdmtx;src/loki;src/utils;&quot;$(JAVA_HOME)\include&quot;;&quot;$(JAVA_HOME)\include\win32&quot;"
+				AdditionalIncludeDirectories=".\src\cvblob;.\src\opencv\include;src;src/libdmtx;src/loki;src/utils;&quot;$(JAVA_HOME)\include&quot;;&quot;$(JAVA_HOME)\include\win32&quot;"
 				PreprocessorDefinitions="_VISUALC_;WIN32;_DEBUG;_CONSOLE;UA_LOGGER;STANDALONE;"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -62,7 +62,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="cv210.lib cxcore210.lib highgui210d.lib cvblobslib.lib user32.lib"
+				AdditionalDependencies="cv210.lib cxcore210.lib user32.lib"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories=".\src\cvblob\lib;.\src\opencv\lib"
 				GenerateDebugInformation="true"
@@ -96,7 +96,7 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
-			UseOfMFC="0"
+			UseOfMFC="2"
 			CharacterSet="1"
 			ManagedExtensions="0"
 			WholeProgramOptimization="0"
@@ -120,13 +120,13 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				FavorSizeOrSpeed="1"
-				AdditionalIncludeDirectories="src;src/libdmtx;src/loki;src/utils;$(JAVA_HOME)\include;$(JAVA_HOME)\include\win32;"
+				AdditionalIncludeDirectories=".\src\cvblob;.\src\opencv\include;src;src/libdmtx;src/loki;src/utils;&quot;$(JAVA_HOME)\include&quot;;&quot;$(JAVA_HOME)\include\win32&quot;"
 				PreprocessorDefinitions="_VISUALC_;__WIN32__;_WIN32;WIN32;_DEBUG;UA_LOGGER;BUILD_DLL;"
 				IgnoreStandardIncludePath="false"
 				MinimalRebuild="false"
 				ExceptionHandling="1"
 				BasicRuntimeChecks="0"
-				RuntimeLibrary="1"
+				RuntimeLibrary="3"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
@@ -145,7 +145,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				LinkLibraryDependencies="true"
+				AdditionalDependencies=" cv210.lib cxcore210.lib user32.lib"
 				LinkIncremental="2"
+				AdditionalLibraryDirectories=".\src\cvblob\lib;.\src\opencv\lib"
+				IgnoreAllDefaultLibraries="false"
+				IgnoreDefaultLibraryNames=""
 				ModuleDefinitionFile="scanlib.def"
 				GenerateDebugInformation="true"
 				AssemblyDebug="1"
@@ -311,6 +315,30 @@
 				RelativePath=".\src\utils\Util.cpp"
 				>
 			</File>
+			<Filter
+				Name="Blob"
+				>
+				<File
+					RelativePath=".\src\cvblob\blob.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\src\cvblob\BlobContour.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\src\cvblob\BlobOperators.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\src\cvblob\BlobResult.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\src\cvblob\ComponentLabeling.cpp"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -377,6 +405,34 @@
 				RelativePath=".\src\utils\Util.h"
 				>
 			</File>
+			<Filter
+				Name="blob"
+				>
+				<File
+					RelativePath=".\src\cvblob\Blob.h"
+					>
+				</File>
+				<File
+					RelativePath=".\src\cvblob\BlobContour.h"
+					>
+				</File>
+				<File
+					RelativePath=".\src\cvblob\BlobLibraryConfiguration.h"
+					>
+				</File>
+				<File
+					RelativePath=".\src\cvblob\BlobOperators.h"
+					>
+				</File>
+				<File
+					RelativePath=".\src\cvblob\BlobResult.h"
+					>
+				</File>
+				<File
+					RelativePath=".\src\cvblob\ComponentLabeling.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Resource Files"

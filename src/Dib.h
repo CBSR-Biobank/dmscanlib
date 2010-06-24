@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 #include "cv.h"
-#include "cvblob/include/BlobResult.h"
+#include "BlobResult.h"
 
 #ifdef WIN32
 #include <windows.h>
