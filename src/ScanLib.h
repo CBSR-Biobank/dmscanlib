@@ -214,14 +214,6 @@ typedef int (*SL_DECODE_IMAGE)(unsigned verbose, unsigned plateNum,
 		const char * filename, double scanGap, unsigned squareDev,
 		unsigned edgeThresh, unsigned corrections, double cellDistance);
 
-EXPORT int slSuperDecode(unsigned verbose, unsigned plateNum, const char * filename,
-		double scanGap, unsigned squareDev, unsigned edgeThresh,
-		unsigned corrections, double cellDistance);
-
-typedef int (*SL_SUPER_DECODE)(unsigned verbose, unsigned plateNum,
-		const char * filename, double scanGap, unsigned squareDev,
-		unsigned edgeThresh, unsigned corrections, double cellDistance);
-
 #ifdef __cplusplus
 }
 #endif

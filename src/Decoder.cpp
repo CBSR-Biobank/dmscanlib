@@ -134,6 +134,10 @@ vector<CvRect> getTubeBlobs(IplImage *original,int threshold, int blobsize, int 
 		
 		UA_ASSERTS(box.x < filtered->width && box.y < filtered->height,"blob is out of bounds");
 
+		if(border < 0){
+			UA_ASSERTS(border*2 < box.width && border*2 < box.height, "cannot shrink past rect dimensions"); 
+		}
+
 		box.x -= border;
 		box.y -= border;
 		box.width += border*2;
@@ -141,7 +145,6 @@ vector<CvRect> getTubeBlobs(IplImage *original,int threshold, int blobsize, int 
 		
 		box.x = box.x < 0 ? 0 : box.x;
 		box.y = box.y < 0 ? 0 : box.y;
-
 
 		if(box.x + box.width >= filtered->width)
 			box.width = (filtered->width-1)-box.x;
@@ -161,12 +164,12 @@ vector<CvRect> getTubeBlobs(IplImage *original,int threshold, int blobsize, int 
 
 
 
-Decoder::ProcessResult Decoder::superProcessImageRegions(Dib & dib,IplImage *opencvImg, vector<vector<string> > & cellsRef, bool nuk) {
+Decoder::ProcessResult Decoder::superProcessImageRegions(Dib & dib,IplImage *opencvImg, vector<vector<string> > & cellsRef, bool matrical) {
 	Dib tmp;
 
 	vector<CvRect> blobVector;
 
-	if(!nuk){
+	if(!matrical){
 		switch(dib.getDpi()){
 			case 600:
 				blobVector = getTubeBlobs(opencvImg,54,2400,4,14);
@@ -182,39 +185,78 @@ Decoder::ProcessResult Decoder::superProcessImageRegions(Dib & dib,IplImage *ope
 				break;
 		}
 	}
-	// nuk
+	// matrical
 	else{
+		UA_DOUT(3, 7, "superProcessImageRegions: matrical mode");
+
 		switch(dib.getDpi()){
 			case 600:
-				blobVector = getTubeBlobs(opencvImg,120,5000,10,0);
+				blobVector = getTubeBlobs(opencvImg,120,5000,10,-10);
 				break;
 
 			case 400:
-				blobVector = getTubeBlobs(opencvImg,120,3000,10,0);
+				blobVector = getTubeBlobs(opencvImg,120,3000,10,-5);
 				break;
 
 			case 300:
 			default:
-				blobVector = getTubeBlobs(opencvImg,110,2000,8,0);
+				blobVector = getTubeBlobs(opencvImg,110,2000,8,-3);
 				break;
 		}
 		
 	}
+	UA_DOUT(3, 5, "getTubeBlobs found: " << blobVector.size() << " blobs.");
 
 	#ifdef _DEBUG
 	Dib blobRegions(dib);
 	RgbQuad white(255,255,255);
 	#endif
 
-	for (int i =0 ;i<(int)blobVector.size();i++){
-		tmp.crop(dib,blobVector[i].x,blobVector[i].y,blobVector[i].x+blobVector[i].width,blobVector[i].y+blobVector[i].height);
-		processImage(tmp,blobVector[i]);
+	//char * buffer = new char[255];
 
-		#ifdef _DEBUG
+	for (int i =0 ;i<(int)blobVector.size();i++){
+
+		tmp.crop(dib,blobVector[i].x,blobVector[i].y,blobVector[i].x+blobVector[i].width,blobVector[i].y+blobVector[i].height);
+
+/*
+		 SYSTEMTIME systemTime;
+		 FILETIME fileTime;
+		 ULARGE_INTEGER uli,uli2;
+
+		 GetSystemTime( &systemTime );
+		 SystemTimeToFileTime( &systemTime, &fileTime );
+		 
+		 uli.LowPart = fileTime.dwLowDateTime;
+		 uli.HighPart = fileTime.dwHighDateTime;
+
+		 ULONGLONG systemTimeIn_ms( uli.QuadPart/10000 );
+*/
+		 processImage(tmp,blobVector[i]);
+		 /*
+
+		 GetSystemTime( &systemTime );
+		 SystemTimeToFileTime( &systemTime, &fileTime );
+		 uli2.LowPart = fileTime.dwLowDateTime;
+		 uli2.HighPart = fileTime.dwHighDateTime;
+
+		 ULONGLONG systemTimeIn_ms_2( uli2.QuadPart/10000 );
+
+		 std::cout << "Time taken: " << systemTimeIn_ms_2-systemTimeIn_ms << "\n";
+	*/
+		//sprintf(buffer,"unscanned/%i.bmp",i);
+		//tmp.writeToFile(buffer);
 		blobRegions.rectangle(blobVector[i].x,blobVector[i].y,blobVector[i].width,blobVector[i].height,white);
-		#endif
+		UA_DOUT(3, 9, "blob: " << blobVector[i].x << ", " << 
+								 blobVector[i].y << ", " << 
+								 blobVector[i].width << ", " << 
+								 blobVector[i].height);
 	}
-	
+	//delete [] buffer;
+
+
+	if(blobVector.size() == 0){
+		return IMG_INVALID; 
+	}
 
 	#ifdef _DEBUG
 	blobRegions.writeToFile("blobRegions.bmp");

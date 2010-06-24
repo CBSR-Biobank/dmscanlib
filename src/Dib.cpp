@@ -498,6 +498,15 @@ bool Dib::crop(Dib &src, unsigned x0, unsigned y0, unsigned x1, unsigned y1) {
 
 	infoHeader->imageSize = infoHeader->height * rowBytes;
 
+	
+	unsigned paletteSize = getPaletteSize(src.infoHeader->bitCount);
+	if (paletteSize > 0) {
+		if (this->colorPalette != NULL)
+			delete [] this->colorPalette;
+		this->colorPalette = new RgbQuad[paletteSize];
+		memcpy(this->colorPalette, src.colorPalette, paletteSize * sizeof(RgbQuad));
+	}
+	
 	isAllocated = true;
 	pixels = new unsigned char[infoHeader->imageSize];
 

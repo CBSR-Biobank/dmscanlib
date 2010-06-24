@@ -131,9 +131,8 @@ CSimpleOptA::SOption longOptions[] = { { OPT_ID_BRIGHTNESS, "--brightness",
 		'i', "-i", SO_REQ_SEP }, { 'p', "--plate", SO_REQ_SEP }, { 'p', "-p",
 		SO_REQ_SEP }, { 'o', "--output", SO_REQ_SEP },
 		{ 'o', "-o", SO_REQ_SEP }, { 's', "--scan", SO_NONE }, { 's', "-s",
-				SO_NONE }, { OPT_ID_CAPABILITY, "--capability", SO_NONE }, 
-				{ OPT_ID_SUPER, "--super", SO_NONE },{
-				OPT_ID_TEST, "--test", SO_NONE }, { OPT_ID_SELECT, "--select",
+				SO_NONE }, { OPT_ID_CAPABILITY, "--capability", SO_NONE },\
+			{OPT_ID_TEST, "--test", SO_NONE }, { OPT_ID_SELECT, "--select",
 				SO_NONE }, { OPT_ID_SQUARE_DEV, "--square-dev", SO_REQ_SEP }, {
 				OPT_ID_THRESHOLD, "--threshold", SO_REQ_SEP }, { OPT_ID_LEFT,
 				"--left", SO_REQ_SEP }, { OPT_ID_TOP, "--top", SO_REQ_SEP }, {
@@ -163,7 +162,6 @@ struct Options {
 	double gap;
 	bool help;
 	bool capability;
-	bool super;
 	bool test;
 	unsigned plateNum;
 	bool scan;
@@ -193,7 +191,6 @@ struct Options {
 		scan = false;
 		select = false;
 		capability = false;
-		super = false;
 		test = false;
 
 		infile = NULL;
@@ -262,16 +259,7 @@ TestApp::TestApp(int argc, char ** argv) {
 
 	if (options.decode) {
 		result = decode();
-	}if (options.super) {
-		if(options.infile != NULL)
-			result = slSuperDecode(9, 1, options.infile,
-									options.gap, options.squareDev, 
-									options.threshold,options.corrections, 
-									options.cellDistance);
-		else
-			result = SC_FAIL;
-
-	}  else if (options.scan) {
+	}if (options.scan) {
 		result = scan();
 	} else if (options.select) {
 		result = slSelectSourceAsDefault();
@@ -583,9 +571,6 @@ bool TestApp::getCmdOptions(int argc, char ** argv) {
 
 			case OPT_ID_TEST:
 				options.test = true;
-				break;
-			case OPT_ID_SUPER:
-				options.super = true;
 				break;
 
 			case OPT_ID_CONTRAST:
