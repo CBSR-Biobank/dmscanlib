@@ -21,7 +21,7 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="1"
-			UseOfMFC="2"
+			UseOfMFC="0"
 			CharacterSet="1"
 			>
 			<Tool
@@ -46,7 +46,7 @@
 				PreprocessorDefinitions="_VISUALC_;WIN32;_DEBUG;_CONSOLE;UA_LOGGER;STANDALONE;"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="3"
+				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				DebugInformationFormat="4"
@@ -62,7 +62,8 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="cv210.lib cxcore210.lib user32.lib"
+				AdditionalDependencies="cv210.lib cxcore210.lib user32.lib libcmtd.lib"
+				ShowProgress="1"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories=".\src\cvblob\lib;.\src\opencv\lib"
 				GenerateDebugInformation="true"
@@ -96,7 +97,7 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
-			UseOfMFC="2"
+			UseOfMFC="0"
 			CharacterSet="1"
 			ManagedExtensions="0"
 			WholeProgramOptimization="0"
@@ -126,7 +127,7 @@
 				MinimalRebuild="false"
 				ExceptionHandling="1"
 				BasicRuntimeChecks="0"
-				RuntimeLibrary="3"
+				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
@@ -145,7 +146,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				LinkLibraryDependencies="true"
-				AdditionalDependencies=" cv210.lib cxcore210.lib user32.lib"
+				AdditionalDependencies=" cv210.lib cxcore210.lib user32.lib libcmtd.lib"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories=".\src\cvblob\lib;.\src\opencv\lib"
 				IgnoreAllDefaultLibraries="false"
@@ -183,6 +184,8 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
+			UseOfMFC="0"
+			UseOfATL="0"
 			CharacterSet="1"
 			WholeProgramOptimization="3"
 			>
@@ -206,7 +209,7 @@
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
-				AdditionalIncludeDirectories="src;src/libdmtx;src/loki;src/utils;$(JAVA_HOME)\include;$(JAVA_HOME)\include\win32;"
+				AdditionalIncludeDirectories=".\src\cvblob;.\src\opencv\include;src;src/libdmtx;src/loki;src/utils;&quot;$(JAVA_HOME)\include&quot;;&quot;$(JAVA_HOME)\include\win32&quot;"
 				PreprocessorDefinitions="_VISUALC_;_WIN32;__WIN32__;WIN32;_CONSOLE;UA_LOGGER;BUILD_DLL"
 				MinimalRebuild="false"
 				BasicRuntimeChecks="0"
@@ -227,9 +230,12 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				LinkLibraryDependencies="false"
-				ShowProgress="2"
+				LinkLibraryDependencies="true"
+				AdditionalDependencies=" cv210.lib cxcore210.lib user32.lib "
+				ShowProgress="0"
 				LinkIncremental="2"
+				AdditionalLibraryDirectories=".\src\cvblob\lib;.\src\opencv\lib"
+				IgnoreDefaultLibraryNames=""
 				ModuleDefinitionFile="scanlib.def"
 				GenerateDebugInformation="false"
 				SubSystem="1"

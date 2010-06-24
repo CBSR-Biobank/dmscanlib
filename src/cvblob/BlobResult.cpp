@@ -7,6 +7,11 @@ MODIFICACIONS (Modificació, Autor, Data):
  
 **************************************************************************/
 
+#ifdef _VISUALC_
+// disable warnings about fopen
+#pragma warning(disable : 4996)
+#endif
+
 #include <limits.h>
 #include <stdio.h>
 #include <functional>
@@ -14,10 +19,6 @@ MODIFICACIONS (Modificació, Autor, Data):
 #include "BlobResult.h"
 
 //! Show errors functions: only works for windows releases
-#ifdef _SHOW_ERRORS
-	#include <afx.h>			//suport per a CStrings
-	#include <afxwin.h>			//suport per a AfxMessageBox
-#endif
 
 /**************************************************************************
 		Constructors / Destructors
@@ -867,22 +868,6 @@ void CBlobResult::ClearBlobs()
 void CBlobResult::RaiseError(const int errorCode) const
 {
 //! Do we need to show errors?
-#ifdef _SHOW_ERRORS
-	CString msg, format = "Error en CBlobResult: %s";
-
-	switch (errorCode)
-	{
-	case EXCEPTION_BLOB_OUT_OF_BOUNDS:
-		msg.Format(format, "Intentant accedir a un blob no existent");
-		break;
-	default:
-		msg.Format(format, "Codi d'error desconegut");
-		break;
-	}
-
-	AfxMessageBox(msg);
-
-#endif
 	throw errorCode;
 }
 
