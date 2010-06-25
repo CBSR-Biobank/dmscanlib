@@ -228,9 +228,6 @@ int slSuperDecodeCommon(unsigned plateNum, Dib & dib, Decoder & decoder,
 }
 
 
-
-
-
 //TODO get rid of old slDecodeCommon
 int slDecodeCommon(unsigned plateNum, Dib & dib, Decoder & decoder,
 		const char * markedDibFilename, vector<vector<string> > & cellsRef) {

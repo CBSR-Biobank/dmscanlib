@@ -481,7 +481,10 @@ bool Dib::crop(Dib &src, unsigned x0, unsigned y0, unsigned x1, unsigned y1) {
 	UA_ASSERT(x1 > x0);
 	UA_ASSERT(y1 > y0);
 
+	if(infoHeader != NULL)
+		delete infoHeader;
 	infoHeader = new BitmapInfoHeader;
+	
 	*infoHeader = *src.infoHeader;
 	bytesPerPixel = src.bytesPerPixel;
 
@@ -497,18 +500,19 @@ bool Dib::crop(Dib &src, unsigned x0, unsigned y0, unsigned x1, unsigned y1) {
 	rowPaddingBytes = rowBytes - (infoHeader->width * bytesPerPixel);
 
 	infoHeader->imageSize = infoHeader->height * rowBytes;
-
 	
 	unsigned paletteSize = getPaletteSize(src.infoHeader->bitCount);
 	if (paletteSize > 0) {
 		if (this->colorPalette != NULL)
 			delete [] this->colorPalette;
 		this->colorPalette = new RgbQuad[paletteSize];
+
 		memcpy(this->colorPalette, src.colorPalette, paletteSize * sizeof(RgbQuad));
 	}
-	
-	isAllocated = true;
+	if(pixels != NULL)
+		delete [] pixels;
 	pixels = new unsigned char[infoHeader->imageSize];
+	isAllocated = true;
 
 	unsigned char * srcRowPtr = src.pixels + (src.infoHeader->height - y1)
 			* src.rowBytes + x0 * bytesPerPixel;
