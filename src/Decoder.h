@@ -12,7 +12,7 @@
 
 #include "cv.h"
 
-#include <vector>
+#include <list>
 #include <string>
 
 /*---thread---*/
@@ -84,7 +84,8 @@ protected:
 };
 
 struct processImageParams{
-	vector<BarcodeInfo *> * barcodeInfo;
+	BarcodeInfo ** barcodeInfo;
+	unsigned * barcodeInfoIt;
 	unsigned * threadCount;
 	HANDLE * hBarcodeInfoMutex;
 	HANDLE * hThreadCountMutex;

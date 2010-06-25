@@ -234,6 +234,10 @@ Decoder::ProcessResult Decoder::superProcessImageRegions(Dib & dib,IplImage *ope
 	HANDLE hBarcodeInfoMutex = CreateMutex( NULL, FALSE, NULL );
 	HANDLE hThreadCountMutex = CreateMutex( NULL, FALSE, NULL );
 	unsigned threadCount = 0;
+	BarcodeInfo ** barcodeArray = new BarcodeInfo* [256];
+	unsigned barcodeArrayIt = 0;
+
+
 	/*---Threading----*/
 
 	for (int i =0 ;i<(int)blobVector.size();i++){
@@ -241,7 +245,7 @@ Decoder::ProcessResult Decoder::superProcessImageRegions(Dib & dib,IplImage *ope
 		/*---Threading----*/
 		WaitForSingleObject( hThreadCountMutex, INFINITE );
 
-		while(threadCount >= 4){
+		while(threadCount >= 100){
 			ReleaseMutex( hThreadCountMutex );
 			Sleep( 10 );
 			WaitForSingleObject( hThreadCountMutex, INFINITE );
@@ -261,7 +265,8 @@ Decoder::ProcessResult Decoder::superProcessImageRegions(Dib & dib,IplImage *ope
 		pig->hBarcodeInfoMutex = &hBarcodeInfoMutex;
 		pig->hThreadCountMutex = &hThreadCountMutex;
 		pig->dib = tmp;
-		pig->barcodeInfo = &this->barcodeInfos;
+		pig->barcodeInfo = barcodeArray;
+		pig->barcodeInfoIt = &barcodeArrayIt;
 		pig->threadCount = &threadCount;
 
 		++threadCount;
@@ -286,6 +291,12 @@ Decoder::ProcessResult Decoder::superProcessImageRegions(Dib & dib,IplImage *ope
 	
 	CloseHandle(hBarcodeInfoMutex);
 	CloseHandle(hThreadCountMutex);
+
+	for(unsigned i=0; i < barcodeArrayIt; i++){
+		this->barcodeInfos.push_back(barcodeArray[i]);
+	}
+	delete [] barcodeArray;
+
 	/*---Threading----*/
 
 	if(blobVector.size() == 0){
@@ -458,14 +469,14 @@ void superProcessImage(void * parameters) {
 	dmtxImageDestroy(&image);
 
 	if (tempBufferInfo.size() == 0) {
-		UA_DOUT(3, 1, "processImage: no barcodes found");
+		UA_DOUT(3, 4, "processImage: no barcodes found");
 	}
 	else{
+		WaitForSingleObject( pig->hBarcodeInfoMutex, INFINITE );
 		for(unsigned j=0; j < tempBufferInfo.size(); j++){
-			WaitForSingleObject( pig->hBarcodeInfoMutex, INFINITE );
-			pig->barcodeInfo->push_back(tempBufferInfo[j]);
-			ReleaseMutex( pig->hBarcodeInfoMutex );
+			pig->barcodeInfo[(*pig->barcodeInfoIt)++] = tempBufferInfo[j];
 		}
+		ReleaseMutex( pig->hBarcodeInfoMutex );
 	}
 	WaitForSingleObject( pig->hThreadCountMutex, INFINITE );
 	*(pig->threadCount) = *(pig->threadCount) - 1 ;
@@ -563,10 +574,6 @@ void Decoder::calcRowsAndColumns() {
 
 		UA_DOUT(3, 9, "tag " << i << " : tlCorner/" << tlCorner.X << "," << tlCorner.Y
 				<< "  brCorner/" << brCorner.X << "," << brCorner.Y);
-
-		if (tlCorner.X == 669) {
-			UA_DOUT(3, 1, "here");
-		}
 
 		for (unsigned c = 0, cn = colBinRegions.size(); c < cn; ++c) {
 			BinRegion & bin = *colBinRegions[c];
