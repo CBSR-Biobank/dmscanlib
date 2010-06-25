@@ -21,10 +21,6 @@
 #include <cmath>
 
 
-
-
-
-
 #if defined(USE_NVWA)
 #   include "debug_new.h"
 #endif
@@ -147,11 +143,10 @@ vector<CvRect> getTubeBlobs(IplImage *original,int threshold, int blobsize, int 
 		box.y = box.y < 0 ? 0 : box.y;
 
 		if(box.x + box.width >= filtered->width)
-			box.width = (filtered->width-1)-box.x;
+			box.width = (filtered->width - box.x) - 1;
 
 		if(box.y + box.height >= filtered->height)
-			box.height = (filtered->height-1)-box.y;
-
+			box.height = (filtered->height - box.y) - 1;
 
 		blobVector.push_back(box);
 	}
@@ -162,17 +157,46 @@ vector<CvRect> getTubeBlobs(IplImage *original,int threshold, int blobsize, int 
 	return blobVector;
 }
 
+/*
+		 SYSTEMTIME systemTime;
+		 FILETIME fileTime;
+		 ULARGE_INTEGER uli,uli2;
 
+		 GetSystemTime( &systemTime );
+		 SystemTimeToFileTime( &systemTime, &fileTime );
+		 
+		 uli.LowPart = fileTime.dwLowDateTime;
+		 uli.HighPart = fileTime.dwHighDateTime;
+
+		 ULONGLONG systemTimeIn_ms( uli.QuadPart/10000 );
+*/
+/*
+
+		 GetSystemTime( &systemTime );
+		 SystemTimeToFileTime( &systemTime, &fileTime );
+		 uli2.LowPart = fileTime.dwLowDateTime;
+		 uli2.HighPart = fileTime.dwHighDateTime;
+
+		 ULONGLONG systemTimeIn_ms_2( uli2.QuadPart/10000 );
+
+		 std::cout << "Time taken: " << systemTimeIn_ms_2-systemTimeIn_ms << "\n";
+	*/
 
 Decoder::ProcessResult Decoder::superProcessImageRegions(Dib & dib,IplImage *opencvImg, vector<vector<string> > & cellsRef, bool matrical) {
 	Dib tmp;
-
+	Dib blobRegions(dib);
+	RgbQuad white(255,255,255);
 	vector<CvRect> blobVector;
+	
+	#ifdef _DEBUG
+		char * buffer = new char[255];
+		int blobsBefore = 0;
+	#endif
 
 	if(!matrical){
 		switch(dib.getDpi()){
 			case 600:
-				blobVector = getTubeBlobs(opencvImg,54,2400,4,14);
+				blobVector = getTubeBlobs(opencvImg,54,2400,4,5);
 				break;
 
 			case 400:
@@ -200,68 +224,51 @@ Decoder::ProcessResult Decoder::superProcessImageRegions(Dib & dib,IplImage *ope
 
 			case 300:
 			default:
-				blobVector = getTubeBlobs(opencvImg,110,2000,8,-3);
+				blobVector = getTubeBlobs(opencvImg,110,2000,8,-4);
 				break;
 		}
 		
 	}
 	UA_DOUT(3, 5, "getTubeBlobs found: " << blobVector.size() << " blobs.");
 
-	#ifdef _DEBUG
-	Dib blobRegions(dib);
-	RgbQuad white(255,255,255);
-	#endif
-
-	//char * buffer = new char[255];
-
 	for (int i =0 ;i<(int)blobVector.size();i++){
 
 		tmp.crop(dib,blobVector[i].x,blobVector[i].y,blobVector[i].x+blobVector[i].width,blobVector[i].y+blobVector[i].height);
 
-/*
-		 SYSTEMTIME systemTime;
-		 FILETIME fileTime;
-		 ULARGE_INTEGER uli,uli2;
+		#ifdef _DEBUG
+			blobsBefore = barcodeInfos.size();
+		#endif
 
-		 GetSystemTime( &systemTime );
-		 SystemTimeToFileTime( &systemTime, &fileTime );
-		 
-		 uli.LowPart = fileTime.dwLowDateTime;
-		 uli.HighPart = fileTime.dwHighDateTime;
+		processImage(tmp,blobVector[i]);
 
-		 ULONGLONG systemTimeIn_ms( uli.QuadPart/10000 );
-*/
-		 processImage(tmp,blobVector[i]);
-		 /*
+		
+		#ifdef _DEBUG
+			if(blobsBefore == barcodeInfos.size()){
+				sprintf(buffer,"bad_%2i.bmp",i);
+				tmp.writeToFile(buffer);
+			}
+			
+			blobsBefore = barcodeInfos.size();
+		#endif
 
-		 GetSystemTime( &systemTime );
-		 SystemTimeToFileTime( &systemTime, &fileTime );
-		 uli2.LowPart = fileTime.dwLowDateTime;
-		 uli2.HighPart = fileTime.dwHighDateTime;
-
-		 ULONGLONG systemTimeIn_ms_2( uli2.QuadPart/10000 );
-
-		 std::cout << "Time taken: " << systemTimeIn_ms_2-systemTimeIn_ms << "\n";
-	*/
-		//sprintf(buffer,"unscanned/%i.bmp",i);
-		//tmp.writeToFile(buffer);
 		blobRegions.rectangle(blobVector[i].x,blobVector[i].y,blobVector[i].width,blobVector[i].height,white);
+		
 		UA_DOUT(3, 9, "blob: " << blobVector[i].x << ", " << 
 								 blobVector[i].y << ", " << 
 								 blobVector[i].width << ", " << 
 								 blobVector[i].height);
+		
 	}
-	//delete [] buffer;
-
+	#ifdef _DEBUG
+		delete [] buffer;
+	#endif
 
 	if(blobVector.size() == 0){
 		return IMG_INVALID; 
 	}
 
-	#ifdef _DEBUG
 	blobRegions.writeToFile("blobRegions.bmp");
-	#endif
-	
+
 	this->width = dib.getWidth();
 	this->height = dib.getHeight();
 	
@@ -282,6 +289,10 @@ bool Decoder::decode(DmtxDecode *& dec, unsigned attempts,
 	DmtxRegion * reg = NULL;
 	BarcodeInfo * info = NULL;
 
+	/*
+	dmtxRegionFindNext is by far the most expensive function in this program.
+	the best way to improve performance is to reduce the lookup time as much as posible.
+	*/
 	reg = dmtxRegionFindNext(dec, NULL);
 	if (reg == NULL)
 		return false;
@@ -300,7 +311,7 @@ bool Decoder::decode(DmtxDecode *& dec, unsigned attempts,
 		DmtxPixelLoc & tlCorner = info->getTopLeftCorner();
 		DmtxPixelLoc & brCorner = info->getBotRightCorner();
 
-		UA_DOUT(3, 5, "message " << barcodeInfos.size() - 1
+		UA_DOUT(3, 8, "message " << barcodeInfos.size() - 1
 				<< ": " << info->getMsg()
 				<< " : tlCorner/" << tlCorner.X << "," << tlCorner.Y
 				<< "  brCorner/" << brCorner.X << "," << brCorner.Y);
@@ -319,7 +330,7 @@ bool Decoder::processImage(Dib & dib, CvRect croppedOffset) {
 	DmtxImage * image = createDmtxImageFromDib(dib);
 	DmtxDecode * dec = NULL;
 
-	UA_DOUT(3, 5, "processImage: image width/" << width
+	UA_DOUT(3, 7, "processImage: image width/" << width
 			<< " image height/" << height
 			<< " row padding/" << dmtxImageGetProp(image, DmtxPropRowPadBytes)
 			<< " image bits per pixel/"
@@ -349,7 +360,7 @@ bool Decoder::processImage(Dib & dib, CvRect croppedOffset) {
 		if (!decode(dec, 1, barcodeInfos,croppedOffset)) {
 			break;
 		}
-		UA_DOUT(3, 5, "retrieved message from region " << regionCount++);
+		UA_DOUT(3, 7, "retrieved message from region " << regionCount++);
 	}
 
 	
@@ -599,7 +610,7 @@ Decoder::ProcessResult Decoder::calculateSlots(double dpi) {
 			interval = 0;
 			for (unsigned i = 1; i < 12; ++i) {
 				double diff = abs(dist - i * cellDistance);
-				UA_DOUT(3, 5, "col region " << c << "-" << c - 1 << " distance/"
+				UA_DOUT(3, 8, "col region " << c << "-" << c - 1 << " distance/"
 						<< dist << " diff/" << diff << " inteval/" << i);
 				if (diff < cellDistError) {
 					interval = i;
@@ -611,7 +622,7 @@ Decoder::ProcessResult Decoder::calculateSlots(double dpi) {
 				return POS_CALC_ERROR;
 			}
 
-			UA_DOUT(3, 5, "col region " << c << "-" << c - 1 << " distance/"
+			UA_DOUT(3,8, "col region " << c << "-" << c - 1 << " distance/"
 					<< dist << " inteval/" << interval);
 
 			region1.setId(region2.getId() + interval);
@@ -774,10 +785,10 @@ void Decoder::imageShowBarcodes(Dib & dib, bool regions) {
 	UA_DOUT(3, 3, "marking tags ");
 
 	RgbQuad quadWhite(255, 255, 255); // change to white (shows up better in grayscale)
-	RgbQuad quadGreen(0, 255, 0); // change to white (shows up better in grayscale)
+	RgbQuad quadPink(255, 0, 255); // change to white (shows up better in grayscale)
 	RgbQuad quadRed(255, 0, 0);
 
-	RgbQuad & highlightQuad = (dib.getBitsPerPixel() == 8 ? quadWhite : quadGreen);
+	RgbQuad & highlightQuad = (dib.getBitsPerPixel() == 8 ? quadWhite : quadPink);
 
 	for (unsigned i = 0, n = barcodeInfos.size(); i < n; ++i) {
 		BarcodeInfo & info = *barcodeInfos[i];

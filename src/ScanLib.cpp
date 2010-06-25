@@ -171,9 +171,9 @@ int slScanImage(unsigned verbose, unsigned dpi, int brightness, int contrast,
 int slSuperDecodeCommon(unsigned plateNum, Dib & dib, Decoder & decoder,
 		const char * markedDibFilename, vector<vector<string> > & cellsRef) {
 	
-	UA_DOUT(1, 6, "called slSuperDecodeCommon");
+	UA_DOUT(1, 2, "Running slSuperDecodeCommon");
 
-	bool matrical = true;
+	bool matrical = false;
 
 	if(matrical){
 		UA_DOUT(1, 4, "DecodeCommon: matrical mode is set");

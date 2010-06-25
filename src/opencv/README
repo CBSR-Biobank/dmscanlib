@@ -1,0 +1,10 @@
+OpenCV2.1
+=========
+How to compile.
+
+Run "cmake C:/opencv2.1"
+
+Make sure MSVC 2010 release configuration has Runtime Library set to Multi-threaded (/MT).
+
+Goto src/cxcore and compile INSTALL.vcxproj
+Goto src/cv and compile INSTALL.vcxproj
