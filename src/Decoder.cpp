@@ -13,6 +13,8 @@
 #include "BarcodeInfo.h"
 #include "BinRegion.h"
 
+#include <time.h>
+
 #include <iostream>
 #include <math.h>
 #include <string>
@@ -183,9 +185,6 @@ vector<CvRect> getTubeBlobs(IplImage *original,int threshold, int blobsize, int 
 	*/
 
 Decoder::ProcessResult Decoder::superProcessImageRegions(Dib & dib,IplImage *opencvImg, vector<vector<string> > & cellsRef, bool matrical) {
-	Dib tmp;
-	Dib blobRegions(dib);
-	RgbQuad white(255,255,255);
 	vector<CvRect> blobVector;
 	
 	#ifdef _DEBUG
@@ -231,43 +230,67 @@ Decoder::ProcessResult Decoder::superProcessImageRegions(Dib & dib,IplImage *ope
 	}
 	UA_DOUT(3, 5, "getTubeBlobs found: " << blobVector.size() << " blobs.");
 
+	/*---Threading----*/
+	HANDLE hBarcodeInfoMutex = CreateMutex( NULL, FALSE, NULL );
+	HANDLE hThreadCountMutex = CreateMutex( NULL, FALSE, NULL );
+	unsigned threadCount = 0;
+	/*---Threading----*/
+
 	for (int i =0 ;i<(int)blobVector.size();i++){
 
-		tmp.crop(dib,blobVector[i].x,blobVector[i].y,blobVector[i].x+blobVector[i].width,blobVector[i].y+blobVector[i].height);
+		/*---Threading----*/
+		WaitForSingleObject( hThreadCountMutex, INFINITE );
 
-		#ifdef _DEBUG
-			blobsBefore = barcodeInfos.size();
-		#endif
+		while(threadCount >= 4){
+			ReleaseMutex( hThreadCountMutex );
+			Sleep( 10 );
+			WaitForSingleObject( hThreadCountMutex, INFINITE );
+		}
 
-		processImage(tmp,blobVector[i]);
+		WaitForSingleObject( hBarcodeInfoMutex, INFINITE );
 
+		Dib * tmp = new Dib;
+		tmp->crop(dib,blobVector[i].x,blobVector[i].y,blobVector[i].x+blobVector[i].width,blobVector[i].y+blobVector[i].height);
 		
-		#ifdef _DEBUG
-			if(blobsBefore == barcodeInfos.size()){
-				sprintf(buffer,"bad_%2i.bmp",i);
-				tmp.writeToFile(buffer);
-			}
-			
-			blobsBefore = barcodeInfos.size();
-		#endif
+		struct processImageParams * pig = new struct processImageParams;
+		pig->scanGap = this->scanGap;
+		pig->squareDev = this->squareDev;
+		pig->edgeThresh = this->edgeThresh;
+		pig->corrections = this->corrections;
+		pig->croppedOffset = blobVector[i];
+		pig->hBarcodeInfoMutex = &hBarcodeInfoMutex;
+		pig->hThreadCountMutex = &hThreadCountMutex;
+		pig->dib = tmp;
+		pig->barcodeInfo = &this->barcodeInfos;
+		pig->threadCount = &threadCount;
 
-		blobRegions.rectangle(blobVector[i].x,blobVector[i].y,blobVector[i].width,blobVector[i].height,white);
-		
-		UA_DOUT(3, 9, "blob: " << blobVector[i].x << ", " << 
-								 blobVector[i].y << ", " << 
-								 blobVector[i].width << ", " << 
-								 blobVector[i].height);
-		
+		++threadCount;
+		_beginthread(superProcessImage,0,(void *)pig);
+
+		ReleaseMutex( hBarcodeInfoMutex );
+		ReleaseMutex( hThreadCountMutex );
+
+		/*---Threading----*/
+
 	}
-	#ifdef _DEBUG
-		delete [] buffer;
-	#endif
+	/*---Threading----*/
+
+	WaitForSingleObject( hThreadCountMutex, INFINITE );
+	while(threadCount > 0){
+			ReleaseMutex( hThreadCountMutex );
+			Sleep( 50 );
+			WaitForSingleObject( hThreadCountMutex, INFINITE );
+	}
+	ReleaseMutex( hThreadCountMutex );
+
+	
+	CloseHandle(hBarcodeInfoMutex);
+	CloseHandle(hThreadCountMutex);
+	/*---Threading----*/
 
 	if(blobVector.size() == 0){
 		return IMG_INVALID; 
 	}
-
-	blobRegions.writeToFile("blobRegions.bmp");
 
 	this->width = dib.getWidth();
 	this->height = dib.getHeight();
@@ -283,6 +306,8 @@ Decoder::ProcessResult Decoder::superProcessImageRegions(Dib & dib,IplImage *ope
 
 	return OK;
 }
+
+
 
 bool Decoder::decode(DmtxDecode *& dec, unsigned attempts,
 		vector<BarcodeInfo *> & barcodeInfos, CvRect croppedOffset) {
@@ -320,6 +345,136 @@ bool Decoder::decode(DmtxDecode *& dec, unsigned attempts,
 	}
 	dmtxRegionDestroy(&reg);
 	return true;
+}
+
+DmtxImage * superCreateDmtxImageFromDib(Dib & dib) {
+	int pack = DmtxPackCustom;
+	unsigned padding = dib.getRowPadBytes();
+
+	switch (dib.getBitsPerPixel()) {
+	case 8:
+		pack = DmtxPack8bppK;
+		break;
+	case 24:
+		pack = DmtxPack24bppRGB;
+		break;
+	case 32:
+		pack = DmtxPack32bppXRGB;
+		break;
+	}
+
+	DmtxImage * image = dmtxImageCreate(dib.getPixelBuffer(), dib.getWidth(),
+			dib.getHeight(), pack);
+
+	//set the properties (pad bytes, flip)
+	dmtxImageSetProp(image, DmtxPropRowPadBytes, padding);
+	dmtxImageSetProp(image, DmtxPropImageFlip, DmtxFlipY); // DIBs are flipped in Y
+	return image;
+}
+
+bool superDecode(DmtxDecode *& dec, unsigned attempts,
+		vector<BarcodeInfo *> & barcodeInfos, CvRect croppedOffset, unsigned corrections) {
+	DmtxRegion * reg = NULL;
+	BarcodeInfo * info = NULL;
+
+
+	reg = dmtxRegionFindNext(dec, NULL);
+	if (reg == NULL)
+		return false;
+
+	DmtxMessage * msg = dmtxDecodeMatrixRegion(dec, reg, corrections);
+	if (msg != NULL) {
+		info = new BarcodeInfo(dec, reg, msg);
+		UA_ASSERT_NOT_NULL(info);
+
+		if(croppedOffset.width !=0 && croppedOffset.height !=0)
+			info->alignCoordinates(croppedOffset.x,croppedOffset.y);
+
+		barcodeInfos.push_back(info);
+
+		DmtxPixelLoc & tlCorner = info->getTopLeftCorner();
+		DmtxPixelLoc & brCorner = info->getBotRightCorner();
+
+		UA_DOUT(3, 8, "message " << barcodeInfos.size() - 1
+				<< ": " << info->getMsg()
+				<< " : tlCorner/" << tlCorner.X << "," << tlCorner.Y
+				<< "  brCorner/" << brCorner.X << "," << brCorner.Y);
+		dmtxMessageDestroy(&msg);
+	}
+	dmtxRegionDestroy(&reg);
+	return true;
+}
+
+
+
+void superProcessImage(void * parameters) {
+
+	struct processImageParams * pig = (struct processImageParams *)parameters;
+
+	vector<BarcodeInfo *> tempBufferInfo;
+	unsigned width,height,dpi;
+
+	height = pig->dib->getHeight();
+	width = pig->dib->getWidth();
+	dpi = pig->dib->getDpi();
+
+	DmtxImage * image = superCreateDmtxImageFromDib(*(pig->dib));
+
+	DmtxDecode * dec = NULL;
+
+	UA_DOUT(3, 7, "processImage: image width/" << width
+			<< " image height/" << height
+			<< " row padding/" << dmtxImageGetProp(image, DmtxPropRowPadBytes)
+			<< " image bits per pixel/"
+			<< dmtxImageGetProp(image, DmtxPropBitsPerPixel)
+			<< " image row size bytes/"
+			<< dmtxImageGetProp(image, DmtxPropRowSizeBytes));
+
+	dec = dmtxDecodeCreate(image, 1);
+	UA_ASSERT_NOT_NULL(dec);
+
+	// slightly smaller than the new tube edge
+	int minEdgeSize = static_cast<unsigned> (0.08 * dpi);
+
+	// slightly bigger than the Nunc edge
+	int maxEdgeSize = static_cast<unsigned> (0.18 * dpi);
+
+	dmtxDecodeSetProp(dec, DmtxPropEdgeMin, minEdgeSize);
+	dmtxDecodeSetProp(dec, DmtxPropEdgeMax, maxEdgeSize);
+	dmtxDecodeSetProp(dec, DmtxPropSymbolSize, DmtxSymbolSquareAuto);
+	dmtxDecodeSetProp(dec, DmtxPropScanGap, static_cast<unsigned> (pig->scanGap* dpi));
+	dmtxDecodeSetProp(dec, DmtxPropSquareDevn, pig->squareDev);
+	dmtxDecodeSetProp(dec, DmtxPropEdgeThresh, pig->edgeThresh);
+
+	unsigned regionCount = 0;
+	while (1) {
+		if (!superDecode(dec, 1, tempBufferInfo,pig->croppedOffset,pig->corrections)) {
+			break;
+		}
+		UA_DOUT(3, 7, "retrieved message from region " << regionCount++);
+	}
+	
+	dmtxDecodeDestroy(&dec);
+	dmtxImageDestroy(&image);
+
+	if (tempBufferInfo.size() == 0) {
+		UA_DOUT(3, 1, "processImage: no barcodes found");
+	}
+	else{
+		for(unsigned j=0; j < tempBufferInfo.size(); j++){
+			WaitForSingleObject( pig->hBarcodeInfoMutex, INFINITE );
+			pig->barcodeInfo->push_back(tempBufferInfo[j]);
+			ReleaseMutex( pig->hBarcodeInfoMutex );
+		}
+	}
+	WaitForSingleObject( pig->hThreadCountMutex, INFINITE );
+	*(pig->threadCount) = *(pig->threadCount) - 1 ;
+	ReleaseMutex( pig->hThreadCountMutex);
+
+	delete pig->dib;
+	delete pig;
+
+	_endthread();
 }
 
 bool Decoder::processImage(Dib & dib, CvRect croppedOffset) {
@@ -364,7 +519,7 @@ bool Decoder::processImage(Dib & dib, CvRect croppedOffset) {
 	}
 
 	
-	if(croppedOffset.width !=0 && croppedOffset.height !=0){
+	if(croppedOffset.width ==0 && croppedOffset.height ==0){
 		// save image to a PNM file
 		UA_DEBUG(
 				FILE * fh;
@@ -382,7 +537,6 @@ bool Decoder::processImage(Dib & dib, CvRect croppedOffset) {
 		);
 	}
 	
-
 	dmtxDecodeDestroy(&dec);
 	dmtxImageDestroy(&image);
 

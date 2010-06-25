@@ -15,6 +15,11 @@
 #include <vector>
 #include <string>
 
+/*---thread---*/
+#include <windows.h>
+#include <process.h>
+/*---thread---*/
+
 using namespace std;
 
 class Dib;
@@ -77,5 +82,25 @@ protected:
 	bool decode(DmtxDecode *& dec, unsigned attempts,
 			vector<BarcodeInfo *> & barcodeInfos, CvRect croppedOffset);
 };
+
+struct processImageParams{
+	vector<BarcodeInfo *> * barcodeInfo;
+	unsigned * threadCount;
+	HANDLE * hBarcodeInfoMutex;
+	HANDLE * hThreadCountMutex;
+	Dib * dib;
+	
+	CvRect croppedOffset;
+	double scanGap;
+	unsigned squareDev;
+	unsigned edgeThresh;
+	unsigned corrections;
+};
+
+
+
+void superProcessImage(void * param);
+bool superDecode(DmtxDecode *& dec, unsigned attempts,
+		vector<BarcodeInfo *> & barcodeInfos, CvRect croppedOffset, unsigned corrections);
 
 #endif /* DECODER_H_ */

@@ -74,10 +74,12 @@ dmtxRegionDestroy(DmtxRegion **reg)
  * @param  timeout Pointer to timeout time (NULL if none)
  * @return Detected region (if found)
  */
+
 #ifndef CUSTOM_REGIONFINDNEXT
 extern DmtxRegion *
 dmtxRegionFindNext(DmtxDecode *dec, DmtxTime *timeout)
 {
+
    int locStatus;
    DmtxPixelLoc loc;
    DmtxRegion   *reg;

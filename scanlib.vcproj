@@ -42,7 +42,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories=".\src\cvblob;.\src\opencv\include;src;src/libdmtx;src/loki;src/utils;&quot;$(JAVA_HOME)\include&quot;;&quot;$(JAVA_HOME)\include\win32&quot;"
+				AdditionalIncludeDirectories=".\src\cvblob;.\src\boost;.\src\opencv\include;src;src/libdmtx;src/loki;src/utils;&quot;$(JAVA_HOME)\include&quot;;&quot;$(JAVA_HOME)\include\win32&quot;"
 				PreprocessorDefinitions="_VISUALC_;WIN32;_DEBUG;_CONSOLE;UA_LOGGER;STANDALONE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -359,6 +359,10 @@
 			</File>
 			<File
 				RelativePath=".\src\BinRegion.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\boost\thread\detail\config.hpp"
 				>
 			</File>
 			<File
