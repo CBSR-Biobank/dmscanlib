@@ -315,7 +315,7 @@ void contourTracing( IplImage *image,
 	}
 
 	// add chain code to current contour
-	currentBlobcontour->AddChainCode(movement);
+	currentBlobcontour->AddChainCode((unsigned char)movement);
 	
 	// assign label to next point 
 	ASSIGN_LABEL( tsecond, labels, image->width, label );
@@ -343,7 +343,7 @@ void contourTracing( IplImage *image,
 		ASSIGN_LABEL( tnext, labels, image->width, label );
 
 		// add chain code to current contour
-		currentBlobcontour->AddChainCode(movement);
+		currentBlobcontour->AddChainCode((unsigned char)movement);
 	}
 
 }

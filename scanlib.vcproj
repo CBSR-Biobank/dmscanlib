@@ -151,7 +151,7 @@
 				LinkIncremental="2"
 				AdditionalLibraryDirectories=".\src\cvblob\lib;.\src\opencv\lib"
 				IgnoreAllDefaultLibraries="false"
-				IgnoreDefaultLibraryNames=""
+				IgnoreDefaultLibraryNames="libcmt.lib"
 				ModuleDefinitionFile="scanlib.def"
 				GenerateDebugInformation="true"
 				AssemblyDebug="1"

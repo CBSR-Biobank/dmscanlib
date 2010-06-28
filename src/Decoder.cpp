@@ -125,6 +125,7 @@ vector<CvRect> getTubeBlobs(IplImage *original,int threshold, int blobsize, int 
 
 	blobs = CBlobResult( originalThr, NULL, 0 );
 	blobs.Filter( blobs, B_EXCLUDE, CBlobGetArea(), B_LESS, blobsize );
+	
 
 	for (int i = 0; i < blobs.GetNumBlobs(); i++ )
 	{
@@ -152,6 +153,7 @@ vector<CvRect> getTubeBlobs(IplImage *original,int threshold, int blobsize, int 
 
 		blobVector.push_back(box);
 	}
+	blobs.ClearBlobs();
 	
 	cvReleaseImage( &originalThr );
 	cvReleaseImage( &filtered );
@@ -159,34 +161,11 @@ vector<CvRect> getTubeBlobs(IplImage *original,int threshold, int blobsize, int 
 	return blobVector;
 }
 
-/*
-		 SYSTEMTIME systemTime;
-		 FILETIME fileTime;
-		 ULARGE_INTEGER uli,uli2;
-
-		 GetSystemTime( &systemTime );
-		 SystemTimeToFileTime( &systemTime, &fileTime );
-		 
-		 uli.LowPart = fileTime.dwLowDateTime;
-		 uli.HighPart = fileTime.dwHighDateTime;
-
-		 ULONGLONG systemTimeIn_ms( uli.QuadPart/10000 );
-*/
-/*
-
-		 GetSystemTime( &systemTime );
-		 SystemTimeToFileTime( &systemTime, &fileTime );
-		 uli2.LowPart = fileTime.dwLowDateTime;
-		 uli2.HighPart = fileTime.dwHighDateTime;
-
-		 ULONGLONG systemTimeIn_ms_2( uli2.QuadPart/10000 );
-
-		 std::cout << "Time taken: " << systemTimeIn_ms_2-systemTimeIn_ms << "\n";
-	*/
-
-
-#define NUM_THREADS 16
+#define THREAD_NUM 16
 #define THREAD_TIMEOUT_SEC 5
+
+#define PALLET_BUFFER_SIZE 128
+#define BARCODE_BUFFER_SIZE 20
 
 Decoder::ProcessResult Decoder::superProcessImageRegions(Dib & dib,IplImage *opencvImg, vector<vector<string> > & cellsRef, bool matrical) {
 	vector<CvRect> blobVector;
@@ -195,7 +174,7 @@ Decoder::ProcessResult Decoder::superProcessImageRegions(Dib & dib,IplImage *ope
 	HANDLE hBarcodeInfoMutex = CreateMutex( NULL, FALSE, NULL );
 	HANDLE hThreadCountMutex = CreateMutex( NULL, FALSE, NULL );
 	unsigned threadCount = 0;
-	BarcodeInfo ** barcodeArray = new BarcodeInfo* [256];
+	BarcodeInfo ** barcodeArray = new BarcodeInfo* [PALLET_BUFFER_SIZE];
 	unsigned barcodeArrayIt = 0;
 	time_t timeStart,timeEnd;
 	/*---Threading----*/
@@ -243,7 +222,7 @@ Decoder::ProcessResult Decoder::superProcessImageRegions(Dib & dib,IplImage *ope
 		/*---Threading----*/
 		time(&timeStart);
 		WaitForSingleObject( hThreadCountMutex, INFINITE );
-		while(threadCount >= NUM_THREADS){
+		while(threadCount >= THREAD_NUM){
 
 				ReleaseMutex( hThreadCountMutex );
 				Sleep(5);
@@ -328,8 +307,6 @@ Decoder::ProcessResult Decoder::superProcessImageRegions(Dib & dib,IplImage *ope
 
 	return OK;
 }
-
-
 
 bool Decoder::decode(DmtxDecode *& dec, unsigned attempts,
 		vector<BarcodeInfo *> & barcodeInfos, CvRect croppedOffset) {
@@ -426,7 +403,7 @@ bool superDecode(DmtxDecode *& dec, unsigned attempts,
 	return true;
 }
 
-#define BARCODE_BUFFER_SIZE 20
+
 
 void superProcessImage(void * parameters) {
 
