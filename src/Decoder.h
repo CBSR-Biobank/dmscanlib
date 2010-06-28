@@ -67,8 +67,6 @@ protected:
 	vector<BinRegion *>   colBinRegions;
 	vector<vector<string> > cells;
 
-	
-
 	unsigned char * imageBuf;
 
 	void clearResults();
@@ -102,6 +100,6 @@ struct processImageParams{
 
 void superProcessImage(void * param);
 bool superDecode(DmtxDecode *& dec, unsigned attempts,
-		vector<BarcodeInfo *> & barcodeInfos, CvRect croppedOffset, unsigned corrections);
+		BarcodeInfo ** barcodeInfos,unsigned * barcodeInfosIt, CvRect croppedOffset, unsigned corrections);
 
 #endif /* DECODER_H_ */
