@@ -185,16 +185,20 @@ vector<CvRect> getTubeBlobs(IplImage *original,int threshold, int blobsize, int 
 	*/
 
 
-#define NUM_THREADS 1
+#define NUM_THREADS 16
 #define THREAD_TIMEOUT_SEC 5
 
 Decoder::ProcessResult Decoder::superProcessImageRegions(Dib & dib,IplImage *opencvImg, vector<vector<string> > & cellsRef, bool matrical) {
 	vector<CvRect> blobVector;
-	
-	#ifdef _DEBUG
-		char * buffer = new char[255];
-		int blobsBefore = 0;
-	#endif
+
+	/*---Threading----*/
+	HANDLE hBarcodeInfoMutex = CreateMutex( NULL, FALSE, NULL );
+	HANDLE hThreadCountMutex = CreateMutex( NULL, FALSE, NULL );
+	unsigned threadCount = 0;
+	BarcodeInfo ** barcodeArray = new BarcodeInfo* [256];
+	unsigned barcodeArrayIt = 0;
+	time_t timeStart,timeEnd;
+	/*---Threading----*/
 
 	if(!matrical){
 		switch(dib.getDpi()){
@@ -233,17 +237,6 @@ Decoder::ProcessResult Decoder::superProcessImageRegions(Dib & dib,IplImage *ope
 		
 	}
 	UA_DOUT(3, 5, "getTubeBlobs found: " << blobVector.size() << " blobs.");
-
-	/*---Threading----*/
-	HANDLE hBarcodeInfoMutex = CreateMutex( NULL, FALSE, NULL );
-	HANDLE hThreadCountMutex = CreateMutex( NULL, FALSE, NULL );
-	unsigned threadCount = 0;
-	BarcodeInfo ** barcodeArray = new BarcodeInfo* [256];
-	unsigned barcodeArrayIt = 0;
-	time_t timeStart,timeEnd;
-
-
-	/*---Threading----*/
 
 	for (int i =0 ;i<(int)blobVector.size();i++){
 
