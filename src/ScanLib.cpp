@@ -168,10 +168,10 @@ int slScanImage(unsigned verbose, unsigned dpi, int brightness, int contrast,
 }
 
 
-int slSuperDecodeCommon(unsigned plateNum, Dib & dib, Decoder & decoder,
-		const char * markedDibFilename, vector<vector<string> > & cellsRef) {
+int slDecodeCommonCv(unsigned plateNum, Dib & dib, Decoder & decoder,
+		const char * markedDibFilename, vector<vector<string> > & cellsRef, bool threaded) {
 	
-	UA_DOUT(1, 2, "Running slSuperDecodeCommon");
+	UA_DOUT(1, 2, "Running slDecodeCommonCv");
 
 	bool matrical = false;
 
@@ -189,14 +189,20 @@ int slSuperDecodeCommon(unsigned plateNum, Dib & dib, Decoder & decoder,
 			filteredDib->writeToFile("filtered.bmp");
 
 	);
-
 	
 	IplImage *iplFilteredDib = filteredDib->generateIplImage();
 	UA_ASSERT_NOT_NULL(iplFilteredDib);
 
 	UA_DOUT(1, 7, "generated IplImage from filteredDib");
 
-	Decoder::ProcessResult result = decoder.superProcessImageRegions(*filteredDib,iplFilteredDib, cellsRef,matrical);
+	Decoder::ProcessResult result;
+
+	if(threaded){
+		UA_DOUT(1, 5, "using multithreaded opencv based decoder");
+		result = decoder.processImageRegionsCvThreaded(*filteredDib,iplFilteredDib, cellsRef,matrical);
+	}
+	else
+		result = decoder.processImageRegionsCv(*filteredDib,iplFilteredDib, cellsRef,matrical);
 
 	delete filteredDib;
 	cvReleaseImage(&iplFilteredDib);
@@ -223,7 +229,7 @@ int slSuperDecodeCommon(unsigned plateNum, Dib & dib, Decoder & decoder,
 	// only get here if decoder returned Decoder::OK
 	Util::getTime(endtime);
 	Util::difftiime(starttime, endtime, timediff);
-	UA_DOUT(1, 1, "slSuperDecodeCommon: time taken: " << timediff);
+	UA_DOUT(1, 1, "slDecodeCommonCv: time taken: " << timediff);
 	return SC_SUCCESS;
 }
 
@@ -232,10 +238,20 @@ int slSuperDecodeCommon(unsigned plateNum, Dib & dib, Decoder & decoder,
 int slDecodeCommon(unsigned plateNum, Dib & dib, Decoder & decoder,
 		const char * markedDibFilename, vector<vector<string> > & cellsRef) {
 
+/*
+If you want to use the older dmtx based coding:
+define LEGACY.
 
+If you want to use opencv with threading:
+define THREADED.
+*/
 #ifndef LEGACY
-	return slSuperDecodeCommon(plateNum,dib,decoder,markedDibFilename,cellsRef);
-#endif
+	#if defined(THREADED) && defined(WIN32)
+		return slDecodeCommonCv(plateNum,dib,decoder,markedDibFilename,cellsRef,true);
+	#else
+		return slDecodeCommonCv(plateNum,dib,decoder,markedDibFilename,cellsRef,false);
+	#endif
+#endif 
 
 	UA_DOUT(3,1, "WARNING: LEGACY MODE");
 
@@ -251,8 +267,7 @@ int slDecodeCommon(unsigned plateNum, Dib & dib, Decoder & decoder,
 			grayscaleDib->writeToFile("filtered.bmp");
 	);
 
-	Decoder::ProcessResult result = decoder.processImageRegions(plateNum,
-			*grayscaleDib, cellsRef);
+	Decoder::ProcessResult result = decoder.processImageRegionsDmtx(plateNum,*grayscaleDib, cellsRef);
 
 	if (result == Decoder::OK) {
 		decoder.imageShowBarcodes(*grayscaleDib,1);

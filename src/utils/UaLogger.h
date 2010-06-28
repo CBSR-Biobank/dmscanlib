@@ -163,16 +163,27 @@ namespace ua {
     extern std::ostream cdebug;
 }
 
-#define UA_DOUT(subsys, level, display)                                 \
-    do {                                                                \
-        if (ua::Logger::Instance().isDebug(subsys, level)) {             \
-            ua::cdebug << ua::Logger::Instance().subSysHeaderGet(subsys) \
-                       << " "                                           \
-                       << level                                         \
-                       << " "                                           \
-                       << display << std::endl;                         \
-        }                                                               \
-    }                                                                   \
-    while(0)
+/*
+UA_DOUT is not thread safe.
+*/
+
+#if defined(LEGACY) || !(defined(THREADED) && defined(WIN32))
+	#define UA_DOUT(subsys, level, display)                                 \
+		do {                                                                \
+			if (ua::Logger::Instance().isDebug(subsys, level)) {             \
+				ua::cdebug << ua::Logger::Instance().subSysHeaderGet(subsys) \
+						   << " "                                           \
+						   << level                                         \
+						   << " "                                           \
+						   << display << std::endl;                         \
+			}                                                               \
+		}                                                                   \
+		while(0)
+
+#else
+	#define UA_DOUT(subsys, level, display){}
+#endif
+
+
 
 #endif /* __INC_bkDebug_h */

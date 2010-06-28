@@ -593,8 +593,15 @@ bool TestApp::getCmdOptions(int argc, char ** argv) {
 				}
 				break;
 
+			/*
+			This is not thread safe.
+			*/
 			case OPT_ID_DEBUG_FILE:
-				options.debugfile = true;
+				#ifndef THREADED
+					options.debugfile = true;
+				#else
+					options.debugfile = false;
+				#endif
 				break;
 
 			case OPT_ID_SQUARE_DEV:

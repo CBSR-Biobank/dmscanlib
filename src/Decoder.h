@@ -15,10 +15,10 @@
 #include <list>
 #include <string>
 
-/*---thread---*/
+#ifdef WIN32
 #include <windows.h>
 #include <process.h>
-/*---thread---*/
+#endif
 
 using namespace std;
 
@@ -40,10 +40,9 @@ public:
 		OK
 	} ProcessResult;
 
-	ProcessResult processImageRegions(unsigned plateNum, Dib & dib,
-			vector<vector<string> > & cells);
-	
-	ProcessResult superProcessImageRegions(Dib & dib,IplImage *opencvImg,vector<vector<string> > & cells, bool matrical);
+	ProcessResult processImageRegionsDmtx(unsigned plateNum, Dib & dib,vector<vector<string> > & cells);
+	ProcessResult processImageRegionsCv(Dib & dib,IplImage *opencvImg,vector<vector<string> > & cells, bool matrical);
+	ProcessResult processImageRegionsCvThreaded(Dib & dib,IplImage *opencvImg,vector<vector<string> > & cells, bool matrical);
 
 	void imageShowBarcodes(Dib & dib, bool regions);
 
@@ -71,7 +70,6 @@ protected:
 
 	void clearResults();
 	void messageAdd(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
-	DmtxImage * createDmtxImageFromDib(Dib & dib);
 	void showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
 	bool processImage(Dib & dib, CvRect croppedOffset);
 	void calcRowsAndColumns();
@@ -80,6 +78,8 @@ protected:
 	bool decode(DmtxDecode *& dec, unsigned attempts,
 			vector<BarcodeInfo *> & barcodeInfos, CvRect croppedOffset);
 };
+
+/*----threading----*/
 
 struct processImageParams{
 	BarcodeInfo ** barcodeInfo;
@@ -95,11 +95,15 @@ struct processImageParams{
 	unsigned edgeThresh;
 	unsigned corrections;
 };
+void processImageThreaded(void * param);
+bool decodeThreaded(DmtxDecode *& dec, 
+						 unsigned attempts,
+						 BarcodeInfo ** barcodeInfos,
+						 unsigned * barcodeInfosIt, 
+						 CvRect croppedOffset, 
+						 unsigned corrections);
+DmtxImage * createDmtxImageFromDib(Dib & dib);
+/*----threading----*/
 
-
-
-void superProcessImage(void * param);
-bool superDecode(DmtxDecode *& dec, unsigned attempts,
-		BarcodeInfo ** barcodeInfos,unsigned * barcodeInfosIt, CvRect croppedOffset, unsigned corrections);
 
 #endif /* DECODER_H_ */

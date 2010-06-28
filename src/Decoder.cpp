@@ -34,6 +34,13 @@
 
 using namespace std;
 
+#define THREAD_NUM 16
+#define THREAD_TIMEOUT_SEC 5
+
+#define PALLET_BUFFER_SIZE 128
+#define BARCODE_BUFFER_SIZE 20
+
+
 Decoder::Decoder(double g, unsigned s, unsigned t, unsigned c, double dist) {
 	ua::Logger::Instance().subSysHeaderSet(3, "Decoder");
 	scanGap = g;
@@ -82,32 +89,6 @@ void Decoder::initCells(unsigned maxRows, unsigned maxCols) {
 
 
 
-Decoder::ProcessResult Decoder::processImageRegions(unsigned plateNum,
-		Dib & dib, vector<vector<string> > & cellsRef) {
-
-	CvRect noRect;
-	noRect.height=0;
-	noRect.width =0;
-
-	if (!processImage(dib,noRect))
-		return IMG_INVALID;
-
-	calcRowsAndColumns();
-	Decoder::ProcessResult calcSlotResult = calculateSlots(
-			static_cast<double> (dib.getDpi()));
-	if (calcSlotResult != OK) {
-		return calcSlotResult;
-	}
-	cellsRef = cells;
-	return OK;
-}
-
-void applyPlateFilters(IplImage * img, int rounds){
-	for(int i=0; i < rounds; i++){
-		cvSmooth(img,img,CV_GAUSSIAN,11,11);
-	}
-}
-
 vector<CvRect> getTubeBlobs(IplImage *original,int threshold, int blobsize, int rounds, int border)
 {
 	IplImage* originalThr;
@@ -118,7 +99,12 @@ vector<CvRect> getTubeBlobs(IplImage *original,int threshold, int blobsize, int 
 
 	filtered = cvCreateImage(cvGetSize(original), original->depth,original->nChannels);
 	cvCopy(original, filtered, NULL);
-	applyPlateFilters(filtered,rounds);
+
+	/*---filters---*/
+	for(int i=0; i < rounds; i++){
+		cvSmooth(filtered,filtered,CV_GAUSSIAN,11,11);
+	}
+	/*---filters---*/
 
 	originalThr = cvCreateImage(cvGetSize(filtered), IPL_DEPTH_8U,1);
 	cvThreshold( filtered, originalThr, threshold, 255, CV_THRESH_BINARY );
@@ -161,26 +147,10 @@ vector<CvRect> getTubeBlobs(IplImage *original,int threshold, int blobsize, int 
 	return blobVector;
 }
 
-#define THREAD_NUM 16
-#define THREAD_TIMEOUT_SEC 5
 
-#define PALLET_BUFFER_SIZE 128
-#define BARCODE_BUFFER_SIZE 20
-
-Decoder::ProcessResult Decoder::superProcessImageRegions(Dib & dib,IplImage *opencvImg, vector<vector<string> > & cellsRef, bool matrical) {
-	vector<CvRect> blobVector;
-
-	/*---Threading----*/
-	HANDLE hBarcodeInfoMutex = CreateMutex( NULL, FALSE, NULL );
-	HANDLE hThreadCountMutex = CreateMutex( NULL, FALSE, NULL );
-	unsigned threadCount = 0;
-	BarcodeInfo ** barcodeArray = new BarcodeInfo* [PALLET_BUFFER_SIZE];
-	unsigned barcodeArrayIt = 0;
-	time_t timeStart,timeEnd;
-	/*---Threading----*/
-
+void getTubeBlobsFromDpi(vector<CvRect> & blobVector,IplImage *opencvImg, bool matrical, int dpi){
 	if(!matrical){
-		switch(dib.getDpi()){
+		switch(dpi){
 			case 600:
 				blobVector = getTubeBlobs(opencvImg,54,2400,4,5);
 				break;
@@ -197,9 +167,9 @@ Decoder::ProcessResult Decoder::superProcessImageRegions(Dib & dib,IplImage *ope
 	}
 	// matrical
 	else{
-		UA_DOUT(3, 7, "superProcessImageRegions: matrical mode");
+		UA_DOUT(3, 7, "getTubeBlobsFromDpi: matrical mode");
 
-		switch(dib.getDpi()){
+		switch(dpi){
 			case 600:
 				blobVector = getTubeBlobs(opencvImg,120,5000,10,-10);
 				break;
@@ -215,6 +185,109 @@ Decoder::ProcessResult Decoder::superProcessImageRegions(Dib & dib,IplImage *ope
 		}
 		
 	}
+}
+
+Decoder::ProcessResult Decoder::processImageRegionsDmtx(unsigned plateNum,Dib & dib, vector<vector<string> > & cellsRef) {
+
+	CvRect noRect;
+	noRect.height=0;
+	noRect.width =0;
+
+	if (!processImage(dib,noRect))
+		return IMG_INVALID;
+
+	calcRowsAndColumns();
+	Decoder::ProcessResult calcSlotResult = calculateSlots(
+			static_cast<double> (dib.getDpi()));
+	if (calcSlotResult != OK) {
+		return calcSlotResult;
+	}
+	cellsRef = cells;
+	return OK;
+}
+
+Decoder::ProcessResult Decoder::processImageRegionsCv(Dib & dib,IplImage *opencvImg, vector<vector<string> > & cellsRef, bool matrical) {
+	Dib tmp;
+	Dib blobRegions(dib);
+	RgbQuad white(255,255,255);
+	vector<CvRect> blobVector;
+	
+	#ifdef _DEBUG
+		char * buffer = new char[255];
+		int blobsBefore = 0;
+	#endif
+	getTubeBlobsFromDpi(blobVector,opencvImg,matrical,dib.getDpi());
+
+	UA_DOUT(3, 5, "getTubeBlobs found: " << blobVector.size() << " blobs.");
+
+	for (int i =0 ;i<(int)blobVector.size();i++){
+
+		tmp.crop(dib,blobVector[i].x,blobVector[i].y,blobVector[i].x+blobVector[i].width,blobVector[i].y+blobVector[i].height);
+
+		#ifdef _DEBUG
+			blobsBefore = barcodeInfos.size();
+		#endif
+
+		processImage(tmp,blobVector[i]);
+
+		
+		#ifdef _DEBUG
+			if(blobsBefore == barcodeInfos.size()){
+				sprintf(buffer,"bad_%2i.bmp",i);
+				tmp.writeToFile(buffer);
+			}
+			
+			blobsBefore = barcodeInfos.size();
+		#endif
+
+		blobRegions.rectangle(blobVector[i].x,blobVector[i].y,blobVector[i].width,blobVector[i].height,white);
+		
+		UA_DOUT(3, 9, "blob: " << blobVector[i].x << ", " << 
+								 blobVector[i].y << ", " << 
+								 blobVector[i].width << ", " << 
+								 blobVector[i].height);
+		
+	}
+	#ifdef _DEBUG
+		delete [] buffer;
+	#endif
+
+	if(blobVector.size() == 0){
+		return IMG_INVALID; 
+	}
+
+	blobRegions.writeToFile("blobRegions.bmp");
+
+	this->width = dib.getWidth();
+	this->height = dib.getHeight();
+	
+	calcRowsAndColumns();
+
+	Decoder::ProcessResult calcSlotResult = calculateSlots(static_cast<double> (dib.getDpi()));
+
+	if (calcSlotResult != OK) 
+		return calcSlotResult;
+	
+	cellsRef = this->cells;
+
+	return OK;
+}
+
+
+Decoder::ProcessResult Decoder::processImageRegionsCvThreaded(Dib & dib,IplImage *opencvImg, vector<vector<string> > & cellsRef, bool matrical) {
+	vector<CvRect> blobVector;
+
+	/*---Threading----*/
+	HANDLE hBarcodeInfoMutex = CreateMutex( NULL, FALSE, NULL );
+	HANDLE hThreadCountMutex = CreateMutex( NULL, FALSE, NULL );
+	unsigned threadCount = 0;
+	BarcodeInfo ** barcodeArray = new BarcodeInfo* [PALLET_BUFFER_SIZE];
+	unsigned barcodeArrayIt = 0;
+	time_t timeStart,timeEnd;
+	/*---Threading----*/
+
+	getTubeBlobsFromDpi(blobVector,opencvImg,matrical,dib.getDpi());
+
 	UA_DOUT(3, 5, "getTubeBlobs found: " << blobVector.size() << " blobs.");
 
 	for (int i =0 ;i<(int)blobVector.size();i++){
@@ -254,7 +327,7 @@ Decoder::ProcessResult Decoder::superProcessImageRegions(Dib & dib,IplImage *ope
 		pig->threadCount = &threadCount;
 
 		++threadCount;
-		_beginthread(superProcessImage,0,(void *)pig);
+		_beginthread(processImageThreaded,0,(void *)pig);
 
 		ReleaseMutex( hBarcodeInfoMutex );
 		ReleaseMutex( hThreadCountMutex );
@@ -346,7 +419,7 @@ bool Decoder::decode(DmtxDecode *& dec, unsigned attempts,
 	return true;
 }
 
-DmtxImage * superCreateDmtxImageFromDib(Dib & dib) {
+DmtxImage * createDmtxImageFromDib(Dib & dib) {
 	int pack = DmtxPackCustom;
 	unsigned padding = dib.getRowPadBytes();
 
@@ -371,7 +444,9 @@ DmtxImage * superCreateDmtxImageFromDib(Dib & dib) {
 	return image;
 }
 
-bool superDecode(DmtxDecode *& dec, unsigned attempts,
+
+
+bool decodeThreaded(DmtxDecode *& dec, unsigned attempts,
 		BarcodeInfo ** barcodeInfos,unsigned * barcodeInfosIt, CvRect croppedOffset, unsigned corrections) {
 	DmtxRegion * reg = NULL;
 	BarcodeInfo * info = NULL;
@@ -405,7 +480,7 @@ bool superDecode(DmtxDecode *& dec, unsigned attempts,
 
 
 
-void superProcessImage(void * parameters) {
+void processImageThreaded(void * parameters) {
 
 	struct processImageParams * pig = (struct processImageParams *)parameters;
 
@@ -420,7 +495,7 @@ void superProcessImage(void * parameters) {
 	width = pig->dib->getWidth();
 	dpi = pig->dib->getDpi();
 
-	DmtxImage * image = superCreateDmtxImageFromDib(*(pig->dib));
+	DmtxImage * image = createDmtxImageFromDib(*(pig->dib));
 
 	DmtxDecode * dec = NULL;
 
@@ -450,7 +525,7 @@ void superProcessImage(void * parameters) {
 
 	unsigned regionCount = 0;
 	while (1) {
-		if (!superDecode(dec, 1, tempBufferInfo,&tempBufferInfoIt,pig->croppedOffset,pig->corrections)) {
+		if (!decodeThreaded(dec, 1, tempBufferInfo,&tempBufferInfoIt,pig->croppedOffset,pig->corrections)) {
 			break;
 		}
 		UA_DOUT(3, 7, "retrieved message from region " << regionCount++);
@@ -487,6 +562,7 @@ bool Decoder::processImage(Dib & dib, CvRect croppedOffset) {
 	height = dib.getHeight();
 	width = dib.getWidth();
 	dpi = dib.getDpi();
+
 
 	DmtxImage * image = createDmtxImageFromDib(dib);
 	DmtxDecode * dec = NULL;
@@ -908,34 +984,6 @@ void Decoder::showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg) {
 	fprintf(stdout, "--------------------------------------------------\n");
 }
 
-/*
- *	createDmtxImageFromDib
- *
- */
-DmtxImage * Decoder::createDmtxImageFromDib(Dib & dib) {
-	int pack = DmtxPackCustom;
-	unsigned padding = dib.getRowPadBytes();
-
-	switch (dib.getBitsPerPixel()) {
-	case 8:
-		pack = DmtxPack8bppK;
-		break;
-	case 24:
-		pack = DmtxPack24bppRGB;
-		break;
-	case 32:
-		pack = DmtxPack32bppXRGB;
-		break;
-	}
-
-	DmtxImage * image = dmtxImageCreate(dib.getPixelBuffer(), dib.getWidth(),
-			dib.getHeight(), pack);
-
-	//set the properties (pad bytes, flip)
-	dmtxImageSetProp(image, DmtxPropRowPadBytes, padding);
-	dmtxImageSetProp(image, DmtxPropImageFlip, DmtxFlipY); // DIBs are flipped in Y
-	return image;
-}
 
 void Decoder::imageShowBarcodes(Dib & dib, bool regions) {
 	UA_DOUT(3, 3, "marking tags ");
