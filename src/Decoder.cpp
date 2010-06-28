@@ -185,7 +185,7 @@ vector<CvRect> getTubeBlobs(IplImage *original,int threshold, int blobsize, int 
 	*/
 
 
-#define NUM_THREADS 100
+#define NUM_THREADS 1
 #define THREAD_TIMEOUT_SEC 5
 
 Decoder::ProcessResult Decoder::superProcessImageRegions(Dib & dib,IplImage *opencvImg, vector<vector<string> > & cellsRef, bool matrical) {
@@ -432,6 +432,7 @@ bool superDecode(DmtxDecode *& dec, unsigned attempts,
 	dmtxRegionDestroy(&reg);
 	return true;
 }
+
 #define BARCODE_BUFFER_SIZE 20
 
 void superProcessImage(void * parameters) {
