@@ -173,28 +173,31 @@ int slScanImage(unsigned verbose, unsigned dpi, int brightness, int contrast,
 int slDecodeCommonCv(unsigned plateNum, Dib & dib, Decoder & decoder,
 		const char * markedDibFilename, vector<vector<string> > & cellsRef, bool threaded) {
 	
+	bool matrical = false;
+	Dib * filteredDib;
+	IplImageContainer *iplFilteredDib;
+	Decoder::ProcessResult result;
+
 	UA_DOUT(1, 2, "Running slDecodeCommonCv");
 
-	bool matrical = false;
-
-	if(matrical){
+	if(matrical)
 		UA_DOUT(1, 4, "DecodeCommon: matrical mode is set");
-	}
 
-	Dib * filteredDib = NULL;
+	/*--- apply filters ---*/
 	filteredDib = Dib::convertGrayscale(dib);
 	UA_ASSERT_NOT_NULL(filteredDib);
-
 	filteredDib->tpPresetFilter();
 
-	UA_DEBUG(
-			filteredDib->writeToFile("filtered.bmp");
-	);
-	IplImageContainer *iplFilteredDib = filteredDib->generateIplImage();
+	#ifdef DEBUG
+		filteredDib->writeToFile("filtered.bmp");
+	#endif
+
+
+	/*--- generate ipl equiv ---*/
+	iplFilteredDib = filteredDib->generateIplImage();
 	UA_ASSERT_NOT_NULL(iplFilteredDib);
 	UA_DOUT(1, 7, "generated IplImage from filteredDib");
 
-	Decoder::ProcessResult result;
 
 	if(threaded){
 		UA_DOUT(1, 5, "using multithreaded opencv based decoder");
