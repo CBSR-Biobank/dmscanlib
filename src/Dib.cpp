@@ -67,6 +67,55 @@ Dib::Dib(Dib & src) :
 	memcpy(pixels, src.pixels, infoHeader->imageSize);
 }
 
+Dib::Dib(IplImageContainer & img){
+
+	IplImage * src = img.getIplImage();
+
+	UA_ASSERTS(src->depth == IPL_DEPTH_8U, 
+		"Dib::Dib(IplImage & src) requires an unsigned 8bit image");
+
+	CvMat hdr, *matrix = NULL;
+	/* IplImage saves a flipped image*/
+	cvFlip(src,src,0);
+	matrix = cvGetMat( src, &hdr );
+
+	bytesPerPixel = 1;
+	rowBytes = src->widthStep;
+	rowPaddingBytes = src->widthStep - (src->width * 1);
+
+	fileHeader = NULL;
+	infoHeader = new BitmapInfoHeader;
+
+	infoHeader->size = 40; /* bytes in header should be 40*/
+	infoHeader->width = src->width;
+	infoHeader->height = src->height;
+	infoHeader->planes = 1;
+	infoHeader->bitCount = 8;
+	infoHeader->compression = 0;
+	infoHeader->hPixelsPerMeter = img.getHorizontalResolution();
+	infoHeader->vPixelsPerMeter  = img.getVerticalResolution();
+	infoHeader->numColors = 256;
+	infoHeader->numColorsImp = 0;
+	infoHeader->imageSize = src->imageSize;
+
+	colorPalette = new RgbQuad[256];
+	for (unsigned i = 0; i < 256; ++i) {
+		colorPalette[i].set(i, i, i);
+	}
+
+	/*---------pixels-----------*/
+	isAllocated = true;
+	pixels = new unsigned char[src->imageSize];
+	
+	/*IplImage is already padded*/
+	memcpy(pixels,matrix->data.ptr,src->imageSize); 
+	/*---------pixels-----------*/
+
+	cvFlip(src,src,0);
+}
+
+
+
 Dib::Dib(unsigned rows, unsigned cols, unsigned colorBits) :
 	fileHeader(NULL), colorPalette(NULL) {
 	bytesPerPixel = colorBits >> 3;
@@ -525,7 +574,9 @@ bool Dib::crop(Dib &src, unsigned x0, unsigned y0, unsigned x1, unsigned y1) {
 	return true;
 }
 
-//XXX
+/*
+TODO: copy over file header
+*/
 Dib * Dib::convertGrayscale(Dib & src) {
 	UA_ASSERT(src.getBitsPerPixel() == 24 || src.getBitsPerPixel() == 8);
 
@@ -549,7 +600,6 @@ Dib * Dib::convertGrayscale(Dib & src) {
 		for (unsigned col = 0; col < src.getWidth(); ++col) {
 			dibBuffer->setPixelGrayscale(row, col, src.getPixelGrayscale(row,
 					col));
-			//dibBuffer.setPixelGrayscale(row, col,	src.getPixelAvgGrayscale(row, col));
 		}
 	}
 
@@ -787,7 +837,9 @@ void Dib::histEqualization(Dib & src) {
 
 //http://opencv.willowgarage.com/documentation/c/basic_structures.html
 //cvmat: Matrices are stored row by row. All of the rows are aligned by 4 bytes.
-IplImage*  Dib::generateIplImage(){
+IplImageContainer*  Dib::generateIplImage(){
+
+	IplImageContainer * iplContainer;
 	IplImage* image = NULL;
 	CvMat hdr, *matrix = NULL;
 	unsigned width,height,imgsize;
@@ -808,7 +860,12 @@ IplImage*  Dib::generateIplImage(){
 	memcpy(matrix->data.ptr,this->getPixelBuffer(),imgsize);
 
 	cvFlip(image,image,0);
-	return image;
+
+	iplContainer = new IplImageContainer(NULL);
+	iplContainer->setIplImage(image);
+	iplContainer->setHorizontalResolution(this->infoHeader->hPixelsPerMeter);
+	iplContainer->setVerticalResolution(this->infoHeader->vPixelsPerMeter);
+	return iplContainer;
 }
 
 

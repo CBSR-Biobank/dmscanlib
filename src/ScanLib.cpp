@@ -168,6 +168,8 @@ int slScanImage(unsigned verbose, unsigned dpi, int brightness, int contrast,
 }
 
 
+
+
 int slDecodeCommonCv(unsigned plateNum, Dib & dib, Decoder & decoder,
 		const char * markedDibFilename, vector<vector<string> > & cellsRef, bool threaded) {
 	
@@ -187,25 +189,22 @@ int slDecodeCommonCv(unsigned plateNum, Dib & dib, Decoder & decoder,
 
 	UA_DEBUG(
 			filteredDib->writeToFile("filtered.bmp");
-
 	);
-	
-	IplImage *iplFilteredDib = filteredDib->generateIplImage();
+	IplImageContainer *iplFilteredDib = filteredDib->generateIplImage();
 	UA_ASSERT_NOT_NULL(iplFilteredDib);
-
 	UA_DOUT(1, 7, "generated IplImage from filteredDib");
 
 	Decoder::ProcessResult result;
 
 	if(threaded){
 		UA_DOUT(1, 5, "using multithreaded opencv based decoder");
-		result = decoder.processImageRegionsCvThreaded(*filteredDib,iplFilteredDib, cellsRef,matrical);
+		result = decoder.processImageRegionsCvThreaded(*filteredDib,iplFilteredDib->getIplImage(), cellsRef,matrical);
 	}
 	else
-		result = decoder.processImageRegionsCv(*filteredDib,iplFilteredDib, cellsRef,matrical);
+		result = decoder.processImageRegionsCv(*filteredDib,iplFilteredDib->getIplImage(), cellsRef,matrical);
 
 	delete filteredDib;
-	cvReleaseImage(&iplFilteredDib);
+	delete iplFilteredDib;
 
 	if (result == Decoder::OK) {
 		decoder.imageShowBarcodes(dib,0);

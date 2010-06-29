@@ -304,6 +304,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\IplContainer.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\src\ScanLib.cpp"
 				>
 			</File>
@@ -383,6 +387,10 @@
 			</File>
 			<File
 				RelativePath=".\src\ImageGrabber.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\IplContainer.h"
 				>
 			</File>
 			<File

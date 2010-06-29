@@ -4,10 +4,12 @@
 #include <stdio.h>
 #include "cv.h"
 #include "BlobResult.h"
+#include "IplContainer.h"
 
 #ifdef WIN32
 #include <windows.h>
 #endif
+
 
 /* File information header
  * provides general information about the file
@@ -60,6 +62,7 @@ public:
 
 	Dib();
 	Dib(Dib & src);
+	Dib(IplImageContainer & src);
 	Dib(unsigned rows, unsigned cols, unsigned colorBits);
 	Dib(char * filename);
 	~Dib();
@@ -105,7 +108,7 @@ public:
 	void expandColours(int start, int end);
 	unsigned getDpi();
 
-	IplImage*  generateIplImage();
+	IplImageContainer*  generateIplImage();
 
 private:
 	static const double UNSHARP_RAD;
