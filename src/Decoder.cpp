@@ -284,7 +284,6 @@ Decoder::ProcessResult Decoder::processImageRegionsCvThreaded(Dib & dib,IplImage
 	BarcodeInfo ** barcodeArray = new BarcodeInfo* [PALLET_BUFFER_SIZE];
 	unsigned barcodeArrayIt = 0;
 	time_t timeStart,timeEnd;
-	/*---Threading----*/
 
 	getTubeBlobsFromDpi(blobVector,opencvImg,matrical,dib.getDpi());
 
@@ -332,10 +331,7 @@ Decoder::ProcessResult Decoder::processImageRegionsCvThreaded(Dib & dib,IplImage
 		ReleaseMutex( hBarcodeInfoMutex );
 		ReleaseMutex( hThreadCountMutex );
 
-		/*---Threading----*/
-
 	}
-	/*---Threading----*/
 
 	time(&timeStart);
 	WaitForSingleObject( hThreadCountMutex, INFINITE );
@@ -359,8 +355,6 @@ Decoder::ProcessResult Decoder::processImageRegionsCvThreaded(Dib & dib,IplImage
 		this->barcodeInfos.push_back(barcodeArray[i]);
 	}
 	delete [] barcodeArray;
-
-	/*---Threading----*/
 
 	if(blobVector.size() == 0){
 		return IMG_INVALID; 

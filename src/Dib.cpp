@@ -969,13 +969,15 @@ void Dib::convolve2DSlow(const float(&kernel)[9], int kernelSizeX, int kernelSiz
                         sum += pixels[rowBytes * rowIndex + colIndex] * kernel[kernelSizeX * mm + nn];
                 }
             }
-            buffer[i*rowBytes + j] = (unsigned char)((float)fabs(sum) + 0.5f);
+			if(sum > 0)
+				buffer[i*rowBytes + j] = (unsigned char)(sum + 0.5f);
+			else
+				buffer[i*rowBytes + j] = (unsigned char)(-sum + 0.5f);
         }
     }
 	memcpy(pixels,buffer,infoHeader->imageSize);
 	delete [] buffer;
 }
-
 
 void Dib::gaussianBlur(Dib & src) {
 	UA_ASSERT_NOT_NULL(src.infoHeader);
