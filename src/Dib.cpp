@@ -164,7 +164,10 @@ void Dib::deallocate() {
 	if (fileHeader != NULL) {
 		delete fileHeader;
 	}
-	delete infoHeader;
+	if (infoHeader != NULL) {
+		delete infoHeader;
+	}
+	
 
 	if (colorPalette != NULL) {
 		delete[] colorPalette;

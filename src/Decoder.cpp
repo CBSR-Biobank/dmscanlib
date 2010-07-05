@@ -37,8 +37,8 @@ using namespace std;
 #define THREAD_NUM 16
 #define THREAD_TIMEOUT_SEC 5
 
-#define PALLET_BUFFER_SIZE 128
-#define BARCODE_BUFFER_SIZE 20
+#define PALLET_BUFFER_SIZE 150  /*maximum number of croped pieces taht found barcodes*/
+#define BARCODE_BUFFER_SIZE 100 /*maximum number of barcodes found per cropped image*/
 
 
 Decoder::Decoder(double g, unsigned s, unsigned t, unsigned c, double dist) {
@@ -89,7 +89,7 @@ void Decoder::initCells(unsigned maxRows, unsigned maxCols) {
 
 
 
-vector<CvRect> getTubeBlobs(IplImage *original,int threshold, int blobsize, int rounds, int border)
+vector<CvRect> getTubeBlobs(IplImage *original,int threshold, int blobsize, int blurRounds, int border)
 {
 	IplImage* originalThr;
 	IplImage* filtered;
@@ -101,7 +101,7 @@ vector<CvRect> getTubeBlobs(IplImage *original,int threshold, int blobsize, int 
 	cvCopy(original, filtered, NULL);
 
 	/*---filters---*/
-	for(int i=0; i < rounds; i++){
+	for(int i=0; i < blurRounds; i++){
 		cvSmooth(filtered,filtered,CV_GAUSSIAN,11,11);
 	}
 	/*---filters---*/
@@ -152,7 +152,7 @@ void getTubeBlobsFromDpi(vector<CvRect> & blobVector,IplImage *opencvImg, bool m
 	if(!matrical){
 		switch(dpi){
 			case 600:
-				blobVector = getTubeBlobs(opencvImg,54,2400,4,5);
+				blobVector = getTubeBlobs(opencvImg,54,2400,5,12);
 				break;
 
 			case 400:
@@ -233,7 +233,7 @@ Decoder::ProcessResult Decoder::processImageRegionsCv(Dib & dib,IplImage *opencv
 		
 		#ifdef _DEBUG
 			if(blobsBefore == barcodeInfos.size()){
-				sprintf(buffer,"bad_%2i.bmp",i);
+				sprintf(buffer,"bad_%02i.bmp",i);
 				tmp.writeToFile(buffer);
 			}
 			
@@ -257,6 +257,7 @@ Decoder::ProcessResult Decoder::processImageRegionsCv(Dib & dib,IplImage *opencv
 	}
 
 	blobRegions.writeToFile("blobRegions.bmp");
+
 
 	this->width = dib.getWidth();
 	this->height = dib.getHeight();
@@ -363,6 +364,9 @@ Decoder::ProcessResult Decoder::processImageRegionsCvThreaded(Dib & dib,IplImage
 		if(!barcodeRegistered)
 			this->barcodeInfos.push_back(barcodeArray[i]);
 	}
+
+	int sizer = this->barcodeInfos.size();
+
 	delete [] barcodeArray;
 
 	if(blobVector.size() == 0){
