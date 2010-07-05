@@ -1747,13 +1747,11 @@
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.cpp.linker.base.618033240" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.base">
 								<option id="gnu.cpp.link.option.shared.758833990" name="Shared (-shared)" superClass="gnu.cpp.link.option.shared" value="false" valueType="boolean"/>
-								<option id="gnu.cpp.link.option.libs.219946775" superClass="gnu.cpp.link.option.libs" valueType="libs">
-									<listOptionValue builtIn="false" value="cv210"/>
-									<listOptionValue builtIn="false" value="cxcore210"/>
+								<option id="gnu.cpp.link.option.libs.219946775" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
+									<listOptionValue builtIn="false" value="cv"/>
+									<listOptionValue builtIn="false" value="cvaux"/>
 								</option>
-								<option id="gnu.cpp.link.option.paths.1596644708" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/opencv/lib}&quot;"/>
-								</option>
+								<option id="gnu.cpp.link.option.paths.1596644708" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.711906795" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
