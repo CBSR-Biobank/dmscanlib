@@ -365,8 +365,6 @@ Decoder::ProcessResult Decoder::processImageRegionsCvThreaded(Dib & dib,IplImage
 			this->barcodeInfos.push_back(barcodeArray[i]);
 	}
 
-	int sizer = this->barcodeInfos.size();
-
 	delete [] barcodeArray;
 
 	if(blobVector.size() == 0){
