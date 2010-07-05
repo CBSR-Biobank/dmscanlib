@@ -188,10 +188,10 @@ int slDecodeCommonCv(unsigned plateNum, Dib & dib, Decoder & decoder,
 	UA_ASSERT_NOT_NULL(filteredDib);
 	filteredDib->tpPresetFilter();
 
+
 	#ifdef DEBUG
 		filteredDib->writeToFile("filtered.bmp");
 	#endif
-
 
 	/*--- generate ipl equiv ---*/
 	iplFilteredDib = filteredDib->generateIplImage();
@@ -200,7 +200,7 @@ int slDecodeCommonCv(unsigned plateNum, Dib & dib, Decoder & decoder,
 
 
 	if(threaded){
-		UA_DOUT(1, 5, "using multithreaded opencv based decoder");
+		UA_DOUT(1, 3, "using multithreaded opencv based decoder");
 		result = decoder.processImageRegionsCvThreaded(*filteredDib,iplFilteredDib->getIplImage(), cellsRef,matrical);
 	}
 	else

@@ -107,6 +107,7 @@ public:
 	void unsharp(Dib & src);
 	void expandColours(int start, int end);
 	unsigned getDpi();
+	void convolveTest3x3(const float(&kernel)[9]);
 
 	IplImageContainer*  generateIplImage();
 
