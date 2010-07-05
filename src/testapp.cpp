@@ -18,23 +18,9 @@
 #   endif
 #endif
 
-#include <iostream>
-#include <bitset>
-#include <vector>
-using namespace std;
-
-
-
 #ifndef WIN32
 #   include <limits>
-#   include <bitset>
-#   include <vector>
 #   include <stdio.h>
-#endif
-
-
-#ifdef USE_NVWA
-#   include "debug_new.h"
 #endif
 
 #ifdef WIN32
@@ -49,6 +35,14 @@ using namespace std;
 #include "ScanLib.h"
 #include "SimpleOpt.h"
 #include "UaLogger.h"
+
+#include <iostream>
+#include <bitset>
+#include <vector>
+
+#ifdef USE_NVWA
+#   include "debug_new.h"
+#endif
 
 using namespace std;
 

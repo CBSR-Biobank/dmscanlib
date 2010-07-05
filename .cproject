@@ -1726,7 +1726,6 @@
 								</option>
 								<option id="gnu.cpp.compiler.option.preprocessor.def.959006752" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="STANDALONE"/>
-									<listOptionValue builtIn="false" value="USE_MPATROL"/>
 									<listOptionValue builtIn="false" value="UA_LOGGER"/>
 									<listOptionValue builtIn="false" value="_DEBUG"/>
 								</option>
@@ -1749,7 +1748,6 @@
 								<option id="gnu.cpp.link.option.shared.758833990" name="Shared (-shared)" superClass="gnu.cpp.link.option.shared" value="false" valueType="boolean"/>
 								<option id="gnu.cpp.link.option.libs.219946775" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
 									<listOptionValue builtIn="false" value="cv"/>
-									<listOptionValue builtIn="false" value="cvaux"/>
 								</option>
 								<option id="gnu.cpp.link.option.paths.1596644708" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.711906795" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
