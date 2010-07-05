@@ -260,7 +260,7 @@ Decoder::ProcessResult Decoder::processImageRegionsCv(Dib & dib,IplImage *opencv
 
 	this->width = dib.getWidth();
 	this->height = dib.getHeight();
-	
+
 	calcRowsAndColumns();
 
 	Decoder::ProcessResult calcSlotResult = calculateSlots(static_cast<double> (dib.getDpi()));
@@ -351,8 +351,17 @@ Decoder::ProcessResult Decoder::processImageRegionsCvThreaded(Dib & dib,IplImage
 	CloseHandle(hBarcodeInfoMutex);
 	CloseHandle(hThreadCountMutex);
 
+	bool barcodeRegistered;
 	for(unsigned i=0; i < barcodeArrayIt; i++){
-		this->barcodeInfos.push_back(barcodeArray[i]);
+		barcodeRegistered = false;
+		for(unsigned j=this->barcodeInfos.size()-1; j >= 0; j--){
+			if(barcodeInfos[i]->getMsg().compare(barcodeInfos[j]->getMsg()) == 0){
+				barcodeRegistered = true;
+				break;
+			}
+		}
+		if(!barcodeRegistered)
+			this->barcodeInfos.push_back(barcodeArray[i]);
 	}
 	delete [] barcodeArray;
 
@@ -397,7 +406,15 @@ bool Decoder::decode(DmtxDecode *& dec, unsigned attempts,
 		if(croppedOffset.width !=0 && croppedOffset.height !=0)
 			info->alignCoordinates(croppedOffset.x,croppedOffset.y);
 
-		barcodeInfos.push_back(info);
+		//inefficient -- but good enough for this case (max size: 96)
+		bool uniqueBarcode = true;
+		for(unsigned i=0; i < barcodeInfos.size(); i++){
+			if(barcodeInfos[i]->getMsg().compare(info->getMsg()) == 0){
+				uniqueBarcode = false;
+			}
+		}
+		if(uniqueBarcode)
+			barcodeInfos.push_back(info);
 
 		DmtxPixelLoc & tlCorner = info->getTopLeftCorner();
 		DmtxPixelLoc & brCorner = info->getBotRightCorner();
