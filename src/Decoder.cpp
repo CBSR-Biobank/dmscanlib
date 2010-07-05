@@ -354,8 +354,8 @@ Decoder::ProcessResult Decoder::processImageRegionsCvThreaded(Dib & dib,IplImage
 	bool barcodeRegistered;
 	for(unsigned i=0; i < barcodeArrayIt; i++){
 		barcodeRegistered = false;
-		for(unsigned j=this->barcodeInfos.size()-1; j >= 0; j--){
-			if(barcodeInfos[i]->getMsg().compare(barcodeInfos[j]->getMsg()) == 0){
+		for(int j=0; j < (int)this->barcodeInfos.size(); j++){
+			if(barcodeArray[i]->getMsg().compare(barcodeInfos[j]->getMsg()) == 0){
 				barcodeRegistered = true;
 				break;
 			}

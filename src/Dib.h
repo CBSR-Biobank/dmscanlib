@@ -107,20 +107,20 @@ public:
 	void unsharp(Dib & src);
 	void expandColours(int start, int end);
 	unsigned getDpi();
-	void convolveTest3x3(const float(&kernel)[9]);
 
 	IplImageContainer*  generateIplImage();
-
 private:
+
+	static const float BLUR_KERNEL[9];
+	static const float BLANK_KERNEL[9];
+	static const float DPI_400_KERNEL[9];
 	static const double UNSHARP_RAD;
     static const double UNSHARP_DEPTH;
     static const unsigned GAUSS_WIDTH;
     static const unsigned GAUSS_FACTORS[];
     static const unsigned GAUSS_SUM;
 
-	static const float BLUR_KERNEL[9];
-	static const float BLANK_KERNEL[9];
-	static const float DPI_400_KERNEL[9];
+
 
 	BitmapFileHeader * fileHeader;
 	BitmapInfoHeader * infoHeader;
@@ -139,7 +139,10 @@ private:
 	void setPalette();
 	void setPalette(RgbQuad * palette);
 	unsigned getRowBytes(unsigned width, unsigned bitCount);
+
+	void convolveFast3x3(const float(&kernel)[9]);
 	void convolve2DSlow(const float(&kernel) [9], int kernelSizeX, int kernelSizeY);
+	
 };
 
 void detectBlobs(Dib & frame, Dib & finalFrame);

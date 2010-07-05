@@ -189,7 +189,7 @@ int slDecodeCommonCv(unsigned plateNum, Dib & dib, Decoder & decoder,
 	filteredDib->tpPresetFilter();
 
 
-	#ifdef DEBUG
+	#ifdef _DEBUG
 		filteredDib->writeToFile("filtered.bmp");
 	#endif
 

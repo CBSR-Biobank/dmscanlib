@@ -468,7 +468,7 @@ unsigned char Dib::getPixelAvgGrayscale(unsigned row, unsigned col) {
 	return 0;
 }
 
-unsigned char Dib::getPixelGrayscale(unsigned row, unsigned col) {
+inline unsigned char Dib::getPixelGrayscale(unsigned row, unsigned col) {
 	UA_ASSERT(row < infoHeader->height);
 	UA_ASSERT(col < infoHeader->width);
 
@@ -505,7 +505,7 @@ void Dib::setPixel(unsigned x, unsigned y, RgbQuad & quad) {
 	ptr[0] = quad.rgbBlue;
 }
 
-void Dib::setPixelGrayscale(unsigned row, unsigned col, unsigned char value) {
+inline void Dib::setPixelGrayscale(unsigned row, unsigned col, unsigned char value) {
 	UA_ASSERT(row < infoHeader->height);
 	UA_ASSERT(col < infoHeader->width);
 
@@ -575,7 +575,7 @@ bool Dib::crop(Dib &src, unsigned x0, unsigned y0, unsigned x1, unsigned y1) {
 }
 
 /*
-TODO: copy over file header
+TODO: copy over file header ?
 */
 Dib * Dib::convertGrayscale(Dib & src) {
 	UA_ASSERT(src.getBitsPerPixel() == 24 || src.getBitsPerPixel() == 8);
@@ -600,6 +600,7 @@ Dib * Dib::convertGrayscale(Dib & src) {
 		for (unsigned col = 0; col < src.getWidth(); ++col) {
 			dibBuffer->setPixelGrayscale(row, col, src.getPixelGrayscale(row,
 					col));
+
 		}
 	}
 
@@ -963,19 +964,20 @@ void Dib::tpPresetFilter() {
 
 	case 400:
 		UA_DOUT(4, 5, "tpPresetFilter: Applying DPI_400_KERNEL");
-		convolve2DSlow(Dib::DPI_400_KERNEL, 3, 3);
+		//convolve2DSlow(Dib::DPI_400_KERNEL, 3, 3);
+		convolveFast3x3(Dib::DPI_400_KERNEL);
 		break;
 
 	case 600:
-		
 		UA_DOUT(4, 5, "tpPresetFilter: Applying BLANK_KERNEL");
-		convolve2DSlow(Dib::BLANK_KERNEL, 3, 3);
+		//convolve2DSlow(Dib::BLANK_KERNEL, 3, 3);
+		convolveFast3x3(Dib::BLANK_KERNEL);
 		
 		UA_DOUT(4, 5, "tpPresetFilter: Applying BLUR_KERNEL");
-		convolve2DSlow(Dib::BLUR_KERNEL, 3, 3);
+		//convolve2DSlow(Dib::BLUR_KERNEL, 3, 3);
+		convolveFast3x3(Dib::BLUR_KERNEL);
 		
-		//convolveTest3x3(Dib::BLANK_KERNEL);
-		//convolveTest3x3(Dib::BLUR_KERNEL);
+
 		break;
 
 	case 300:
@@ -987,7 +989,7 @@ void Dib::tpPresetFilter() {
 		break;
 	}
 }
-void Dib::convolveTest3x3(const float(&k)[9] ) {
+void Dib::convolveFast3x3(const float(&k)[9] ) {
 	int nc =  infoHeader->width;
 	int nr =  infoHeader->height;
 
