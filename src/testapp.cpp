@@ -671,6 +671,7 @@ int main(int argc, char ** argv) {
 			_CrtSetDbgFlag ( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
 		#endif
 	#endif
+	for(int i=0; i < 10;i++)
 	TestApp app(argc, argv);
 }
 

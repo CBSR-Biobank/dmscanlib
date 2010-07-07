@@ -308,6 +308,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\processImageManager.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\src\ScanLib.cpp"
 				>
 			</File>
@@ -391,6 +395,10 @@
 			</File>
 			<File
 				RelativePath=".\src\IplContainer.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\processImageManager.h"
 				>
 			</File>
 			<File

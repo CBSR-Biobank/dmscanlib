@@ -17,12 +17,7 @@
 
 #ifdef WIN32
 #include <windows.h>
-#include <process.h>
 #endif
-
-#include <OpenThreads/Mutex>
-#include <OpenThreads/ScopedLock>
-#include <OpenThreads/Thread>
 
 using namespace std;
 
@@ -85,18 +80,6 @@ protected:
 
 /*----threading----*/
 
-struct processImageParams{
-	BarcodeInfo ** barcodeInfo;
-	unsigned * barcodeInfoIt;
-	OpenThreads::Mutex * hBarcodeInfoMutex;
-	Dib * dib;
-	
-	CvRect croppedOffset;
-	double scanGap;
-	unsigned squareDev;
-	unsigned edgeThresh;
-	unsigned corrections;
-};
 void processImageThreaded(void * param);
 DmtxImage * createDmtxImageFromDib(Dib & dib);
 /*----threading----*/
