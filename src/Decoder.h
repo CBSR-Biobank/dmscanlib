@@ -22,6 +22,7 @@
 
 #include <OpenThreads/Mutex>
 #include <OpenThreads/ScopedLock>
+#include <OpenThreads/Thread>
 
 using namespace std;
 
@@ -45,7 +46,7 @@ public:
 
 	ProcessResult processImageRegionsDmtx(unsigned plateNum, Dib & dib,vector<vector<string> > & cells);
 	ProcessResult processImageRegionsCv(Dib & dib,IplImage *opencvImg,vector<vector<string> > & cells, bool matrical);
-	ProcessResult processImageRegionsCvThreaded(Dib & dib,IplImage *opencvImg,vector<vector<string> > & cells, bool matrical);
+	ProcessResult processImageRegionsCvThreaded(Dib * dib,IplImage *opencvImg,vector<vector<string> > & cells, bool matrical);
 
 	void imageShowBarcodes(Dib & dib, bool regions);
 
@@ -87,9 +88,7 @@ protected:
 struct processImageParams{
 	BarcodeInfo ** barcodeInfo;
 	unsigned * barcodeInfoIt;
-	unsigned * threadCount;
 	OpenThreads::Mutex * hBarcodeInfoMutex;
-	OpenThreads::Mutex * hThreadCountMutex;
 	Dib * dib;
 	
 	CvRect croppedOffset;
@@ -99,12 +98,6 @@ struct processImageParams{
 	unsigned corrections;
 };
 void processImageThreaded(void * param);
-bool decodeThreaded(DmtxDecode *& dec, 
-						 unsigned attempts,
-						 BarcodeInfo ** barcodeInfos,
-						 unsigned * barcodeInfosIt, 
-						 CvRect croppedOffset, 
-						 unsigned corrections);
 DmtxImage * createDmtxImageFromDib(Dib & dib);
 /*----threading----*/
 

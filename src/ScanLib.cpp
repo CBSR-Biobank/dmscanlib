@@ -201,7 +201,7 @@ int slDecodeCommonCv(unsigned plateNum, Dib & dib, Decoder & decoder,
 
 	if(threaded){
 		UA_DOUT(1, 3, "using multithreaded opencv based decoder");
-		result = decoder.processImageRegionsCvThreaded(*filteredDib,iplFilteredDib->getIplImage(), cellsRef,matrical);
+		result = decoder.processImageRegionsCvThreaded(filteredDib,iplFilteredDib->getIplImage(), cellsRef,matrical);
 	}
 	else
 		result = decoder.processImageRegionsCv(*filteredDib,iplFilteredDib->getIplImage(), cellsRef,matrical);

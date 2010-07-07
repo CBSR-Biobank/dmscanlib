@@ -398,10 +398,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\openthreads\ScopedLock.h"
-				>
-			</File>
-			<File
 				RelativePath=".\src\utils\SimpleGlob.h"
 				>
 			</File>

@@ -35,7 +35,7 @@
 
 using namespace std;
 
-#define THREAD_NUM 16
+#define THREAD_NUM 8
 #define THREAD_TIMEOUT_SEC 10
 #define SPAWN_THREAD_TIMEOUT_SEC 5
 
@@ -276,104 +276,268 @@ Decoder::ProcessResult Decoder::processImageRegionsCv(Dib & dib,IplImage *opencv
 	return OK;
 }
 
+class BarcodeThread : public OpenThreads::Thread{
+	
+private:
+	struct processImageParams * pig;
+	OpenThreads::Mutex quitMutex;
+	volatile bool quitFlag;
 
-Decoder::ProcessResult Decoder::processImageRegionsCvThreaded(Dib & dib,IplImage *opencvImg, vector<vector<string> > & cellsRef, bool matrical) {
-	vector<CvRect> blobVector;
 
-	/*---Threading----*/
-	OpenThreads::Mutex hBarcodeInfoMutex;
-	OpenThreads::Mutex hThreadCountMutex;
-	unsigned threadCount = 0;
-	BarcodeInfo ** barcodeArray = new BarcodeInfo* [PALLET_BUFFER_SIZE];
-	unsigned barcodeArrayIt = 0;
-	time_t timeStart,timeEnd;
-
-	getTubeBlobsFromDpi(blobVector,opencvImg,matrical,dib.getDpi());
-
-	UA_DOUT(3, 5, "getTubeBlobs found: " << blobVector.size() << " blobs.");
-
-	for (int i =0 ;i<(int)blobVector.size();i++){
-
-		/*---Threading----*/
-		time(&timeStart);
-		do{
-				Sleep(1);
-				OpenThreads::ScopedLock<OpenThreads::Mutex> lock(hThreadCountMutex);
-				if(threadCount < THREAD_NUM)
-					break;
-
-				time(&timeEnd);
-				if(difftime(timeEnd,timeStart) >= SPAWN_THREAD_TIMEOUT_SEC){
-					UA_DOUT(3, 1, "Error: Some threads have timed out.");
-					break;
-				}
-
-		}while(true);
-
-		OpenThreads::ScopedLock<OpenThreads::Mutex> lockThreadCountMutex(hThreadCountMutex);
-		OpenThreads::ScopedLock<OpenThreads::Mutex> lockBarcodeInfoMutex(hBarcodeInfoMutex);
-
-		Dib * tmp = new Dib;
-		tmp->crop(dib,blobVector[i].x,blobVector[i].y,blobVector[i].x+blobVector[i].width,blobVector[i].y+blobVector[i].height);
-		
-		struct processImageParams * pig = new struct processImageParams;
-		pig->scanGap = this->scanGap;
-		pig->squareDev = this->squareDev;
-		pig->edgeThresh = this->edgeThresh;
-		pig->corrections = this->corrections;
-		pig->croppedOffset = blobVector[i];
-		pig->hBarcodeInfoMutex = &hBarcodeInfoMutex;
-		pig->hThreadCountMutex = &hThreadCountMutex;
-		pig->dib = tmp;
-		pig->barcodeInfo = barcodeArray;
-		pig->barcodeInfoIt = &barcodeArrayIt;
-		pig->threadCount = &threadCount;
-
-		++threadCount;
-		_beginthread(processImageThreaded,0,(void *)pig);
-
+public:
+	BarcodeThread(struct processImageParams * pig){
+		this->pig = pig;
+		quitMutex.lock();
+		this->quitFlag = false;
+		quitMutex.unlock();
 	}
 
-	time(&timeStart);
-	do{
-			Sleep(20);
-			OpenThreads::ScopedLock<OpenThreads::Mutex> lock(hThreadCountMutex);
-			if(threadCount <= 0)
-				break;
+	virtual ~BarcodeThread() {};
 
-			time(&timeEnd);
-			if(difftime(timeEnd,timeStart) >= THREAD_TIMEOUT_SEC){
-				UA_DOUT(3, 1, "Error:: Some threads have timed out.");
-				break;
-			}
+	virtual void run() {
+		DmtxImage * image = createDmtxImageFromDib(*(pig->dib));
+		DmtxDecode * dec = NULL;
+		BarcodeInfo ** tempBufferInfo = new BarcodeInfo* [BARCODE_BUFFER_SIZE];
+		unsigned tempBufferInfoIt = 0;
+		unsigned regionCount = 0;
+		unsigned width,height,dpi;
+		int minEdgeSize,maxEdgeSize;
 
-	}while(true);
+		height = pig->dib->getHeight();
+		width = pig->dib->getWidth();
+		dpi = pig->dib->getDpi();
 
-	bool barcodeRegistered;
-	for(unsigned i=0; i < barcodeArrayIt; i++){
-		barcodeRegistered = false;
-		for(int j=0; j < (int)this->barcodeInfos.size(); j++){
-			if(barcodeArray[i]->getMsg().compare(barcodeInfos[j]->getMsg()) == 0){
-				barcodeRegistered = true;
-				break;
+		dec = dmtxDecodeCreate(image, 1);
+		UA_ASSERT_NOT_NULL(dec);
+
+		// slightly smaller than the new tube edge
+		minEdgeSize = static_cast<unsigned> (0.08 * dpi);
+
+		// slightly bigger than the Nunc edge
+		maxEdgeSize = static_cast<unsigned> (0.18 * dpi);
+
+		dmtxDecodeSetProp(dec, DmtxPropEdgeMin, minEdgeSize);
+		dmtxDecodeSetProp(dec, DmtxPropEdgeMax, maxEdgeSize);
+		dmtxDecodeSetProp(dec, DmtxPropSymbolSize, DmtxSymbolSquareAuto);
+		dmtxDecodeSetProp(dec, DmtxPropScanGap, static_cast<unsigned> (pig->scanGap* dpi));
+		dmtxDecodeSetProp(dec, DmtxPropSquareDevn, pig->squareDev);
+		dmtxDecodeSetProp(dec, DmtxPropEdgeThresh, pig->edgeThresh);
+
+		UA_DOUT(3, 7, "processImage: image width/" << width
+				<< " image height/" << height
+				<< " row padding/" << dmtxImageGetProp(image, DmtxPropRowPadBytes)
+				<< " image bits per pixel/"
+				<< dmtxImageGetProp(image, DmtxPropBitsPerPixel)
+				<< " image row size bytes/"
+				<< dmtxImageGetProp(image, DmtxPropRowSizeBytes));
+
+		while (1) {
+				DmtxRegion * reg = NULL;
+				BarcodeInfo * info = NULL;
+
+				reg = dmtxRegionFindNext(dec, NULL);
+				if (reg == NULL)
+					break;
+
+				DmtxMessage * msg = dmtxDecodeMatrixRegion(dec, reg, pig->corrections);
+				if (msg != NULL) {
+					info = new BarcodeInfo(dec, reg, msg);
+					UA_ASSERT_NOT_NULL(info);
+
+					if(pig->croppedOffset.width !=0 && pig->croppedOffset.height !=0)
+						info->alignCoordinates(pig->croppedOffset.x,pig->croppedOffset.y);
+
+					tempBufferInfo[(tempBufferInfoIt)++] = info;
+
+					DmtxPixelLoc & tlCorner = info->getTopLeftCorner();
+					DmtxPixelLoc & brCorner = info->getBotRightCorner();
+
+					UA_DOUT(3, 8, "message " << *barcodeInfosIt - 1
+							<< ": " << info->getMsg()
+							<< " : tlCorner/" << tlCorner.X << "," << tlCorner.Y
+							<< "  brCorner/" << brCorner.X << "," << brCorner.Y);
+					dmtxMessageDestroy(&msg);
+				}
+				dmtxRegionDestroy(&reg);
+
+			UA_DOUT(3, 7, "retrieved message from region " << regionCount++);
+		}
+		
+		dmtxDecodeDestroy(&dec);
+		dmtxImageDestroy(&image);
+
+		if (tempBufferInfoIt == 0) {
+			UA_DOUT(3, 4, "processImage: no barcodes found");
+		}
+		else{
+			OpenThreads::ScopedLock<OpenThreads::Mutex> lockBarcode(*(pig->hBarcodeInfoMutex));
+			for(unsigned j=0; j < tempBufferInfoIt; j++){
+				pig->barcodeInfo[(*pig->barcodeInfoIt)++] = tempBufferInfo[j];
 			}
 		}
-		if(!barcodeRegistered)
-			this->barcodeInfos.push_back(barcodeArray[i]);
+
+		delete [] tempBufferInfo;
+		delete pig->dib;
+		delete pig;
+
+		quitMutex.lock();
+		this->quitFlag = true;
+		quitMutex.unlock();
+		return;
+    }
+
+	bool isFinished(){
+		bool quitFlagBuf;
+
+		quitMutex.lock();
+		quitFlagBuf = this->quitFlag;
+		quitMutex.unlock();
+		
+		return quitFlagBuf;
 	}
 
-	delete [] barcodeArray;
+};
 
-	if(blobVector.size() == 0){
-		return IMG_INVALID; 
+class processImageManager{
+
+	Dib * dib;
+	IplImage *opencvImg;
+	bool matrical;
+	vector<BarcodeInfo *> * barcodeInfos;
+	double scanGap;
+	unsigned squareDev;
+	unsigned edgeThresh;
+	unsigned corrections;
+	
+public:
+	processImageManager(Dib * dib,
+						IplImage *opencvImg, 
+						bool matrical,
+						vector<BarcodeInfo *> * barcodeInfos,
+						double scanGap,
+						unsigned squareDev,
+						unsigned edgeThresh,
+						unsigned corrections){
+
+			this->dib = dib;
+			this->opencvImg = opencvImg;
+			this->matrical = matrical;
+
+			this->scanGap = scanGap;
+			this->squareDev = squareDev;
+			this->edgeThresh = edgeThresh;
+			this->corrections = corrections;
+			this->barcodeInfos = barcodeInfos;
 	}
 
-	this->width = dib.getWidth();
-	this->height = dib.getHeight();
+	void generateBarcodes(){
+		vector<CvRect> blobVector;
+
+		/*---Threading----*/
+		OpenThreads::Mutex hBarcodeInfoMutex;
+		BarcodeInfo ** barcodeArray = new BarcodeInfo* [PALLET_BUFFER_SIZE];
+		unsigned barcodeArrayIt = 0;
+		time_t timeStart,timeEnd;
+
+		getTubeBlobsFromDpi(blobVector,opencvImg,matrical,dib->getDpi());
+
+		UA_DOUT(3, 5, "getTubeBlobs found: " << blobVector.size() << " blobs.");
+
+		 std::vector<BarcodeThread *> threads;
+
+		for (int i =0 ;i<(int)blobVector.size();i++){
+
+			/*---limiter----*/
+			while(1){
+				unsigned numThreads = threads.size();
+				unsigned numFinished = 0;
+				for(unsigned j=0; j < threads.size(); j++){
+					if(threads[j]->isFinished())
+						numFinished++;
+				}
+				if(numThreads - numFinished < THREAD_NUM)
+					break;
+				else
+					Sleep(1);
+			}
+
+			OpenThreads::ScopedLock<OpenThreads::Mutex> lockBarcodeInfoMutex(hBarcodeInfoMutex);
+
+			Dib * tmp = new Dib;
+			tmp->crop(*dib,blobVector[i].x,blobVector[i].y,blobVector[i].x+blobVector[i].width,blobVector[i].y+blobVector[i].height);
+
+			struct processImageParams * pig = new struct processImageParams;
+			pig->scanGap = this->scanGap;
+			pig->squareDev = this->squareDev;
+			pig->edgeThresh = this->edgeThresh;
+			pig->corrections = this->corrections;
+			pig->croppedOffset = blobVector[i];
+			pig->hBarcodeInfoMutex = &hBarcodeInfoMutex;
+			pig->dib = tmp;
+			pig->barcodeInfo = barcodeArray;
+			pig->barcodeInfoIt = &barcodeArrayIt;
+			
+			BarcodeThread * thread = new BarcodeThread(pig);
+			threads.push_back(thread);
+			thread->start();
+
+		}
+
+		while(1){
+			unsigned numThreads = threads.size();
+			unsigned numFinished = 0;
+			for(unsigned j=0; j < threads.size(); j++){
+				if(threads[j]->isFinished())
+					numFinished++;
+			}
+			if(numThreads - numFinished <= 0)
+				break;
+			else
+				Sleep(10);
+		}
+
+		/*---join---*/
+
+		bool barcodeRegistered;
+		for(unsigned i=0; i < barcodeArrayIt; i++){
+			barcodeRegistered = false;
+			for(int j=0; j < (int)this->barcodeInfos->size(); j++){
+				if(barcodeArray[i]->getMsg().compare((*barcodeInfos)[j]->getMsg()) == 0){
+					barcodeRegistered = true;
+					break;
+				}
+			}
+			if(!barcodeRegistered)
+				this->barcodeInfos->push_back(barcodeArray[i]);
+		}
+
+		delete [] barcodeArray;
+
+		/*
+		if(blobVector.size() == 0){
+			return IMG_INVALID; 
+		}
+		*/
+
+	
+	}
+
+};
+
+
+Decoder::ProcessResult Decoder::processImageRegionsCvThreaded(Dib * dib,IplImage *opencvImg, vector<vector<string> > & cellsRef, bool matrical) {
+
+
+	processImageManager imageProcessor(dib,opencvImg,matrical,&(this->barcodeInfos),this->scanGap,this->squareDev,this->edgeThresh,this->corrections);
+
+	imageProcessor.generateBarcodes();
+
+	this->width = dib->getWidth();
+	this->height = dib->getHeight();
 	
 	calcRowsAndColumns();
 
-	Decoder::ProcessResult calcSlotResult = calculateSlots(static_cast<double> (dib.getDpi()));
+	Decoder::ProcessResult calcSlotResult = calculateSlots(static_cast<double> (dib->getDpi()));
 
 	if (calcSlotResult != OK) 
 		return calcSlotResult;
@@ -455,59 +619,37 @@ DmtxImage * createDmtxImageFromDib(Dib & dib) {
 }
 
 
-
-bool decodeThreaded(DmtxDecode *& dec, unsigned attempts,
-		BarcodeInfo ** barcodeInfos,unsigned * barcodeInfosIt, CvRect croppedOffset, unsigned corrections) {
-	DmtxRegion * reg = NULL;
-	BarcodeInfo * info = NULL;
-
-	reg = dmtxRegionFindNext(dec, NULL);
-	if (reg == NULL)
-		return false;
-
-	DmtxMessage * msg = dmtxDecodeMatrixRegion(dec, reg, corrections);
-	if (msg != NULL) {
-		info = new BarcodeInfo(dec, reg, msg);
-		UA_ASSERT_NOT_NULL(info);
-
-		if(croppedOffset.width !=0 && croppedOffset.height !=0)
-			info->alignCoordinates(croppedOffset.x,croppedOffset.y);
-
-		barcodeInfos[(*barcodeInfosIt)++] = info;
-
-		DmtxPixelLoc & tlCorner = info->getTopLeftCorner();
-		DmtxPixelLoc & brCorner = info->getBotRightCorner();
-
-		UA_DOUT(3, 8, "message " << *barcodeInfosIt - 1
-				<< ": " << info->getMsg()
-				<< " : tlCorner/" << tlCorner.X << "," << tlCorner.Y
-				<< "  brCorner/" << brCorner.X << "," << brCorner.Y);
-		dmtxMessageDestroy(&msg);
-	}
-	dmtxRegionDestroy(&reg);
-	return true;
-}
-
-
-
 void processImageThreaded(void * parameters) {
 
 	struct processImageParams * pig = (struct processImageParams *)parameters;
 
+	DmtxImage * image = createDmtxImageFromDib(*(pig->dib));
+	DmtxDecode * dec = NULL;
 	BarcodeInfo ** tempBufferInfo = new BarcodeInfo* [BARCODE_BUFFER_SIZE];
 	unsigned tempBufferInfoIt = 0;
+	unsigned regionCount = 0;
 	unsigned width,height,dpi;
-
-	for(int i=0; i < BARCODE_BUFFER_SIZE; i++)
-		tempBufferInfo[i] = NULL;
+	int minEdgeSize,maxEdgeSize;
 
 	height = pig->dib->getHeight();
 	width = pig->dib->getWidth();
 	dpi = pig->dib->getDpi();
 
-	DmtxImage * image = createDmtxImageFromDib(*(pig->dib));
+	dec = dmtxDecodeCreate(image, 1);
+	UA_ASSERT_NOT_NULL(dec);
 
-	DmtxDecode * dec = NULL;
+	// slightly smaller than the new tube edge
+	minEdgeSize = static_cast<unsigned> (0.08 * dpi);
+
+	// slightly bigger than the Nunc edge
+	maxEdgeSize = static_cast<unsigned> (0.18 * dpi);
+
+	dmtxDecodeSetProp(dec, DmtxPropEdgeMin, minEdgeSize);
+	dmtxDecodeSetProp(dec, DmtxPropEdgeMax, maxEdgeSize);
+	dmtxDecodeSetProp(dec, DmtxPropSymbolSize, DmtxSymbolSquareAuto);
+	dmtxDecodeSetProp(dec, DmtxPropScanGap, static_cast<unsigned> (pig->scanGap* dpi));
+	dmtxDecodeSetProp(dec, DmtxPropSquareDevn, pig->squareDev);
+	dmtxDecodeSetProp(dec, DmtxPropEdgeThresh, pig->edgeThresh);
 
 	UA_DOUT(3, 7, "processImage: image width/" << width
 			<< " image height/" << height
@@ -517,30 +659,37 @@ void processImageThreaded(void * parameters) {
 			<< " image row size bytes/"
 			<< dmtxImageGetProp(image, DmtxPropRowSizeBytes));
 
-	dec = dmtxDecodeCreate(image, 1);
-	UA_ASSERT_NOT_NULL(dec);
-
-	// slightly smaller than the new tube edge
-	int minEdgeSize = static_cast<unsigned> (0.08 * dpi);
-
-	// slightly bigger than the Nunc edge
-	int maxEdgeSize = static_cast<unsigned> (0.18 * dpi);
-
-	dmtxDecodeSetProp(dec, DmtxPropEdgeMin, minEdgeSize);
-	dmtxDecodeSetProp(dec, DmtxPropEdgeMax, maxEdgeSize);
-	dmtxDecodeSetProp(dec, DmtxPropSymbolSize, DmtxSymbolSquareAuto);
-	dmtxDecodeSetProp(dec, DmtxPropScanGap, static_cast<unsigned> (pig->scanGap* dpi));
-	dmtxDecodeSetProp(dec, DmtxPropSquareDevn, pig->squareDev);
-	dmtxDecodeSetProp(dec, DmtxPropEdgeThresh, pig->edgeThresh);
-
-	unsigned regionCount = 0;
 	while (1) {
-		if (!decodeThreaded(dec, 1, tempBufferInfo,&tempBufferInfoIt,pig->croppedOffset,pig->corrections)) {
-			break;
-		}
+			DmtxRegion * reg = NULL;
+			BarcodeInfo * info = NULL;
+
+			reg = dmtxRegionFindNext(dec, NULL);
+			if (reg == NULL)
+				break;
+
+			DmtxMessage * msg = dmtxDecodeMatrixRegion(dec, reg, pig->corrections);
+			if (msg != NULL) {
+				info = new BarcodeInfo(dec, reg, msg);
+				UA_ASSERT_NOT_NULL(info);
+
+				if(pig->croppedOffset.width !=0 && pig->croppedOffset.height !=0)
+					info->alignCoordinates(pig->croppedOffset.x,pig->croppedOffset.y);
+
+				tempBufferInfo[(tempBufferInfoIt)++] = info;
+
+				DmtxPixelLoc & tlCorner = info->getTopLeftCorner();
+				DmtxPixelLoc & brCorner = info->getBotRightCorner();
+
+				UA_DOUT(3, 8, "message " << *barcodeInfosIt - 1
+						<< ": " << info->getMsg()
+						<< " : tlCorner/" << tlCorner.X << "," << tlCorner.Y
+						<< "  brCorner/" << brCorner.X << "," << brCorner.Y);
+				dmtxMessageDestroy(&msg);
+			}
+			dmtxRegionDestroy(&reg);
+
 		UA_DOUT(3, 7, "retrieved message from region " << regionCount++);
 	}
-	
 	
 	dmtxDecodeDestroy(&dec);
 	dmtxImageDestroy(&image);
@@ -554,9 +703,6 @@ void processImageThreaded(void * parameters) {
 			pig->barcodeInfo[(*pig->barcodeInfoIt)++] = tempBufferInfo[j];
 		}
 	}
-	OpenThreads::ScopedLock<OpenThreads::Mutex> lockThread(*(pig->hThreadCountMutex));
-	*(pig->threadCount) = *(pig->threadCount) - 1 ;
-
 	delete [] tempBufferInfo;
 	delete pig->dib;
 	delete pig;
