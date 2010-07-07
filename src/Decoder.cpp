@@ -13,6 +13,7 @@
 #include "BarcodeInfo.h"
 #include "BinRegion.h"
 
+
 #include <time.h>
 
 #include <iostream>
@@ -35,7 +36,8 @@
 using namespace std;
 
 #define THREAD_NUM 16
-#define THREAD_TIMEOUT_SEC 5
+#define THREAD_TIMEOUT_SEC 10
+#define SPAWN_THREAD_TIMEOUT_SEC 5
 
 #define PALLET_BUFFER_SIZE 150  /*maximum number of croped pieces taht found barcodes*/
 #define BARCODE_BUFFER_SIZE 100 /*maximum number of barcodes found per cropped image*/
@@ -279,8 +281,8 @@ Decoder::ProcessResult Decoder::processImageRegionsCvThreaded(Dib & dib,IplImage
 	vector<CvRect> blobVector;
 
 	/*---Threading----*/
-	HANDLE hBarcodeInfoMutex = CreateMutex( NULL, FALSE, NULL );
-	HANDLE hThreadCountMutex = CreateMutex( NULL, FALSE, NULL );
+	OpenThreads::Mutex hBarcodeInfoMutex;
+	OpenThreads::Mutex hThreadCountMutex;
 	unsigned threadCount = 0;
 	BarcodeInfo ** barcodeArray = new BarcodeInfo* [PALLET_BUFFER_SIZE];
 	unsigned barcodeArrayIt = 0;
@@ -294,21 +296,22 @@ Decoder::ProcessResult Decoder::processImageRegionsCvThreaded(Dib & dib,IplImage
 
 		/*---Threading----*/
 		time(&timeStart);
-		WaitForSingleObject( hThreadCountMutex, INFINITE );
-		while(threadCount >= THREAD_NUM){
-
-				ReleaseMutex( hThreadCountMutex );
-				Sleep(5);
-				WaitForSingleObject( hThreadCountMutex, INFINITE );
+		do{
+				Sleep(1);
+				OpenThreads::ScopedLock<OpenThreads::Mutex> lock(hThreadCountMutex);
+				if(threadCount < THREAD_NUM)
+					break;
 
 				time(&timeEnd);
-				if(difftime(timeEnd,timeStart) >= THREAD_TIMEOUT_SEC){
+				if(difftime(timeEnd,timeStart) >= SPAWN_THREAD_TIMEOUT_SEC){
 					UA_DOUT(3, 1, "Error: Some threads have timed out.");
 					break;
 				}
 
-		}
-		WaitForSingleObject( hBarcodeInfoMutex, INFINITE );
+		}while(true);
+
+		OpenThreads::ScopedLock<OpenThreads::Mutex> lockThreadCountMutex(hThreadCountMutex);
+		OpenThreads::ScopedLock<OpenThreads::Mutex> lockBarcodeInfoMutex(hBarcodeInfoMutex);
 
 		Dib * tmp = new Dib;
 		tmp->crop(dib,blobVector[i].x,blobVector[i].y,blobVector[i].x+blobVector[i].width,blobVector[i].y+blobVector[i].height);
@@ -329,28 +332,22 @@ Decoder::ProcessResult Decoder::processImageRegionsCvThreaded(Dib & dib,IplImage
 		++threadCount;
 		_beginthread(processImageThreaded,0,(void *)pig);
 
-		ReleaseMutex( hBarcodeInfoMutex );
-		ReleaseMutex( hThreadCountMutex );
-
 	}
 
 	time(&timeStart);
-	WaitForSingleObject( hThreadCountMutex, INFINITE );
-	while(threadCount > 0){
-			ReleaseMutex( hThreadCountMutex );
-			Sleep( 50 );
-			WaitForSingleObject( hThreadCountMutex, INFINITE );
+	do{
+			Sleep(20);
+			OpenThreads::ScopedLock<OpenThreads::Mutex> lock(hThreadCountMutex);
+			if(threadCount <= 0)
+				break;
+
 			time(&timeEnd);
 			if(difftime(timeEnd,timeStart) >= THREAD_TIMEOUT_SEC){
-				UA_DOUT(3, 1, "Error: Some threads have timed out.");
+				UA_DOUT(3, 1, "Error:: Some threads have timed out.");
 				break;
 			}
-	}
-	ReleaseMutex( hThreadCountMutex );
 
-	
-	CloseHandle(hBarcodeInfoMutex);
-	CloseHandle(hThreadCountMutex);
+	}while(true);
 
 	bool barcodeRegistered;
 	for(unsigned i=0; i < barcodeArrayIt; i++){
@@ -552,23 +549,19 @@ void processImageThreaded(void * parameters) {
 		UA_DOUT(3, 4, "processImage: no barcodes found");
 	}
 	else{
-		WaitForSingleObject( *(pig->hBarcodeInfoMutex), INFINITE );
-		
+		OpenThreads::ScopedLock<OpenThreads::Mutex> lockBarcode(*(pig->hBarcodeInfoMutex));
 		for(unsigned j=0; j < tempBufferInfoIt; j++){
 			pig->barcodeInfo[(*pig->barcodeInfoIt)++] = tempBufferInfo[j];
 		}
-
-		ReleaseMutex( *(pig->hBarcodeInfoMutex) );
 	}
-	WaitForSingleObject( *(pig->hThreadCountMutex), INFINITE );
+	OpenThreads::ScopedLock<OpenThreads::Mutex> lockThread(*(pig->hThreadCountMutex));
 	*(pig->threadCount) = *(pig->threadCount) - 1 ;
-	ReleaseMutex( *(pig->hThreadCountMutex) );
 
 	delete [] tempBufferInfo;
 	delete pig->dib;
 	delete pig;
 
-	_endthread();
+	return;
 }
 
 bool Decoder::processImage(Dib & dib, CvRect croppedOffset) {

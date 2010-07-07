@@ -42,8 +42,8 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories=".\src\cvblob;.\src\boost;.\src\opencv\include;src;src/libdmtx;src/loki;src/utils;&quot;$(JAVA_HOME)\include&quot;;&quot;$(JAVA_HOME)\include\win32&quot;"
-				PreprocessorDefinitions="_VISUALC_;WIN32;_DEBUG;_CONSOLE;UA_LOGGER;STANDALONE;THREADED"
+				AdditionalIncludeDirectories=".\src\openthreads;.\src\cvblob;.\src\boost;.\src\opencv\include;src;src/libdmtx;src/loki;src/utils;&quot;$(JAVA_HOME)\include&quot;;&quot;$(JAVA_HOME)\include\win32&quot;"
+				PreprocessorDefinitions="_VISUALC_;WIN32;_DEBUG;_CONSOLE;UA_LOGGER;STANDALONE;THREADED;"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="0"
@@ -62,10 +62,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="cv210.lib cxcore210.lib user32.lib libcmtd.lib"
+				AdditionalDependencies="cv210.lib cxcore210.lib user32.lib libcmtd.lib OpenThreadsWin32d.lib"
 				ShowProgress="0"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories=".\src\opencv\win32"
+				AdditionalLibraryDirectories=".\src\opencv\win32;.\src\openthreads"
 				IgnoreDefaultLibraryNames=" libcmt.lib"
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -362,11 +362,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\BinRegion.h"
+				RelativePath=".\src\openthreads\Barrier.h"
 				>
 			</File>
 			<File
-				RelativePath=".\src\boost\thread\detail\config.hpp"
+				RelativePath=".\src\BinRegion.h"
 				>
 			</File>
 			<File
@@ -395,6 +395,10 @@
 			</File>
 			<File
 				RelativePath=".\src\ScanLib.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\openthreads\ScopedLock.h"
 				>
 			</File>
 			<File

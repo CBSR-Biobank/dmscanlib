@@ -20,6 +20,9 @@
 #include <process.h>
 #endif
 
+#include <OpenThreads/Mutex>
+#include <OpenThreads/ScopedLock>
+
 using namespace std;
 
 class Dib;
@@ -85,8 +88,8 @@ struct processImageParams{
 	BarcodeInfo ** barcodeInfo;
 	unsigned * barcodeInfoIt;
 	unsigned * threadCount;
-	HANDLE * hBarcodeInfoMutex;
-	HANDLE * hThreadCountMutex;
+	OpenThreads::Mutex * hBarcodeInfoMutex;
+	OpenThreads::Mutex * hThreadCountMutex;
 	Dib * dib;
 	
 	CvRect croppedOffset;
