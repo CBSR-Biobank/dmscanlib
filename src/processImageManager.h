@@ -71,27 +71,25 @@ public:
 class processImageManager{
 
 private:
-	Dib * dib;
-	vector<CvRect> * blobVector;
-	vector<BarcodeInfo *> * barcodeInfos;
 	double scanGap;
 	unsigned squareDev;
 	unsigned edgeThresh;
 	unsigned corrections;
 
-	void threadHandler(std::vector<BarcodeThread *> & threads, unsigned threshold);
+
+	void threadHandler(vector<BarcodeInfo *> * barcodeInfos,
+					   vector<BarcodeThread *> & threads, 
+					   unsigned threshold);
 	
 public:
-	processImageManager(Dib * dib,
-						vector<CvRect> * blobVector,
-						vector<BarcodeInfo *> * barcodeInfos,
-						double scanGap,
+	processImageManager(double scanGap,
 						unsigned squareDev,
 						unsigned edgeThresh,
 						unsigned corrections);
 
-	// populates barcodeInfos 
-	void generateBarcodes(); 
+	void generateBarcodes(Dib * dib,
+						vector<CvRect> * blobVector,
+						vector<BarcodeInfo *> * barcodeInfos); 
 
 };
 

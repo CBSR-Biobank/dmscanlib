@@ -275,10 +275,8 @@ Decoder::ProcessResult Decoder::processImageRegionsCvThreaded(Dib * dib,IplImage
 	vector<CvRect> blobVector;
 	getTubeBlobsFromDpi(blobVector,opencvImg,matrical,dib->getDpi());
 
-	//generateBarcodes populates barcodeInfos
-	processImageManager imageProcessor(dib,&blobVector,&(this->barcodeInfos),
-											this->scanGap,this->squareDev,this->edgeThresh,this->corrections);
-	imageProcessor.generateBarcodes(); 
+	processImageManager imageProcessor(this->scanGap,this->squareDev,this->edgeThresh,this->corrections);
+	imageProcessor.generateBarcodes(dib,&blobVector,&(this->barcodeInfos) ); 
 
 	blobVector.~vector();
 

@@ -1,23 +1,16 @@
 #include "processImageManager.h"
 
-processImageManager::processImageManager(Dib * dib,
-										 vector<CvRect> * blobVector,
-										 vector<BarcodeInfo *> * barcodeInfos,
-										 double scanGap,
-										 unsigned squareDev,
-										 unsigned edgeThresh,
-										 unsigned corrections){
-
-											 this->dib = dib;
-										     this->blobVector = blobVector;
-											 this->scanGap = scanGap;
-											 this->squareDev = squareDev;
-											 this->edgeThresh = edgeThresh;
-											 this->corrections = corrections;
-											 this->barcodeInfos = barcodeInfos;
+processImageManager::processImageManager(double scanGap,unsigned squareDev,
+										 unsigned edgeThresh,unsigned corrections){
+	this->scanGap = scanGap;
+	this->squareDev = squareDev;
+	this->edgeThresh = edgeThresh;
+	this->corrections = corrections;
 }
 
-void processImageManager::threadHandler(std::vector<BarcodeThread *> & threads, unsigned threshold){
+void processImageManager::threadHandler(vector<BarcodeInfo *> * barcodeInfos,
+										vector<BarcodeThread *> & threads, 
+										unsigned threshold){
 	time_t timeStart,timeEnd;
 
 	time(&timeStart);
@@ -30,7 +23,7 @@ void processImageManager::threadHandler(std::vector<BarcodeThread *> & threads, 
 				std::vector<BarcodeInfo *> * barcodes = threads[j]->getBarcodes();
 
 				for(unsigned z=0; z < barcodes->size(); z++)
-					this->barcodeInfos->push_back((*barcodes)[z]);
+					barcodeInfos->push_back((*barcodes)[z]);
 
 				threads[j]->clean();
 			}
@@ -59,7 +52,9 @@ void processImageManager::threadHandler(std::vector<BarcodeThread *> & threads, 
 	}
 }
 
-void processImageManager::generateBarcodes(){
+void processImageManager::generateBarcodes(Dib * dib,
+						vector<CvRect> * blobVector,
+						vector<BarcodeInfo *> * barcodeInfos){
 
 	UA_DOUT(3, 5, "getTubeBlobs found: " << blobVector.size() << " blobs.");
 
@@ -68,7 +63,7 @@ void processImageManager::generateBarcodes(){
 	for (int i =0 ;i<(int)blobVector->size();i++){
 
 		/*---thread controller (limit # threads to THREAD_NUM)----*/
-		threadHandler(threads,THREAD_NUM);
+		threadHandler(barcodeInfos,threads,THREAD_NUM);
 
 		Dib * tmp = new Dib;
 		tmp->crop(*dib,
@@ -90,12 +85,8 @@ void processImageManager::generateBarcodes(){
 	}
 
 	/*---join---*/
-	threadHandler(threads,THRESHOLD_JOIN);
+	threadHandler(barcodeInfos,threads,THRESHOLD_JOIN);
 }
-
-
-
-
 
 /*-----------------------------------Barcode Thread-------------------------------------------*/
 
@@ -115,8 +106,6 @@ BarcodeThread::BarcodeThread(double scanGap,
 								 quitMutex.lock();
 								 this->quitFlag = false;
 								 quitMutex.unlock();
-
-
 }
 
 
