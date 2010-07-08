@@ -29,6 +29,9 @@ public:
 	string & getMsg() {
 		return str;
 	}
+	bool Equals(BarcodeInfo * other){
+		return strcmp(this->getMsg().c_str(),other->getMsg().c_str()) == 0;
+	}
 
 	void getCorners(DmtxVector2 & p00, DmtxVector2 & p10,
 			DmtxVector2 & p11, DmtxVector2 & p01);

@@ -86,6 +86,27 @@ void processImageManager::generateBarcodes(Dib * dib,
 
 	/*---join---*/
 	threadHandler(barcodeInfos,threads,THRESHOLD_JOIN);
+
+
+
+	//TODO add upper bound to blob size
+	std::vector<BarcodeInfo *> tempBarcodes;
+	for(unsigned y=0; y < barcodeInfos->size(); y++){
+
+		bool uniqueBarcode = true;
+		for(unsigned x=0; x < tempBarcodes.size(); x++)
+			if(tempBarcodes[x]->Equals((*barcodeInfos)[y])){
+				uniqueBarcode = false;
+				break;
+			}
+		
+		if(uniqueBarcode)
+			tempBarcodes.push_back((*barcodeInfos)[y]);
+	}
+
+	barcodeInfos->clear();
+	*barcodeInfos = tempBarcodes;
+	tempBarcodes.~vector();
 }
 
 /*-----------------------------------Barcode Thread-------------------------------------------*/
