@@ -599,8 +599,10 @@ Dib * Dib::convertGrayscale(Dib & src) {
 
 	UA_DOUT(4, 9, "convertGrayscale: Made dib");
 
-	for (unsigned row = 0; row < src.getHeight(); ++row) {
-		for (unsigned col = 0; col < src.getWidth(); ++col) {
+	memset(dibBuffer->pixels, 0, src.getHeight() * dibBuffer->rowBytes);
+
+	for (unsigned row = 0, rowMax = src.getHeight(); row < rowMax; ++row) {
+		for (unsigned col = 0, colMax = src.getWidth(); col < colMax; ++col) {
 			dibBuffer->setPixelGrayscale(row, col, src.getPixelGrayscale(row,
 					col));
 

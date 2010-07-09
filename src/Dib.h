@@ -43,7 +43,7 @@ struct BitmapInfoHeader{
  */
 struct RgbQuad {
 	RgbQuad() {
-		rgbRed = rgbGreen = rgbBlue = 0;
+		set(0, 0, 0);
 	}
 	RgbQuad(unsigned char r, unsigned char g, unsigned char b) {
 		set(r, g, b);

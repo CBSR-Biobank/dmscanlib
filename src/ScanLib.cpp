@@ -189,9 +189,8 @@ int slDecodeCommonCv(unsigned plateNum, Dib & dib, Decoder & decoder,
 	filteredDib->tpPresetFilter();
 
 
-	#ifdef _DEBUG
-		filteredDib->writeToFile("filtered.bmp");
-	#endif
+	UA_DEBUG(
+		filteredDib->writeToFile("filtered.bmp"));
 
 	/*--- generate ipl equiv ---*/
 	iplFilteredDib = filteredDib->generateIplImage();

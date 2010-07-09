@@ -15,8 +15,9 @@ void processImageManager::threadHandler(vector<BarcodeInfo *> * barcodeInfos,
 
 	time(&timeStart);
 
-	while(1){
-		std::vector<BarcodeThread *> tempthreads;
+	std::vector<BarcodeThread *> tempthreads;
+
+	while(1) {
 
 		for(unsigned j=0; j < threads.size(); j++){
 			if(threads[j]->isFinished()){
@@ -32,7 +33,7 @@ void processImageManager::threadHandler(vector<BarcodeInfo *> * barcodeInfos,
 			}
 		}
 		threads = tempthreads;
-		tempthreads.~vector();
+		tempthreads.clear();
 
 		if(threads.size() < threshold)
 			break;
@@ -106,7 +107,6 @@ void processImageManager::generateBarcodes(Dib * dib,
 
 	barcodeInfos->clear();
 	*barcodeInfos = tempBarcodes;
-	//tempBarcodes.~vector();
 }
 
 /*-----------------------------------Barcode Thread-------------------------------------------*/
@@ -228,6 +228,5 @@ vector<BarcodeInfo *> * BarcodeThread::getBarcodes(){
 	}
 }
 void BarcodeThread::clean(){
-	this->tempBarcodeInfo.~vector();
-	quitMutex.~Mutex();
+	//quitMutex.~Mutex();
 }

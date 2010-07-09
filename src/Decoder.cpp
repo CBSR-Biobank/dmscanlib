@@ -272,7 +272,6 @@ Decoder::ProcessResult Decoder::processImageRegionsCv(Dib & dib,IplImage *opencv
 
 	barcodeInfos.clear();
 	barcodeInfos = tempBarcodes;
-	tempBarcodes.~vector();
 
 	this->width = dib.getWidth();
 	this->height = dib.getHeight();
@@ -297,8 +296,6 @@ Decoder::ProcessResult Decoder::processImageRegionsCvThreaded(Dib * dib,IplImage
 	processImageManager imageProcessor(this->scanGap,this->squareDev,this->edgeThresh,this->corrections);
 	imageProcessor.generateBarcodes(dib,&blobVector,&(this->barcodeInfos) ); 
 
-	blobVector.~vector();
-
 	if(this->barcodeInfos.empty()){
 		return IMG_INVALID; 
 	}
@@ -309,6 +306,11 @@ Decoder::ProcessResult Decoder::processImageRegionsCvThreaded(Dib * dib,IplImage
 	calcRowsAndColumns();
 
 	Decoder::ProcessResult calcSlotResult = calculateSlots(static_cast<double> (dib->getDpi()));
+
+
+	for (unsigned i = 0, n = barcodeInfos.size(); i < n; ++i) {
+		delete barcodeInfos[i];
+	}
 
 	if (calcSlotResult != OK) 
 		return calcSlotResult;
@@ -820,7 +822,7 @@ void Decoder::imageShowBarcodes(Dib & dib, bool regions) {
 	UA_DOUT(3, 3, "marking tags ");
 
 	RgbQuad quadWhite(255, 255, 255); // change to white (shows up better in grayscale)
-	RgbQuad quadPink(255, 0, 255); // change to white (shows up better in grayscale)
+	RgbQuad quadPink(255, 0, 255);
 	RgbQuad quadRed(255, 0, 0);
 
 	RgbQuad & highlightQuad = (dib.getBitsPerPixel() == 8 ? quadWhite : quadPink);
