@@ -1,9 +1,9 @@
 /************************************************************************
   			Blob.h
   			
-FUNCIONALITAT: Definició de la classe CBlob
+FUNCIONALITAT: Definiciï¿½ de la classe CBlob
 AUTOR: Inspecta S.L.
-MODIFICACIONS (Modificació, Autor, Data):
+MODIFICACIONS (Modificaciï¿½, Autor, Data):
 
 FUNCTIONALITY: Definition of the CBlob class and some helper classes to perform
 			   some calculations on it
@@ -13,7 +13,9 @@ MODIFICATIONS (Modification, Author, Date):
 **************************************************************************/
 
 //! Disable warnings referred to 255 character truncation for the std:map
-#pragma warning( disable : 4786 ) 
+#ifdef _WIN32
+#pragma warning( disable : 4786 )
+#endif
 
 #ifndef CBLOB_INSPECTA_INCLUDED
 #define CBLOB_INSPECTA_INCLUDED
@@ -48,7 +50,7 @@ public:
 	CBlob( const CBlob &src );
 	CBlob( const CBlob *src );
 
-	//! Operador d'assignació
+	//! Operador d'assignaciï¿½
 	//! Assigment operator
 	CBlob& operator=(const CBlob &src );
 	
@@ -90,7 +92,7 @@ public:
 	//! Get standard deviation grey color
 	double StdDev( IplImage *image );
 
-	//! Indica si el blob està buit ( no té cap info associada )
+	//! Indica si el blob estï¿½ buit ( no tï¿½ cap info associada )
 	//! Shows if the blob has associated information
 	bool IsEmpty();
 

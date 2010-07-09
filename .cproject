@@ -1725,12 +1725,16 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/src/utils}&quot;"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.preprocessor.def.959006752" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
-									<listOptionValue builtIn="false" value="STANDALONE"/>
-									<listOptionValue builtIn="false" value="UA_LOGGER"/>
 									<listOptionValue builtIn="false" value="_DEBUG"/>
+									<listOptionValue builtIn="false" value="UA_LOGGER"/>
+									<listOptionValue builtIn="false" value="STANDALONE"/>
+									<listOptionValue builtIn="false" value="THREADED"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.optimization.level.1916415167" name="Optimization Level" superClass="gnu.cpp.compiler.option.optimization.level" value="gnu.cpp.compiler.optimization.level.none" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.option.debugging.level.536075763" name="Debug Level" superClass="gnu.cpp.compiler.option.debugging.level" value="gnu.cpp.compiler.debugging.level.max" valueType="enumerated"/>
+								<option id="gnu.cpp.compiler.option.preprocessor.preprocess.1321725477" name="Preprocess only (-E)" superClass="gnu.cpp.compiler.option.preprocessor.preprocess" value="false" valueType="boolean"/>
+								<option id="gnu.cpp.compiler.option.warnings.pedantic.1974763326" name="Pedantic (-pedantic)" superClass="gnu.cpp.compiler.option.warnings.pedantic" value="false" valueType="boolean"/>
+								<option id="gnu.cpp.compiler.option.warnings.pedantic.error.919083750" superClass="gnu.cpp.compiler.option.warnings.pedantic.error" value="true" valueType="boolean"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.785322141" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.c.compiler.base.559835875" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.base">
@@ -1748,8 +1752,9 @@
 								<option id="gnu.cpp.link.option.shared.758833990" name="Shared (-shared)" superClass="gnu.cpp.link.option.shared" value="false" valueType="boolean"/>
 								<option id="gnu.cpp.link.option.libs.219946775" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
 									<listOptionValue builtIn="false" value="cv"/>
+									<listOptionValue builtIn="false" value="OpenThreads"/>
 								</option>
-								<option id="gnu.cpp.link.option.paths.1596644708" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths"/>
+								<option id="gnu.cpp.link.option.paths.1596644708" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.711906795" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
@@ -1757,32 +1762,6 @@
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.assembler.base.2143537842" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.base">
 								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.348497199" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
-							</tool>
-						</toolChain>
-					</folderInfo>
-					<folderInfo id="cdt.managedbuild.config.gnu.mingw.so.debug.409171940.946229780.1880275877" name="/" resourcePath="src">
-						<toolChain id="cdt.managedbuild.toolchain.gnu.base.1857155997" name="Linux GCC" superClass="cdt.managedbuild.toolchain.gnu.base" unusedChildren="">
-							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF" id="cdt.managedbuild.target.gnu.platform.base" name="Debug Platform" osList="linux,hpux,aix,qnx" superClass="cdt.managedbuild.target.gnu.platform.base"/>
-							<tool id="cdt.managedbuild.tool.gnu.archiver.base.2081729489" name="GCC Archiver" superClass="cdt.managedbuild.tool.gnu.archiver.base.542067461"/>
-							<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.894503190" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.497654374">
-								<option id="gnu.cpp.compiler.option.optimization.level.695976819" name="Optimization Level" superClass="gnu.cpp.compiler.option.optimization.level" value="gnu.cpp.compiler.optimization.level.none" valueType="enumerated"/>
-								<option id="gnu.cpp.compiler.option.debugging.level.630767889" name="Debug Level" superClass="gnu.cpp.compiler.option.debugging.level" value="gnu.cpp.compiler.debugging.level.max" valueType="enumerated"/>
-								<option id="gnu.cpp.compiler.option.preprocessor.def.1332590098" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
-									<listOptionValue builtIn="false" value="STANDALONE"/>
-									<listOptionValue builtIn="false" value="UA_LOGGER"/>
-									<listOptionValue builtIn="false" value="_DEBUG"/>
-								</option>
-								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.2066284166" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
-							</tool>
-							<tool id="cdt.managedbuild.tool.gnu.c.compiler.base.745438667" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.base.559835875">
-								<option defaultValue="gnu.c.optimization.level.none" id="gnu.c.compiler.option.optimization.level.1760546965" name="Optimization Level" superClass="gnu.c.compiler.option.optimization.level" valueType="enumerated"/>
-								<option id="gnu.c.compiler.option.debugging.level.1463088930" name="Debug Level" superClass="gnu.c.compiler.option.debugging.level" value="gnu.c.debugging.level.max" valueType="enumerated"/>
-								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.1861852726" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
-							</tool>
-							<tool id="cdt.managedbuild.tool.gnu.c.linker.base.1474233070" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.base.1864832702"/>
-							<tool id="cdt.managedbuild.tool.gnu.cpp.linker.base.1804041115" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.base.618033240"/>
-							<tool id="cdt.managedbuild.tool.gnu.assembler.base.353851192" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.base.2143537842">
-								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.1099338535" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
 							</tool>
 						</toolChain>
 					</folderInfo>

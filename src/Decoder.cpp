@@ -210,7 +210,7 @@ Decoder::ProcessResult Decoder::processImageRegionsCv(Dib & dib,IplImage *opencv
 	
 	#ifdef _DEBUG
 		char * buffer = new char[255];
-		int blobsBefore = 0;
+		unsigned blobsBefore = 0;
 	#endif
 	getTubeBlobsFromDpi(blobVector,opencvImg,matrical,dib.getDpi());
 

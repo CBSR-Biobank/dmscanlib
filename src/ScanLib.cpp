@@ -248,7 +248,7 @@ If you want to use opencv with threading:
 define THREADED.
 */
 #ifndef LEGACY
-	#if defined(THREADED) && defined(WIN32)
+	#if defined(THREADED)
 		return slDecodeCommonCv(plateNum,dib,decoder,markedDibFilename,cellsRef,true);
 	#else
 		return slDecodeCommonCv(plateNum,dib,decoder,markedDibFilename,cellsRef,false);

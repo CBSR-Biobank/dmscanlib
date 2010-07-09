@@ -37,7 +37,7 @@ void processImageManager::threadHandler(vector<BarcodeInfo *> * barcodeInfos,
 		if(threads.size() < threshold)
 			break;
 		else
-			Sleep(1);
+			sleep(1);
 
 		/*----join----*/
 		if(threshold == THRESHOLD_JOIN){
@@ -56,7 +56,7 @@ void processImageManager::generateBarcodes(Dib * dib,
 						vector<CvRect> * blobVector,
 						vector<BarcodeInfo *> * barcodeInfos){
 
-	UA_DOUT(3, 5, "getTubeBlobs found: " << blobVector.size() << " blobs.");
+	UA_DOUT(3, 5, "getTubeBlobs found: " << blobVector->size() << " blobs.");
 
 	std::vector<BarcodeThread *> threads;
 
@@ -106,7 +106,7 @@ void processImageManager::generateBarcodes(Dib * dib,
 
 	barcodeInfos->clear();
 	*barcodeInfos = tempBarcodes;
-	tempBarcodes.~vector();
+	//tempBarcodes.~vector();
 }
 
 /*-----------------------------------Barcode Thread-------------------------------------------*/
@@ -186,7 +186,7 @@ void BarcodeThread::run() {
 			DmtxPixelLoc & tlCorner = info->getTopLeftCorner();
 			DmtxPixelLoc & brCorner = info->getBotRightCorner();
 
-			UA_DOUT(3, 8, "message " << *barcodeInfosIt - 1
+			UA_DOUT(3, 8, "message " // << *barcodeInfosIt - 1
 				<< ": " << info->getMsg()
 				<< " : tlCorner/" << tlCorner.X << "," << tlCorner.Y
 				<< "  brCorner/" << brCorner.X << "," << brCorner.Y);

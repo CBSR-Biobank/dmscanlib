@@ -167,6 +167,7 @@ void LoggerSink::standardHeader(std::string & str_r) {
 }
 
 void LoggerSinkStdoutImpl::write(const std::string& str_r) {
+	mutex.lock();
     if (str_r.size() == 0)
         return;
 
@@ -183,9 +184,11 @@ void LoggerSinkStdoutImpl::write(const std::string& str_r) {
         op += '\n';
 
     std::cout << op;
+    mutex.unlock();
 }
 
 void LoggerSinkFileImpl::write(const std::string& str_r) {
+	mutex.lock();
     if (file_m.size() == 0)
         return;
 
@@ -206,6 +209,7 @@ void LoggerSinkFileImpl::write(const std::string& str_r) {
         return;    // The file could not be opened. Exit
 
     output << op;
+    mutex.unlock();
 }
 
 
