@@ -1,8 +1,5 @@
 /*
- * Calibrator.cpp
- *
- *  Created on: 5-Jun-2009
- *      Author: loyola
+ * BarcodeInfo.cpp
  */
 
 #include "BarcodeInfo.h"
@@ -17,7 +14,7 @@
 
 BarcodeInfo::BarcodeInfo(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg) :
 	colBinRegion(NULL), rowBinRegion(NULL) {
-	str.append((char *) msg->output, msg->outputIdx);
+	str.assign((char *)msg->output, msg->outputIdx);
 
 	int height = dmtxDecodeGetProp(dec, DmtxPropHeight);
 	p00.X = p00.Y = p10.Y = p01.X = 0.0;

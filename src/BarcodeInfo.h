@@ -29,7 +29,7 @@ public:
 	string & getMsg() {
 		return str;
 	}
-	bool Equals(BarcodeInfo * other){
+	bool equals(BarcodeInfo * other){
 		return strcmp(this->getMsg().c_str(),other->getMsg().c_str()) == 0;
 	}
 

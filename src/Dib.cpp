@@ -592,10 +592,8 @@ bool Dib::crop(Dib & src, unsigned x0, unsigned y0, unsigned x1, unsigned y1)
 	*infoHeader = *src.infoHeader;
 	bytesPerPixel = src.bytesPerPixel;
 
-	if ((y0 >= infoHeader->height) || (y1 >= infoHeader->height) || (x0
-									 >=
-									 infoHeader->width)
-	    || (x1 >= infoHeader->width)) {
+	if ((y0 >= infoHeader->height) || (y1 >= infoHeader->height)
+			|| (x0 >= infoHeader->width) || (x1 >= infoHeader->width)) {
 		return false;
 	}
 
@@ -609,15 +607,15 @@ bool Dib::crop(Dib & src, unsigned x0, unsigned y0, unsigned x1, unsigned y1)
 
 	unsigned paletteSize = getPaletteSize(src.infoHeader->bitCount);
 	if (paletteSize > 0) {
-		if (this->colorPalette != NULL)
-			delete[]this->colorPalette;
-		this->colorPalette = new RgbQuad[paletteSize];
-
-		memcpy(this->colorPalette, src.colorPalette,
-		       paletteSize * sizeof(RgbQuad));
+		if (colorPalette != NULL)
+			delete [] colorPalette;
+		colorPalette = new RgbQuad[paletteSize];
+		memcpy(colorPalette, src.colorPalette, paletteSize * sizeof(RgbQuad));
 	}
+
 	if (pixels != NULL)
 		delete[]pixels;
+
 	pixels = new unsigned char[infoHeader->imageSize];
 	isAllocated = true;
 
@@ -625,8 +623,8 @@ bool Dib::crop(Dib & src, unsigned x0, unsigned y0, unsigned x1, unsigned y1)
 	    * src.rowBytes + x0 * bytesPerPixel;
 	unsigned char *destRowPtr = pixels;
 
-	for (unsigned row = 0; row < infoHeader->height; ++row, srcRowPtr
-	     += src.rowBytes, destRowPtr += rowBytes) {
+	for (unsigned row = 0; row < infoHeader->height;
+			++row, srcRowPtr += src.rowBytes, destRowPtr += rowBytes) {
 		memcpy(destRowPtr, srcRowPtr, rowBytes);
 	}
 	return true;
@@ -973,9 +971,9 @@ IplImageContainer *Dib::generateIplImage()
 
 	iplContainer = new IplImageContainer(NULL);
 	iplContainer->setIplImage(image);
-	iplContainer->setHorizontalResolution(this->
+	iplContainer->setHorizontalResolution(
 					      infoHeader->hPixelsPerMeter);
-	iplContainer->setVerticalResolution(this->infoHeader->vPixelsPerMeter);
+	iplContainer->setVerticalResolution(infoHeader->vPixelsPerMeter);
 	return iplContainer;
 }
 
@@ -991,10 +989,10 @@ IplImageContainer *Dib::generateIplImage()
 void Dib::rectangle(unsigned x, unsigned y, unsigned width, unsigned height,
 		    RgbQuad & quad)
 {
-	this->line(x, y, x, y + height, quad);
-	this->line(x, y, x + width, y, quad);
-	this->line(x + width, y, x + width, y + height, quad);
-	this->line(x, y + height, x + width, y + height, quad);
+	line(x, y, x, y + height, quad);
+	line(x, y, x + width, y, quad);
+	line(x + width, y, x + width, y + height, quad);
+	line(x, y + height, x + width, y + height, quad);
 
 }
 

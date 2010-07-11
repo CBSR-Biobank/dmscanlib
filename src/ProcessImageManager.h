@@ -6,10 +6,6 @@
 
 using namespace std;
 
-#define THREAD_NUM 8
-#define JOIN_TIMEOUT_SEC 10
-#define THRESHOLD_JOIN 1
-
 class Dib;
 class BarcodeInfo;
 class BarcodeThread;
@@ -19,17 +15,20 @@ class ProcessImageManager {
 	ProcessImageManager(double scanGap, unsigned squareDev,
 			    unsigned edgeThresh, unsigned corrections);
 
-	void generateBarcodes(Dib * dib, vector < CvRect > *blobVector,
+	void generateBarcodes(Dib * dib, vector < CvRect > & blobVector,
 			vector<BarcodeInfo *> & barcodeInfos);
 
  private:
+	static const unsigned THREAD_NUM = 8;
+	static const unsigned JOIN_TIMEOUT_SEC = 10;
+	static const unsigned THRESHOLD_JOIN = 1;
+
 	double scanGap;
 	unsigned squareDev;
 	unsigned edgeThresh;
 	unsigned corrections;
 
-	void threadHandler(vector < BarcodeInfo * > & barcodeInfos,
-			vector<BarcodeThread *> & threads, unsigned threshold);
+	void threadHandler(vector<BarcodeThread *> & threads, unsigned threshold);
 
 };
 

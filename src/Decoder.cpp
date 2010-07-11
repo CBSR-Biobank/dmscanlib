@@ -270,7 +270,7 @@ Decoder::ProcessResult Decoder::processImageRegionsCv(Dib & dib,
 
 		bool uniqueBarcode = true;
 		for (unsigned x = 0; x < tempBarcodes.size(); x++)
-			if (tempBarcodes[x]->Equals(barcodeInfos[y])) {
+			if (tempBarcodes[x]->equals(barcodeInfos[y])) {
 				uniqueBarcode = false;
 				break;
 			}
@@ -307,7 +307,7 @@ Decoder::ProcessResult Decoder::processImageRegionsCvThreaded(Dib * dib,
 
 	ProcessImageManager imageProcessor(scanGap, squareDev,
 					   edgeThresh, corrections);
-	imageProcessor.generateBarcodes(dib, &blobVector, &barcodeInfos);
+	imageProcessor.generateBarcodes(dib, blobVector, barcodeInfos);
 
 	if (barcodeInfos.empty()) {
 		return IMG_INVALID;
@@ -318,17 +318,7 @@ Decoder::ProcessResult Decoder::processImageRegionsCvThreaded(Dib * dib,
 
 	calcRowsAndColumns();
 
-	Decoder::ProcessResult calcSlotResult =
-	    calculateSlots(static_cast < double >(dib->getDpi()));
-
-	for (unsigned i = 0, n = barcodeInfos.size(); i < n; ++i) {
-		delete barcodeInfos[i];
-	}
-
-	if (calcSlotResult != OK)
-		return calcSlotResult;
-
-	return OK;
+	return calculateSlots(static_cast < double >(dib->getDpi()));
 }
 
 bool Decoder::decode(DmtxDecode * &dec, unsigned attempts,
