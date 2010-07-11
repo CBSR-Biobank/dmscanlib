@@ -39,11 +39,17 @@ public:
 		OK
 	} ProcessResult;
 
-	ProcessResult processImageRegionsDmtx(unsigned plateNum, Dib & dib,vector<vector<string> > & cells);
-	ProcessResult processImageRegionsCv(Dib & dib,IplImage *opencvImg,vector<vector<string> > & cells, bool matrical);
-	ProcessResult processImageRegionsCvThreaded(Dib * dib,IplImage *opencvImg,vector<vector<string> > & cells, bool matrical);
+	ProcessResult processImageRegionsDmtx(unsigned plateNum, Dib & dib);
+	ProcessResult processImageRegionsCv(Dib & dib,
+			IplImage *opencvImg, bool metrical);
+	ProcessResult processImageRegionsCvThreaded(Dib * dib,
+			IplImage *opencvImg, bool metrical);
 
 	void imageShowBarcodes(Dib & dib, bool regions);
+	vector<vector<string> > & getCells() { return cells; }
+
+	static DmtxImage * createDmtxImageFromDib(Dib & dib);
+
 
 protected:
 
@@ -81,7 +87,6 @@ protected:
 /*----threading----*/
 
 void processImageThreaded(void * param);
-DmtxImage * createDmtxImageFromDib(Dib & dib);
 /*----threading----*/
 
 

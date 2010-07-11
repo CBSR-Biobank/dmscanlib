@@ -142,7 +142,7 @@ CSimpleOptA::SOption longOptions[] = { { OPT_ID_BRIGHTNESS, "--brightness",
 #endif
 
 struct Options {
-	std::vector<unsigned> dpis;
+	unsigned dpi;
 	char * infile;
 	char * outfile;
 
@@ -316,44 +316,26 @@ int TestApp::decode() {
 		return SC_FAIL;
 	}
 
-	unsigned numDpis = options.dpis.size();
-
-	if (numDpis == 0) {
+	if (options.dpi == 0) {
 		cerr << "ERROR: DPI not specified" << endl;
 		return SC_FAIL;
 	}
 
-	if (numDpis == 1) {
-		return slDecodePlate(options.debugLevel, options.dpis[0],
-				options.brightness, options.contrast, options.plateNum,
-				options.left, options.top, options.right, options.bottom,
-				options.gap, options.squareDev, options.threshold,
-				options.corrections, options.cellDistance);
-	}
-
-	if (numDpis == 2)
-		options.dpis.push_back(0);
-
-	return slDecodePlateMultipleDpi(options.debugLevel, options.dpis[0],
-			options.dpis[1], options.dpis[2], options.brightness,
-			options.contrast, options.plateNum, options.left, options.top,
-			options.right, options.bottom, options.gap, options.squareDev,
-			options.threshold, options.corrections, options.cellDistance);
+	return slDecodePlate(options.debugLevel, options.dpi,
+			options.brightness, options.contrast, options.plateNum,
+			options.left, options.top, options.right, options.bottom,
+			options.gap, options.squareDev, options.threshold,
+			options.corrections, options.cellDistance);
 }
 
 int TestApp::scan() {
-	unsigned numDpis = options.dpis.size();
 
-	if (numDpis != 1) {
-		if (numDpis == 0) {
-			cerr << "ERROR: DPI not specified" << endl;
-		} else {
-			cerr << "ERROR: use a single DPI value" << endl;
-		}
+	if (options.dpi == 0) {
+		cerr << "ERROR: DPI not specified" << endl;
 		return SC_FAIL;
 	}
 
-	return slScanImage(options.debugLevel, options.dpis[0], options.brightness,
+	return slScanImage(options.debugLevel, options.dpi, options.brightness,
 			options.contrast, options.left, options.top, options.right,
 			options.bottom, options.outfile);
 }
@@ -396,8 +378,8 @@ int TestApp::capability() {
 }
 
 int TestApp::test() {
-	if (options.dpis.size() < 3) {
-		cout << "ERROR: Must provide 3 dpi values and plate offsets." << endl;
+	if (options.dpi == 0) {
+		cout << "ERROR: DPI not specified" << endl;
 		return SC_FAIL;
 	}
 
@@ -421,7 +403,7 @@ int TestApp::test() {
 	cout << "===========================================" << endl;
 
 	cout << "==============Scan Image to File================" << endl;
-	result = slScanImage(options.debugLevel, options.dpis[0],
+	result = slScanImage(options.debugLevel, options.dpi,
 			options.brightness, options.contrast, options.left, options.top,
 			options.right, options.bottom, "test.bmp");
 
@@ -444,28 +426,13 @@ int TestApp::test() {
 	cout << "===========================================" << endl;
 
 	cout << "==============Scan & Decode Image================" << endl;
-	result = slDecodePlate(options.debugLevel, options.dpis[0],
+	result = slDecodePlate(options.debugLevel, options.dpi,
 			options.brightness, options.contrast, 1, options.left, options.top,
 			options.right, options.bottom, options.gap, options.squareDev,
 			options.threshold, options.corrections, options.cellDistance);
 
 	if (result != SC_SUCCESS) {
 		cout << "Failed to scan & decode image." << endl;
-		goto TEST_STOP;
-	}
-
-	cout << "===========================================" << endl;
-
-	cout << "==============Scan & Decode Multiple Dpi Image================"
-			<< endl;
-	result = slDecodePlateMultipleDpi(options.debugLevel, options.dpis[0],
-			options.dpis[1], options.dpis[2], options.brightness,
-			options.contrast, 1, options.left, options.top, options.right,
-			options.bottom, options.gap, options.squareDev, options.threshold,
-			options.corrections, options.cellDistance);
-
-	if (result != SC_SUCCESS) {
-		cout << "Failed to scan & decode multiple dpi imaeg" << endl;
 		goto TEST_STOP;
 	}
 
@@ -546,8 +513,8 @@ bool TestApp::getCmdOptions(int argc, char ** argv) {
 				break;
 
 			case OPT_ID_DPI:
-				options.dpis.push_back(strtoul((const char *) args.OptionArg(),
-						&end, 10));
+				options.dpi = strtoul((const char *) args.OptionArg(),
+						&end, 10);
 				if (*end != 0) {
 					cerr << "invalid value for dpi: " << args.OptionArg()
 							<< endl;

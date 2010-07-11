@@ -63,7 +63,7 @@ public:
 	Dib();
 	Dib(Dib & src);
 	Dib(IplImageContainer & src);
-	Dib(unsigned rows, unsigned cols, unsigned colorBits);
+	Dib(unsigned width, unsigned height, unsigned colorBits);
 	Dib(char * filename);
 	~Dib();
 	void readFromFile(const char * filename) ;

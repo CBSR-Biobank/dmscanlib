@@ -30,7 +30,7 @@
 #include <sstream>
 #include <string>
 
-//XXX KERNELTEST
+// XXX KERNELTEST
 #include <ctime>
 #include <cstdlib>
 #include <math.h>
@@ -41,7 +41,7 @@
 
 using namespace std;
 
-const char * INI_FILE_NAME = "scanlib.ini";
+const char *INI_FILE_NAME = "scanlib.ini";
 
 slTime starttime; // for debugging
 slTime endtime;
@@ -70,7 +70,7 @@ void configLogging(unsigned level, bool useFile = true) {
  * Could not use C++ streams for Release version of DLL.
  */
 void saveResults(string & msg) {
-	FILE * fh = fopen("scanlib.txt", "w");
+	FILE *fh = fopen("scanlib.txt", "w");
 	UA_ASSERT_NOT_NULL(fh);
 	fprintf(fh, "%s", msg.c_str());
 	fclose(fh);
@@ -97,27 +97,29 @@ int slSelectSourceAsDefault() {
 }
 
 /*
- Please note that the 32nd bit should be ignored.
+ * Please note that the 32nd bit should be ignored. 
  */
 int slGetScannerCapability() {
 #ifdef WIN32
 	ImageGrabber ig;
 	return ig.getScannerCapability();
 #endif
-	return 0xFF; //supports WIA and DPI: 300,400,600
+	return 0xFF; // supports WIA and DPI: 300,400,600
 }
 
 int isValidDpi(int dpi) {
 #ifdef WIN32
 	ImageGrabber ig;
 	int dpiCap = ig.getScannerCapability();
-	return ((dpiCap & CAP_DPI_300) && dpi == 300) || ((dpiCap & CAP_DPI_400)
-			&& dpi == 400) || ((dpiCap & CAP_DPI_600) && dpi == 600);
+	return ((dpiCap & CAP_DPI_300) && dpi == 300)
+	|| ((dpiCap & CAP_DPI_400)
+			&& dpi == 400)
+	|| ((dpiCap & CAP_DPI_600) && dpi == 600);
 #endif
 	return 1;
 }
 
-void formatCellMessages(unsigned plateNum, vector<vector<string> > & cells,
+void formatCellMessages(unsigned plateNum, vector<vector<string> >&cells,
 		string & msg) {
 	ostringstream out;
 	out << "#Plate,Row,Col,Barcode" << endl;
@@ -135,15 +137,14 @@ void formatCellMessages(unsigned plateNum, vector<vector<string> > & cells,
 
 int slScanImage(unsigned verbose, unsigned dpi, int brightness, int contrast,
 		double left, double top, double right, double bottom,
-		const char * filename) {
+		const char *filename) {
 	configLogging(verbose);
 	UA_DOUT(1, 3, "slScanImage: dpi/" << dpi
 			<< " brightness/" << brightness
 			<< " contrast/" << contrast
 			<< " left/" << left
-			<< " top/"<< top
-			<< " right/"<< right
-			<< " bottom/"<< bottom);
+			<< " top/" << top << " right/" << right << " bottom/" <<
+			bottom);
 
 #ifdef WIN32
 	ImageGrabber ig;
@@ -167,49 +168,43 @@ int slScanImage(unsigned verbose, unsigned dpi, int brightness, int contrast,
 #endif
 }
 
-
-
-
 int slDecodeCommonCv(unsigned plateNum, Dib & dib, Decoder & decoder,
-		const char * markedDibFilename, vector<vector<string> > & cellsRef, bool threaded) {
-	
-	bool matrical = false;
-	Dib * filteredDib;
+		const char *markedDibFilename, bool threaded) {
+
+	bool metrical = false;
+	Dib *filteredDib;
 	IplImageContainer *iplFilteredDib;
 	Decoder::ProcessResult result;
 
 	UA_DOUT(1, 2, "Running slDecodeCommonCv");
 
-	if(matrical)
-		UA_DOUT(1, 4, "DecodeCommon: matrical mode is set");
+	UA_DOUT(1, 4, "DecodeCommon: metrical mode: " << metrical);
 
 	/*--- apply filters ---*/
 	filteredDib = Dib::convertGrayscale(dib);
 	UA_ASSERT_NOT_NULL(filteredDib);
 	filteredDib->tpPresetFilter();
 
-
-	UA_DEBUG(
-		filteredDib->writeToFile("filtered.bmp"));
+	UA_DEBUG(filteredDib->writeToFile("filtered.bmp"));
 
 	/*--- generate ipl equiv ---*/
 	iplFilteredDib = filteredDib->generateIplImage();
 	UA_ASSERT_NOT_NULL(iplFilteredDib);
 	UA_DOUT(1, 7, "generated IplImage from filteredDib");
 
-
-	if(threaded){
+	if (threaded) {
 		UA_DOUT(1, 3, "using multithreaded opencv based decoder");
-		result = decoder.processImageRegionsCvThreaded(filteredDib,iplFilteredDib->getIplImage(), cellsRef,matrical);
-	}
-	else
-		result = decoder.processImageRegionsCv(*filteredDib,iplFilteredDib->getIplImage(), cellsRef,matrical);
+		result = decoder.processImageRegionsCvThreaded(filteredDib,
+				iplFilteredDib-> getIplImage(), metrical);
+	} else
+		result = decoder.processImageRegionsCv(*filteredDib,
+				iplFilteredDib->getIplImage(), metrical);
 
 	delete filteredDib;
 	delete iplFilteredDib;
 
 	if (result == Decoder::OK) {
-		decoder.imageShowBarcodes(dib,0);
+		decoder.imageShowBarcodes(dib, 0);
 	}
 	dib.writeToFile(markedDibFilename);
 
@@ -234,59 +229,56 @@ int slDecodeCommonCv(unsigned plateNum, Dib & dib, Decoder & decoder,
 	return SC_SUCCESS;
 }
 
-
-//TODO get rid of old slDecodeCommon
+// TODO get rid of old slDecodeCommon
 int slDecodeCommon(unsigned plateNum, Dib & dib, Decoder & decoder,
-		const char * markedDibFilename, vector<vector<string> > & cellsRef) {
+		const char *markedDibFilename) {
 
-/*
-If you want to use the older dmtx based coding:
-define LEGACY.
-
-If you want to use opencv with threading:
-define THREADED.
-*/
+	/*
+	 * If you want to use the older dmtx based coding: define LEGACY.
+	 * 
+	 * If you want to use opencv with threading: define THREADED. 
+	 */
 #ifndef LEGACY
-	#if defined(THREADED)
-		return slDecodeCommonCv(plateNum,dib,decoder,markedDibFilename,cellsRef,true);
-	#else
-		return slDecodeCommonCv(plateNum,dib,decoder,markedDibFilename,cellsRef,false);
-	#endif
-#endif 
-
-	UA_DOUT(3,1, "WARNING: LEGACY MODE");
+#ifdef THREADED
+	return slDecodeCommonCv(plateNum, dib, decoder, markedDibFilename,
+			true);
+#else
+	return slDecodeCommonCv(plateNum, dib, decoder, markedDibFilename, false);
+#endif
+#else
+	UA_DOUT(3, 1, "WARNING: LEGACY MODE");
 
 	string msg;
 
-	Dib * grayscaleDib = NULL;
+	Dib *grayscaleDib = NULL;
 	grayscaleDib = Dib::convertGrayscale(dib);
 	UA_ASSERT_NOT_NULL(grayscaleDib);
 
 	grayscaleDib->tpPresetFilter();
 
-	UA_DEBUG(
-			grayscaleDib->writeToFile("filtered.bmp");
+	UA_DEBUG(grayscaleDib->writeToFile("filtered.bmp");
 	);
 
-	Decoder::ProcessResult result = decoder.processImageRegionsDmtx(plateNum,*grayscaleDib, cellsRef);
+	Decoder::ProcessResult result =
+	decoder.processImageRegionsDmtx(plateNum, *grayscaleDib, cellsRef);
 
 	if (result == Decoder::OK) {
-		decoder.imageShowBarcodes(*grayscaleDib,1);
+		decoder.imageShowBarcodes(*grayscaleDib, 1);
 		grayscaleDib->writeToFile(markedDibFilename);
 	}
 	delete grayscaleDib;
 
 	switch (result) {
-	case Decoder::IMG_INVALID:
+		case Decoder::IMG_INVALID:
 		return SC_INVALID_IMAGE;
 
-	case Decoder::POS_INVALID:
+		case Decoder::POS_INVALID:
 		return SC_INVALID_POSITION;
 
-	case Decoder::POS_CALC_ERROR:
+		case Decoder::POS_CALC_ERROR:
 		return SC_POS_CALC_ERROR;
 
-	default:
+		default:
 		; // do nothing
 	}
 
@@ -295,9 +287,8 @@ define THREADED.
 	Util::difftiime(starttime, endtime, timediff);
 	UA_DOUT(1, 1, "slDecodeCommon: time taken: " << timediff);
 	return SC_SUCCESS;
+#endif
 }
-
-
 
 int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
 		unsigned plateNum, double left, double top, double right,
@@ -309,9 +300,9 @@ int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
 			<< " contrast/" << contrast
 			<< " plateNum/" << plateNum
 			<< " left/" << left
-			<< " top/"<< top
-			<< " right/"<< right
-			<< " bottom/"<< bottom
+			<< " top/" << top
+			<< " right/" << right
+			<< " bottom/" << bottom
 			<< " scanGap/" << scanGap
 			<< " squareDev/" << squareDev
 			<< " edgeThresh/" << edgeThresh
@@ -328,11 +319,13 @@ int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
 	HANDLE h;
 	int result;
 	Dib dib;
-	vector<vector<string> > cells;
+	vector < vector < string > >cells;
 	Util::getTime(starttime);
-	Decoder decoder(scanGap, squareDev, edgeThresh, corrections, cellDistance);
+	Decoder decoder(scanGap, squareDev, edgeThresh, corrections,
+			cellDistance);
 
-	h = ig.acquireImage(dpi, brightness, contrast, left, top, right, bottom);
+	h = ig.acquireImage(dpi, brightness, contrast, left, top, right,
+			bottom);
 	if (h == NULL) {
 		UA_DOUT(1, 1, "could not acquire plate image: " << plateNum);
 		return ig.getErrorCode();
@@ -342,9 +335,10 @@ int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
 	dib.writeToFile("scanned.bmp");
 
 	if (dib.getDpi() != dpi)
-		result = SC_INCORRECT_DPI_SCANNED;
+	result = SC_INCORRECT_DPI_SCANNED;
 	else
-		result = slDecodeCommon(plateNum, dib, decoder, "decode.bmp", cells);
+	result =
+	slDecodeCommon(plateNum, dib, decoder, "decode.bmp", cells);
 
 	if (result == SC_SUCCESS) {
 		string msg;
@@ -359,119 +353,12 @@ int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
 #endif
 }
 
-int slDecodePlateMultipleDpi(unsigned verbose, unsigned dpi1, unsigned dpi2,
-		unsigned dpi3, int brightness, int contrast, unsigned plateNum,
-		double left, double top, double right, double bottom, double scanGap,
-		unsigned squareDev, unsigned edgeThresh, unsigned corrections,
-		double cellDistance) {
-	configLogging(verbose);
-	UA_DOUT(1, 3, "slDecodePlateMultipleDpi: dpi1/" << dpi1
-			<< " dpi2/" << dpi2
-			<< " dpi3/" << dpi3
-			<< " brightness/" << brightness
-			<< " contrast/" << contrast
-			<< " plateNum/" << plateNum
-			<< " left/" << left
-			<< " top/"<< top
-			<< " right/"<< right
-			<< " bottom/"<< bottom
-			<< " scanGap/" << scanGap
-			<< " squareDev/" << squareDev
-			<< " edgeThresh/" << edgeThresh
-			<< " corrections/" << corrections
-			<< " cellDistance/" << cellDistance);
-
-#ifdef WIN32
-	ImageGrabber ig;
-
-	Util::getTime(starttime);
-	unsigned dpis[] = { dpi1, dpi2, dpi3 };
-
-	std::ostringstream filename;
-
-	HANDLE h;
-	int result = SC_FAIL;
-	Dib dib;
-	vector<vector<string> > cells;
-	vector<vector<string> > newCells;
-
-	for (unsigned i = 0; i < 3; ++i) {
-		if (dpis[i] == 0)
-			continue;
-
-		Decoder * decoder = new Decoder(scanGap, squareDev, edgeThresh,
-				corrections, cellDistance);
-		UA_ASSERT_NOT_NULL(decoder);
-
-		h = ig.acquireImage(dpis[i], brightness, contrast, left, top, right,
-				bottom);
-		if (h == NULL) {
-			UA_DOUT(1, 1, "could not acquire plate image: " << plateNum);
-			return ig.getErrorCode();
-		}
-
-		dib.readFromHandle(h);
-		filename.str("");
-		filename << "scanned" << i + 1 << ".bmp";
-		dib.writeToFile(filename.str().c_str());
-		filename.str("");
-		filename << "decoded" << i + 1 << ".bmp";
-
-		if (dib.getDpi() != dpis[i])
-			result = SC_INCORRECT_DPI_SCANNED;
-		else
-			result = slDecodeCommon(plateNum, dib, *decoder,
-					filename.str().c_str(), newCells);
-
-		if (result != SC_SUCCESS) {
-			return result;
-		}
-
-		if (cells.size() < newCells.size()) {
-			cells = newCells;
-		} else {
-			for (unsigned row = 0, numRows = cells.size(); row < numRows; ++row) {
-				for (unsigned col = 0, numCols = newCells[row].size(); col
-						< numCols; ++col) {
-					if ((cells[row][col].length() > 0)
-							&& (newCells[row][col].length() > 0)
-							&& (cells[row][col] != newCells[row][col])) {
-						UA_WARN("current cell and new cell do not match: row/"
-								<< row << " col/" << col << " current/" << cells[row][col]
-								<< " new/" << newCells[row][col]);
-					} else {
-						cells[row][col] = newCells[row][col];
-					}
-				}
-			}
-		}
-		ig.freeImage(h);
-		delete decoder;
-	}
-
-	if (result == SC_SUCCESS) {
-		string msg;
-		formatCellMessages(plateNum, cells, msg);
-		saveResults(msg);
-	}
-
-	Util::getTime(endtime);
-	Util::difftiime(starttime, endtime, timediff);
-	UA_DOUT(1, 1, "slDecodePlateMultipleDpi: time taken: " << timediff);
-
-	return result;
-#else
-	return SC_FAIL;
-#endif
-
-}
-
-int slDecodeImage(unsigned verbose, unsigned plateNum, const char * filename,
+int slDecodeImage(unsigned verbose, unsigned plateNum, const char *filename,
 		double scanGap, unsigned squareDev, unsigned edgeThresh,
 		unsigned corrections, double cellDistance) {
 	configLogging(verbose);
 	UA_DOUT(1, 3, "slDecodeImage: plateNum/" << plateNum
-			<< " filename/"<< filename
+			<< " filename/" << filename
 			<< " scanGap/" << scanGap
 			<< " squareDev/" << squareDev
 			<< " edgeThresh/" << edgeThresh
@@ -489,16 +376,15 @@ int slDecodeImage(unsigned verbose, unsigned plateNum, const char * filename,
 	Util::getTime(starttime);
 
 	Dib dib;
-	vector<vector<string> > cells;
 	Decoder decoder(scanGap, squareDev, edgeThresh, corrections, cellDistance);
 
 	dib.readFromFile(filename);
 
-	int result = slDecodeCommon(plateNum, dib, decoder, "decode.bmp", cells);
+	int result = slDecodeCommon(plateNum, dib, decoder, "decode.bmp");
 
 	if (result == SC_SUCCESS) {
 		string msg;
-		formatCellMessages(plateNum, cells, msg);
+		formatCellMessages(plateNum, decoder.getCells(), msg);
 		saveResults(msg);
 	}
 	return result;
