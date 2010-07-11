@@ -23,6 +23,10 @@ ProcessImageManager::ProcessImageManager(double scanGap, unsigned squareDev,
 	this->corrections = corrections;
 }
 
+ProcessImageManager::~ProcessImageManager() {
+}
+
+
 void ProcessImageManager::threadHandler(vector < BarcodeThread * > & threads,
 		unsigned threshold)
 {
@@ -118,5 +122,6 @@ void ProcessImageManager::generateBarcodes(Dib * dib,
 				delete threadBarcodes[i];
 			}
 		}
+		delete &thread;
 	}
 }

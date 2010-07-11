@@ -14,6 +14,7 @@ class ProcessImageManager {
  public:
 	ProcessImageManager(double scanGap, unsigned squareDev,
 			    unsigned edgeThresh, unsigned corrections);
+	~ProcessImageManager();
 
 	void generateBarcodes(Dib * dib, vector < CvRect > & blobVector,
 			vector<BarcodeInfo *> & barcodeInfos);
