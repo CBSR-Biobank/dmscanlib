@@ -197,11 +197,6 @@ extern int slDecodePlate(unsigned verbose, unsigned dpi, int brightness,
     int contrast, unsigned plateNum, double left, double top, double right,
     double bottom, double scanGap, unsigned squareDev,
     unsigned edgeThresh, unsigned corrections, double cellDistance);
-extern int slDecodePlateMultipleDpi(unsigned verbose, unsigned dpi1, unsigned dpi2,
-		unsigned dpi3, int brightness, int contrast, unsigned plateNum,
-		double left, double top, double right, double bottom, double scanGap,
-		unsigned squareDev, unsigned edgeThresh, unsigned corrections,
-		double cellDistance);	
 extern int slDecodeImage(unsigned verbose, unsigned plateNum, char * filename,
         double scanGap, unsigned squareDev, unsigned edgeThresh, 
         unsigned corrections, double cellDistance);
@@ -317,50 +312,6 @@ SWIGEXPORT jint JNICALL Java_edu_ualberta_med_scannerconfig_scanlib_ScanLibWin32
   arg13 = (unsigned int)jarg13; 
   arg14 = (double)jarg14; 
   result = (int)slDecodePlate(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10,arg11,arg12,arg13,arg14);
-  jresult = (jint)result; 
-  return jresult;
-}
-
-
-SWIGEXPORT jint JNICALL Java_edu_ualberta_med_scannerconfig_scanlib_ScanLibWin32WrapperJNI_slDecodePlateMultipleDpi(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2, jlong jarg3, jlong jarg4, jint jarg5, jint jarg6, jlong jarg7, jdouble jarg8, jdouble jarg9, jdouble jarg10, jdouble jarg11, jdouble jarg12, jlong jarg13, jlong jarg14, jlong jarg15, jdouble jarg16) {
-  jint jresult = 0 ;
-  unsigned int arg1 ;
-  unsigned int arg2 ;
-  unsigned int arg3 ;
-  unsigned int arg4 ;
-  int arg5 ;
-  int arg6 ;
-  unsigned int arg7 ;
-  double arg8 ;
-  double arg9 ;
-  double arg10 ;
-  double arg11 ;
-  double arg12 ;
-  unsigned int arg13 ;
-  unsigned int arg14 ;
-  unsigned int arg15 ;
-  double arg16 ;
-  int result;
-  
-  (void)jenv;
-  (void)jcls;
-  arg1 = (unsigned int)jarg1; 
-  arg2 = (unsigned int)jarg2; 
-  arg3 = (unsigned int)jarg3; 
-  arg4 = (unsigned int)jarg4; 
-  arg5 = (int)jarg5; 
-  arg6 = (int)jarg6; 
-  arg7 = (unsigned int)jarg7; 
-  arg8 = (double)jarg8; 
-  arg9 = (double)jarg9; 
-  arg10 = (double)jarg10; 
-  arg11 = (double)jarg11; 
-  arg12 = (double)jarg12; 
-  arg13 = (unsigned int)jarg13; 
-  arg14 = (unsigned int)jarg14; 
-  arg15 = (unsigned int)jarg15; 
-  arg16 = (double)jarg16; 
-  result = (int)slDecodePlateMultipleDpi(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10,arg11,arg12,arg13,arg14,arg15,arg16);
   jresult = (jint)result; 
   return jresult;
 }

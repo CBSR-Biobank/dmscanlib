@@ -86,9 +86,9 @@ public:
 	unsigned char * getRowPtr(unsigned row);
 	void getPixel(unsigned row, unsigned col, RgbQuad & quad);
 	unsigned char getPixelAvgGrayscale(unsigned row, unsigned col);
-	unsigned char getPixelGrayscale(unsigned row, unsigned col);
+	inline unsigned char getPixelGrayscale(unsigned row, unsigned col);
 	void setPixel(unsigned row, unsigned col, RgbQuad & quad);
-	void setPixelGrayscale(unsigned row, unsigned col, unsigned char value);
+	inline void setPixelGrayscale(unsigned row, unsigned col, unsigned char value);
 	unsigned char * getPixelsNoPadding();
 	void setPixelsNoPadding(unsigned char * pixels);
 	bool crop(Dib &src, unsigned x0, unsigned y0, unsigned x1, unsigned y1);

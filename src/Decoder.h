@@ -64,6 +64,15 @@ public:
 
 
 protected:
+	void showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
+	void calcRowsAndColumns();
+	ProcessResult calculateSlots(double dpi);
+	void initCells(unsigned maxRow, unsigned maxCol);
+	static void getTubeBlobsFromDpi(vector < CvRect > &blobVector,
+			IplImage * opencvImg, bool metrical, int dpi);
+	static void getTubeBlobs(IplImage * original, int threshold,
+			int blobsize, int blurRounds, int border,
+			vector <CvRect> & blobVector);
 
 	static const char * INI_SECTION_NAME;
 	static const char * INI_REGION_LABEL;
@@ -86,17 +95,6 @@ protected:
 
 	unsigned char * imageBuf;
 	OpenThreads::Mutex addBarcodeMutex;
-
-
-	void showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
-	void calcRowsAndColumns();
-	ProcessResult calculateSlots(double dpi);
-	void initCells(unsigned maxRow, unsigned maxCol);
-	static void getTubeBlobsFromDpi(vector < CvRect > &blobVector,
-			IplImage * opencvImg, bool metrical, int dpi);
-	static void getTubeBlobs(IplImage * original, int threshold,
-			int blobsize, int blurRounds, int border,
-			vector <CvRect> & blobVector);
 };
 
 

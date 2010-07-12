@@ -280,6 +280,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\BarcodeThread.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\src\BinRegion.cpp"
 				>
 			</File>
@@ -308,7 +312,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\processImageManager.cpp"
+				RelativePath=".\src\ProcessImageManager.cpp"
 				>
 			</File>
 			<File
@@ -335,7 +339,7 @@
 				Name="Blob"
 				>
 				<File
-					RelativePath=".\src\cvblob\blob.cpp"
+					RelativePath=".\src\cvblob\Blob.cpp"
 					>
 				</File>
 				<File
@@ -363,6 +367,10 @@
 			>
 			<File
 				RelativePath=".\src\BarcodeInfo.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\BarcodeThread.h"
 				>
 			</File>
 			<File

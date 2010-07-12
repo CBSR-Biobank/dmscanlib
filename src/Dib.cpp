@@ -1110,7 +1110,7 @@ void Dib::convolveFast3x3(const float (&k)[9])
 	float *imageOut = new float[size];
 	float *imageIn = new float[size];
 
-	fill(imageOut, imageOut + size, 0.0);
+	fill(imageOut, imageOut + size, 0.0f);
 
 	{
 		unsigned char *srcRowPtr = pixels, *srcPtr;

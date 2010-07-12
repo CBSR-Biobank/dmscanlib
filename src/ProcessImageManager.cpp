@@ -9,6 +9,9 @@
 
 #ifdef WIN32
 #include <windows.h>
+#define SLEEP Sleep
+#else 
+#define SLEEP sleep
 #endif
 
 #include <map>
@@ -53,7 +56,7 @@ void ProcessImageManager::threadHandler(vector < BarcodeThread * > & threads,
 		if (threads.size() < threshold)
 			break;
 		else
-			sleep(1);
+			SLEEP(1);
 
 		/*----join----*/
 		if (threshold == THRESHOLD_JOIN) {

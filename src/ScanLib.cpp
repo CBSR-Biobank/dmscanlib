@@ -268,15 +268,15 @@ int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
 	dib.readFromHandle(h);
 	dib.writeToFile("scanned.bmp");
 
-	if (dib.getDpi() != dpi)
-	result = SC_INCORRECT_DPI_SCANNED;
-	else
-	result =
-	slDecodeCommon(plateNum, dib, decoder, "decode.bmp", cells);
+	if (dib.getDpi() != dpi) {
+		result = SC_INCORRECT_DPI_SCANNED;
+	} else {
+		result = slDecodeCommon(plateNum, dib, decoder, "decode.bmp");
+	}
 
 	if (result == SC_SUCCESS) {
 		string msg;
-		formatCellMessages(plateNum, cells, msg);
+		formatCellMessages(plateNum, decoder.getCells(), msg);
 		saveResults(msg);
 	}
 
