@@ -192,7 +192,7 @@ int slDecodeCommon(unsigned plateNum, Dib & dib, Decoder & decoder,
 	UA_ASSERT_NOT_NULL(iplFilteredDib);
 	UA_DOUT(1, 7, "generated IplImage from filteredDib");
 
-	result = decoder.processImageRegionsCvThreaded(filteredDib,
+	result = decoder.processImageRegions(filteredDib,
 			iplFilteredDib-> getIplImage(), metrical);
 
 	delete filteredDib;

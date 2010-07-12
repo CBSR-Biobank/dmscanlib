@@ -5,6 +5,11 @@
  *      Author: loyola
  */
 
+#ifdef _VISUALC_
+// disable fopen warnings
+#pragma warning(disable : 4996)
+#endif
+
 #include "Decoder.h"
 #include "UaLogger.h"
 #include "UaAssert.h"
@@ -15,7 +20,6 @@
 #include "ProcessImageManager.h"
 
 #include <time.h>
-
 #include <iostream>
 #include <math.h>
 #include <string>
@@ -25,11 +29,6 @@
 
 #if defined(USE_NVWA)
 #   include "debug_new.h"
-#endif
-
-#ifdef _VISUALC_
-// disable fopen warnings
-#pragma warning(disable : 4996)
 #endif
 
 using namespace std;
@@ -83,13 +82,12 @@ void Decoder::initCells(unsigned maxRows, unsigned maxCols)
 	}
 }
 
-vector < CvRect > getTubeBlobs(IplImage * original, int threshold, int blobsize,
-			       int blurRounds, int border)
+void Decoder::getTubeBlobs(IplImage * original, int threshold, int blobsize,
+		int blurRounds, int border, vector <CvRect> & blobVector)
 {
 	IplImage *originalThr;
 	IplImage *filtered;
 
-	vector < CvRect > blobVector;
 	CBlobResult blobs;
 
 	filtered =
@@ -108,6 +106,8 @@ vector < CvRect > getTubeBlobs(IplImage * original, int threshold, int blobsize,
 
 	blobs = CBlobResult(originalThr, NULL, 0);
 	blobs.Filter(blobs, B_EXCLUDE, CBlobGetArea(), B_LESS, blobsize);
+
+	blobVector.clear();
 
 	for (int i = 0; i < blobs.GetNumBlobs(); i++) {
 		CvRect box = blobs.GetBlob(i)->GetBoundingBox();
@@ -142,164 +142,49 @@ vector < CvRect > getTubeBlobs(IplImage * original, int threshold, int blobsize,
 
 	cvReleaseImage(&originalThr);
 	cvReleaseImage(&filtered);
-
-	return blobVector;
 }
 
-void getTubeBlobsFromDpi(vector < CvRect > &blobVector, IplImage * opencvImg,
-			 bool matrical, int dpi)
+void Decoder::getTubeBlobsFromDpi(vector < CvRect > &blobVector,
+		IplImage * opencvImg,bool metrical, int dpi)
 {
-	if (!matrical) {
+	if (!metrical) {
 		switch (dpi) {
 		case 600:
-			blobVector = getTubeBlobs(opencvImg, 54, 2400, 5, 12);
+			 getTubeBlobs(opencvImg, 54, 2400, 5, 12, blobVector);
 			break;
 
 		case 400:
-			blobVector = getTubeBlobs(opencvImg, 50, 1900, 3, 4);
+			getTubeBlobs(opencvImg, 50, 1900, 3, 4, blobVector);
 			break;
 
 		case 300:
 		default:
-			blobVector = getTubeBlobs(opencvImg, 55, 840, 2, 3);
+			getTubeBlobs(opencvImg, 55, 840, 2, 3, blobVector);
 			break;
 		}
-	}
-	// matrical
-	else {
-		UA_DOUT(3, 7, "getTubeBlobsFromDpi: matrical mode");
+	} else {
+		// metrical
+		UA_DOUT(3, 7, "getTubeBlobsFromDpi: metrical mode");
 
 		switch (dpi) {
 		case 600:
-			blobVector =
-			    getTubeBlobs(opencvImg, 120, 5000, 10, -10);
+			getTubeBlobs(opencvImg, 120, 5000, 10, -10, blobVector);
 			break;
 
 		case 400:
-			blobVector = getTubeBlobs(opencvImg, 120, 3000, 10, -5);
+			getTubeBlobs(opencvImg, 120, 3000, 10, -5, blobVector);
 			break;
 
 		case 300:
 		default:
-			blobVector = getTubeBlobs(opencvImg, 110, 2000, 8, -4);
+			getTubeBlobs(opencvImg, 110, 2000, 8, -4, blobVector);
 			break;
 		}
-
 	}
 }
 
-Decoder::ProcessResult Decoder::processImageRegionsDmtx(unsigned plateNum,
-							Dib & dib)
-{
-	CvRect noRect;
-	noRect.height = 0;
-	noRect.width = 0;
-
-	if (!processImage(dib, noRect))
-		return IMG_INVALID;
-
-	calcRowsAndColumns();
-	Decoder::ProcessResult calcSlotResult =
-	    calculateSlots(static_cast < double >(dib.getDpi()));
-	if (calcSlotResult != OK) {
-		return calcSlotResult;
-	}
-	return OK;
-}
-
-Decoder::ProcessResult Decoder::processImageRegionsCv(Dib & dib,
-						      IplImage * opencvImg,
-						      bool metrical)
-{
-	Dib tmp;
-	Dib blobRegions(dib);
-	RgbQuad white(255, 255, 255);
-	vector < CvRect > blobVector;
-
-#ifdef _DEBUG
-	char *buffer = new char[255];
-	unsigned blobsBefore = 0;
-#endif
-	getTubeBlobsFromDpi(blobVector, opencvImg, metrical, dib.getDpi());
-
-	UA_DOUT(3, 5, "getTubeBlobs found: " << blobVector.size() << " blobs.");
-
-	for (int i = 0; i < (int)blobVector.size(); i++) {
-
-		tmp.crop(dib, blobVector[i].x, blobVector[i].y,
-			 blobVector[i].x + blobVector[i].width,
-			 blobVector[i].y + blobVector[i].height);
-
-#ifdef _DEBUG
-		blobsBefore = barcodeInfos.size();
-#endif
-
-		processImage(tmp, blobVector[i]);
-
-#ifdef _DEBUG
-		if (blobsBefore == barcodeInfos.size()) {
-			sprintf(buffer, "bad_%02i.bmp", i);
-			tmp.writeToFile(buffer);
-		}
-
-		blobsBefore = barcodeInfos.size();
-#endif
-
-		blobRegions.rectangle(blobVector[i].x, blobVector[i].y,
-				      blobVector[i].width, blobVector[i].height,
-				      white);
-
-		UA_DOUT(3, 9, "blob: " << blobVector[i].x << ", " <<
-			blobVector[i].y << ", " <<
-			blobVector[i].width << ", " << blobVector[i].height);
-
-	}
-#ifdef _DEBUG
-	delete[]buffer;
-#endif
-
-	if (blobVector.size() == 0) {
-		return IMG_INVALID;
-	}
-
-	blobRegions.writeToFile("blobRegions.bmp");
-
-	//TODO add upper bound to blob size
-	std::vector < BarcodeInfo * >tempBarcodes;
-	for (unsigned y = 0; y < barcodeInfos.size(); y++) {
-
-		bool uniqueBarcode = true;
-		for (unsigned x = 0; x < tempBarcodes.size(); x++)
-			if (tempBarcodes[x]->equals(barcodeInfos[y])) {
-				uniqueBarcode = false;
-				break;
-			}
-
-		if (uniqueBarcode)
-			tempBarcodes.push_back(barcodeInfos[y]);
-	}
-
-	barcodeInfos.clear();
-	barcodeInfos = tempBarcodes;
-
-	width = dib.getWidth();
-	height = dib.getHeight();
-
-	calcRowsAndColumns();
-
-	Decoder::ProcessResult calcSlotResult =
-	    calculateSlots(static_cast < double >(dib.getDpi()));
-
-	if (calcSlotResult != OK)
-		return calcSlotResult;
-
-	return OK;
-}
-
-Decoder::ProcessResult Decoder::processImageRegionsCvThreaded(Dib * dib,
-							      IplImage *
-							      opencvImg,
-							      bool matrical)
+Decoder::ProcessResult Decoder::processImageRegions(Dib * dib,
+		IplImage * opencvImg, bool matrical)
 {
 
 	vector < CvRect > blobVector;
@@ -319,56 +204,6 @@ Decoder::ProcessResult Decoder::processImageRegionsCvThreaded(Dib * dib,
 	calcRowsAndColumns();
 
 	return calculateSlots(static_cast < double >(dib->getDpi()));
-}
-
-bool Decoder::decode(DmtxDecode * &dec, unsigned attempts,
-		     vector < BarcodeInfo * >&barcodeInfos,
-		     CvRect croppedOffset)
-{
-	DmtxRegion *reg = NULL;
-	BarcodeInfo *info = NULL;
-
-	/*
-	   dmtxRegionFindNext is by far the most expensive function in this program.
-	   the best way to improve performance is to reduce the lookup time as much as posible.
-	 */
-	reg = dmtxRegionFindNext(dec, NULL);
-	if (reg == NULL)
-		return false;
-
-	DmtxMessage *msg = dmtxDecodeMatrixRegion(dec, reg, corrections);
-	if (msg != NULL) {
-		info = new BarcodeInfo(dec, reg, msg);
-		UA_ASSERT_NOT_NULL(info);
-
-		//image is not aligned when croppedOffset width or height equal 0
-		if (croppedOffset.width != 0 && croppedOffset.height != 0)
-			info->alignCoordinates(croppedOffset.x,
-					       croppedOffset.y);
-
-		//inefficient -- but good enough for this case (max size: 96)
-		bool uniqueBarcode = true;
-		for (unsigned i = 0; i < barcodeInfos.size(); i++) {
-			if (barcodeInfos[i]->getMsg().compare(info->getMsg()) ==
-			    0) {
-				uniqueBarcode = false;
-			}
-		}
-		if (uniqueBarcode)
-			barcodeInfos.push_back(info);
-
-		DmtxPixelLoc & tlCorner = info->getTopLeftCorner();
-		DmtxPixelLoc & brCorner = info->getBotRightCorner();
-
-		UA_DOUT(3, 8, "message " << barcodeInfos.size() - 1
-			<< ": " << info->getMsg()
-			<< " : tlCorner/" << tlCorner.X << "," << tlCorner.Y
-			<< "  brCorner/" << brCorner.X << "," << brCorner.Y);
-		//showStats(dec, reg, msg);
-		dmtxMessageDestroy(&msg);
-	}
-	dmtxRegionDestroy(&reg);
-	return true;
 }
 
 DmtxImage * Decoder::createDmtxImageFromDib(Dib & dib)
@@ -395,78 +230,6 @@ DmtxImage * Decoder::createDmtxImageFromDib(Dib & dib)
 	dmtxImageSetProp(image, DmtxPropRowPadBytes, padding);
 	dmtxImageSetProp(image, DmtxPropImageFlip, DmtxFlipY);	// DIBs are flipped in Y
 	return image;
-}
-
-bool Decoder::processImage(Dib & dib, CvRect croppedOffset)
-{
-	height = dib.getHeight();
-	width = dib.getWidth();
-	dpi = dib.getDpi();
-
-	DmtxImage *image = createDmtxImageFromDib(dib);
-	DmtxDecode *dec = NULL;
-
-	UA_DOUT(3, 7, "processImage: image width/" << width
-		<< " image height/" << height
-		<< " row padding/" << dmtxImageGetProp(image,
-						       DmtxPropRowPadBytes)
-		<< " image bits per pixel/" << dmtxImageGetProp(image,
-								DmtxPropBitsPerPixel)
-		<< " image row size bytes/" << dmtxImageGetProp(image,
-								DmtxPropRowSizeBytes));
-
-	dec = dmtxDecodeCreate(image, 1);
-	UA_ASSERT_NOT_NULL(dec);
-
-	// slightly smaller than the new tube edge
-	int minEdgeSize = static_cast < unsigned >(0.08 * dpi);
-
-	// slightly bigger than the Nunc edge
-	int maxEdgeSize = static_cast < unsigned >(0.18 * dpi);
-
-	dmtxDecodeSetProp(dec, DmtxPropEdgeMin, minEdgeSize);
-	dmtxDecodeSetProp(dec, DmtxPropEdgeMax, maxEdgeSize);
-	dmtxDecodeSetProp(dec, DmtxPropSymbolSize, DmtxSymbolSquareAuto);
-	dmtxDecodeSetProp(dec, DmtxPropScanGap, static_cast < unsigned >(scanGap
-									 *
-									 dpi));
-	dmtxDecodeSetProp(dec, DmtxPropSquareDevn, squareDev);
-	dmtxDecodeSetProp(dec, DmtxPropEdgeThresh, edgeThresh);
-
-	unsigned regionCount = 0;
-	while (1) {
-		if (!decode(dec, 1, barcodeInfos, croppedOffset)) {
-			break;
-		}
-		UA_DOUT(3, 7,
-			"retrieved message from region " << regionCount++);
-	}
-
-	if (croppedOffset.width == 0 && croppedOffset.height == 0) {
-		// save image to a PNM file
-		UA_DEBUG(FILE * fh;
-			 unsigned char *pnm;
-			 int totalBytes;
-			 int headerBytes;
-			 pnm =
-			 dmtxDecodeCreateDiagnostic(dec, &totalBytes,
-						    &headerBytes, 0);
-			 if (pnm != NULL) {
-			 fh = fopen("out.pnm", "wb");
-			 fwrite(pnm, sizeof(unsigned char), totalBytes, fh);
-			 fclose(fh); free(pnm);}
-		) ;
-	}
-
-	dmtxDecodeDestroy(&dec);
-	dmtxImageDestroy(&image);
-
-	if (barcodeInfos.size() == 0) {
-		UA_DOUT(3, 1, "processImage: no barcodes found");
-		return false;
-	}
-
-	return true;
 }
 
 void Decoder::calcRowsAndColumns()

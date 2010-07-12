@@ -41,10 +41,7 @@ public:
 		OK
 	} ProcessResult;
 
-	ProcessResult processImageRegionsDmtx(unsigned plateNum, Dib & dib);
-	ProcessResult processImageRegionsCv(Dib & dib,
-			IplImage *opencvImg, bool metrical);
-	ProcessResult processImageRegionsCvThreaded(Dib * dib,
+	ProcessResult processImageRegions(Dib * dib,
 			IplImage *opencvImg, bool metrical);
 
 	void imageShowBarcodes(Dib & dib, bool regions);
@@ -91,15 +88,15 @@ protected:
 	OpenThreads::Mutex addBarcodeMutex;
 
 
-	void clearResults();
-	void messageAdd(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
 	void showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
-	bool processImage(Dib & dib, CvRect croppedOffset);
 	void calcRowsAndColumns();
 	ProcessResult calculateSlots(double dpi);
 	void initCells(unsigned maxRow, unsigned maxCol);
-	bool decode(DmtxDecode *& dec, unsigned attempts,
-			vector<BarcodeInfo *> & barcodeInfos, CvRect croppedOffset);
+	static void getTubeBlobsFromDpi(vector < CvRect > &blobVector,
+			IplImage * opencvImg, bool metrical, int dpi);
+	static void getTubeBlobs(IplImage * original, int threshold,
+			int blobsize, int blurRounds, int border,
+			vector <CvRect> & blobVector);
 };
 
 

@@ -155,19 +155,6 @@ typedef int (*SL_DECODE_PLATE)(unsigned verbose, unsigned dpi, int brightness,
 		unsigned edgeThresh, unsigned corrections, double cellDistance);
 
 
-EXPORT int
-slDecodePlateMultipleDpi(unsigned verbose, unsigned dpi1, unsigned dpi2,
-		unsigned dpi3, int brightness, int contrast,
-		unsigned plateNum, double left, double top, double right,
-		double bottom, double scanGap, unsigned squareDev,
-		unsigned edgeThresh, unsigned corrections, double cellDistance);
-
-typedef int (*SL_DECODE_PLATE_MULTIPLE_DPI)(unsigned verbose, unsigned dpi1,
-		unsigned dpi2, unsigned dpi3, int brightness,
-		int contrast, unsigned plateNum, double left, double top, double right,
-		double bottom, double scanGap, unsigned squareDev,
-		unsigned edgeThresh, unsigned corrections, double cellDistance);
-
 /**
  * From the regions specified in the INI file for the corresponding plate,
  * decodes all the regions. The decoded barcodes are written to the file
