@@ -62,7 +62,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="cv210.lib cxcore210.lib user32.lib libcmtd.lib OpenThreadsWin32d.lib"
+				AdditionalDependencies="cv210.lib cxcore210.lib user32.lib libcmtd.lib OpenThreadsWin32.lib"
 				ShowProgress="0"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories=".\src\opencv\win32;.\src\openthreads"
