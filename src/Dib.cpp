@@ -614,7 +614,7 @@ bool Dib::crop(Dib & src, unsigned x0, unsigned y0, unsigned x1, unsigned y1)
 	}
 
 	if (pixels != NULL)
-		delete[]pixels;
+		delete [] pixels;
 
 	pixels = new unsigned char[infoHeader->imageSize];
 	isAllocated = true;
@@ -625,7 +625,8 @@ bool Dib::crop(Dib & src, unsigned x0, unsigned y0, unsigned x1, unsigned y1)
 
 	for (unsigned row = 0; row < infoHeader->height;
 			++row, srcRowPtr += src.rowBytes, destRowPtr += rowBytes) {
-		memcpy(destRowPtr, srcRowPtr, rowBytes);
+		memcpy(destRowPtr, srcRowPtr, infoHeader->width);
+		memset(&destRowPtr[infoHeader->width], 0, rowPaddingBytes);
 	}
 	return true;
 }

@@ -83,8 +83,8 @@ void ProcessImageManager::generateBarcodes(Dib * dib,
 		/*---thread controller (limit # threads to THREAD_NUM)----*/
 		threadHandler(threads, THREAD_NUM);
 
-		Dib tmp;
-		tmp.crop(*dib,
+		Dib croppedDib;
+		croppedDib.crop(*dib,
 			  blobVector[i].x,
 			  blobVector[i].y,
 			  blobVector[i].x + blobVector[i].width,
@@ -95,7 +95,7 @@ void ProcessImageManager::generateBarcodes(Dib * dib,
 							  edgeThresh,
 							  corrections,
 							  blobVector[i],
-							  tmp);
+							  croppedDib);
 
 		allThreads.push_back(thread);
 		threads.push_back(thread);
