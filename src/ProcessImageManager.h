@@ -9,15 +9,18 @@ using namespace std;
 class Dib;
 class BarcodeInfo;
 class BarcodeThread;
+class Decoder;
 
 class ProcessImageManager {
  public:
-	ProcessImageManager(double scanGap, unsigned squareDev,
+	ProcessImageManager(Decoder * decoder, double scanGap, unsigned squareDev,
 			    unsigned edgeThresh, unsigned corrections);
 	~ProcessImageManager();
 
 	void generateBarcodes(Dib * dib, vector < CvRect > & blobVector,
 			vector<BarcodeInfo *> & barcodeInfos);
+
+	Decoder * getDecoder() { return decoder; }
 
  private:
 	static const unsigned THREAD_NUM = 8;
@@ -28,6 +31,8 @@ class ProcessImageManager {
 	unsigned squareDev;
 	unsigned edgeThresh;
 	unsigned corrections;
+	Decoder  * decoder;
+	vector < BarcodeThread * > allThreads;
 
 	void threadHandler(vector<BarcodeThread *> & threads, unsigned threshold);
 

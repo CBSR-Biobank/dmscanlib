@@ -305,7 +305,7 @@ Decoder::ProcessResult Decoder::processImageRegionsCvThreaded(Dib * dib,
 	vector < CvRect > blobVector;
 	getTubeBlobsFromDpi(blobVector, opencvImg, matrical, dib->getDpi());
 
-	ProcessImageManager imageProcessor(scanGap, squareDev,
+	ProcessImageManager imageProcessor(this, scanGap, squareDev,
 					   edgeThresh, corrections);
 	imageProcessor.generateBarcodes(dib, blobVector, barcodeInfos);
 
@@ -941,4 +941,24 @@ void Decoder::imageShowBarcodes(Dib & dib, bool regions)
 		dib.line(max, 0, max, height, highlightQuad);
 		//dib.line(center, 0, center, height, quadRed);
 	}
+}
+
+// this method needs to be thread safe
+BarcodeInfo * Decoder::addBarcodeInfo(DmtxDecode *dec, DmtxRegion *reg,
+		DmtxMessage *msg) {
+	addBarcodeMutex.lock();
+	BarcodeInfo * info = NULL;
+
+	string str((char *)msg->output, msg->outputIdx);
+
+	if (barcodesMap[str] == NULL) {
+		// this is a unique barcode
+		info = new BarcodeInfo(dec, reg, msg);
+		UA_ASSERT_NOT_NULL(info);
+		barcodesMap[str] = info;
+		barcodeInfos.push_back(info);
+	}
+
+	addBarcodeMutex.unlock();
+	return info;
 }

@@ -168,8 +168,8 @@ int slScanImage(unsigned verbose, unsigned dpi, int brightness, int contrast,
 #endif
 }
 
-int slDecodeCommonCv(unsigned plateNum, Dib & dib, Decoder & decoder,
-		const char *markedDibFilename, bool threaded) {
+int slDecodeCommon(unsigned plateNum, Dib & dib, Decoder & decoder,
+		const char *markedDibFilename) {
 
 	bool metrical = false;
 	Dib *filteredDib;
@@ -192,13 +192,8 @@ int slDecodeCommonCv(unsigned plateNum, Dib & dib, Decoder & decoder,
 	UA_ASSERT_NOT_NULL(iplFilteredDib);
 	UA_DOUT(1, 7, "generated IplImage from filteredDib");
 
-	if (threaded) {
-		UA_DOUT(1, 3, "using multithreaded opencv based decoder");
-		result = decoder.processImageRegionsCvThreaded(filteredDib,
-				iplFilteredDib-> getIplImage(), metrical);
-	} else
-		result = decoder.processImageRegionsCv(*filteredDib,
-				iplFilteredDib->getIplImage(), metrical);
+	result = decoder.processImageRegionsCvThreaded(filteredDib,
+			iplFilteredDib-> getIplImage(), metrical);
 
 	delete filteredDib;
 	delete iplFilteredDib;
@@ -227,67 +222,6 @@ int slDecodeCommonCv(unsigned plateNum, Dib & dib, Decoder & decoder,
 	Util::difftiime(starttime, endtime, timediff);
 	UA_DOUT(1, 1, "slDecodeCommonCv: time taken: " << timediff);
 	return SC_SUCCESS;
-}
-
-// TODO get rid of old slDecodeCommon
-int slDecodeCommon(unsigned plateNum, Dib & dib, Decoder & decoder,
-		const char *markedDibFilename) {
-
-	/*
-	 * If you want to use the older dmtx based coding: define LEGACY.
-	 * 
-	 * If you want to use opencv with threading: define THREADED. 
-	 */
-#ifndef LEGACY
-#ifdef THREADED
-	return slDecodeCommonCv(plateNum, dib, decoder, markedDibFilename,
-			true);
-#else
-	return slDecodeCommonCv(plateNum, dib, decoder, markedDibFilename, false);
-#endif
-#else
-	UA_DOUT(3, 1, "WARNING: LEGACY MODE");
-
-	string msg;
-
-	Dib *grayscaleDib = NULL;
-	grayscaleDib = Dib::convertGrayscale(dib);
-	UA_ASSERT_NOT_NULL(grayscaleDib);
-
-	grayscaleDib->tpPresetFilter();
-
-	UA_DEBUG(grayscaleDib->writeToFile("filtered.bmp");
-	);
-
-	Decoder::ProcessResult result =
-	decoder.processImageRegionsDmtx(plateNum, *grayscaleDib, cellsRef);
-
-	if (result == Decoder::OK) {
-		decoder.imageShowBarcodes(*grayscaleDib, 1);
-		grayscaleDib->writeToFile(markedDibFilename);
-	}
-	delete grayscaleDib;
-
-	switch (result) {
-		case Decoder::IMG_INVALID:
-		return SC_INVALID_IMAGE;
-
-		case Decoder::POS_INVALID:
-		return SC_INVALID_POSITION;
-
-		case Decoder::POS_CALC_ERROR:
-		return SC_POS_CALC_ERROR;
-
-		default:
-		; // do nothing
-	}
-
-	// only get here if decoder returned Decoder::OK
-	Util::getTime(endtime);
-	Util::difftiime(starttime, endtime, timediff);
-	UA_DOUT(1, 1, "slDecodeCommon: time taken: " << timediff);
-	return SC_SUCCESS;
-#endif
 }
 
 int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,

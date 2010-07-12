@@ -13,17 +13,20 @@
 
 #include <map>
 
-ProcessImageManager::ProcessImageManager(double scanGap, unsigned squareDev,
-					 unsigned edgeThresh,
-					 unsigned corrections)
+ProcessImageManager::ProcessImageManager(Decoder * decoder, double scanGap,
+		unsigned squareDev, unsigned edgeThresh, unsigned corrections)
 {
 	this->scanGap = scanGap;
 	this->squareDev = squareDev;
 	this->edgeThresh = edgeThresh;
 	this->corrections = corrections;
+	this->decoder = decoder;
 }
 
 ProcessImageManager::~ProcessImageManager() {
+	for (unsigned i = 0, n = allThreads.size(); i < n; ++i) {
+		delete allThreads[i];
+	}
 }
 
 
@@ -73,7 +76,6 @@ void ProcessImageManager::generateBarcodes(Dib * dib,
 	UA_DOUT(3, 5,
 		"getTubeBlobs found: " << blobVector.size() << " blobs.");
 
-	vector < BarcodeThread * > allThreads;
 	vector < BarcodeThread * > threads;
 
 	for (unsigned i = 0, n = blobVector.size(); i < n; i++) {
@@ -88,10 +90,10 @@ void ProcessImageManager::generateBarcodes(Dib * dib,
 			  blobVector[i].x + blobVector[i].width,
 			  blobVector[i].y + blobVector[i].height);
 
-		BarcodeThread *thread = new BarcodeThread(this->scanGap,
-							  this->squareDev,
-							  this->edgeThresh,
-							  this->corrections,
+		BarcodeThread *thread = new BarcodeThread(this, scanGap,
+							  squareDev,
+							  edgeThresh,
+							  corrections,
 							  blobVector[i],
 							  tmp);
 
@@ -102,26 +104,4 @@ void ProcessImageManager::generateBarcodes(Dib * dib,
 
 	/*---join---*/
 	threadHandler(threads, THRESHOLD_JOIN);
-
-	// merge barcodes from all threads - making sure to ignore duplicates
-	map<string, BarcodeInfo *> barcodesMap;
-
-	for (unsigned i = 0, n = allThreads.size(); i < n; i++) {
-		BarcodeThread & thread = *allThreads[i];
-
-		vector < BarcodeInfo * > & threadBarcodes =
-		    thread.getBarcodes();
-
-		for (unsigned i = 0, n = threadBarcodes.size(); i < n; ++i) {
-			if (barcodesMap[threadBarcodes[i]->getMsg()] == NULL) {
-				// this is a unique barcode
-				barcodesMap[threadBarcodes[i]->getMsg()] = threadBarcodes[i];
-				barcodeInfos.push_back(threadBarcodes[i]);
-			} else {
-				// this barcode will not be used
-				delete threadBarcodes[i];
-			}
-		}
-		delete &thread;
-	}
 }

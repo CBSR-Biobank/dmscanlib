@@ -9,15 +9,17 @@
  */
 
 #include "dmtx.h"
-
 #include "cv.h"
 
 #include <list>
 #include <string>
+#include <map>
+#include <OpenThreads/Mutex>
 
 #ifdef WIN32
 #include <windows.h>
 #endif
+
 
 using namespace std;
 
@@ -50,6 +52,19 @@ public:
 
 	static DmtxImage * createDmtxImageFromDib(Dib & dib);
 
+	/**
+	 * Called by subordinates to add a barcode. Returns NULL if the barcode has
+	 * previously been added.
+	 *
+	 * @param dec Pointer to the libdmtx decode structure.
+	 * @param reg Pointer to the libdmtx region structure.
+	 * @param msg Pointer to the libdmtx message structure.
+	 *
+	 * @return Pointer to the barcode object that was added or NULL if the
+	 * barcode has already been added.
+	 */
+	BarcodeInfo * addBarcodeInfo(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
+
 
 protected:
 
@@ -67,11 +82,14 @@ protected:
 	unsigned height;
 	unsigned dpi;
 	vector<BarcodeInfo *> barcodeInfos;
+	map<string, BarcodeInfo *> barcodesMap;
 	vector<BinRegion *>   rowBinRegions;
 	vector<BinRegion *>   colBinRegions;
 	vector<vector<string> > cells;
 
 	unsigned char * imageBuf;
+	OpenThreads::Mutex addBarcodeMutex;
+
 
 	void clearResults();
 	void messageAdd(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
@@ -83,11 +101,6 @@ protected:
 	bool decode(DmtxDecode *& dec, unsigned attempts,
 			vector<BarcodeInfo *> & barcodeInfos, CvRect croppedOffset);
 };
-
-/*----threading----*/
-
-void processImageThreaded(void * param);
-/*----threading----*/
 
 
 #endif /* DECODER_H_ */

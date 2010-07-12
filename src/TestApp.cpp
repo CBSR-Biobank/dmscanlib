@@ -177,6 +177,7 @@ struct Options {
 		contrast = numeric_limits<int>::max();
 #endif
 
+		dpi = 0;
 		decode = false;
 		debugfile = false;
 		debugLevel = 0;
@@ -554,15 +555,8 @@ bool TestApp::getCmdOptions(int argc, char ** argv) {
 				}
 				break;
 
-			/*
-			This is not thread safe.
-			*/
 			case OPT_ID_DEBUG_FILE:
-				#ifndef THREADED
-					options.debugfile = true;
-				#else
-					options.debugfile = false;
-				#endif
+				options.debugfile = true;
 				break;
 
 			case OPT_ID_SQUARE_DEV:

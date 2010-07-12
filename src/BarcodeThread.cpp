@@ -5,14 +5,14 @@
 #include "UaAssert.h"
 #include "UaLogger.h"
 #include "BarcodeInfo.h"
+#include "ProcessImageManager.h"
 
-BarcodeThread::BarcodeThread(double scanGap,
-			     unsigned squareDev,
-			     unsigned edgeThresh,
-			     unsigned corrections,
+BarcodeThread::BarcodeThread(ProcessImageManager * manager, double scanGap,
+			     unsigned squareDev,unsigned edgeThresh, unsigned corrections,
 			     CvRect croppedOffset, Dib & d)
 : dib(d)
 {
+	this->manager = manager;
 	this->scanGap = scanGap;
 	this->squareDev = squareDev;
 	this->edgeThresh = edgeThresh;
@@ -73,25 +73,25 @@ void BarcodeThread::run()
 		DmtxMessage *msg =
 		    dmtxDecodeMatrixRegion(dec, reg, corrections);
 		if (msg != NULL) {
-			info = new BarcodeInfo(dec, reg, msg);
-			UA_ASSERT_NOT_NULL(info);
 
-			if ((croppedOffset.width != 0)
-			    && (croppedOffset.height != 0))
-				info->alignCoordinates(croppedOffset.x,
-						       croppedOffset.y);
+			info = manager->getDecoder()->addBarcodeInfo(dec, reg, msg);
 
-			barcodeInfo.push_back(info);
+			if (info != NULL) {
+				if ((croppedOffset.width != 0)
+						&& (croppedOffset.height != 0))
+					info->alignCoordinates(croppedOffset.x,
+						       	   croppedOffset.y);
 
-			DmtxPixelLoc & tlCorner = info->getTopLeftCorner();
-			DmtxPixelLoc & brCorner = info->getBotRightCorner();
+				DmtxPixelLoc & tlCorner = info->getTopLeftCorner();
+				DmtxPixelLoc & brCorner = info->getBotRightCorner();
 
-			UA_DOUT(3, 8, "message "	// << *barcodeInfosIt - 1
-				<< ": " << info->getMsg()
-				<< " : tlCorner/" << tlCorner.
-				X << "," << tlCorner.
-				Y << "  brCorner/" << brCorner.
-				X << "," << brCorner.Y);
+				UA_DOUT(3, 8, "message "	// << *barcodeInfosIt - 1
+						<< ": " << info->getMsg()
+						<< " : tlCorner/" << tlCorner.
+						X << "," << tlCorner.
+						Y << "  brCorner/" << brCorner.
+						X << "," << brCorner.Y);
+			}
 			dmtxMessageDestroy(&msg);
 		}
 		dmtxRegionDestroy(&reg);
@@ -120,8 +120,3 @@ bool BarcodeThread::isFinished()
 	return quitFlagBuf;
 }
 
-vector < BarcodeInfo * > & BarcodeThread::getBarcodes()
-{
-	UA_ASSERTS(isFinished(), "thread has not finished");
-	return barcodeInfo;
-}

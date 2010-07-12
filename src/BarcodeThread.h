@@ -12,10 +12,11 @@ using namespace std;
 
 class Dib;
 class BarcodeInfo;
+class ProcessImageManager;
 
 class BarcodeThread : public OpenThreads::Thread {
 public:
-	BarcodeThread(double scanGap, unsigned squareDev, unsigned edgeThresh,
+	BarcodeThread(ProcessImageManager * manager, double scanGap, unsigned squareDev, unsigned edgeThresh,
 		      unsigned corrections, CvRect croppedOffset, Dib & dib);
 
 	virtual ~ BarcodeThread() {
@@ -24,13 +25,10 @@ public:
 	virtual void run();
 
 	bool isFinished();
-	vector < BarcodeInfo * > & getBarcodes();
 
  private:
 	OpenThreads::Mutex quitMutex;
 	volatile bool quitFlag;
-
-	vector < BarcodeInfo * > barcodeInfo;
 
 	Dib & dib;
 	CvRect croppedOffset;
@@ -38,7 +36,7 @@ public:
 	unsigned squareDev;
 	unsigned edgeThresh;
 	unsigned corrections;
-
+	ProcessImageManager * manager;
 };
 
 #endif /* BARCODE_THREAD_H_ */
