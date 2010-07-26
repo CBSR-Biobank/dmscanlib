@@ -94,93 +94,6 @@
 			/>
 		</Configuration>
 		<Configuration
-			Name="DebugDLL|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
-			ConfigurationType="2"
-			UseOfMFC="0"
-			CharacterSet="1"
-			ManagedExtensions="0"
-			WholeProgramOptimization="0"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				Optimization="0"
-				FavorSizeOrSpeed="1"
-				AdditionalIncludeDirectories=".\src\cvblob;.\src\opencv\include;src;src/libdmtx;src/loki;src/utils;&quot;$(JAVA_HOME)\include&quot;;&quot;$(JAVA_HOME)\include\win32&quot;"
-				PreprocessorDefinitions="_VISUALC_;__WIN32__;_WIN32;WIN32;_DEBUG;UA_LOGGER;BUILD_DLL;THREADED"
-				IgnoreStandardIncludePath="false"
-				MinimalRebuild="false"
-				ExceptionHandling="1"
-				BasicRuntimeChecks="0"
-				RuntimeLibrary="0"
-				EnableFunctionLevelLinking="true"
-				UsePrecompiledHeader="0"
-				WarningLevel="3"
-				DebugInformationFormat="3"
-				CallingConvention="0"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLinkerTool"
-				LinkLibraryDependencies="true"
-				AdditionalDependencies=" cv210.lib cxcore210.lib user32.lib libcmtd.lib"
-				LinkIncremental="2"
-				AdditionalLibraryDirectories=".\src\opencv\win32"
-				IgnoreAllDefaultLibraries="false"
-				IgnoreDefaultLibraryNames="libcmt.lib"
-				ModuleDefinitionFile="scanlib.def"
-				GenerateDebugInformation="true"
-				AssemblyDebug="1"
-				SubSystem="1"
-				TargetMachine="1"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-			/>
-		</Configuration>
-		<Configuration
 			Name="ReleaseDLL|Win32"
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
@@ -288,10 +201,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\utils\ConvertUTF.c"
-				>
-			</File>
-			<File
 				RelativePath=".\src\Decoder.cpp"
 				>
 			</File>
@@ -300,7 +209,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\libdmtx\dmtx.c"
+				RelativePath=".\src\libdmtx\Dmtx.c"
 				>
 			</File>
 			<File
@@ -324,7 +233,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\testapp.cpp"
+				RelativePath=".\src\Testapp.cpp"
 				>
 			</File>
 			<File
@@ -336,7 +245,7 @@
 				>
 			</File>
 			<Filter
-				Name="Blob"
+				Name="cvBlobsLib"
 				>
 				<File
 					RelativePath=".\src\cvblob\Blob.cpp"
@@ -394,7 +303,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\libdmtx\dmtx.h"
+				RelativePath=".\src\libdmtx\Dmtx.h"
 				>
 			</File>
 			<File
@@ -418,15 +327,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\utils\SimpleIni.h"
-				>
-			</File>
-			<File
 				RelativePath=".\src\utils\SimpleOpt.h"
 				>
 			</File>
 			<File
-				RelativePath=".\src\twain.h"
+				RelativePath=".\src\Twain.h"
 				>
 			</File>
 			<File
@@ -442,7 +347,7 @@
 				>
 			</File>
 			<Filter
-				Name="blob"
+				Name="cvBlobsLib"
 				>
 				<File
 					RelativePath=".\src\cvblob\Blob.h"
