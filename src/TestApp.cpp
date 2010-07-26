@@ -76,8 +76,10 @@ const char
 					"  --debugfile          Send debugging output to file named scanlib.log.\n"
 					"  --select             Opens the default scanner dialog.\n"
 					"  --capability         Query selected scanner for dpi and driver type settings.\n"
-					"  --test			   Tests most functions in this project.\n"
+					"  --test               Tests most functions in this project.\n"
+					"  --license            Displays the license.\n"
 					"  -h, --help           Displays this text.\n"
+					"  --about              Information about the developers.\n"
 					"\n"
 					"Scanner/Decoding Settings\n"
 					"  -d, --decode         Acquires an image from the scanner and Decodes the 2D barcodes.\n"
@@ -112,6 +114,29 @@ const char
 					"  -r, --right NUM      The left coordinate, in inches, for the scanning window.\n"
 					"  -b, --bottom NUM     The bottom coordinate, in inches, for the scanning window.\n";
 
+
+const char * LICENCE =  "Scanlib is a software library and standalone application that scans\n" 
+						"and decodes libdmtx compatible test-tubes. It is currently designed \n" 
+						"to decode 12x8 pallets that use 2D data-matrix laser etched test-tubes.\n" 
+						"Copyright (C) 2010 Canadian Biosample Repository\n\n"
+
+						"This program is free software: you can redistribute it and/or modify\n" 
+						"it under the terms of the GNU General Public License as published by\n" 
+						"the Free Software Foundation, either version 3 of the License, or\n" 
+						"(at your option) any later version.\n\n" 
+
+						"This program is distributed in the hope that it will be useful,\n" 
+						"but WITHOUT ANY WARRANTY; without even the implied warranty of\n" 
+						"MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n" 
+						"GNU General Public License for more details.\n\n" 
+
+						"You should have received a copy of the GNU General Public License\n" 
+						"along with this program.  If not, see <http://www.gnu.org/licenses/>.\n";
+
+const char * ABOUT =	"Developers of the Data Matrix Pallet Scanning Library:\n\n"
+						"Lead Programmer - Nelson Loyola\n"
+						"Programmer - Thomas Polasek\n";
+
 enum longOptID {
 	OPT_ID_BRIGHTNESS = 200,
 	OPT_ID_CELLDIST,
@@ -119,6 +144,8 @@ enum longOptID {
 	OPT_ID_CONTRAST,
 	OPT_ID_DEBUG,
 	OPT_ID_DEBUG_FILE,
+	OPT_ID_LICENSE,
+	OPT_ID_ABOUT,
 	OPT_ID_DPI,
 	OPT_ID_GAP,
 	OPT_ID_SELECT,
@@ -134,26 +161,43 @@ enum longOptID {
 };
 
 /* Allowed command line arguments.  */
-CSimpleOptA::SOption longOptions[] = { { OPT_ID_BRIGHTNESS, "--brightness",
-		SO_REQ_SEP }, { OPT_ID_CELLDIST, "--celldist", SO_REQ_SEP }, {
-		OPT_ID_CORRECTIONS, "--corrections", SO_REQ_SEP }, { OPT_ID_CONTRAST,
-		"--contrast", SO_REQ_SEP }, { 'd', "--decode", SO_NONE }, { 'd', "-d",
-		SO_NONE }, { OPT_ID_DEBUG, "--debug", SO_REQ_SEP }, {
-		OPT_ID_DEBUG_FILE, "--debugfile", SO_NONE }, { OPT_ID_DPI, "--dpi",
-		SO_REQ_SEP }, { OPT_ID_GAP, "--gap", SO_REQ_SEP }, { 'h', "--help",
-		SO_NONE }, { 'h', "--h", SO_NONE }, { 'i', "--input", SO_REQ_SEP }, {
-		'i', "-i", SO_REQ_SEP }, { 'p', "--plate", SO_REQ_SEP }, { 'p', "-p",
-		SO_REQ_SEP }, { 'o', "--output", SO_REQ_SEP },
-		{ 'o', "-o", SO_REQ_SEP }, { 's', "--scan", SO_NONE }, { 's', "-s",
-				SO_NONE }, { OPT_ID_CAPABILITY, "--capability", SO_NONE },\
-			{OPT_ID_TEST, "--test", SO_NONE }, { OPT_ID_SELECT, "--select",
-				SO_NONE }, { OPT_ID_SQUARE_DEV, "--square-dev", SO_REQ_SEP }, {
-				OPT_ID_THRESHOLD, "--threshold", SO_REQ_SEP }, { OPT_ID_LEFT,
-				"--left", SO_REQ_SEP }, { OPT_ID_TOP, "--top", SO_REQ_SEP }, {
-				OPT_ID_RIGHT, "--right", SO_REQ_SEP }, { OPT_ID_BOTTOM,
-				"--bottom", SO_REQ_SEP }, { 'l', "-l", SO_REQ_SEP }, { 't',
-				"-t", SO_REQ_SEP }, { 'r', "-r", SO_REQ_SEP }, { 'b', "-b",
-				SO_REQ_SEP }, SO_END_OF_OPTIONS };
+CSimpleOptA::SOption longOptions[] = { 
+				{ OPT_ID_BRIGHTNESS, "--brightness",SO_REQ_SEP }, 
+				{ OPT_ID_CELLDIST, "--celldist", SO_REQ_SEP }, 
+				{OPT_ID_CORRECTIONS, "--corrections", SO_REQ_SEP }, 
+				{ OPT_ID_CONTRAST, "--contrast", SO_REQ_SEP }, 
+				{ 'd', "--decode", SO_NONE }, 
+				{ 'd', "-d", SO_NONE }, 
+				{ OPT_ID_DEBUG, "--debug", SO_REQ_SEP }, 
+				{OPT_ID_DEBUG_FILE, "--debugfile", SO_NONE },
+				{OPT_ID_LICENSE, "--license", SO_NONE }, 
+				{OPT_ID_ABOUT, "--about", SO_NONE }, 
+				{ OPT_ID_DPI, "--dpi",SO_REQ_SEP }, 
+				{ OPT_ID_GAP, "--gap", SO_REQ_SEP }, 
+				{ 'h', "--help",SO_NONE }, 
+				{ 'h', "--h", SO_NONE }, 
+				{ 'i', "--input", SO_REQ_SEP }, 
+				{'i', "-i", SO_REQ_SEP }, 
+				{ 'p', "--plate", SO_REQ_SEP }, 
+				{ 'p', "-p", SO_REQ_SEP }, 
+				{ 'o', "--output", SO_REQ_SEP },
+				{ 'o', "-o", SO_REQ_SEP }, 
+				{ 's', "--scan", SO_NONE }, 
+				{ 's', "-s",SO_NONE }, 
+				{ OPT_ID_CAPABILITY, "--capability", SO_NONE },
+				{OPT_ID_TEST, "--test", SO_NONE }, 
+				{ OPT_ID_SELECT, "--select",SO_NONE }, 
+				{ OPT_ID_SQUARE_DEV, "--square-dev", SO_REQ_SEP }, 
+				{OPT_ID_THRESHOLD, "--threshold", SO_REQ_SEP }, 
+				{ OPT_ID_LEFT,"--left", SO_REQ_SEP }, 
+				{ OPT_ID_TOP, "--top", SO_REQ_SEP }, 
+				{OPT_ID_RIGHT, "--right", SO_REQ_SEP }, 
+				{ OPT_ID_BOTTOM,"--bottom", SO_REQ_SEP }, 
+				{ 'l', "-l", SO_REQ_SEP }, 
+				{ 't',"-t", SO_REQ_SEP }, 
+				{ 'r', "-r", SO_REQ_SEP }, 
+				{ 'b', "-b",SO_REQ_SEP }, 
+				SO_END_OF_OPTIONS };
 
 #ifdef WIN32
 #define DIR_SEP_CHR '\\'
@@ -541,6 +585,22 @@ bool TestApp::getCmdOptions(int argc, char ** argv) {
 							<< endl;
 					exit(1);
 				}
+				break;
+
+			case OPT_ID_LICENSE:
+				cout << endl;
+				cout << "======================================" << endl;
+				cout << LICENCE;
+				cout << "======================================" << endl;
+				exit(0);
+				break;
+
+			case OPT_ID_ABOUT:
+				cout << endl;
+				cout << "======================================" << endl;
+				cout << ABOUT;
+				cout << "======================================" << endl;
+				exit(0);
 				break;
 
 			case OPT_ID_SELECT:
