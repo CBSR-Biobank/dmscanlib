@@ -1,28 +1,25 @@
 #ifndef __INC_bkDebug_h
 #define __INC_bkDebug_h
+/*
+Scanlib is a software library and standalone application that scans 
+and decodes libdmtx compatible test-tubes. It is currently designed 
+to decode 12x8 pallets that use 2D data-matrix laser etched test-tubes.
+Copyright (C) 2010 Canadian Biosample Repository
 
-/*****************************************************************************
- *
- * Name: $Id: UaDebug.h,v 1.5 2007/07/18 23:37:36 octopus Exp $
- *
- *-----------------------------------------------------------------------------
- *
- * The information contained herein is proprietary and confidential to Alberta
- * Ingenuity Centre For Machine Learning (AICML) and describes aspects of AICML
- * products and services that must not be used or implemented by a third party
- * without first obtaining a license to use or implement.
- *
- * Copyright 2006 Alberta Ingenuity Centre For Machine Learning.
- *
- *-----------------------------------------------------------------------------
- *
- * Modification History:
- *
- * Date           Name             Description
- * --------       ---------------  --------------------------------------------
- * Oct25/2006     N.Loyola         Added this comment header.
- *
- *****************************************************************************/
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 
 /**
  * The UA_ASSERT macros contained here are used for debugging purposes.

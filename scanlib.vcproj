@@ -209,10 +209,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\libdmtx\Dmtx.c"
-				>
-			</File>
-			<File
 				RelativePath=".\src\ImageGrabber.cpp"
 				>
 			</File>
@@ -245,28 +241,36 @@
 				>
 			</File>
 			<Filter
-				Name="cvBlobsLib"
+				Name="libs"
 				>
 				<File
-					RelativePath=".\src\cvblob\Blob.cpp"
+					RelativePath=".\src\libdmtx\Dmtx.c"
 					>
 				</File>
-				<File
-					RelativePath=".\src\cvblob\BlobContour.cpp"
+				<Filter
+					Name="cvBlobsLib"
 					>
-				</File>
-				<File
-					RelativePath=".\src\cvblob\BlobOperators.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\src\cvblob\BlobResult.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\src\cvblob\ComponentLabeling.cpp"
-					>
-				</File>
+					<File
+						RelativePath=".\src\cvblob\Blob.cpp"
+						>
+					</File>
+					<File
+						RelativePath=".\src\cvblob\BlobContour.cpp"
+						>
+					</File>
+					<File
+						RelativePath=".\src\cvblob\BlobOperators.cpp"
+						>
+					</File>
+					<File
+						RelativePath=".\src\cvblob\BlobResult.cpp"
+						>
+					</File>
+					<File
+						RelativePath=".\src\cvblob\ComponentLabeling.cpp"
+						>
+					</File>
+				</Filter>
 			</Filter>
 		</Filter>
 		<Filter
@@ -283,15 +287,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\openthreads\Barrier.h"
-				>
-			</File>
-			<File
 				RelativePath=".\src\BinRegion.h"
-				>
-			</File>
-			<File
-				RelativePath=".\src\utils\ConvertUTF.h"
 				>
 			</File>
 			<File
@@ -300,10 +296,6 @@
 			</File>
 			<File
 				RelativePath=".\src\Dib.h"
-				>
-			</File>
-			<File
-				RelativePath=".\src\libdmtx\Dmtx.h"
 				>
 			</File>
 			<File
@@ -323,18 +315,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\utils\SimpleGlob.h"
-				>
-			</File>
-			<File
-				RelativePath=".\src\utils\SimpleOpt.h"
-				>
-			</File>
-			<File
-				RelativePath=".\src\Twain.h"
-				>
-			</File>
-			<File
 				RelativePath=".\src\utils\UaAssert.h"
 				>
 			</File>
@@ -347,32 +327,52 @@
 				>
 			</File>
 			<Filter
-				Name="cvBlobsLib"
+				Name="libs"
 				>
 				<File
-					RelativePath=".\src\cvblob\Blob.h"
+					RelativePath=".\src\libdmtx\Dmtx.h"
 					>
 				</File>
 				<File
-					RelativePath=".\src\cvblob\BlobContour.h"
+					RelativePath=".\src\utils\SimpleGlob.h"
 					>
 				</File>
 				<File
-					RelativePath=".\src\cvblob\BlobLibraryConfiguration.h"
+					RelativePath=".\src\utils\SimpleOpt.h"
 					>
 				</File>
 				<File
-					RelativePath=".\src\cvblob\BlobOperators.h"
+					RelativePath=".\src\Twain.h"
 					>
 				</File>
-				<File
-					RelativePath=".\src\cvblob\BlobResult.h"
+				<Filter
+					Name="cvBlobsLib"
 					>
-				</File>
-				<File
-					RelativePath=".\src\cvblob\ComponentLabeling.h"
-					>
-				</File>
+					<File
+						RelativePath=".\src\cvblob\Blob.h"
+						>
+					</File>
+					<File
+						RelativePath=".\src\cvblob\BlobContour.h"
+						>
+					</File>
+					<File
+						RelativePath=".\src\cvblob\BlobLibraryConfiguration.h"
+						>
+					</File>
+					<File
+						RelativePath=".\src\cvblob\BlobOperators.h"
+						>
+					</File>
+					<File
+						RelativePath=".\src\cvblob\BlobResult.h"
+						>
+					</File>
+					<File
+						RelativePath=".\src\cvblob\ComponentLabeling.h"
+						>
+					</File>
+				</Filter>
 			</Filter>
 		</Filter>
 		<Filter
