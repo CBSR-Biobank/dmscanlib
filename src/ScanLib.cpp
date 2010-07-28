@@ -218,10 +218,13 @@ int slDecodeCommon(unsigned plateNum, Dib & dib, Decoder & decoder,
 	delete filteredDib;
 	delete iplFilteredDib;
 
-	if (result == Decoder::OK) {
-		decoder.imageShowBarcodes(dib, 0);
-	}
-	dib.writeToFile(markedDibFilename);
+
+	decoder.imageShowBarcodes(dib, 0);
+	if (result == Decoder::OK) 
+		dib.writeToFile(markedDibFilename);
+	else
+		dib.writeToFile("decode.partial.bmp");
+
 
 	switch (result) {
 	case Decoder::IMG_INVALID:

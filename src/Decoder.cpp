@@ -105,10 +105,22 @@ void Decoder::initCells(unsigned maxRows, unsigned maxCols)
 void Decoder::getTubeBlobs(IplImage * original, int threshold, int blobsize,
 		int blurRounds, int border, vector <CvRect> & blobVector)
 {
+	if(blobsize == 0){
+		CvRect img;
+		img.x = 0;
+		img.y = 0;
+		img.width = original->width-2;
+		img.height = original->height-2;
+		blobVector.clear();
+		blobVector.push_back(img);
+		return;
+	}
+
 	IplImage *originalThr;
 	IplImage *filtered;
 
 	CBlobResult blobs;
+
 
 	filtered =
 	    cvCreateImage(cvGetSize(original), original->depth,
@@ -167,6 +179,7 @@ void Decoder::getTubeBlobs(IplImage * original, int threshold, int blobsize,
 void Decoder::getTubeBlobsFromDpi(vector < CvRect > &blobVector,
 		IplImage * opencvImg,bool metrical, int dpi)
 {
+
 	if (!metrical) {
 		switch (dpi) {
 		case 600:
@@ -210,11 +223,23 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib,
 	vector < CvRect > blobVector;
 	getTubeBlobsFromDpi(blobVector, opencvImg, matrical, dib->getDpi());
 
-	ProcessImageManager imageProcessor(this, scanGap, squareDev,
-					   edgeThresh, corrections);
+	#ifdef _DEBUG
+		{
+			Dib blobDib(*dib);
+			RgbQuad white(255,255,255);
+			unsigned n,i;
+			for ( i = 0, n = blobVector.size(); i < n; i++) {
+				blobDib.rectangle(blobVector[i].x,blobVector[i].y,blobVector[i].width,blobVector[i].height,white);
+			}
+			blobDib.writeToFile("blobRegions.bmp");
+		}
+	#endif
+
+	ProcessImageManager imageProcessor(this, scanGap, squareDev, edgeThresh, corrections);
 	imageProcessor.generateBarcodes(dib, blobVector, barcodeInfos);
 
 	if (barcodeInfos.empty()) {
+		UA_DOUT(3, 5, "no barcodes were found.");
 		return IMG_INVALID;
 	}
 
@@ -665,7 +690,10 @@ void Decoder::showStats(DmtxDecode * dec, DmtxRegion * reg, DmtxMessage * msg)
 
 void Decoder::imageShowBarcodes(Dib & dib, bool regions)
 {
+
 	UA_DOUT(3, 3, "marking tags ");
+	if(barcodeInfos.size() == 0)
+		return;
 
 	RgbQuad quadWhite(255, 255, 255);	// change to white (shows up better in grayscale)
 	RgbQuad quadPink(255, 0, 255);
@@ -740,6 +768,7 @@ BarcodeInfo * Decoder::addBarcodeInfo(DmtxDecode *dec, DmtxRegion *reg,
 		UA_ASSERT_NOT_NULL(info);
 		barcodesMap[str] = info;
 		barcodeInfos.push_back(info);
+		UA_DOUT(3, 9, "Succesfully added barcode: " << info->getMsg());
 	}
 
 	addBarcodeMutex.unlock();
