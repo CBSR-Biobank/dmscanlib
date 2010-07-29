@@ -1,4 +1,4 @@
-%module ScanLibWin32Wrapper
+%module DmScanLibWin32Wrapper
 %{
 extern int slIsTwainAvailable();
 extern int slSelectSourceAsDefault();

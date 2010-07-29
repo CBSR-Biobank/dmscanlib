@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 /*******************************************************************************
  * Canadian Biosample Repository
  *
- * ScanLib project
+ * DmScanLib project
  *
  * Multi-platform application for scanning and decoding datamatrix 2D barcodes.
  *
@@ -52,7 +52,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #   include "ImageGrabber.h"
 #endif
 
-#include "ScanLib.h"
+#include "DmScanLib.h"
 #include "SimpleOpt.h"
 #include "UaLogger.h"
 
@@ -269,7 +269,7 @@ struct Options {
 	}
 };
 
-// this function defined in ScanLib.cpp and is only used by test application
+// this function defined in DmScanLib.cpp and is only used by test application
 void configLogging(unsigned level, bool useFile);
 
 class TestApp {

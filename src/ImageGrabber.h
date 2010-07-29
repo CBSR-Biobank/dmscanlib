@@ -35,7 +35,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "dmtx.h"
 #include "twain.h"     // Standard TWAIN header.
 #include "Singleton.h"
-#include "ScanLib.h"
+#include "DmScanLib.h"
 
 #include <windows.h>
 #include <map>

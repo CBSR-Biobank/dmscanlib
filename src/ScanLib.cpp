@@ -21,13 +21,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 /*******************************************************************************
  * Canadian Biosample Repository
  *
- * ScanLib project
+ * DmScanLib project
  *
  * Multi-platform application for scanning and decoding datamatrix 2D barcodes.
  *
  ******************************************************************************/
 
-#include "ScanLib.h"
+#include "DmScanLib.h"
 #include "UaLogger.h"
 #include "UaAssert.h"
 #include "Decoder.h"
@@ -79,7 +79,7 @@ void configLogging(unsigned level, bool useFile = true) {
 			ua::LoggerSinkStdout::Instance().showHeader(true);
 			ua::logstream.sink(ua::LoggerSinkStdout::Instance());
 		}
-		ua::Logger::Instance().subSysHeaderSet(1, "ScanLib");
+		ua::Logger::Instance().subSysHeaderSet(1, "DmScanLib");
 		loggingInitialized = true;
 	}
 
