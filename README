@@ -1,7 +1,17 @@
-Call test app as follows:
-  scanlib.exe --debug 9 --debugfile -d -p 1 --dpi 600 -l 0.287367 -t 0.101386 -r 4.41637 -b 3.04159 -gap 0.085 --square-dev 15 --threshold 5 --corrections 10 --celldis 0.345
-  
-  
-  
-SCAN MULTIPLE  
-  Debug-standalone/scanlib.exe --debug 9 --dpi 300 --dpi 400 --dpi 600 --decode -l 3.8 -t 0.1 -r 4.5 -b 3.1 -p 1 --square-dev 10 --threshold 30 --gap 30
+How to use scanlib:
+-----------------
+
+Decoding Images
+====================================
+1. Scan the bottom of a pallet at 300, 400, or 600 dpi.
+
+2. Save the file as a BMP. (eg. pallet.bmp)
+
+3. Extract and run scanlib.exe with the following arguments:
+	./scanlib.exe -p 1 -d -i pallet.bmp
+
+4. A file scanlib.txt will be created, it will contain the barccodes of each test tube successfully decoded.
+
+5. Debugging files that will be created include: blobRegions.bmp, decoded.bmp, filtered.bmp.
+
+6. For additional command line arguments: ./scanlib.exe --help
