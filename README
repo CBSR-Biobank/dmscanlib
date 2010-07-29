@@ -1,4 +1,4 @@
-How to use scanlib:
+How to use dmscanlib:
 -----------------
 
 Decoding Images
@@ -7,11 +7,11 @@ Decoding Images
 
 2. Save the file as a BMP. (eg. pallet.bmp)
 
-3. Extract and run scanlib.exe with the following arguments:
-	./scanlib.exe -p 1 -d -i pallet.bmp
+3. Extract and run dmscanlib.exe with the following arguments:
+	./dmscanlib.exe -p 1 -d -i pallet.bmp
 
-4. A file scanlib.txt will be created, it will contain the barccodes of each test tube successfully decoded.
+4. A file dmscanlib.txt will be created, it will contain the barccodes of each test tube successfully decoded.
 
 5. Debugging files that will be created include: blobRegions.bmp, decoded.bmp, filtered.bmp.
 
-6. For additional command line arguments: ./scanlib.exe --help
+6. For additional command line arguments: ./dmscanlib.exe --help

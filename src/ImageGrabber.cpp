@@ -1,5 +1,5 @@
 /*
-Scanlib is a software library and standalone application that scans 
+Dmscanlib is a software library and standalone application that scans 
 and decodes libdmtx compatible test-tubes. It is currently designed 
 to decode 12x8 pallets that use 2D data-matrix laser etched test-tubes.
 Copyright (C) 2010 Canadian Biosample Repository
@@ -42,9 +42,9 @@ using namespace std;
 // Initialize g_AppID. This structure is passed to DSM_Entry() in each
 // function call.
 TW_IDENTITY ImageGrabber::g_AppID = { 0, { 1, 0, TWLG_ENGLISH_USA, TWCY_USA,
-		"scanlib 1.0" }, TWON_PROTOCOLMAJOR, TWON_PROTOCOLMINOR, DG_CONTROL
+		"dmscanlib 1.0" }, TWON_PROTOCOLMAJOR, TWON_PROTOCOLMINOR, DG_CONTROL
 		| DG_IMAGE, "Canadian Biosample Repository",
-		"Image acquisition library", "scanlib", };
+		"Image acquisition library", "dmscanlib", };
 
 const char * ImageGrabber::TWAIN_DLL_FILENAME = "TWAIN_32.DLL";
 

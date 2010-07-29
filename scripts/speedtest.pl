@@ -11,16 +11,16 @@ foreach((
 
 $input = $_;
 
-$old = "./scanlib.exe --debug 9 -d -p 1 -i $input ";
-$new = "./scanlib.exe --debug 9 --super -i $input";
+$old = "./dmscanlib.exe --debug 9 -d -p 1 -i $input ";
+$new = "./dmscanlib.exe --debug 9 --super -i $input";
 
-`rm scanlib.txt`;
+`rm dmscanlib.txt`;
 print "Old: $old\n";
 $init_time = time();
 `$old`;
 $end_time = time();
 
-$oldtube_count = int(`cat scanlib.txt | wc -l`) - 1;
+$oldtube_count = int(`cat dmscanlib.txt | wc -l`) - 1;
 
 print "Tube count : " . $oldtube_count ." tubes\n";
 print "Time taken: " . ($end_time-$init_time). " sec\n";
@@ -29,13 +29,13 @@ $old_time = $end_time-$init_time;
 
 print "\n";
 
-`rm scanlib.txt`;
+`rm dmscanlib.txt`;
 print "New: $new \n";
 $init_time = time();
 `$new`;
 $end_time = time();
 
-$newtube_count = int(`cat scanlib.txt | wc -l`) - 1;
+$newtube_count = int(`cat dmscanlib.txt | wc -l`) - 1;
 
 print "Tube count : " . $newtube_count . " tubes\n";
 print "Time taken: " . ($end_time-$init_time). " sec\n";

@@ -1,5 +1,5 @@
 /*
-Scanlib is a software library and standalone application that scans 
+Dmscanlib is a software library and standalone application that scans 
 and decodes libdmtx compatible test-tubes. It is currently designed 
 to decode 12x8 pallets that use 2D data-matrix laser etched test-tubes.
 Copyright (C) 2010 Canadian Biosample Repository
@@ -61,7 +61,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 using namespace std;
 
-const char *INI_FILE_NAME = "scanlib.ini";
+const char *INI_FILE_NAME = "dmscanlib.ini";
 
 slTime starttime; // for debugging
 slTime endtime;
@@ -72,7 +72,7 @@ static bool loggingInitialized = false;
 void configLogging(unsigned level, bool useFile = true) {
 	if (!loggingInitialized) {
 		if (useFile) {
-			ua::LoggerSinkFile::Instance().setFile("scanlib.log");
+			ua::LoggerSinkFile::Instance().setFile("dmscanlib.log");
 			ua::LoggerSinkFile::Instance().showHeader(true);
 			ua::logstream.sink(ua::LoggerSinkFile::Instance());
 		} else {
@@ -90,7 +90,7 @@ void configLogging(unsigned level, bool useFile = true) {
  * Could not use C++ streams for Release version of DLL.
  */
 void saveResults(string & msg) {
-	FILE *fh = fopen("scanlib.txt", "w");
+	FILE *fh = fopen("dmscanlib.txt", "w");
 	UA_ASSERT_NOT_NULL(fh);
 	fprintf(fh, "%s", msg.c_str());
 	fclose(fh);

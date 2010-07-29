@@ -30,20 +30,20 @@ while(1){
 	print FH sprintf("TOSCAN/{ Brightness: %s%.4d, Contrast: %s%.4d } \n",$brightnessSign,$brightness,$contrastSign,$contrast);
 	close(FH);
 	
-	`rm -f scanlib.txt`;
-	$scanlibOut = `./scanlib.exe -l $platedim[0] -t $platedim[1] -r $platedim[2] -b $platedim[3] -p 1 --square-dev $squaredev --threshold $threshold --gap $gap --celldist $celldist --dpi $dpi --brightness $brightness --contrast $contrast -d --debug 9`;
+	`rm -f dmscanlib.txt`;
+	$dmscanlibOut = `./scanlib.exe -l $platedim[0] -t $platedim[1] -r $platedim[2] -b $platedim[3] -p 1 --square-dev $squaredev --threshold $threshold --gap $gap --celldist $celldist --dpi $dpi --brightness $brightness --contrast $contrast -d --debug 9`;
 
 
 
-	if(!(-e "scanlib.txt")){
+	if(!(-e "dmscanlib.txt")){
 		printf("FAILD Scanned: %.2d\t { Brightness: %s%.4d, Contrast: %s%.4d } \n",0,$brightnessSign,$brightness,$contrastSign,$contrast);
 		open(FH, ">>failTubes.log");
 		print FH sprintf("FAILD Scanned: %.2d\t { Brightness: %s%.4d, Contrast: %s%.4d } \n",0,$brightnessSign,$brightness,$contrastSign,$contrast);
-		print FH $scanlibOut;
+		print FH $dmscanlibOut;
 		close(FH);
 	}
 	else{
-		$tubesScanned = int(`cat scanlib.txt | wc -l`) - 1;
+		$tubesScanned = int(`cat dmscanlib.txt | wc -l`) - 1;
 		open(FH, ">>successTubes.log");
 		print FH sprintf("%.2d,%s%.4d,%s%.4d\n",$tubesScanned,$brightnessSign,$brightness,$contrastSign,$contrast);
 		close(FH);

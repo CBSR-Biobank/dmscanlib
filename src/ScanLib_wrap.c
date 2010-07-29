@@ -206,7 +206,7 @@ extern int slDecodeImage(unsigned verbose, unsigned plateNum, char * filename,
 extern "C" {
 #endif
 
-SWIGEXPORT jint JNICALL Java_edu_ualberta_med_scannerconfig_scanlib_ScanLibWin32WrapperJNI_slIsTwainAvailable(JNIEnv *jenv, jclass jcls) {
+SWIGEXPORT jint JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLibWin32WrapperJNI_slIsTwainAvailable(JNIEnv *jenv, jclass jcls) {
   jint jresult = 0 ;
   int result;
   
@@ -218,7 +218,7 @@ SWIGEXPORT jint JNICALL Java_edu_ualberta_med_scannerconfig_scanlib_ScanLibWin32
 }
 
 
-SWIGEXPORT jint JNICALL Java_edu_ualberta_med_scannerconfig_scanlib_ScanLibWin32WrapperJNI_slSelectSourceAsDefault(JNIEnv *jenv, jclass jcls) {
+SWIGEXPORT jint JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLibWin32WrapperJNI_slSelectSourceAsDefault(JNIEnv *jenv, jclass jcls) {
   jint jresult = 0 ;
   int result;
   
@@ -230,7 +230,7 @@ SWIGEXPORT jint JNICALL Java_edu_ualberta_med_scannerconfig_scanlib_ScanLibWin32
 }
 
 
-SWIGEXPORT jint JNICALL Java_edu_ualberta_med_scannerconfig_scanlib_ScanLibWin32WrapperJNI_slGetScannerCapability(JNIEnv *jenv, jclass jcls) {
+SWIGEXPORT jint JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLibWin32WrapperJNI_slGetScannerCapability(JNIEnv *jenv, jclass jcls) {
   jint jresult = 0 ;
   int result;
   
@@ -242,7 +242,7 @@ SWIGEXPORT jint JNICALL Java_edu_ualberta_med_scannerconfig_scanlib_ScanLibWin32
 }
 
 
-SWIGEXPORT jint JNICALL Java_edu_ualberta_med_scannerconfig_scanlib_ScanLibWin32WrapperJNI_slScanImage(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2, jint jarg3, jint jarg4, jdouble jarg5, jdouble jarg6, jdouble jarg7, jdouble jarg8, jstring jarg9) {
+SWIGEXPORT jint JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLibWin32WrapperJNI_slScanImage(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2, jint jarg3, jint jarg4, jdouble jarg5, jdouble jarg6, jdouble jarg7, jdouble jarg8, jstring jarg9) {
   jint jresult = 0 ;
   unsigned int arg1 ;
   unsigned int arg2 ;
@@ -277,7 +277,7 @@ SWIGEXPORT jint JNICALL Java_edu_ualberta_med_scannerconfig_scanlib_ScanLibWin32
 }
 
 
-SWIGEXPORT jint JNICALL Java_edu_ualberta_med_scannerconfig_scanlib_ScanLibWin32WrapperJNI_slDecodePlate(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2, jint jarg3, jint jarg4, jlong jarg5, jdouble jarg6, jdouble jarg7, jdouble jarg8, jdouble jarg9, jdouble jarg10, jlong jarg11, jlong jarg12, jlong jarg13, jdouble jarg14) {
+SWIGEXPORT jint JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLibWin32WrapperJNI_slDecodePlate(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2, jint jarg3, jint jarg4, jlong jarg5, jdouble jarg6, jdouble jarg7, jdouble jarg8, jdouble jarg9, jdouble jarg10, jlong jarg11, jlong jarg12, jlong jarg13, jdouble jarg14) {
   jint jresult = 0 ;
   unsigned int arg1 ;
   unsigned int arg2 ;
@@ -317,7 +317,7 @@ SWIGEXPORT jint JNICALL Java_edu_ualberta_med_scannerconfig_scanlib_ScanLibWin32
 }
 
 
-SWIGEXPORT jint JNICALL Java_edu_ualberta_med_scannerconfig_scanlib_ScanLibWin32WrapperJNI_slDecodeImage(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2, jstring jarg3, jdouble jarg4, jlong jarg5, jlong jarg6, jlong jarg7, jdouble jarg8) {
+SWIGEXPORT jint JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLibWin32WrapperJNI_slDecodeImage(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2, jstring jarg3, jdouble jarg4, jlong jarg5, jlong jarg6, jlong jarg7, jdouble jarg8) {
   jint jresult = 0 ;
   unsigned int arg1 ;
   unsigned int arg2 ;

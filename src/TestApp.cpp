@@ -1,5 +1,5 @@
 /*
-Scanlib is a software library and standalone application that scans 
+Dmscanlib is a software library and standalone application that scans 
 and decodes libdmtx compatible test-tubes. It is currently designed 
 to decode 12x8 pallets that use 2D data-matrix laser etched test-tubes.
 Copyright (C) 2010 Canadian Biosample Repository
@@ -69,11 +69,11 @@ using namespace std;
 const char
 		* USAGE_FMT =
 				"Usage: %s [OPTIONS]\n"
-					"Test tool for scanlib library."
+					"Test tool for dmscanlib library."
 					"\n"
 					"  --debug NUM          Sets debugging level. Debugging messages are output\n"
 					"                       to stdout. Only when built UA_HAVE_DEBUG on.\n"
-					"  --debugfile          Send debugging output to file named scanlib.log.\n"
+					"  --debugfile          Send debugging output to file named dmscanlib.log.\n"
 					"  --select             Opens the default scanner dialog.\n"
 					"  --capability         Query selected scanner for dpi and driver type settings.\n"
 					"  --test               Tests most functions in this project.\n"
@@ -115,7 +115,7 @@ const char
 					"  -b, --bottom NUM     The bottom coordinate, in inches, for the scanning window.\n";
 
 
-const char * LICENCE =  "Scanlib is a software library and standalone application that scans\n" 
+const char * LICENCE =  "Dmscanlib is a software library and standalone application that scans\n" 
 						"and decodes libdmtx compatible test-tubes. It is currently designed \n" 
 						"to decode 12x8 pallets that use 2D data-matrix laser etched test-tubes.\n" 
 						"Copyright (C) 2010 Canadian Biosample Repository\n\n"
@@ -295,7 +295,7 @@ private:
 
 int location = 0;
 
-const char * TestApp::INI_FILE_NAME = "scanlib.ini";
+const char * TestApp::INI_FILE_NAME = "dmscanlib.ini";
 
 TestApp::TestApp(int argc, char ** argv) {
 

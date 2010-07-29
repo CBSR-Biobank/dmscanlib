@@ -1,7 +1,7 @@
 #ifndef MESSABE_INFO_H_
 #define MESSABE_INFO_H_
 /*
-Scanlib is a software library and standalone application that scans 
+Dmscanlib is a software library and standalone application that scans 
 and decodes libdmtx compatible test-tubes. It is currently designed 
 to decode 12x8 pallets that use 2D data-matrix laser etched test-tubes.
 Copyright (C) 2010 Canadian Biosample Repository

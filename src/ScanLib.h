@@ -1,7 +1,7 @@
 #ifndef __INC_SCANLIB_H
 #define __INC_SCANLIB_H
 /*
-Scanlib is a software library and standalone application that scans 
+Dmscanlib is a software library and standalone application that scans 
 and decodes libdmtx compatible test-tubes. It is currently designed 
 to decode 12x8 pallets that use 2D data-matrix laser etched test-tubes.
 Copyright (C) 2010 Canadian Biosample Repository
@@ -98,7 +98,7 @@ typedef int (*SL_GET_SCANNER_CAPABILITY)();
  *
  * @param verbose    The amount of logging information to generate. 1 is minimal
  *                   and 9 is very detailed. Logging information is appended to
- *                 file scanlib.log.
+ *                 file dmscanlib.log.
  * @param dpi        The dots per inch for the image. Possible values are 200,
  *                   300, 400, 600, 720, 800.
  * @param brightness a value between -1000 and 1000.
@@ -121,7 +121,7 @@ typedef int (*SL_SCAN_IMAGE)(unsigned verbose, unsigned dpi, double left,
 /**
  * From the regions specified in the INI file for the corresponding plate,
  * scans an image and then decodes all the regions. The decoded barcodes are
- * written to the file "scanlib.txt". The scanlib.txt file is a comma separated
+ * written to the file "dmscanlib.txt". The scanlib.txt file is a comma separated
  * value file with the following columns: Plate, Row, Column, Barcode.
  *
  * Calling this function also creates the "decoded.bmp" windows bitmap file.
@@ -131,7 +131,7 @@ typedef int (*SL_SCAN_IMAGE)(unsigned verbose, unsigned dpi, double left,
  *
  * @param verbose    The amount of logging information to generate. 1 is minimal
  *                   and 9 is very detailed. Logging information is appended to
- *                   file scanlib.log.
+ *                   file dmscanlib.log.
  * @param dpi        The dots per inch for the image. Possible values are 200,
  *                   300, 400, 600, 720, 800.
  * @param brightness a value between -1000 and 1000.
@@ -178,7 +178,7 @@ typedef int (*SL_DECODE_PLATE)(unsigned verbose, unsigned dpi, int brightness,
 /**
  * From the regions specified in the INI file for the corresponding plate,
  * decodes all the regions. The decoded barcodes are written to the file
- * "scanlib.txt". The scanlib.txt file is a comma separated value file with the
+ * "dmscanlib.txt". The scanlib.txt file is a comma separated value file with the
  * following columns: Plate, Row, Column, Barcode.
  *
  * Calling this function also creates the "decoded.bmp" windows bitmap file.
@@ -188,7 +188,7 @@ typedef int (*SL_DECODE_PLATE)(unsigned verbose, unsigned dpi, int brightness,
  *
  * @param verbose    The amount of logging information to generate. 1 is minimal
  *                   and 9 is very detailed. Logging information is appended to
- *                   file scanlib.log.
+ *                   file dmscanlib.log.
  * @param plateNum   The plate number. Must be a number beteen 1 and 4.
  * @param filename   The windows bitmap file to decode.
  * @param scanGap    The number of pixels to use for scan grid gap. This is a
