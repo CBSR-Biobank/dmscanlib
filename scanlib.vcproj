@@ -385,11 +385,11 @@
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
 			>
 			<File
-				RelativePath=".\resources.rc"
+				RelativePath=".\scanlib.def"
 				>
 			</File>
 			<File
-				RelativePath=".\scanlib.def"
+				RelativePath=".\scanlib.rc"
 				>
 			</File>
 		</Filter>
