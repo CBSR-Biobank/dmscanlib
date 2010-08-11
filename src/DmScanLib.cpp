@@ -132,11 +132,11 @@ int isValidDpi(int dpi) {
 	ImageGrabber ig;
 	int dpiCap = ig.getScannerCapability();
 	return ((dpiCap & CAP_DPI_300) && dpi == 300)
-	|| ((dpiCap & CAP_DPI_400)
-			&& dpi == 400)
-	|| ((dpiCap & CAP_DPI_600) && dpi == 600);
-#endif
+		|| ((dpiCap & CAP_DPI_400) && dpi == 400)
+		|| ((dpiCap & CAP_DPI_600) && dpi == 600);
+#else
 	return 1;
+#endif
 }
 
 void formatCellMessages(unsigned plateNum, vector<vector<string> >&cells,
@@ -188,17 +188,118 @@ int slScanImage(unsigned verbose, unsigned dpi, int brightness, int contrast,
 #endif
 }
 
+struct Pt2d{
+	int x;
+	int y;
+};
+
+Pt2d rotate(Pt2d point, Pt2d pivot,float radians){
+	
+	Pt2d rotated;
+	rotated.x = (int) (pivot.x + (point.x - pivot.x)*cos(radians) - (point.y - pivot.y)*sin(radians));
+	rotated.y = (int) (pivot.y + (point.x - pivot.x)*sin(radians) + (point.y - pivot.y)*cos(radians));
+	
+	return rotated;
+}
+
+Pt2d redCenter(Dib dib){
+
+	Dib redBitmap(dib);
+
+	float avgx=0,avgy=0,weightsum=0;
+
+	RgbQuad color;
+	for(int y=0,h=redBitmap.getHeight();y < h; y++){
+		for(int x=0,w=redBitmap.getWidth();x < w; x++){
+			redBitmap.getPixel(y,x,color);
+
+			if(color.rgbRed < 40){
+				color.rgbBlue = 0;
+				color.rgbGreen = 0;
+				color.rgbRed = 0;
+			}
+			else{
+				if(  ((float)color.rgbGreen/(float)color.rgbRed) > 0.75){
+					color.rgbBlue = 0;
+					color.rgbGreen = 0;
+					color.rgbRed = 0;
+				}
+			}
+			float multiplier = (float)color.rgbRed*color.rgbRed*color.rgbRed;
+			avgx += multiplier*x;
+			avgy += multiplier*y;
+			weightsum += multiplier;
+			
+			redBitmap.setPixel(x,y,color);
+		}
+	}
+	avgx /= weightsum;
+	avgy /= weightsum;
+
+
+	Pt2d pos;
+	pos.x = (int)avgx;
+	pos.y = (int)avgy;
+
+	return pos;
+}
+
+Pt2d greenCenter(Dib dib){
+
+	Dib greenBitmap(dib);
+
+	float avgx=0,avgy=0,weightsum=0;
+
+	RgbQuad color;
+	for(int y=0,h=greenBitmap.getHeight();y < h; y++){
+		for(int x=0,w=greenBitmap.getWidth();x < w; x++){
+			greenBitmap.getPixel(y,x,color);
+
+			if(color.rgbGreen < 40){
+				color.rgbBlue = 0;
+				color.rgbGreen = 0;
+				color.rgbRed = 0;
+			}
+			else{
+				if(  ((float)color.rgbRed/(float)color.rgbGreen) > 0.75){
+					color.rgbBlue = 0;
+					color.rgbGreen = 0;
+					color.rgbRed = 0;
+				}
+			}
+			float multiplier = (float)color.rgbGreen*color.rgbGreen*color.rgbGreen;
+			avgx += multiplier*x;
+			avgy += multiplier*y;
+			weightsum += multiplier;
+			
+			greenBitmap.setPixel(x,y,color);
+		}
+	}
+	avgx /= weightsum;
+	avgy /= weightsum;
+
+
+	Pt2d pos;
+	pos.x = (int)avgx;
+	pos.y = (int)avgy;
+
+	return pos;
+}
+
+
 int slDecodeCommon(unsigned plateNum, Dib & dib, Decoder & decoder,
 		const char *markedDibFilename) {
 
 	bool metrical = false;
 	Dib *filteredDib;
-	IplImageContainer *iplFilteredDib;
 	Decoder::ProcessResult result;
 
 	UA_DOUT(1, 2, "Running slDecodeCommonCv");
 
 	UA_DOUT(1, 4, "DecodeCommon: metrical mode: " << metrical);
+
+
+
 
 	/*--- apply filters ---*/
 	filteredDib = Dib::convertGrayscale(dib);
@@ -207,17 +308,9 @@ int slDecodeCommon(unsigned plateNum, Dib & dib, Decoder & decoder,
 
 	UA_DEBUG(filteredDib->writeToFile("filtered.bmp"));
 
-	/*--- generate ipl equiv ---*/
-	iplFilteredDib = filteredDib->generateIplImage();
-	UA_ASSERT_NOT_NULL(iplFilteredDib);
-	UA_DOUT(1, 7, "generated IplImage from filteredDib");
-
-	result = decoder.processImageRegions(filteredDib,
-			iplFilteredDib-> getIplImage(), metrical);
+	result = decoder.processImageRegions(filteredDib, metrical);
 
 	delete filteredDib;
-	delete iplFilteredDib;
-
 
 	decoder.imageShowBarcodes(dib, 0);
 	if (result == Decoder::OK) 

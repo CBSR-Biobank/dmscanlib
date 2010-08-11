@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "dmtx.h"
 #include "cv.h"
+#include "IplContainer.h"
 
 #include <list>
 #include <string>
@@ -60,8 +61,7 @@ public:
 		OK
 	} ProcessResult;
 
-	ProcessResult processImageRegions(Dib * dib,
-			IplImage *opencvImg, bool metrical);
+	ProcessResult processImageRegions(Dib * dib, bool metrical);
 
 	void imageShowBarcodes(Dib & dib, bool regions);
 	vector<vector<string> > & getCells() { return cells; }
@@ -87,9 +87,9 @@ protected:
 	void calcRowsAndColumns();
 	ProcessResult calculateSlots(double dpi);
 	void initCells(unsigned maxRow, unsigned maxCol);
-	static void getTubeBlobsFromDpi(vector < CvRect > &blobVector,
-			IplImage * opencvImg, bool metrical, int dpi);
-	static void getTubeBlobs(IplImage * original, int threshold,
+	static void getTubeBlobsFromDpi(Dib * dib,vector < CvRect > &blobVector,
+		bool metrical, int dpi);
+	static void getTubeBlobs(Dib * dib, int threshold,
 			int blobsize, int blurRounds, int border,
 			vector <CvRect> & blobVector);
 

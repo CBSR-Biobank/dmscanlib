@@ -120,6 +120,7 @@ public:
 	void histEqualization(Dib & src);
 	void line(unsigned x0, unsigned y0, unsigned x1, unsigned y1, RgbQuad & quad);
 	void rectangle(unsigned x, unsigned y, unsigned width, unsigned height,RgbQuad & quad);
+	void rectangleRotated(unsigned x, unsigned y, unsigned width, unsigned height, RgbQuad & quad,float radians);
 	void grayscale(Dib & src);
 	void gaussianBlur(Dib & src);
 	void blur(Dib & src);
@@ -163,8 +164,6 @@ private:
 	void convolve2DSlow(const float(&kernel) [9], int kernelSizeX, int kernelSizeY);
 	
 };
-
-void detectBlobs(Dib & frame, Dib & finalFrame);
 
 
 #endif /* __INCLUDE_DIB_H */

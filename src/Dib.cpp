@@ -576,6 +576,8 @@ void Dib::setPixel(unsigned x, unsigned y, RgbQuad & quad)
 	ptr[0] = quad.rgbBlue;
 }
 
+
+
 inline void Dib::setPixelGrayscale(unsigned row, unsigned col,
 				   unsigned char value)
 {
@@ -649,6 +651,8 @@ bool Dib::crop(Dib & src, unsigned x0, unsigned y0, unsigned x1, unsigned y1)
 	}
 	return true;
 }
+
+
 
 /*
 TODO: copy over file header ?
@@ -968,7 +972,7 @@ void Dib::histEqualization(Dib & src)
 }
 
 //http://opencv.willowgarage.com/documentation/c/basic_structures.html
-//cvmat: Matrices are stored row by row. All of the rows are aligned by 4 bytes.
+//cvmat: Matrices are stored row by row. All of the rows are padded (4 bytes).
 IplImageContainer *Dib::generateIplImage()
 {
 	IplImageContainer *iplContainer;
@@ -991,21 +995,12 @@ IplImageContainer *Dib::generateIplImage()
 
 	iplContainer = new IplImageContainer(NULL);
 	iplContainer->setIplImage(image);
-	iplContainer->setHorizontalResolution(
-					      infoHeader->hPixelsPerMeter);
+	iplContainer->setHorizontalResolution(infoHeader->hPixelsPerMeter);
 	iplContainer->setVerticalResolution(infoHeader->vPixelsPerMeter);
 	return iplContainer;
 }
 
-/*
- * generate x,y coordinates to draw a line from x0,y0 to x1,y1 and output the
- * coordinates in the same direction that they are drawn.
- *
- * any coordinates which overlap other coordinates are duplicates and are
- * removed from the output because they are redundant.
- *
- * Taken from: http://en.wikipedia.org/wiki/Bresenham's_line_algorithm
- */
+
 void Dib::rectangle(unsigned x, unsigned y, unsigned width, unsigned height,
 		    RgbQuad & quad)
 {
@@ -1016,6 +1011,81 @@ void Dib::rectangle(unsigned x, unsigned y, unsigned width, unsigned height,
 
 }
 
+struct Pt2d{
+	int x;
+	int y;
+};
+
+Pt2d rotater(Pt2d point, Pt2d pivot,float radians){
+
+	Pt2d rotated;
+	rotated.x = (int) (pivot.x + (point.x - pivot.x)*cos(radians) - (point.y - pivot.y)*sin(radians));
+	rotated.y = (int) (pivot.y + (point.x - pivot.x)*sin(radians) + (point.y - pivot.y)*cos(radians));
+
+	return rotated;
+}
+void Dib::rectangleRotated(unsigned x, unsigned y, unsigned width, unsigned height,
+					RgbQuad & quad,float radians)
+{
+	Pt2d pivot,start,end;
+	
+	pivot.x = x;
+	pivot.y = y;
+
+	//line 1
+	start.x = x;
+	start.y = y;
+	end.x = x;
+	end.y = y + height;
+	
+	start = rotater(start,pivot,radians);
+	end = rotater(end,pivot,radians);
+
+	line(start.x, start.y, end.x, end.y, quad);
+
+
+	//line 2
+	start.x = x;
+	start.y = y;
+	end.x = x + width;
+	end.y = y ;
+
+	start = rotater(start,pivot,radians);
+	end = rotater(end,pivot,radians);
+
+	line(start.x, start.y, end.x, end.y, quad);
+
+	//line 3
+	start.x = x + width;
+	start.y = y;
+	end.x = x + width;
+	end.y = y + height;
+
+	start = rotater(start,pivot,radians);
+	end = rotater(end,pivot,radians);
+
+	line(start.x, start.y, end.x, end.y, quad);
+
+	//line 4
+	start.x = x ;
+	start.y = y + height;
+	end.x = x + width;
+	end.y = y + height;
+
+	start = rotater(start,pivot,radians);
+	end = rotater(end,pivot,radians);
+
+	line(start.x, start.y, end.x, end.y, quad);
+}
+/*
+ * generate x,y coordinates to draw a line from x0,y0 to x1,y1 and output the
+ * coordinates in the same direction that they are drawn.
+ *
+ * any coordinates which overlap other coordinates are duplicates and are
+ * removed from the output because they are redundant.
+ *
+ * Taken from: http://en.wikipedia.org/wiki/Bresenham's_line_algorithm
+ */
 void Dib::line(unsigned x0, unsigned y0, unsigned x1, unsigned y1,
 	       RgbQuad & quad)
 {
@@ -1084,6 +1154,8 @@ void Dib::line(unsigned x0, unsigned y0, unsigned x1, unsigned y1,
 		}
 	}
 }
+
+
 
 void Dib::tpPresetFilter()
 {
@@ -1194,7 +1266,7 @@ void Dib::convolveFast3x3(const float (&k)[9])
 
 }
 
-// actually slow version
+//  slow version
 void Dib::convolve2DSlow(const float (&kernel)[9], int kernelSizeX,
 			 int kernelSizeY)
 {
@@ -1639,205 +1711,3 @@ unsigned Dib::getDpi()
 	    unsigned >(infoHeader->hPixelsPerMeter * 0.0254 + 0.5);
 }
 
-struct coordinate {
-	unsigned int x, y;
-	void *data;
-};
-
-struct lineBlob {
-	unsigned int min, max;
-	unsigned int blobId;
-
-	bool attached;
-};
-
-struct blob {
-	//unsigned int blobId;
-	coordinate min, max;
-
-	coordinate center;
-};
-
-void detectBlobs(Dib & frame, Dib & finalFrame)
-{
-	int blobCounter = 0;
-	map < unsigned int, blob > blobs;
-
-	unsigned char threshold = 120;
-
-	UA_DOUT(4, 5, "DETECT BLOBS");
-
-	UA_DOUT(4, 5,
-		"frame : " << "width/" << (int)frame.getWidth() << " height/" <<
-		(int)frame.getHeight());
-	vector < vector < lineBlob > >imgData(frame.getWidth());
-
-	for (int row = 0; row < (int)frame.getHeight(); ++row) {
-
-		for (int column = 0; column < (int)frame.getWidth(); ++column) {
-
-			//unsigned char byte = (unsigned char) imgStream.get();
-			unsigned char byte =
-			    (unsigned char)
-			    frame.getPixelBuffer()[(row * frame.getWidth()) +
-						   column];
-
-			if (byte >= threshold) {
-
-				int start = column;
-
-				for (; byte >= threshold;
-				     byte =
-				     (unsigned char)
-				     frame.getPixelBuffer()[(row *
-							     frame.getWidth()) +
-							    column], ++column) ;
-
-				int stop = column - 1;
-				lineBlob lineBlobData =
-				    { start, stop, blobCounter, false };
-
-				imgData[row].push_back(lineBlobData);
-				blobCounter++;
-			}
-		}
-	}
-	UA_DOUT(4, 5, "imgdata : " << "size/" << (int)imgData[0].size());
-
-	/* Check lineBlobs for a touching lineblob on the next row */
-
-	for (int row = 0; row < (int)imgData.size(); ++row) {
-
-		for (int entryLine1 = 0; entryLine1 < (int)imgData[row].size();
-		     ++entryLine1) {
-
-			for (int entryLine2 = 0;
-			     entryLine2 < (int)imgData[row + 1].size();
-			     ++entryLine2) {
-
-				if (!
-				    ((imgData[row][entryLine1].max <
-				      imgData[row + 1][entryLine2].min)
-				     || (imgData[row][entryLine1].min >
-					 imgData[row + 1][entryLine2].max))) {
-
-					if (imgData[row + 1]
-					    [entryLine2].attached == false) {
-
-						imgData[row +
-							1][entryLine2].blobId =
-						    imgData[row]
-						    [entryLine1].blobId;
-
-						imgData[row +
-							1][entryLine2].attached
-						    = true;
-					} else {
-						imgData[row][entryLine1].blobId
-						    =
-						    imgData[row +
-							    1]
-						    [entryLine2].blobId;
-
-						imgData[row]
-						    [entryLine1].attached =
-						    true;
-					}
-				}
-			}
-		}
-	}
-
-	// Sort and group blobs
-
-	for (int row = 0; row < (int)imgData.size(); ++row) {
-
-		for (int entry = 0; entry < (int)imgData[row].size(); ++entry) {
-
-			if (blobs.find(imgData[row][entry].blobId) ==
-			    blobs.end()) {
-				// Blob does not exist yet
-				blob blobData = { {imgData[row][entry].min, row}
-				, {imgData[row][entry].max, row}
-				, {0, 0}
-				};
-
-				blobs[imgData[row][entry].blobId] = blobData;
-			} else {
-				if (imgData[row][entry].min <
-				    blobs[imgData[row][entry].blobId].min.x)
-
-					blobs[imgData[row][entry].blobId].
-					    min.x = imgData[row][entry].min;
-
-				else if (imgData[row][entry].max >
-					 blobs[imgData[row][entry].blobId].
-					 max.x)
-
-					blobs[imgData[row][entry].blobId].
-					    max.x = imgData[row][entry].max;
-
-				if ((unsigned)row <
-				    blobs[imgData[row][entry].blobId].min.y)
-
-					blobs[imgData[row][entry].blobId].
-					    min.y = row;
-
-				else if ((unsigned)row >
-					 blobs[imgData[row][entry].blobId].
-					 max.y)
-
-					blobs[imgData[row][entry].blobId].
-					    max.y = row;
-			}
-		}
-	}
-
-	UA_DOUT(4, 5, "Blobs found: " << blobs.size());
-
-	// Calculate center
-	for (map < unsigned int, blob >::iterator i = blobs.begin();
-	     i != blobs.end(); ++i) {
-		(*i).second.center.x =
-		    (*i).second.min.x + ((*i).second.max.x -
-					 (*i).second.min.x) / 2;
-		(*i).second.center.y =
-		    (*i).second.min.y + ((*i).second.max.y -
-					 (*i).second.min.y) / 2;
-
-		int size =
-		    ((*i).second.max.x -
-		     (*i).second.min.x) * ((*i).second.max.y -
-					   (*i).second.min.y);
-
-		// Print coordinates on image, if it is large enough
-		if (size > 0) {
-
-			RgbQuad highlightQuad;
-			highlightQuad.set(255, 255, 255);
-
-			finalFrame.line((*i).second.min.x,
-					frame.getHeight() - (*i).second.min.y,
-					(*i).second.max.x,
-					frame.getHeight() - (*i).second.min.y,
-					highlightQuad);
-			finalFrame.line((*i).second.min.x,
-					frame.getHeight() - (*i).second.max.y,
-					(*i).second.max.x,
-					frame.getHeight() - (*i).second.max.y,
-					highlightQuad);
-			finalFrame.line((*i).second.min.x,
-					frame.getHeight() - (*i).second.min.y,
-					(*i).second.min.x,
-					frame.getHeight() - (*i).second.max.y,
-					highlightQuad);
-			finalFrame.line((*i).second.max.x,
-					frame.getHeight() - (*i).second.min.y,
-					(*i).second.max.x,
-					frame.getHeight() - (*i).second.max.y,
-					highlightQuad);
-			//char textBuffer[128];
-			//sprintf(textBuffer, "(%d, %d)", (*i).second.center.x, (*i).second.center.y);
-		}
-	}
-}

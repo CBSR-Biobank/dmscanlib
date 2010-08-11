@@ -53,6 +53,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 using namespace std;
 
+
 Decoder::Decoder(double g, unsigned s, unsigned t, unsigned c, double dist)
 {
 	ua::Logger::Instance().subSysHeaderSet(3, "Decoder");
@@ -102,9 +103,21 @@ void Decoder::initCells(unsigned maxRows, unsigned maxCols)
 	}
 }
 
-void Decoder::getTubeBlobs(IplImage * original, int threshold, int blobsize,
+
+void Decoder::getTubeBlobs(Dib * dib, int threshold, int blobsize,
 		int blurRounds, int border, vector <CvRect> & blobVector)
 {
+
+	/*--- generate ipl equiv ---*/
+	IplImageContainer *iplFilteredDib;
+	iplFilteredDib = dib->generateIplImage();
+	UA_ASSERT_NOT_NULL(iplFilteredDib);
+	UA_DOUT(1, 7, "generated IplImage from filteredDib");
+
+	IplImage *original; 
+	original = iplFilteredDib->getIplImage();
+
+		/* special case: blobsize = 0 then make the whole image a blob */
 	if(blobsize == 0){
 		CvRect img;
 		img.x = 0;
@@ -115,16 +128,21 @@ void Decoder::getTubeBlobs(IplImage * original, int threshold, int blobsize,
 		blobVector.push_back(img);
 		return;
 	}
+	double minBlobWidth, minBlobHeight, barcodeSizeInches = 0.13;
+
+	minBlobWidth =  ((double)iplFilteredDib->getHorizontalResolution()/39.3700787)*barcodeSizeInches;
+	minBlobHeight = ((double)iplFilteredDib->getVerticalResolution()/39.3700787)*barcodeSizeInches;
+
+	UA_DOUT(1, 8, "Minimum Blob Size (Inches): " << barcodeSizeInches);
+	UA_DOUT(1, 8, "Minimum Blob Width (Pixels): " << minBlobWidth);
+	UA_DOUT(1, 8, "Minimum Blob Height (Pixels): " << minBlobHeight);
 
 	IplImage *originalThr;
 	IplImage *filtered;
 
 	CBlobResult blobs;
 
-
-	filtered =
-	    cvCreateImage(cvGetSize(original), original->depth,
-			  original->nChannels);
+	filtered = cvCreateImage(cvGetSize(original), original->depth, original->nChannels);
 	cvCopy(original, filtered, NULL);
 
 	/*---filters---*/
@@ -135,6 +153,8 @@ void Decoder::getTubeBlobs(IplImage * original, int threshold, int blobsize,
 
 	originalThr = cvCreateImage(cvGetSize(filtered), IPL_DEPTH_8U, 1);
 	cvThreshold(filtered, originalThr, threshold, 255, CV_THRESH_BINARY);
+
+
 
 	blobs = CBlobResult(originalThr, NULL, 0);
 	blobs.Filter(blobs, B_EXCLUDE, CBlobGetArea(), B_LESS, blobsize);
@@ -167,32 +187,54 @@ void Decoder::getTubeBlobs(IplImage * original, int threshold, int blobsize,
 
 		if (box.y + box.height >= filtered->height)
 			box.height = (filtered->height - box.y) - 1;
+	
 
-		blobVector.push_back(box);
+		float contrastSum = 0, count = 0, contrastRatio = 0;
+
+		cvSetImageROI(original, box);
+		for (int i = box.y ; i < (box.y + box.height) -1; i++) {
+			for (int j = box.x; j < (box.x + box.width) - 1; j++) {
+				float center = (float)(original->imageData + i * original->widthStep)[j];
+				float right  = (float)(original->imageData + i * original->widthStep)[j+1];
+				float down  = (float)(original->imageData + (i+1) * original->widthStep)[j];
+
+				contrastSum +=  (float)((center-right)*(center-right) + (center-down)*(center-down));
+				count++;
+			}
+		}
+		cvResetImageROI(original);
+
+		contrastRatio = contrastSum / count;
+		UA_DOUT(1, 9, "Contrast Ratio: " << contrastRatio );
+
+
+		if(box.width >= minBlobWidth && box.height >= minBlobHeight && contrastRatio > 2000)
+			blobVector.push_back(box);
+
 	}
 	blobs.ClearBlobs();
 
 	cvReleaseImage(&originalThr);
 	cvReleaseImage(&filtered);
+	delete iplFilteredDib;
 }
 
-void Decoder::getTubeBlobsFromDpi(vector < CvRect > &blobVector,
-		IplImage * opencvImg,bool metrical, int dpi)
+void Decoder::getTubeBlobsFromDpi(Dib * dib,vector < CvRect > &blobVector,
+		bool metrical, int dpi)
 {
-
 	if (!metrical) {
 		switch (dpi) {
 		case 600:
-			 getTubeBlobs(opencvImg, 54, 2400, 5, 12, blobVector);
+			 getTubeBlobs(dib, 54, 2400, 5, 12, blobVector);
 			break;
 
 		case 400:
-			getTubeBlobs(opencvImg, 50, 1900, 3, 4, blobVector);
+			getTubeBlobs(dib, 50, 1900, 3, 4, blobVector);
 			break;
 
 		case 300:
 		default:
-			getTubeBlobs(opencvImg, 55, 840, 2, 3, blobVector);
+			getTubeBlobs(dib, 55, 840, 2, 3, blobVector);
 			break;
 		}
 	} else {
@@ -201,27 +243,26 @@ void Decoder::getTubeBlobsFromDpi(vector < CvRect > &blobVector,
 
 		switch (dpi) {
 		case 600:
-			getTubeBlobs(opencvImg, 120, 5000, 10, -10, blobVector);
+			getTubeBlobs(dib, 120, 5000, 10, -10, blobVector);
 			break;
 
 		case 400:
-			getTubeBlobs(opencvImg, 120, 3000, 10, -5, blobVector);
+			getTubeBlobs(dib, 120, 3000, 10, -5, blobVector);
 			break;
 
 		case 300:
 		default:
-			getTubeBlobs(opencvImg, 110, 2000, 8, -4, blobVector);
+			getTubeBlobs(dib, 110, 2000, 8, -4, blobVector);
 			break;
 		}
 	}
 }
 
-Decoder::ProcessResult Decoder::processImageRegions(Dib * dib,
-		IplImage * opencvImg, bool matrical)
+Decoder::ProcessResult Decoder::processImageRegions(Dib * dib, bool matrical)
 {
 
 	vector < CvRect > blobVector;
-	getTubeBlobsFromDpi(blobVector, opencvImg, matrical, dib->getDpi());
+	getTubeBlobsFromDpi(dib,blobVector, matrical, dib->getDpi()); //updates blobVector
 
 	#ifdef _DEBUG
 		{
