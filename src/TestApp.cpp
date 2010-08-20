@@ -230,6 +230,11 @@ struct Options {
 	double top;
 	double right;
 	double bottom;
+	double gapX;
+	double gapY;
+	unsigned profileA;
+	unsigned profileB;
+	unsigned profileC;
 
 	Options() {
 
@@ -266,6 +271,12 @@ struct Options {
 		top = 0.0;
 		right = 0.0;
 		bottom = 0.0;
+
+		gapX = 0;
+		gapY = 0;
+		profileA = (unsigned)-1;
+		profileB = (unsigned)-1;
+		profileC = (unsigned)-1;
 	}
 };
 
@@ -372,7 +383,9 @@ int TestApp::decode() {
 	if (options.infile != NULL) {
 		return slDecodeImage(options.debugLevel, options.plateNum,
 				options.infile, options.gap, options.squareDev,
-				options.threshold, options.corrections, options.cellDistance);
+				options.threshold, options.corrections, options.cellDistance,
+				options.gapX,options.gapY,
+				options.profileA,options.profileB,options.profileC);
 	}
 
 	if ((options.left == 0.0) && (options.right == 0.0) && (options.top == 0.0)
@@ -390,7 +403,9 @@ int TestApp::decode() {
 			options.brightness, options.contrast, options.plateNum,
 			options.left, options.top, options.right, options.bottom,
 			options.gap, options.squareDev, options.threshold,
-			options.corrections, options.cellDistance);
+			options.corrections, options.cellDistance,
+				options.gapX,options.gapY,
+				options.profileA,options.profileB,options.profileC);
 }
 
 int TestApp::scan() {
@@ -481,7 +496,8 @@ int TestApp::test() {
 	cout << "==============Decode image from file================" << endl;
 	result = slDecodeImage(options.debugLevel, 1, "test.bmp", options.gap,
 			options.squareDev, options.threshold, options.corrections,
-			options.cellDistance);
+			options.cellDistance,options.gapX,options.gapY,
+			options.profileA,options.profileB,options.profileC);
 
 	if (result != SC_SUCCESS) {
 		cout << "Failed to decode scanned image file." << endl;
@@ -494,7 +510,9 @@ int TestApp::test() {
 	result = slDecodePlate(options.debugLevel, options.dpi,
 			options.brightness, options.contrast, 1, options.left, options.top,
 			options.right, options.bottom, options.gap, options.squareDev,
-			options.threshold, options.corrections, options.cellDistance);
+			options.threshold, options.corrections, options.cellDistance,
+			options.gapX,options.gapY,
+			options.profileA,options.profileB,options.profileC);
 
 	if (result != SC_SUCCESS) {
 		cout << "Failed to scan & decode image." << endl;

@@ -201,7 +201,7 @@ Pt2d rotate(Pt2d point, Pt2d pivot,float radians){
 	
 	return rotated;
 }
-
+/*
 Pt2d redCenter(Dib dib){
 
 	Dib redBitmap(dib);
@@ -285,7 +285,7 @@ Pt2d greenCenter(Dib dib){
 
 	return pos;
 }
-
+*/
 
 int slDecodeCommon(unsigned plateNum, Dib & dib, Decoder & decoder,
 		const char *markedDibFilename) {
@@ -298,7 +298,130 @@ int slDecodeCommon(unsigned plateNum, Dib & dib, Decoder & decoder,
 
 	UA_DOUT(1, 4, "DecodeCommon: metrical mode: " << metrical);
 
+	/*
+	UA_DOUT(1, 1, "===========DEBUG==============");
+	
 
+	RgbQuad color;
+	
+	Pt2d redPos = redCenter(dib);
+	Pt2d greenPos = greenCenter(dib);
+
+	
+	for(int y=0,h=dib.getHeight();y < h; y++){
+		for(int x=0,w=dib.getWidth();x < w; x++){
+			dib.getPixel(y,x,color);
+
+			if(color.rgbGreen + color.rgbBlue + color.rgbRed < 500){
+				color.rgbBlue = 0;
+				color.rgbGreen = 0;
+				color.rgbRed = 0;
+			}
+
+			dib.setPixel(x,y,color);
+		}
+	}
+
+	RgbQuad center;
+	RgbQuad adjacent[4];
+	RgbQuad buffer;
+	float sum;
+
+	double contrastRatio = 0;
+
+	for(int y=1,h=dib.getHeight();y < h-1; y++){
+		for(int x=1,w=dib.getWidth();x < w-1; x++){
+			
+			dib.getPixel(y,x,center);
+			dib.getPixel(y-1,x,adjacent[0]);
+			dib.getPixel(y,x-1,adjacent[1]);
+			dib.getPixel(y,x+1,adjacent[2]);
+			dib.getPixel(y+1,x,adjacent[3]);
+
+
+			sum = 0;
+			for(int i=0; i < 4; i++)
+				sum += (float)(adjacent[i]).rgbBlue;
+			buffer.rgbBlue = (unsigned char)(sum/4.0);
+
+			sum = 0;
+			for(int i=0; i < 4; i++)
+				sum += (float)(adjacent[i]).rgbGreen;
+			buffer.rgbGreen = (unsigned char)(sum/4.0);
+			
+			sum = 0;
+			for(int i=0; i < 4; i++)
+				sum += (float)(adjacent[i]).rgbRed;
+			buffer.rgbRed = (unsigned char)(sum/4.0);
+
+			contrastRatio += (pow(abs((float)buffer.rgbBlue - (float)center.rgbBlue),2) +
+							pow(abs((float)buffer.rgbGreen - (float)center.rgbGreen),2) +
+							pow(abs((float)buffer.rgbRed - (float)center.rgbRed),2))/3.0;
+		}
+	}
+
+	contrastRatio /= (dib.getHeight()-2)*(dib.getWidth()-2);
+
+	UA_DOUT(1, 1, "Contrast Ratio: " << contrastRatio );
+	
+
+	color.set(255,255,255);
+
+	float angle = (float)(atan( ((float)(greenPos.y - redPos.y))/((float)(greenPos.x - redPos.x))));
+	angle = -0.15;
+	//expected [right] angle 33.69 degrees (0.588002604 rad) 
+
+
+	UA_DOUT(1, 1, "Angle: " << angle );
+
+
+	int ox,oy;
+	ox = 110;
+	oy = 25;
+
+	int gapx,gapy;
+	gapx = 26;
+	gapy = 26;
+
+	int startx,starty;
+	startx = redPos.x + ox;
+	starty = (dib.getHeight()-(redPos.y - oy) );
+
+
+	float dist = sqrt((float)(redPos.y - greenPos.y)*(redPos.y - greenPos.y) + (redPos.x - greenPos.x)*(redPos.x  - greenPos.x)) - 220;
+	int scalex,scaley;
+	scalex = 80;
+	scaley = 80;
+	for(int y =0; y < 8; y++){
+		for(int x =0; x < 12; x++){
+
+			int x0 = startx + x*scalex + x*gapx;
+			int y0 = starty + y*scaley + y*gapy;
+
+			Pt2d start;
+			Pt2d pt;
+			Pt2d rotated;
+
+			start.x = startx;
+			start.y = starty;
+			pt.x = x0;
+			pt.y = y0;
+			rotated = rotate(pt,start,angle);
+
+			dib.rectangleRotated(rotated.x,rotated.y,scalex,scaley,color,angle);
+		}
+	}
+
+
+	dib.line(redPos.x,dib.getHeight()-redPos.y,greenPos.x,dib.getHeight()-greenPos.y,color);
+
+	dib.writeToFile("ready.bmp");
+
+	exit(0);
+
+	*/
+	
+	
 
 
 	/*--- apply filters ---*/
@@ -343,7 +466,8 @@ int slDecodeCommon(unsigned plateNum, Dib & dib, Decoder & decoder,
 int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
 		unsigned plateNum, double left, double top, double right,
 		double bottom, double scanGap, unsigned squareDev, unsigned edgeThresh,
-		unsigned corrections, double cellDistance) {
+		unsigned corrections, double cellDistance, double gapX, double gapY,
+		unsigned profileA,unsigned profileB, unsigned profileC) {
 	configLogging(verbose);
 	UA_DOUT(1, 3, "slDecodePlate: dpi/" << dpi
 			<< " brightness/" << brightness
@@ -372,7 +496,7 @@ int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
 	vector < vector < string > >cells;
 	Util::getTime(starttime);
 	Decoder decoder(scanGap, squareDev, edgeThresh, corrections,
-			cellDistance);
+			cellDistance,gapX,gapY,profileA,profileB,profileC);
 
 	h = ig.acquireImage(dpi, brightness, contrast, left, top, right,
 			bottom);
@@ -405,7 +529,8 @@ int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
 
 int slDecodeImage(unsigned verbose, unsigned plateNum, const char *filename,
 		double scanGap, unsigned squareDev, unsigned edgeThresh,
-		unsigned corrections, double cellDistance) {
+		unsigned corrections, double cellDistance, double gapX, double gapY,
+		unsigned profileA,unsigned profileB, unsigned profileC) {
 	configLogging(verbose);
 	UA_DOUT(1, 3, "slDecodeImage: plateNum/" << plateNum
 			<< " filename/" << filename
@@ -426,7 +551,8 @@ int slDecodeImage(unsigned verbose, unsigned plateNum, const char *filename,
 	Util::getTime(starttime);
 
 	Dib dib;
-	Decoder decoder(scanGap, squareDev, edgeThresh, corrections, cellDistance);
+	Decoder decoder(scanGap, squareDev, edgeThresh, corrections, cellDistance,
+		gapX,gapY,profileA,profileB,profileC);
 
 	dib.readFromFile(filename);
 

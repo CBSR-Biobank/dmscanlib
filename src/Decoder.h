@@ -51,7 +51,9 @@ class BinRegion;
 class Decoder {
 public:
 	Decoder(double scanGap, unsigned squareDev, unsigned edgeThresh,
-			unsigned corrections, double cellDistance);
+			unsigned corrections, double cellDistance,
+			double gapX, double gapY, 
+			unsigned profileA, unsigned profileB, unsigned profileC);
 	virtual ~Decoder();
 
 	typedef enum {

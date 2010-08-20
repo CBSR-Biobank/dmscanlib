@@ -54,7 +54,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 using namespace std;
 
 
-Decoder::Decoder(double g, unsigned s, unsigned t, unsigned c, double dist)
+Decoder::Decoder(double g, unsigned s, unsigned t, unsigned c, double dist, 
+				 double gapX, double gapY,
+				 unsigned profileA,unsigned profileB, unsigned profileC)
 {
 	ua::Logger::Instance().subSysHeaderSet(3, "Decoder");
 	scanGap = g;
@@ -63,6 +65,12 @@ Decoder::Decoder(double g, unsigned s, unsigned t, unsigned c, double dist)
 	corrections = c;
 	imageBuf = NULL;
 	cellDistance = dist;
+
+	UA_DOUT(1, 9, "GapX :" << gapX);
+	UA_DOUT(1, 9, "GapY :" << gapX);
+	UA_DOUT(1, 9, "profileA :" << profileA);
+	UA_DOUT(1, 9, "profileB :" << profileB);
+	UA_DOUT(1, 9, "profileC :" << profileC);
 }
 
 Decoder::~Decoder()
@@ -119,6 +127,8 @@ void Decoder::getTubeBlobs(Dib * dib, int threshold, int blobsize,
 
 		/* special case: blobsize = 0 then make the whole image a blob */
 	if(blobsize == 0){
+		UA_DOUT(1,1,"Special blob case: blobsize = 0.");
+		UA_DOUT(1,1,"Using a single blob that covers the entire image.");
 		CvRect img;
 		img.x = 0;
 		img.y = 0;
@@ -155,7 +165,6 @@ void Decoder::getTubeBlobs(Dib * dib, int threshold, int blobsize,
 	cvThreshold(filtered, originalThr, threshold, 255, CV_THRESH_BINARY);
 
 
-
 	blobs = CBlobResult(originalThr, NULL, 0);
 	blobs.Filter(blobs, B_EXCLUDE, CBlobGetArea(), B_LESS, blobsize);
 
@@ -173,6 +182,7 @@ void Decoder::getTubeBlobs(Dib * dib, int threshold, int blobsize,
 				   && border * 2 < box.height,
 				   "cannot shrink past rect dimensions");
 		}
+
 
 		box.x -= border;
 		box.y -= border;
@@ -208,11 +218,23 @@ void Decoder::getTubeBlobs(Dib * dib, int threshold, int blobsize,
 		UA_DOUT(1, 9, "Contrast Ratio: " << contrastRatio );
 
 
-		if(box.width >= minBlobWidth && box.height >= minBlobHeight && contrastRatio > 2000)
+		if(box.width >= minBlobWidth && box.height >= minBlobHeight && contrastRatio > 1000)
 			blobVector.push_back(box);
 
 	}
 	blobs.ClearBlobs();
+
+	if(blobVector.size() == 0){
+		UA_DOUT(1,1,"WARNING: 0 blobs were found.");
+		UA_DOUT(1,1,"Using a single blob that covers the entire image.");
+		CvRect img;
+		img.x = 0;
+		img.y = 0;
+		img.width = original->width-2;
+		img.height = original->height-2;
+		blobVector.push_back(img);
+		return;
+	}
 
 	cvReleaseImage(&originalThr);
 	cvReleaseImage(&filtered);
