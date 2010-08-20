@@ -191,4 +191,14 @@ extern std::ostream cdebug;
 		}                                                                    \
 		while(0)
 
+
+
+#define UA_DOUT_NL(subsys, level, display)                                      \
+		do {                                                                 \
+			if (ua::Logger::Instance().isDebug(subsys, level)) {             \
+				ua::cdebug  << display;										\
+			}                                                                \
+		}                                                                    \
+		while(0)
+
 #endif /* __INC_bkDebug_h */

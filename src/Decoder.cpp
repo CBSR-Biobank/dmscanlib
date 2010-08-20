@@ -39,6 +39,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "BinRegion.h"
 #include "ProcessImageManager.h"
 
+
 #include <time.h>
 #include <iostream>
 #include <math.h>
@@ -53,10 +54,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 using namespace std;
 
-
 Decoder::Decoder(double g, unsigned s, unsigned t, unsigned c, double dist, 
-				 double gapX, double gapY,
+				 double gx, double gy,
 				 unsigned profileA,unsigned profileB, unsigned profileC)
+				 : profile(profileA,profileB,profileC)
 {
 	ua::Logger::Instance().subSysHeaderSet(3, "Decoder");
 	scanGap = g;
@@ -65,12 +66,17 @@ Decoder::Decoder(double g, unsigned s, unsigned t, unsigned c, double dist,
 	corrections = c;
 	imageBuf = NULL;
 	cellDistance = dist;
+	gapX = gx;
+	gapY = gy;
 
-	UA_DOUT(1, 9, "GapX :" << gapX);
-	UA_DOUT(1, 9, "GapY :" << gapX);
-	UA_DOUT(1, 9, "profileA :" << profileA);
-	UA_DOUT(1, 9, "profileB :" << profileB);
-	UA_DOUT(1, 9, "profileC :" << profileC);
+	UA_DOUT_NL(1,4,"Profile Data: ");
+	for(int i=0; i < 96; i++){
+		if(i % 12 == 0) {
+			UA_DOUT_NL(1,4,"\n");
+		}
+		UA_DOUT_NL(1, 4, profile.isSetBit(i));
+	}
+	UA_DOUT_NL(1,4,"\n\n");
 }
 
 Decoder::~Decoder()
@@ -284,19 +290,66 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib, bool matrical)
 {
 
 	vector < CvRect > blobVector;
-	getTubeBlobsFromDpi(dib,blobVector, matrical, dib->getDpi()); //updates blobVector
+	//getTubeBlobsFromDpi(dib,blobVector, matrical, dib->getDpi()); //updates blobVector
 
-	#ifdef _DEBUG
-		{
-			Dib blobDib(*dib);
-			RgbQuad white(255,255,255);
-			unsigned n,i;
-			for ( i = 0, n = blobVector.size(); i < n; i++) {
-				blobDib.rectangle(blobVector[i].x,blobVector[i].y,blobVector[i].width,blobVector[i].height,white);
+
+	double dpi = (double)dib->getDpi();
+	int imgw = dib->getWidth();
+	int imgh = dib->getHeight();
+
+	double w = imgw / 12.0;
+	double h = imgh / 8.0;
+
+	RgbQuad green(0,255,0);
+	RgbQuad yellow(255,255,0);
+
+
+	UA_DOUT(1,1,"==grid");
+	UA_DOUT(1,1,"w : " << imgw  << " " << "h : " << imgh);
+
+	gapX = 0.09756572;
+	gapY = 0.09311373;
+
+	for (int j = 0; j < 8; j++) {
+		for (int i = 0; i < 12; i++) {
+			
+			if(!profile.isSetBit(i + j*12)){
+				continue;
 			}
-			blobDib.writeToFile("blobRegions.bmp");
+
+			double cx = i * w + w / 2.0;
+			double cy = j * h + h / 2.0;
+
+			int nx = (int)(cx - w / 2.0 + (gapX*dpi) / 2.0);
+			int ny = (int)(cy - h / 2.0 + (gapY*dpi) / 2.0);
+			int nw = (int)( w - gapX*dpi);
+			int nh = (int)(h - gapY*dpi);
+
+			if(nx + nw < imgw && ny + nh < imgh){
+				dib->rectangle( nx, ny, nw, nh,green);
+			}
+
+			CvRect img;
+			img.x = nx;
+			img.y = ny;
+			img.width = nw;
+			img.height = nh;
+
+			blobVector.push_back(img);
 		}
-	#endif
+	}
+
+	dib->writeToFile("grid.bmp");
+
+
+	/*Debug level > 4 ?*/
+	Dib blobDib(*dib);
+	RgbQuad white(255,255,255);
+	unsigned n,i;
+	for ( i = 0, n = blobVector.size(); i < n; i++) {
+		blobDib.rectangle(blobVector[i].x,blobVector[i].y,blobVector[i].width,blobVector[i].height,white);
+	}
+	blobDib.writeToFile("blobRegions.bmp");
 
 	ProcessImageManager imageProcessor(this, scanGap, squareDev, edgeThresh, corrections);
 	imageProcessor.generateBarcodes(dib, blobVector, barcodeInfos);

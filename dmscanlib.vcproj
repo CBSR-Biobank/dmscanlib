@@ -209,6 +209,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\DmScanLib.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\DmScanLib_wrap.c"
+				>
+			</File>
+			<File
 				RelativePath=".\src\ImageGrabber.cpp"
 				>
 			</File>
@@ -221,15 +229,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\DmScanLib.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\src\DmScanLib_wrap.c"
-				>
-			</File>
-			<File
 				RelativePath=".\src\Testapp.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\TriInt.cpp"
 				>
 			</File>
 			<File
@@ -299,6 +303,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\DmScanLib.h"
+				>
+			</File>
+			<File
 				RelativePath=".\src\ImageGrabber.h"
 				>
 			</File>
@@ -315,7 +323,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\DmScanLib.h"
+				RelativePath=".\TriInt.h"
 				>
 			</File>
 			<File

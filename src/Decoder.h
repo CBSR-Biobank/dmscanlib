@@ -30,6 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "dmtx.h"
 #include "cv.h"
 #include "IplContainer.h"
+#include "TriInt.h"
 
 #include <list>
 #include <string>
@@ -108,6 +109,9 @@ protected:
 	unsigned width;
 	unsigned height;
 	unsigned dpi;
+	double gapX;
+	double gapY;
+	TriInt profile;
 	vector<BarcodeInfo *> barcodeInfos;
 	map<string, BarcodeInfo *> barcodesMap;
 	vector<BinRegion *>   rowBinRegions;
