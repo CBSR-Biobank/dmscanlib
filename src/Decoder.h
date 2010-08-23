@@ -86,6 +86,7 @@ public:
 
 
 protected:
+	void reduceBlobToMatrix(unsigned blobCount, Dib * dib,CvRect & blob);
 	void showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
 	void calcRowsAndColumns();
 	ProcessResult calculateSlots(double dpi);

@@ -69,7 +69,7 @@ Decoder::Decoder(double g, unsigned s, unsigned t, unsigned c, double dist,
 	gapX = gx;
 	gapY = gy;
 
-	UA_DOUT_NL(1,4,"Profile Data: ");
+	UA_DOUT_NL(1,4,"Loaded Profile: ");
 	for(int i=0; i < 96; i++){
 		if(i % 12 == 0) {
 			UA_DOUT_NL(1,4,"\n");
@@ -286,29 +286,76 @@ void Decoder::getTubeBlobsFromDpi(Dib * dib,vector < CvRect > &blobVector,
 	}
 }
 
+void Decoder::reduceBlobToMatrix(unsigned blobCount,Dib * dib, CvRect & inputBlob){
+	Dib croppedDib;
+	CBlobResult blobs;
+	IplImageContainer *img;
+
+	croppedDib.crop(*dib,
+		  inputBlob.x,
+		  inputBlob.y,
+		  inputBlob.x + inputBlob.width,
+		  inputBlob.y + inputBlob.height);
+
+	img = croppedDib.generateIplImage();
+	
+	for (int i = 0; i < 3; i++) 
+		cvSmooth(img->getIplImage(), img->getIplImage(), CV_GAUSSIAN, 11, 11);
+	cvThreshold(img->getIplImage(), img->getIplImage(), 50, 255, CV_THRESH_BINARY);
+
+	blobs = CBlobResult(img->getIplImage(), NULL, 0);
+	
+	switch(img->getHorizontalResolution()){
+		case 300:
+			blobs.Filter(blobs, B_EXCLUDE, CBlobGetArea(), B_LESS, 840);
+			break;
+		case 400:
+			blobs.Filter(blobs, B_EXCLUDE, CBlobGetArea(), B_LESS, 1900);
+			break;
+		case 600:
+			blobs.Filter(blobs, B_EXCLUDE, CBlobGetArea(), B_LESS, 2400);
+			break;
+	}
+
+	bool reducedBlob = false;
+	CvRect largestBlob;
+	largestBlob.x =0;
+	largestBlob.y =0;
+	largestBlob.width = 0;
+	largestBlob.height = 0;
+
+	for (int i = 0; i < blobs.GetNumBlobs(); i++) {
+		CvRect currentBlob = blobs.GetBlob(i)->GetBoundingBox();
+		if(currentBlob.width*currentBlob.height > largestBlob.width*largestBlob.height){
+			largestBlob = currentBlob;
+			reducedBlob = true;
+		}
+	}
+
+	delete img;
+
+	if(reducedBlob){
+		largestBlob.x += inputBlob.x;
+		largestBlob.y += inputBlob.y;
+		inputBlob = largestBlob;
+	}
+	else{
+		UA_DOUT(1,1,"WARNING: could not reduce blob #" << blobCount);
+	}
+}
+
 Decoder::ProcessResult Decoder::processImageRegions(Dib * dib, bool matrical)
 {
-
 	vector < CvRect > blobVector;
 	//getTubeBlobsFromDpi(dib,blobVector, matrical, dib->getDpi()); //updates blobVector
 
-
 	double dpi = (double)dib->getDpi();
-	int imgw = dib->getWidth();
-	int imgh = dib->getHeight();
 
-	double w = imgw / 12.0;
-	double h = imgh / 8.0;
+	double w = dib->getWidth() / 12.0;
+	double h =  dib->getHeight() / 8.0;
 
 	RgbQuad green(0,255,0);
 	RgbQuad yellow(255,255,0);
-
-
-	UA_DOUT(1,1,"==grid");
-	UA_DOUT(1,1,"w : " << imgw  << " " << "h : " << imgh);
-
-	gapX = 0.09756572;
-	gapY = 0.09311373;
 
 	for (int j = 0; j < 8; j++) {
 		for (int i = 0; i < 12; i++) {
@@ -320,36 +367,35 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib, bool matrical)
 			double cx = i * w + w / 2.0;
 			double cy = j * h + h / 2.0;
 
-			int nx = (int)(cx - w / 2.0 + (gapX*dpi) / 2.0);
-			int ny = (int)(cy - h / 2.0 + (gapY*dpi) / 2.0);
-			int nw = (int)( w - gapX*dpi);
-			int nh = (int)(h - gapY*dpi);
-
-			if(nx + nw < imgw && ny + nh < imgh){
-				dib->rectangle( nx, ny, nw, nh,green);
-			}
-
 			CvRect img;
-			img.x = nx;
-			img.y = ny;
-			img.width = nw;
-			img.height = nh;
+			img.x = (int)(cx - w / 2.0 + (gapX*dpi) / 2.0);
+			img.y = (int)(cy - h / 2.0 + (gapY*dpi) / 2.0);
+			img.width = (int)( w - gapX*dpi);
+			img.height = (int)(h - gapY*dpi);
 
 			blobVector.push_back(img);
 		}
 	}
-
-	dib->writeToFile("grid.bmp");
-
-
-	/*Debug level > 4 ?*/
-	Dib blobDib(*dib);
-	RgbQuad white(255,255,255);
+	
+	UA_DOUT(1,8,"Reducing blobs");
 	unsigned n,i;
 	for ( i = 0, n = blobVector.size(); i < n; i++) {
-		blobDib.rectangle(blobVector[i].x,blobVector[i].y,blobVector[i].width,blobVector[i].height,white);
+		reduceBlobToMatrix(i,dib,blobVector[i]);
 	}
-	blobDib.writeToFile("blobRegions.bmp");
+
+	// Debug level >= 4 
+	if(ua::Logger::Instance().isDebug(3, 4)){
+
+		Dib blobDib(*dib);
+		RgbQuad white(255,255,255);
+
+		for ( i = 0, n = blobVector.size(); i < n; i++) {
+			blobDib.rectangle(blobVector[i].x,blobVector[i].y,blobVector[i].width,blobVector[i].height,white);
+		}
+		blobDib.writeToFile("blobRegions.bmp");
+
+		UA_DOUT(1,4,"Created blobRegion bitmap");
+	}
 
 	ProcessImageManager imageProcessor(this, scanGap, squareDev, edgeThresh, corrections);
 	imageProcessor.generateBarcodes(dib, blobVector, barcodeInfos);
