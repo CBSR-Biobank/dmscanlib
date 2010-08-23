@@ -82,26 +82,12 @@ Decoder::Decoder(double g, unsigned s, unsigned t, unsigned c, double dist,
 Decoder::~Decoder()
 {
 	BarcodeInfo *b;
-	BinRegion *c;
 
 	while (barcodeInfos.size() > 0) {
 		b = barcodeInfos.back();
 		barcodeInfos.pop_back();
 		UA_ASSERT_NOT_NULL(b);
 		delete b;
-	}
-
-	while (rowBinRegions.size() > 0) {
-		c = rowBinRegions.back();
-		rowBinRegions.pop_back();
-		UA_ASSERT_NOT_NULL(c);
-		delete c;
-	}
-	while (colBinRegions.size() > 0) {
-		c = colBinRegions.back();
-		colBinRegions.pop_back();
-		UA_ASSERT_NOT_NULL(c);
-		delete c;
 	}
 
 	if (imageBuf != NULL) {
@@ -188,7 +174,6 @@ void Decoder::getTubeBlobs(Dib * dib, int threshold, int blobsize,
 				   && border * 2 < box.height,
 				   "cannot shrink past rect dimensions");
 		}
-
 
 		box.x -= border;
 		box.y -= border;
@@ -299,7 +284,7 @@ void Decoder::reduceBlobToMatrix(unsigned blobCount,Dib * dib, CvRect & inputBlo
 
 	img = croppedDib.generateIplImage();
 	
-	for (int i = 0; i < 3; i++) 
+	for (int i = 0; i < 5; i++) 
 		cvSmooth(img->getIplImage(), img->getIplImage(), CV_GAUSSIAN, 11, 11);
 	cvThreshold(img->getIplImage(), img->getIplImage(), 50, 255, CV_THRESH_BINARY);
 
@@ -340,14 +325,26 @@ void Decoder::reduceBlobToMatrix(unsigned blobCount,Dib * dib, CvRect & inputBlo
 		inputBlob = largestBlob;
 	}
 	else{
+		inputBlob.x = 0;
+		inputBlob.y = 0;
+		inputBlob.width = 0;
+		inputBlob.height = 0;
 		UA_DOUT(1,1,"WARNING: could not reduce blob #" << blobCount);
 	}
 }
 
 Decoder::ProcessResult Decoder::processImageRegions(Dib * dib, bool matrical)
 {
+
 	vector < CvRect > blobVector;
 	//getTubeBlobsFromDpi(dib,blobVector, matrical, dib->getDpi()); //updates blobVector
+
+	double minBlobWidth, minBlobHeight, barcodeSizeInches = 0.13;
+	minBlobWidth =  ((double)dib->getDpi()*barcodeSizeInches);
+	minBlobHeight = ((double)dib->getDpi()*barcodeSizeInches);
+
+	UA_DOUT(1,7,"Minimum blob width (pixels): " << minBlobWidth);
+	UA_DOUT(1,7,"Minimum blob height (pixels): " << minBlobHeight);
 
 	double dpi = (double)dib->getDpi();
 
@@ -357,10 +354,16 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib, bool matrical)
 	RgbQuad green(0,255,0);
 	RgbQuad yellow(255,255,0);
 
+	vector<vector<CvRect> > rectVector;
+
 	for (int j = 0; j < 8; j++) {
 		for (int i = 0; i < 12; i++) {
 			
-			if(!profile.isSetBit(i + j*12)){
+			/*
+			The scanned image is a mirror image, 
+			so we must flip our coordinates in the horiztonal axis.
+			*/
+			if(!profile.isSetBit((11-i) + j*12)){
 				continue;
 			}
 
@@ -373,15 +376,26 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib, bool matrical)
 			img.width = (int)( w - gapX*dpi);
 			img.height = (int)(h - gapY*dpi);
 
-			blobVector.push_back(img);
+			reduceBlobToMatrix((i-11) + j*12,dib,img);
+
+			if(img.width != 0 && img.height != 0 && 
+				img.width >= minBlobWidth && img.height >= minBlobHeight){
+
+				CvRect position;
+				position.x = 11-i;
+				position.y = j;
+
+				vector<CvRect> pair;
+				pair.push_back(position);
+				pair.push_back(img);
+				
+				rectVector.push_back(pair);
+
+				blobVector.push_back(img);
+			}
 		}
 	}
-	
-	UA_DOUT(1,8,"Reducing blobs");
-	unsigned n,i;
-	for ( i = 0, n = blobVector.size(); i < n; i++) {
-		reduceBlobToMatrix(i,dib,blobVector[i]);
-	}
+	unsigned n,m,i,j;
 
 	// Debug level >= 4 
 	if(ua::Logger::Instance().isDebug(3, 4)){
@@ -408,9 +422,33 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib, bool matrical)
 	width = dib->getWidth();
 	height = dib->getHeight();
 
-	calcRowsAndColumns();
+	initCells(8,12);
 
-	return calculateSlots(static_cast < double >(dib->getDpi()));
+	for (i = 0, n = barcodeInfos.size(); i < n; ++i) {
+		DmtxPixelLoc & tlCorner = barcodeInfos[i]->getTopLeftCorner();
+		DmtxPixelLoc & brCorner = barcodeInfos[i]->getBotRightCorner();
+
+		double avgx = (tlCorner.X + brCorner.X)/2.0;
+		double avgy = (tlCorner.Y + brCorner.Y)/2.0;
+
+		bool foundGrid = false;
+		for ( j = 0, m = rectVector.size(); j < m; j++) {
+
+			// pt inside rectangle
+			if(avgx > rectVector[j][1].x && 
+			   avgx < rectVector[j][1].x + rectVector[j][1].width &&
+			   avgy > rectVector[j][1].y && 
+			   avgy < rectVector[j][1].y + rectVector[j][1].height){
+					cells[ rectVector[j][0].y ][ rectVector[j][0].x ] = barcodeInfos[i]->getMsg();
+					foundGrid = true;
+					break;
+			}
+		}
+		if(!foundGrid){
+			return POS_CALC_ERROR;
+		}
+	}
+	return OK; 
 }
 
 DmtxImage * Decoder::createDmtxImageFromDib(Dib & dib)
@@ -437,360 +475,6 @@ DmtxImage * Decoder::createDmtxImageFromDib(Dib & dib)
 	dmtxImageSetProp(image, DmtxPropRowPadBytes, padding);
 	dmtxImageSetProp(image, DmtxPropImageFlip, DmtxFlipY);	// DIBs are flipped in Y
 	return image;
-}
-
-void Decoder::calcRowsAndColumns()
-{
-	UA_ASSERTS(barcodeInfos.size() != 0,
-		   "no barcodes in barcodeInfos vector");
-
-	bool insideRowBin;
-	bool insideColBin;
-
-	for (unsigned i = 0, n = barcodeInfos.size(); i < n; ++i) {
-		insideRowBin = false;
-		insideColBin = false;
-
-		DmtxPixelLoc & tlCorner = barcodeInfos[i]->getTopLeftCorner();
-		DmtxPixelLoc & brCorner = barcodeInfos[i]->getBotRightCorner();
-
-		UA_DOUT(3, 9,
-			"tag " << i << " : tlCorner/" << tlCorner.X << "," <<
-			tlCorner.
-			Y << "  brCorner/" << brCorner.X << "," << brCorner.Y);
-
-		for (unsigned c = 0, cn = colBinRegions.size(); c < cn; ++c) {
-			BinRegion & bin = *colBinRegions[c];
-
-			unsigned min = bin.getMin();
-			unsigned max = bin.getMax();
-			unsigned left = static_cast < unsigned >(tlCorner.X);
-			unsigned right = static_cast < unsigned >(brCorner.X);
-
-			if (((min - BIN_THRESH <= left)
-			     && (left <= max + BIN_THRESH))
-			    || ((min - BIN_THRESH <= right)
-				&& (right <= max + BIN_THRESH))) {
-				insideColBin = true;
-				barcodeInfos[i]->setColBinRegion(&bin);
-				UA_DOUT(3, 9, "overlaps col " << c);
-				if (left < min) {
-					bin.setMin(left);
-					UA_DOUT(3, 9,
-						"col " << c << " update min " <<
-						bin.getMin());
-				}
-				if (left > max) {
-					bin.setMax(left);
-					UA_DOUT(3, 9,
-						"col " << c << " update max " <<
-						bin.getMax());
-				}
-				if (right < min) {
-					bin.setMin(right);
-					UA_DOUT(3, 9,
-						"col " << c << " update min " <<
-						bin.getMin());
-				}
-				if (right > max) {
-					bin.setMax(right);
-					UA_DOUT(3, 9,
-						"col " << c << " update max " <<
-						bin.getMax());
-				}
-				break;
-			}
-		}
-
-		for (unsigned r = 0, rn = rowBinRegions.size(); r < rn; ++r) {
-			BinRegion & bin = *rowBinRegions[r];
-
-			unsigned min = bin.getMin();
-			unsigned max = bin.getMax();
-			unsigned top = static_cast < unsigned >(tlCorner.Y);
-			unsigned bottom = static_cast < unsigned >(brCorner.Y);
-
-			if (((min - BIN_THRESH <= top)
-			     && (top <= max + BIN_THRESH))
-			    || ((min - BIN_THRESH <= bottom)
-				&& (bottom <= max + BIN_THRESH))) {
-				insideRowBin = true;
-				barcodeInfos[i]->setRowBinRegion(&bin);
-				UA_DOUT(3, 9, "overlaps row " << r);
-				if (top < min) {
-					bin.setMin(top);
-					UA_DOUT(3, 9,
-						"row " << r << " update min " <<
-						bin.getMin());
-				}
-				if (top > max) {
-					bin.setMax(top);
-					UA_DOUT(3, 9,
-						"row " << r << " update max " <<
-						bin.getMax());
-				}
-				if (bottom < min) {
-					bin.setMin(bottom);
-					UA_DOUT(3, 9,
-						"row " << r << " update min " <<
-						bin.getMin());
-				}
-				if (bottom > max) {
-					bin.setMax(bottom);
-					UA_DOUT(3, 9,
-						"row " << r << " update max " <<
-						bin.getMax());
-				}
-				break;
-			}
-		}
-
-		if (!insideColBin) {
-			BinRegion *newBinRegion =
-			    new BinRegion(BinRegion::ORIENTATION_VER,
-					  static_cast < unsigned >(tlCorner.X),
-					  static_cast < unsigned >(brCorner.X));
-			UA_ASSERT_NOT_NULL(newBinRegion);
-			UA_DOUT(3, 9,
-				"new col " << colBinRegions.size() << ": " <<
-				*newBinRegion);
-			colBinRegions.push_back(newBinRegion);
-			barcodeInfos[i]->setColBinRegion(newBinRegion);
-		}
-
-		if (!insideRowBin) {
-			BinRegion *newBinRegion =
-			    new BinRegion(BinRegion::ORIENTATION_HOR,
-					  static_cast < unsigned >(tlCorner.Y),
-					  static_cast < unsigned >(brCorner.Y));
-			UA_ASSERT_NOT_NULL(newBinRegion);
-			UA_DOUT(3, 9,
-				"new row " << rowBinRegions.size() << ": " <<
-				*newBinRegion);
-			rowBinRegions.push_back(newBinRegion);
-			barcodeInfos[i]->setRowBinRegion(newBinRegion);
-		}
-
-		ostringstream msg;
-		for (unsigned c = 0, n = colBinRegions.size(); c < n; ++c) {
-			BinRegion & region = *colBinRegions[c];
-			msg << c << " (" << region.
-			    getMin() << ", " << region.getMax()
-			    << "), ";
-		}
-		UA_DOUT(3, 9, "columns " << msg.str());
-
-		msg.str("");
-		for (unsigned r = 0, rn = rowBinRegions.size(); r < rn; ++r) {
-			BinRegion & region = *rowBinRegions[r];
-			msg << r << " (" << region.
-			    getMin() << ", " << region.getMax()
-			    << "), ";
-		}
-		UA_DOUT(3, 9, "rows " << msg.str());
-	}
-
-	sort(rowBinRegions.begin(), rowBinRegions.end(), BinRegionSort());
-	sort(colBinRegions.begin(), colBinRegions.end(), BinRegionSort());
-
-	// assign ranks now and add threshold
-	for (unsigned i = 0, n = colBinRegions.size(); i < n; ++i) {
-		BinRegion & c = *colBinRegions[i];
-
-		unsigned min = c.getMin();
-		c.setMin(min > BIN_MARGIN ? min - BIN_MARGIN : 0);
-
-		unsigned max = c.getMax();
-		c.setMax(max <
-			 width - BIN_MARGIN - 1 ? max + BIN_MARGIN : width - 1);
-
-		c.setRank(i);
-		UA_DOUT(3, 5, "col BinRegion " << i << ": " << c);
-	}
-	for (unsigned i = 0, n = rowBinRegions.size(); i < n; ++i) {
-		BinRegion & c = *rowBinRegions[i];
-
-		unsigned min = c.getMin();
-		c.setMin(min > BIN_MARGIN ? min - BIN_MARGIN : 0);
-
-		unsigned max = c.getMax();
-		c.setMax(max <
-			 height - BIN_MARGIN - 1 ? max + BIN_MARGIN : height -
-			 1);
-
-		c.setRank(i);
-		UA_DOUT(3, 5, "row BinRegion " << i << ": " << c);
-	}
-
-	UA_DOUT(3, 3, "number of columns: " << colBinRegions.size());
-	UA_DOUT(3, 3, "number of rows: " << rowBinRegions.size());
-
-	sort(barcodeInfos.begin(), barcodeInfos.end(), BarcodeInfoSort());
-}
-
-Decoder::ProcessResult Decoder::calculateSlots(double dpi)
-{
-	// for columns the one with largest rank is column 1
-	unsigned numCols = colBinRegions.size();
-	unsigned numRows = rowBinRegions.size();
-
-	if (numCols > 0) {
-		BinRegion & region = *colBinRegions[numCols - 1];
-
-		// Calculate the distance of the 12'th column to check that it is within
-		// the bounds of the image. If not then the column is not really the
-		// first one.
-		double edgeDist = 11.0 * cellDistance * dpi;
-		UA_DOUT(3, 5, "first_col_center/" << region.getCenter()
-			<< " edge_distance/" << edgeDist);
-		if (region.getCenter() <= static_cast < unsigned >(edgeDist)) {
-			UA_DOUT(3, 5, "out of bounds");
-			return POS_CALC_ERROR;
-		}
-
-		region.setId(0);
-	}
-
-	if (numRows > 0) {
-		BinRegion & region = *rowBinRegions[0];
-
-		// Calculate the distance of the 8'th row to check that it is within
-		// the bounds of the image. If not then the column is not really the
-		// first one.
-		double edgeDist = 7.0 * cellDistance * dpi;
-		UA_DOUT(3, 5, "first_row_center/" << region.getCenter()
-			<< " edge_distance/" << edgeDist << " height/" <<
-			height);
-		if (region.getCenter() + static_cast < unsigned >(edgeDist) >=
-		    height) {
-			UA_DOUT(3, 5, "out of bounds");
-			return POS_CALC_ERROR;
-		}
-		rowBinRegions[0]->setId(0);
-	}
-
-	unsigned interval;
-	double cellDistError = cellDistance * 0.4;
-
-	UA_DOUT(3, 5, "cellDistError/" << cellDistError);
-
-	if (numCols > 1) {
-		for (int c = numCols - 1; c > 0; --c) {
-			BinRegion & region1 = *colBinRegions[c - 1];
-			BinRegion & region2 = *colBinRegions[c];
-
-			double dist = static_cast < double >(region2.getCenter()
-							     -
-							     region1.getCenter
-							     ()) / static_cast <
-			    double >(dpi);
-
-			interval = 0;
-			for (unsigned i = 1; i < 12; ++i) {
-				double diff = abs(dist - i * cellDistance);
-				UA_DOUT(3, 8,
-					"col region " << c << "-" << c -
-					1 << " distance/" << dist << " diff/" <<
-					diff << " inteval/" << i);
-				if (diff < cellDistError) {
-					interval = i;
-					break;
-				}
-			}
-			if (interval == 0) {
-				UA_DOUT(3, 1,
-					"could not determine column intervals");
-				return POS_CALC_ERROR;
-			}
-
-			UA_DOUT(3, 8,
-				"col region " << c << "-" << c -
-				1 << " distance/" << dist << " inteval/" <<
-				interval);
-
-			region1.setId(region2.getId() + interval);
-		}
-	}
-
-	if (numRows > 1) {
-		for (unsigned r = 1; r < numRows; ++r) {
-			BinRegion & region1 = *rowBinRegions[r - 1];
-			BinRegion & region2 = *rowBinRegions[r];
-
-			double dist = static_cast < double >(region2.getCenter()
-							     -
-							     region1.getCenter
-							     ()) / static_cast <
-			    double >(dpi);
-
-			interval = 0;
-			for (unsigned i = 1; i < 8; ++i) {
-				double diff = abs(dist - i * cellDistance);
-				UA_DOUT(3, 5,
-					"row region " << r << "-" << r -
-					1 << " distance/" << dist << " diff/" <<
-					diff << " inteval/" << i);
-				if (abs(dist - i * cellDistance) <
-				    cellDistError) {
-					interval = i;
-					break;
-				}
-			}
-			if (interval == 0) {
-				UA_DOUT(3, 1,
-					"could not determine row intervals");
-				return POS_CALC_ERROR;
-			}
-
-			UA_DOUT(3, 5,
-				"row region " << r << "-" << r -
-				1 << " distance/" << dist << " inteval/" <<
-				interval);
-
-			region2.setId(region1.getId() + interval);
-		}
-	}
-	// get max rows and max cols
-	unsigned maxRow = 0;
-	unsigned maxCol = 0;
-	for (unsigned i = 0, n = barcodeInfos.size(); i < n; ++i) {
-		BarcodeInfo & info = *barcodeInfos[i];
-		unsigned row = info.getRowBinRegion().getId();
-		unsigned col = info.getColBinRegion().getId();
-
-		if (row > maxRow) {
-			maxRow = row;
-		}
-
-		if (col > maxCol) {
-			maxCol = col;
-		}
-	}
-
-	if ((maxRow >= 8) || (maxCol >= 12)) {
-		return POS_CALC_ERROR;
-	}
-	// make sure no barcodes are in the same cells
-	initCells(maxRow + 1, maxCol + 1);
-	for (unsigned i = 0, n = barcodeInfos.size(); i < n; ++i) {
-		BarcodeInfo & info = *barcodeInfos[i];
-		unsigned row = info.getRowBinRegion().getId();
-		unsigned col = info.getColBinRegion().getId();
-
-		UA_DOUT(3, 5,
-			"barcode " << i << " (" << (char)('A' +
-							  row) << ", " << col +
-			1 << "): " << info.getMsg());
-
-		if (cells[row][col].length() > 0) {
-			UA_DOUT(3, 5, "position (" << (char)('A' + row) << ", "
-				<< col + 1 << ") already occupied");
-			return POS_CALC_ERROR;
-		}
-
-		cells[row][col] = info.getMsg();
-	}
-	return OK;
 }
 
 void Decoder::showStats(DmtxDecode * dec, DmtxRegion * reg, DmtxMessage * msg)
@@ -886,34 +570,6 @@ void Decoder::imageShowBarcodes(Dib & dib, bool regions)
 
 	unsigned height = dib.getHeight() - 1;
 	unsigned width = dib.getWidth() - 1;
-
-	for (unsigned r = 0, rn = rowBinRegions.size(); r < rn; ++r) {
-		BinRegion & region = *rowBinRegions[r];
-
-		unsigned min = region.getMin();
-		unsigned max = region.getMax();
-		//unsigned center = region.getCenter();
-
-		dib.line(0, min, width, min, highlightQuad);
-		dib.line(0, min, 0, max, highlightQuad);
-		dib.line(0, max, width, max, highlightQuad);
-		dib.line(width, min, width, max, highlightQuad);
-		//dib.line(0, center, width, center, quadRed);
-	}
-
-	for (unsigned c = 0, n = colBinRegions.size(); c < n; ++c) {
-		BinRegion & region = *colBinRegions[c];
-
-		unsigned min = region.getMin();
-		unsigned max = region.getMax();
-		//unsigned center = region.getCenter();
-
-		dib.line(min, 0, max, 0, highlightQuad);
-		dib.line(min, height, max, height, highlightQuad);
-		dib.line(min, 0, min, height, highlightQuad);
-		dib.line(max, 0, max, height, highlightQuad);
-		//dib.line(center, 0, center, height, quadRed);
-	}
 }
 
 // this method needs to be thread safe

@@ -233,7 +233,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\TriInt.cpp"
+				RelativePath=".\src\TriInt.cpp"
 				>
 			</File>
 			<File
@@ -323,7 +323,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\TriInt.h"
+				RelativePath=".\src\TriInt.h"
 				>
 			</File>
 			<File

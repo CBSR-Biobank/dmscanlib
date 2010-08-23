@@ -88,8 +88,6 @@ public:
 protected:
 	void reduceBlobToMatrix(unsigned blobCount, Dib * dib,CvRect & blob);
 	void showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
-	void calcRowsAndColumns();
-	ProcessResult calculateSlots(double dpi);
 	void initCells(unsigned maxRow, unsigned maxCol);
 	static void getTubeBlobsFromDpi(Dib * dib,vector < CvRect > &blobVector,
 		bool metrical, int dpi);
@@ -115,8 +113,6 @@ protected:
 	TriInt profile;
 	vector<BarcodeInfo *> barcodeInfos;
 	map<string, BarcodeInfo *> barcodesMap;
-	vector<BinRegion *>   rowBinRegions;
-	vector<BinRegion *>   colBinRegions;
 	vector<vector<string> > cells;
 
 	unsigned char * imageBuf;
