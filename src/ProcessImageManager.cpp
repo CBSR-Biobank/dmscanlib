@@ -97,13 +97,6 @@ void ProcessImageManager::generateBarcodes(Dib * dib,
 	UA_DOUT(3, 5,
 		"getTubeBlobs found: " << blobVector.size() << " blobs.");
 
-	for (unsigned i = 0, n = blobVector.size(); i < n; i++) {
-		UA_DOUT(3, 9,"Blob: x=" << blobVector[i].x << 
-						  " y=" << blobVector[i].y << 
-						  " w=" << blobVector[i].width <<
-						  " h=" << blobVector[i].height);
-	}
-
 	vector < BarcodeThread * > threads;
 
 	for (unsigned i = 0, n = blobVector.size(); i < n; i++) {

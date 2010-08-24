@@ -103,178 +103,11 @@ void Decoder::initCells(unsigned maxRows, unsigned maxCols)
 	}
 }
 
-
-void Decoder::getTubeBlobs(Dib * dib, int threshold, int blobsize,
-		int blurRounds, int border, vector <CvRect> & blobVector)
-{
-
-	/*--- generate ipl equiv ---*/
-	IplImageContainer *iplFilteredDib;
-	iplFilteredDib = dib->generateIplImage();
-	UA_ASSERT_NOT_NULL(iplFilteredDib);
-	UA_DOUT(1, 7, "generated IplImage from filteredDib");
-
-	IplImage *original; 
-	original = iplFilteredDib->getIplImage();
-
-		/* special case: blobsize = 0 then make the whole image a blob */
-	if(blobsize == 0){
-		UA_DOUT(1,1,"Special blob case: blobsize = 0.");
-		UA_DOUT(1,1,"Using a single blob that covers the entire image.");
-		CvRect img;
-		img.x = 0;
-		img.y = 0;
-		img.width = original->width-2;
-		img.height = original->height-2;
-		blobVector.clear();
-		blobVector.push_back(img);
-		return;
-	}
-	double minBlobWidth, minBlobHeight, barcodeSizeInches = 0.13;
-
-	minBlobWidth =  ((double)iplFilteredDib->getHorizontalResolution()/39.3700787)*barcodeSizeInches;
-	minBlobHeight = ((double)iplFilteredDib->getVerticalResolution()/39.3700787)*barcodeSizeInches;
-
-	UA_DOUT(1, 8, "Minimum Blob Size (Inches): " << barcodeSizeInches);
-	UA_DOUT(1, 8, "Minimum Blob Width (Pixels): " << minBlobWidth);
-	UA_DOUT(1, 8, "Minimum Blob Height (Pixels): " << minBlobHeight);
-
-	IplImage *originalThr;
-	IplImage *filtered;
-
-	CBlobResult blobs;
-
-	filtered = cvCreateImage(cvGetSize(original), original->depth, original->nChannels);
-	cvCopy(original, filtered, NULL);
-
-	/*---filters---*/
-	for (int i = 0; i < blurRounds; i++) {
-		cvSmooth(filtered, filtered, CV_GAUSSIAN, 11, 11);
-	}
-	/*---filters---*/
-
-	originalThr = cvCreateImage(cvGetSize(filtered), IPL_DEPTH_8U, 1);
-	cvThreshold(filtered, originalThr, threshold, 255, CV_THRESH_BINARY);
-
-
-	blobs = CBlobResult(originalThr, NULL, 0);
-	blobs.Filter(blobs, B_EXCLUDE, CBlobGetArea(), B_LESS, blobsize);
-
-	blobVector.clear();
-
-	for (int i = 0; i < blobs.GetNumBlobs(); i++) {
-		CvRect box = blobs.GetBlob(i)->GetBoundingBox();
-
-		UA_ASSERTS(box.x < filtered->width
-			   && box.y < filtered->height,
-			   "blob is out of bounds");
-
-		if (border < 0) {
-			UA_ASSERTS(border * 2 < box.width
-				   && border * 2 < box.height,
-				   "cannot shrink past rect dimensions");
-		}
-
-		box.x -= border;
-		box.y -= border;
-		box.width += border * 2;
-		box.height += border * 2;
-
-		box.x = box.x < 0 ? 0 : box.x;
-		box.y = box.y < 0 ? 0 : box.y;
-
-		if (box.x + box.width >= filtered->width)
-			box.width = (filtered->width - box.x) - 1;
-
-		if (box.y + box.height >= filtered->height)
-			box.height = (filtered->height - box.y) - 1;
-	
-
-		float contrastSum = 0, count = 0, contrastRatio = 0;
-
-		cvSetImageROI(original, box);
-		for (int i = box.y ; i < (box.y + box.height) -1; i++) {
-			for (int j = box.x; j < (box.x + box.width) - 1; j++) {
-				float center = (float)(original->imageData + i * original->widthStep)[j];
-				float right  = (float)(original->imageData + i * original->widthStep)[j+1];
-				float down  = (float)(original->imageData + (i+1) * original->widthStep)[j];
-
-				contrastSum +=  (float)((center-right)*(center-right) + (center-down)*(center-down));
-				count++;
-			}
-		}
-		cvResetImageROI(original);
-
-		contrastRatio = contrastSum / count;
-		UA_DOUT(1, 9, "Contrast Ratio: " << contrastRatio );
-
-
-		if(box.width >= minBlobWidth && box.height >= minBlobHeight && contrastRatio > 1000)
-			blobVector.push_back(box);
-
-	}
-	blobs.ClearBlobs();
-
-	if(blobVector.size() == 0){
-		UA_DOUT(1,1,"WARNING: 0 blobs were found.");
-		UA_DOUT(1,1,"Using a single blob that covers the entire image.");
-		CvRect img;
-		img.x = 0;
-		img.y = 0;
-		img.width = original->width-2;
-		img.height = original->height-2;
-		blobVector.push_back(img);
-		return;
-	}
-
-	cvReleaseImage(&originalThr);
-	cvReleaseImage(&filtered);
-	delete iplFilteredDib;
-}
-
-void Decoder::getTubeBlobsFromDpi(Dib * dib,vector < CvRect > &blobVector,
-		bool metrical, int dpi)
-{
-	if (!metrical) {
-		switch (dpi) {
-		case 600:
-			 getTubeBlobs(dib, 54, 2400, 5, 12, blobVector);
-			break;
-
-		case 400:
-			getTubeBlobs(dib, 50, 1900, 3, 4, blobVector);
-			break;
-
-		case 300:
-		default:
-			getTubeBlobs(dib, 55, 840, 2, 3, blobVector);
-			break;
-		}
-	} else {
-		// metrical
-		UA_DOUT(3, 7, "getTubeBlobsFromDpi: metrical mode");
-
-		switch (dpi) {
-		case 600:
-			getTubeBlobs(dib, 120, 5000, 10, -10, blobVector);
-			break;
-
-		case 400:
-			getTubeBlobs(dib, 120, 3000, 10, -5, blobVector);
-			break;
-
-		case 300:
-		default:
-			getTubeBlobs(dib, 110, 2000, 8, -4, blobVector);
-			break;
-		}
-	}
-}
-
 void Decoder::reduceBlobToMatrix(unsigned blobCount,Dib * dib, CvRect & inputBlob){
 	Dib croppedDib;
 	CBlobResult blobs;
 	IplImageContainer *img;
+	//float contrastSum, count, contrastRatio;
 
 	croppedDib.crop(*dib,
 		  inputBlob.x,
@@ -301,7 +134,28 @@ void Decoder::reduceBlobToMatrix(unsigned blobCount,Dib * dib, CvRect & inputBlo
 			blobs.Filter(blobs, B_EXCLUDE, CBlobGetArea(), B_LESS, 2400);
 			break;
 	}
+	delete img;
 
+
+	/* ---- Generates the value of relative contrast within the image -----*/
+	/*
+	count = 0;
+	contrastSum = 0;
+	contrastRatio = 0;
+	for (int i = 0; i < (int)croppedDib.getHeight() - 1; i++) {
+		for (int j =0; j < (int)croppedDib.getWidth() - 1; j++) {
+			float center = (float)croppedDib.getPixelGrayscale(i,j);
+			float right  = (float)croppedDib.getPixelGrayscale(i,j+1);
+			float down  = (float)croppedDib.getPixelGrayscale(i+1,j);
+
+			contrastSum +=  (float)((center-right)*(center-right) + (center-down)*(center-down));
+			count++;
+		}
+	}
+	contrastRatio = contrastSum / count;
+	UA_DOUT(1, 9, "Contrast Ratio: " << contrastRatio );
+	*/
+	/* ---- Grabs the largest blob in the blobs vector -----*/
 	bool reducedBlob = false;
 	CvRect largestBlob;
 	largestBlob.x =0;
@@ -315,10 +169,9 @@ void Decoder::reduceBlobToMatrix(unsigned blobCount,Dib * dib, CvRect & inputBlo
 			largestBlob = currentBlob;
 			reducedBlob = true;
 		}
-	}
+	}	
 
-	delete img;
-
+	/* ---- Keep blobs that were successfully reduced-----*/
 	if(reducedBlob){
 		largestBlob.x += inputBlob.x;
 		largestBlob.y += inputBlob.y;
@@ -329,46 +182,56 @@ void Decoder::reduceBlobToMatrix(unsigned blobCount,Dib * dib, CvRect & inputBlo
 		inputBlob.y = 0;
 		inputBlob.width = 0;
 		inputBlob.height = 0;
-		UA_DOUT(1,1,"WARNING: could not reduce blob #" << blobCount);
+		UA_DOUT(1,1,"could not reduce blob #" << blobCount);
+		return;
 	}
+
 }
+
+struct BlobPosition{
+	CvRect position;
+	CvRect blob;
+};
+
+#define PALLET_COLUMNS 12
+#define PALLET_ROWS 8
 
 Decoder::ProcessResult Decoder::processImageRegions(Dib * dib, bool matrical)
 {
-
 	vector < CvRect > blobVector;
-	//getTubeBlobsFromDpi(dib,blobVector, matrical, dib->getDpi()); //updates blobVector
-
-	double minBlobWidth, minBlobHeight, barcodeSizeInches = 0.13;
-	minBlobWidth =  ((double)dib->getDpi()*barcodeSizeInches);
-	minBlobHeight = ((double)dib->getDpi()*barcodeSizeInches);
-
-	UA_DOUT(1,7,"Minimum blob width (pixels): " << minBlobWidth);
-	UA_DOUT(1,7,"Minimum blob height (pixels): " << minBlobHeight);
-
-	double dpi = (double)dib->getDpi();
-
-	double w = dib->getWidth() / 12.0;
-	double h =  dib->getHeight() / 8.0;
+	vector<struct BlobPosition * > rectVector;
 
 	RgbQuad green(0,255,0);
 	RgbQuad yellow(255,255,0);
 
-	vector<vector<CvRect> > rectVector;
+	double barcodeSizeInches = 0.13;
+	double minBlobWidth =  ((double)dib->getDpi()*barcodeSizeInches);
+	double minBlobHeight = ((double)dib->getDpi()*barcodeSizeInches);
 
-	for (int j = 0; j < 8; j++) {
-		for (int i = 0; i < 12; i++) {
+	double dpi = (double)dib->getDpi();
+	double w = dib->getWidth() / ((double)PALLET_COLUMNS);
+	double h =  dib->getHeight() / ((double)PALLET_ROWS);
+
+	UA_DOUT(1,7,"Minimum blob width (pixels): " << minBlobWidth);
+	UA_DOUT(1,7,"Minimum blob height (pixels): " << minBlobHeight);
+
+	for (int j = 0; j < PALLET_ROWS; j++) {
+		for (int i = 0; i < PALLET_COLUMNS; i++) {
 			
 			/*
 			The scanned image is a mirror image, 
-			so we must flip our coordinates in the horiztonal axis.
+			so we must flip our coordinates in the horizontal axis.
 			*/
-			if(!profile.isSetBit((11-i) + j*12)){
+			unsigned position = (PALLET_COLUMNS-1)-i + j*PALLET_COLUMNS;
+
+			if(!profile.isSetBit(position)){
 				continue;
 			}
 
 			double cx = i * w + w / 2.0;
 			double cy = j * h + h / 2.0;
+
+			
 
 			CvRect img;
 			img.x = (int)(cx - w / 2.0 + (gapX*dpi) / 2.0);
@@ -376,19 +239,15 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib, bool matrical)
 			img.width = (int)( w - gapX*dpi);
 			img.height = (int)(h - gapY*dpi);
 
-			reduceBlobToMatrix((i-11) + j*12,dib,img);
+			reduceBlobToMatrix(position,dib,img);
 
 			if(img.width != 0 && img.height != 0 && 
 				img.width >= minBlobWidth && img.height >= minBlobHeight){
 
-				CvRect position;
-				position.x = 11-i;
-				position.y = j;
-
-				vector<CvRect> pair;
-				pair.push_back(position);
-				pair.push_back(img);
-				
+				struct BlobPosition * pair = new struct BlobPosition();
+				pair->position.x = (PALLET_COLUMNS-1) - i;
+				pair->position.y = j;
+				pair->blob = img;
 				rectVector.push_back(pair);
 
 				blobVector.push_back(img);
@@ -415,6 +274,9 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib, bool matrical)
 	imageProcessor.generateBarcodes(dib, blobVector, barcodeInfos);
 
 	if (barcodeInfos.empty()) {
+		for ( j = 0, m = rectVector.size(); j < m; j++) 
+			delete rectVector[j];
+
 		UA_DOUT(3, 5, "no barcodes were found.");
 		return IMG_INVALID;
 	}
@@ -422,7 +284,7 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib, bool matrical)
 	width = dib->getWidth();
 	height = dib->getHeight();
 
-	initCells(8,12);
+	initCells(PALLET_ROWS,PALLET_COLUMNS);
 
 	for (i = 0, n = barcodeInfos.size(); i < n; ++i) {
 		DmtxPixelLoc & tlCorner = barcodeInfos[i]->getTopLeftCorner();
@@ -435,19 +297,26 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib, bool matrical)
 		for ( j = 0, m = rectVector.size(); j < m; j++) {
 
 			// pt inside rectangle
-			if(avgx > rectVector[j][1].x && 
-			   avgx < rectVector[j][1].x + rectVector[j][1].width &&
-			   avgy > rectVector[j][1].y && 
-			   avgy < rectVector[j][1].y + rectVector[j][1].height){
-					cells[ rectVector[j][0].y ][ rectVector[j][0].x ] = barcodeInfos[i]->getMsg();
+			if(avgx > rectVector[j]->blob.x && 
+			   avgx < rectVector[j]->blob.x + rectVector[j]->blob.width &&
+			   avgy > rectVector[j]->blob.y && 
+			   avgy < rectVector[j]->blob.y + rectVector[j]->blob.height){
+				    cells[ rectVector[j]->position.y ][ rectVector[j]->position.x  ] = barcodeInfos[i]->getMsg();
 					foundGrid = true;
 					break;
 			}
 		}
 		if(!foundGrid){
+			for ( j = 0, m = rectVector.size(); j < m; j++) 
+				delete rectVector[j];
+			
 			return POS_CALC_ERROR;
 		}
 	}
+	for ( j = 0, m = rectVector.size(); j < m; j++) 
+		delete rectVector[j];
+	
+
 	return OK; 
 }
 
