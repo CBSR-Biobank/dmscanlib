@@ -11,11 +11,11 @@ extern int slDecodePlate(unsigned verbose, unsigned dpi, int brightness,
     double bottom, double scanGap, unsigned squareDev,
     unsigned edgeThresh, unsigned corrections, double cellDistance, 
      double gapX, double gapY,
-        unsigned profileA, unsigned profileB, unsigned profileC);
+        unsigned profileA, unsigned profileB, unsigned profileC, unsigned isHorizontal);
 extern int slDecodeImage(unsigned verbose, unsigned plateNum, char * filename,
         double scanGap, unsigned squareDev, unsigned edgeThresh, 
         unsigned corrections, double cellDistance, double gapX, double gapY,
-        unsigned profileA, unsigned profileB, unsigned profileC);
+        unsigned profileA, unsigned profileB, unsigned profileC, unsigned isHorizontal);
 %}
 
 extern int slIsTwainAvailable();
@@ -29,9 +29,9 @@ extern int slDecodePlate(unsigned verbose, unsigned dpi, int brightness,
     double bottom, double scanGap, unsigned squareDev,
     unsigned edgeThresh, unsigned corrections, double cellDistance, 
 	double gapX, double gapY,
-        unsigned profileA, unsigned profileB, unsigned profileC);
+        unsigned profileA, unsigned profileB, unsigned profileC, unsigned isHorizontal);
 extern int slDecodeImage(unsigned verbose, unsigned plateNum, char * filename,
         double scanGap, unsigned squareDev, unsigned edgeThresh, 
         unsigned corrections, double cellDistance, double gapX, double gapY,
-        unsigned profileA, unsigned profileB, unsigned profileC);
+        unsigned profileA, unsigned profileB, unsigned profileC, unsigned isHorizontal);
         

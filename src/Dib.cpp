@@ -613,9 +613,43 @@ bool Dib::crop(Dib & src, unsigned x0, unsigned y0, unsigned x1, unsigned y1)
 	*infoHeader = *src.infoHeader;
 	bytesPerPixel = src.bytesPerPixel;
 
-	if ((y0 >= infoHeader->height) || (y1 >= infoHeader->height)
-			|| (x0 >= infoHeader->width) || (x1 >= infoHeader->width)) {
-		return false;
+
+	bool warnUser = false;
+
+	if(y0 >= infoHeader->height){
+		y0 = infoHeader->height;
+		warnUser = true;
+	}
+	if(y1 >= infoHeader->height){
+		y1 = infoHeader->height;
+		warnUser = true;
+	}
+	if(x0 >= infoHeader->width){
+		x0 = infoHeader->width;
+		warnUser = true;
+	}
+	if(x1 >= infoHeader->width){
+		x1 = infoHeader->width;
+		warnUser = true;
+	}
+	if(x0 < 0){
+		x0 = 0;
+		warnUser = true;
+	}
+	if(x1 < 0){
+		x1 = 0;
+		warnUser = true;
+	}
+	if(y0 < 0){
+		y0 = 0;
+		warnUser = true;
+	}
+	if(y1 < 0){
+		y1 = 0;
+		warnUser = true;
+	}
+	if(warnUser){
+		UA_DOUT(1,1,"Warning: crop dimensions were out of image bounds ");
 	}
 
 	infoHeader->width = x1 - x0;
@@ -975,13 +1009,15 @@ void Dib::histEqualization(Dib & src)
 //cvmat: Matrices are stored row by row. All of the rows are padded (4 bytes).
 IplImageContainer *Dib::generateIplImage()
 {
+	UA_ASSERTS(infoHeader != NULL, "NULL infoHeader specified to generateIplImage");
+	UA_ASSERTS(infoHeader->bitCount == 8,
+		   "generateIplImage requires an unsigned 8bit image");
+	UA_ASSERTS(pixels != NULL,"NULL pixel data specified to generateIplImage");
+
 	IplImageContainer *iplContainer;
 	IplImage *image = NULL;
 	CvMat hdr, *matrix = NULL;
 	CvSize size;
-
-	UA_ASSERTS(infoHeader->bitCount == 8,
-		   "createImageFromDib8U requires an unsigned 8bit image");
 
 	size.width = infoHeader->width;
 	size.height = infoHeader->height;

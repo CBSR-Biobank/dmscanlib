@@ -54,7 +54,7 @@ public:
 	Decoder(double scanGap, unsigned squareDev, unsigned edgeThresh,
 			unsigned corrections, double cellDistance,
 			double gapX, double gapY, 
-			unsigned profileA, unsigned profileB, unsigned profileC);
+			unsigned profileA, unsigned profileB, unsigned profileC, unsigned isHorizontal);
 	virtual ~Decoder();
 
 	typedef enum {
@@ -111,6 +111,7 @@ protected:
 	double gapX;
 	double gapY;
 	TriInt profile;
+	bool isHorizontal;
 	vector<BarcodeInfo *> barcodeInfos;
 	map<string, BarcodeInfo *> barcodesMap;
 	vector<vector<string> > cells;

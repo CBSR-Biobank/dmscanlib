@@ -56,7 +56,7 @@ using namespace std;
 
 Decoder::Decoder(double g, unsigned s, unsigned t, unsigned c, double dist, 
 				 double gx, double gy,
-				 unsigned profileA,unsigned profileB, unsigned profileC)
+				 unsigned profileA, unsigned profileB, unsigned profileC, unsigned rh)
 				 : profile(profileA,profileB,profileC)
 {
 	ua::Logger::Instance().subSysHeaderSet(3, "Decoder");
@@ -68,6 +68,7 @@ Decoder::Decoder(double g, unsigned s, unsigned t, unsigned c, double dist,
 	cellDistance = dist;
 	gapX = gx;
 	gapY = gy;
+	isHorizontal = ( (rh != 0) ? true : false );
 
 	UA_DOUT_NL(1,4,"Loaded Profile: ");
 	for(int i=0; i < 96; i++){
@@ -107,7 +108,6 @@ void Decoder::reduceBlobToMatrix(unsigned blobCount,Dib * dib, CvRect & inputBlo
 	Dib croppedDib;
 	CBlobResult blobs;
 	IplImageContainer *img;
-	//float contrastSum, count, contrastRatio;
 
 	croppedDib.crop(*dib,
 		  inputBlob.x,
@@ -136,25 +136,6 @@ void Decoder::reduceBlobToMatrix(unsigned blobCount,Dib * dib, CvRect & inputBlo
 	}
 	delete img;
 
-
-	/* ---- Generates the value of relative contrast within the image -----*/
-	/*
-	count = 0;
-	contrastSum = 0;
-	contrastRatio = 0;
-	for (int i = 0; i < (int)croppedDib.getHeight() - 1; i++) {
-		for (int j =0; j < (int)croppedDib.getWidth() - 1; j++) {
-			float center = (float)croppedDib.getPixelGrayscale(i,j);
-			float right  = (float)croppedDib.getPixelGrayscale(i,j+1);
-			float down  = (float)croppedDib.getPixelGrayscale(i+1,j);
-
-			contrastSum +=  (float)((center-right)*(center-right) + (center-down)*(center-down));
-			count++;
-		}
-	}
-	contrastRatio = contrastSum / count;
-	UA_DOUT(1, 9, "Contrast Ratio: " << contrastRatio );
-	*/
 	/* ---- Grabs the largest blob in the blobs vector -----*/
 	bool reducedBlob = false;
 	CvRect largestBlob;
@@ -208,30 +189,38 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib, bool matrical)
 	double minBlobWidth =  ((double)dib->getDpi()*barcodeSizeInches);
 	double minBlobHeight = ((double)dib->getDpi()*barcodeSizeInches);
 
-	double dpi = (double)dib->getDpi();
-	double w = dib->getWidth() / ((double)PALLET_COLUMNS);
-	double h =  dib->getHeight() / ((double)PALLET_ROWS);
-
 	UA_DOUT(1,7,"Minimum blob width (pixels): " << minBlobWidth);
 	UA_DOUT(1,7,"Minimum blob height (pixels): " << minBlobHeight);
 
-	for (int j = 0; j < PALLET_ROWS; j++) {
-		for (int i = 0; i < PALLET_COLUMNS; i++) {
-			
-			/*
-			The scanned image is a mirror image, 
-			so we must flip our coordinates in the horizontal axis.
-			*/
-			unsigned position = (PALLET_COLUMNS-1)-i + j*PALLET_COLUMNS;
+	double dpi = (double)dib->getDpi();
 
+	double w = dib->getWidth() / ((double)(isHorizontal ? PALLET_COLUMNS : PALLET_ROWS));
+	double h =  dib->getHeight() / ((double)(isHorizontal ? PALLET_ROWS : PALLET_COLUMNS));
+
+
+	/* -- generate blobs -- */
+	for (int j = 0; j < (isHorizontal ? PALLET_ROWS : PALLET_COLUMNS) ; j++) {
+		for (int i = 0; i < (isHorizontal ? PALLET_COLUMNS : PALLET_ROWS); i++) {
+
+			unsigned ix,iy;
+
+			if(isHorizontal){
+				// flip horiztonally
+				ix = (PALLET_COLUMNS - 1 ) - i;
+				iy = j;
+			}
+			else{
+				ix =  (PALLET_COLUMNS - 1 ) - j;
+				iy =  (PALLET_ROWS - 1) - i;
+			}
+
+			unsigned position = ix + iy*PALLET_COLUMNS;
 			if(!profile.isSetBit(position)){
 				continue;
 			}
 
 			double cx = i * w + w / 2.0;
 			double cy = j * h + h / 2.0;
-
-			
 
 			CvRect img;
 			img.x = (int)(cx - w / 2.0 + (gapX*dpi) / 2.0);
@@ -245,8 +234,8 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib, bool matrical)
 				img.width >= minBlobWidth && img.height >= minBlobHeight){
 
 				struct BlobPosition * pair = new struct BlobPosition();
-				pair->position.x = (PALLET_COLUMNS-1) - i;
-				pair->position.y = j;
+				pair->position.x = ix;
+				pair->position.y = iy;
 				pair->blob = img;
 				rectVector.push_back(pair);
 
@@ -256,8 +245,8 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib, bool matrical)
 	}
 	unsigned n,m,i,j;
 
-	// Debug level >= 4 
-	if(ua::Logger::Instance().isDebug(3, 4)){
+	/* -- record blob regions (if debug >= 1) -- */
+	if(ua::Logger::Instance().isDebug(3, 1)){
 
 		Dib blobDib(*dib);
 		RgbQuad white(255,255,255);
@@ -270,17 +259,21 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib, bool matrical)
 		UA_DOUT(1,4,"Created blobRegion bitmap");
 	}
 
+
+	/* -- find barcodes -- */
 	ProcessImageManager imageProcessor(this, scanGap, squareDev, edgeThresh, corrections);
 	imageProcessor.generateBarcodes(dib, blobVector, barcodeInfos);
 
 	if (barcodeInfos.empty()) {
+		UA_DOUT(3, 5, "no barcodes were found.");
+
 		for ( j = 0, m = rectVector.size(); j < m; j++) 
 			delete rectVector[j];
-
-		UA_DOUT(3, 5, "no barcodes were found.");
+		
 		return IMG_INVALID;
 	}
 
+	/* -- load barcodes into the appropiate cell region -- */
 	width = dib->getWidth();
 	height = dib->getHeight();
 
@@ -307,16 +300,19 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib, bool matrical)
 			}
 		}
 		if(!foundGrid){
+			UA_DOUT(3, 1, "found a barcode but could not locate the grid region");
+
 			for ( j = 0, m = rectVector.size(); j < m; j++) 
 				delete rectVector[j];
 			
 			return POS_CALC_ERROR;
 		}
 	}
+
+
 	for ( j = 0, m = rectVector.size(); j < m; j++) 
 		delete rectVector[j];
 	
-
 	return OK; 
 }
 

@@ -107,6 +107,7 @@ const char
 					"  --corrections NUM    The number of corrections to make.\n"
 					"  --celldist NUM       Distance between tube cells in inches.\n"
 					"  --gap NUM            Use scan grid with gap of NUM inches (or less) between lines.\n"
+					"  -v					Image is rotated veritcally. (default is horiztonal orientation)\n"
 					"\n"
 					"Scanning Coordinates\n"
 					"  -l, --left NUM       The left coordinate, in inches, for the scanning window.\n"
@@ -235,6 +236,7 @@ struct Options {
 	unsigned profileA;
 	unsigned profileB;
 	unsigned profileC;
+	bool isHoriztonal;
 
 	Options() {
 
@@ -256,6 +258,7 @@ struct Options {
 		select = false;
 		capability = false;
 		test = false;
+		isHoriztonal = true;
 
 		infile = NULL;
 		outfile = NULL;
@@ -385,7 +388,7 @@ int TestApp::decode() {
 				options.infile, options.gap, options.squareDev,
 				options.threshold, options.corrections, options.cellDistance,
 				options.gapX,options.gapY,
-				options.profileA,options.profileB,options.profileC);
+				options.profileA,options.profileB,options.profileC,options.isHoriztonal);
 	}
 
 	if ((options.left == 0.0) && (options.right == 0.0) && (options.top == 0.0)
@@ -405,7 +408,7 @@ int TestApp::decode() {
 			options.gap, options.squareDev, options.threshold,
 			options.corrections, options.cellDistance,
 				options.gapX,options.gapY,
-				options.profileA,options.profileB,options.profileC);
+				options.profileA,options.profileB,options.profileC,options.isHoriztonal);
 }
 
 int TestApp::scan() {
@@ -497,7 +500,7 @@ int TestApp::test() {
 	result = slDecodeImage(options.debugLevel, 1, "test.bmp", options.gap,
 			options.squareDev, options.threshold, options.corrections,
 			options.cellDistance,options.gapX,options.gapY,
-			options.profileA,options.profileB,options.profileC);
+			options.profileA,options.profileB,options.profileC,options.isHoriztonal);
 
 	if (result != SC_SUCCESS) {
 		cout << "Failed to decode scanned image file." << endl;
@@ -512,7 +515,7 @@ int TestApp::test() {
 			options.right, options.bottom, options.gap, options.squareDev,
 			options.threshold, options.corrections, options.cellDistance,
 			options.gapX,options.gapY,
-			options.profileA,options.profileB,options.profileC);
+			options.profileA,options.profileB,options.profileC,options.isHoriztonal);
 
 	if (result != SC_SUCCESS) {
 		cout << "Failed to scan & decode image." << endl;
@@ -556,6 +559,11 @@ bool TestApp::getCmdOptions(int argc, char ** argv) {
 			case 'd':
 				options.decode = true;
 				break;
+
+			case 'v':
+				options.isHoriztonal = false;
+				break;
+				
 
 			case 'h':
 				options.help = true;

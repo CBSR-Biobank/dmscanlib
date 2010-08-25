@@ -198,11 +198,11 @@ extern int slDecodePlate(unsigned verbose, unsigned dpi, int brightness,
     double bottom, double scanGap, unsigned squareDev,
     unsigned edgeThresh, unsigned corrections, double cellDistance, 
      double gapX, double gapY,
-        unsigned profileA, unsigned profileB, unsigned profileC);
+        unsigned profileA, unsigned profileB, unsigned profileC, unsigned isHorizontal);
 extern int slDecodeImage(unsigned verbose, unsigned plateNum, char * filename,
         double scanGap, unsigned squareDev, unsigned edgeThresh, 
         unsigned corrections, double cellDistance, double gapX, double gapY,
-        unsigned profileA, unsigned profileB, unsigned profileC);
+        unsigned profileA, unsigned profileB, unsigned profileC, unsigned isHorizontal);
 
 
 #ifdef __cplusplus
@@ -280,7 +280,7 @@ SWIGEXPORT jint JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_DmScanLibW
 }
 
 
-SWIGEXPORT jint JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_DmScanLibWin32WrapperJNI_slDecodePlate(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2, jint jarg3, jint jarg4, jlong jarg5, jdouble jarg6, jdouble jarg7, jdouble jarg8, jdouble jarg9, jdouble jarg10, jlong jarg11, jlong jarg12, jlong jarg13, jdouble jarg14, jdouble jarg15, jdouble jarg16, jlong jarg17, jlong jarg18, jlong jarg19) {
+SWIGEXPORT jint JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_DmScanLibWin32WrapperJNI_slDecodePlate(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2, jint jarg3, jint jarg4, jlong jarg5, jdouble jarg6, jdouble jarg7, jdouble jarg8, jdouble jarg9, jdouble jarg10, jlong jarg11, jlong jarg12, jlong jarg13, jdouble jarg14, jdouble jarg15, jdouble jarg16, jlong jarg17, jlong jarg18, jlong jarg19, jlong jarg20) {
   jint jresult = 0 ;
   unsigned int arg1 ;
   unsigned int arg2 ;
@@ -301,6 +301,7 @@ SWIGEXPORT jint JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_DmScanLibW
   unsigned int arg17 ;
   unsigned int arg18 ;
   unsigned int arg19 ;
+  unsigned int arg20 ;
   int result;
   
   (void)jenv;
@@ -324,13 +325,14 @@ SWIGEXPORT jint JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_DmScanLibW
   arg17 = (unsigned int)jarg17; 
   arg18 = (unsigned int)jarg18; 
   arg19 = (unsigned int)jarg19; 
-  result = (int)slDecodePlate(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10,arg11,arg12,arg13,arg14,arg15,arg16,arg17,arg18,arg19);
+  arg20 = (unsigned int)jarg20; 
+  result = (int)slDecodePlate(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10,arg11,arg12,arg13,arg14,arg15,arg16,arg17,arg18,arg19,arg20);
   jresult = (jint)result; 
   return jresult;
 }
 
 
-SWIGEXPORT jint JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_DmScanLibWin32WrapperJNI_slDecodeImage(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2, jstring jarg3, jdouble jarg4, jlong jarg5, jlong jarg6, jlong jarg7, jdouble jarg8, jdouble jarg9, jdouble jarg10, jlong jarg11, jlong jarg12, jlong jarg13) {
+SWIGEXPORT jint JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_DmScanLibWin32WrapperJNI_slDecodeImage(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2, jstring jarg3, jdouble jarg4, jlong jarg5, jlong jarg6, jlong jarg7, jdouble jarg8, jdouble jarg9, jdouble jarg10, jlong jarg11, jlong jarg12, jlong jarg13, jlong jarg14) {
   jint jresult = 0 ;
   unsigned int arg1 ;
   unsigned int arg2 ;
@@ -345,6 +347,7 @@ SWIGEXPORT jint JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_DmScanLibW
   unsigned int arg11 ;
   unsigned int arg12 ;
   unsigned int arg13 ;
+  unsigned int arg14 ;
   int result;
   
   (void)jenv;
@@ -366,7 +369,8 @@ SWIGEXPORT jint JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_DmScanLibW
   arg11 = (unsigned int)jarg11; 
   arg12 = (unsigned int)jarg12; 
   arg13 = (unsigned int)jarg13; 
-  result = (int)slDecodeImage(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10,arg11,arg12,arg13);
+  arg14 = (unsigned int)jarg14; 
+  result = (int)slDecodeImage(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10,arg11,arg12,arg13,arg14);
   jresult = (jint)result; 
   if (arg3) (*jenv)->ReleaseStringUTFChars(jenv, jarg3, (const char *)arg3);
   return jresult;
