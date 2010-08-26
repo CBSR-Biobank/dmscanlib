@@ -600,7 +600,22 @@ inline void Dib::setPixelGrayscale(unsigned row, unsigned col,
 /*
  * DIBs are flipped in Y;
  */
-bool Dib::crop(Dib & src, unsigned x0, unsigned y0, unsigned x1, unsigned y1)
+//[a,b)
+bool bound(unsigned min,unsigned & x, unsigned max){
+	bool valueChanged = false;
+
+	if(x < min){
+		x = min;
+		valueChanged = true;
+	}
+	if(x >= max){
+		x = max - 1;
+		valueChanged = true;
+	}
+	return valueChanged;
+}
+
+void Dib::crop(Dib & src, unsigned x0, unsigned y0, unsigned x1, unsigned y1)
 {
 	UA_ASSERT_NOT_NULL(src.infoHeader);
 	UA_ASSERT(x1 > x0);
@@ -614,43 +629,21 @@ bool Dib::crop(Dib & src, unsigned x0, unsigned y0, unsigned x1, unsigned y1)
 	bytesPerPixel = src.bytesPerPixel;
 
 
-	bool warnUser = false;
+	if(x1 < x0 ){
+		UA_DOUT(1,1,"cropped regions cannot have negative width ");
+		x1 = x0 + 1;
+		
+	}
+	if(y1 < y0){
+		UA_DOUT(1,1,"cropped regions cannot have negative height");
+		y1 = y0 + 1;
+	}
 
-	if(y0 >= infoHeader->height){
-		y0 = infoHeader->height;
-		warnUser = true;
-	}
-	if(y1 >= infoHeader->height){
-		y1 = infoHeader->height;
-		warnUser = true;
-	}
-	if(x0 >= infoHeader->width){
-		x0 = infoHeader->width;
-		warnUser = true;
-	}
-	if(x1 >= infoHeader->width){
-		x1 = infoHeader->width;
-		warnUser = true;
-	}
-	if(x0 < 0){
-		x0 = 0;
-		warnUser = true;
-	}
-	if(x1 < 0){
-		x1 = 0;
-		warnUser = true;
-	}
-	if(y0 < 0){
-		y0 = 0;
-		warnUser = true;
-	}
-	if(y1 < 0){
-		y1 = 0;
-		warnUser = true;
-	}
-	if(warnUser){
-		UA_DOUT(1,1,"Warning: crop dimensions were out of image bounds ");
-	}
+	bound(0,x0,infoHeader->width);
+    bound(0,x1,infoHeader->width);
+	bound(0,y0,infoHeader->height);
+	bound(0,y1,infoHeader->height);
+	bound(0,y1,src.infoHeader->height);
 
 	infoHeader->width = x1 - x0;
 	infoHeader->height = y1 - y0;
@@ -674,19 +667,20 @@ bool Dib::crop(Dib & src, unsigned x0, unsigned y0, unsigned x1, unsigned y1)
 	pixels = new unsigned char[infoHeader->imageSize];
 	isAllocated = true;
 
-	unsigned char *srcRowPtr = src.pixels + (src.infoHeader->height - y1)
-	    * src.rowBytes + x0 * bytesPerPixel;
+	unsigned char *srcRowPtr = src.pixels + (src.infoHeader->height - y1)* src.rowBytes + x0 * bytesPerPixel;
 	unsigned char *destRowPtr = pixels;
 
-	for (unsigned row = 0; row < infoHeader->height;
-			++row, srcRowPtr += src.rowBytes, destRowPtr += rowBytes) {
+	unsigned row = 0;
+	while(row < infoHeader->height){
+
 		memcpy(destRowPtr, srcRowPtr, infoHeader->width);
-		memset(&destRowPtr[infoHeader->width], 0, rowPaddingBytes);
+		memset(destRowPtr + infoHeader->width, 0, rowPaddingBytes);
+
+		++row;
+		srcRowPtr += src.rowBytes;
+		destRowPtr += rowBytes;
 	}
-	return true;
 }
-
-
 
 /*
 TODO: copy over file header ?
@@ -1010,8 +1004,7 @@ void Dib::histEqualization(Dib & src)
 IplImageContainer *Dib::generateIplImage()
 {
 	UA_ASSERTS(infoHeader != NULL, "NULL infoHeader specified to generateIplImage");
-	UA_ASSERTS(infoHeader->bitCount == 8,
-		   "generateIplImage requires an unsigned 8bit image");
+	UA_ASSERTS(infoHeader->bitCount == 8, "generateIplImage requires an unsigned 8bit image");
 	UA_ASSERTS(pixels != NULL,"NULL pixel data specified to generateIplImage");
 
 	IplImageContainer *iplContainer;

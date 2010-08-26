@@ -197,7 +197,6 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib, bool matrical)
 	double w = dib->getWidth() / ((double)(isHorizontal ? PALLET_COLUMNS : PALLET_ROWS));
 	double h =  dib->getHeight() / ((double)(isHorizontal ? PALLET_ROWS : PALLET_COLUMNS));
 
-
 	/* -- generate blobs -- */
 	for (int j = 0; j < (isHorizontal ? PALLET_ROWS : PALLET_COLUMNS) ; j++) {
 		for (int i = 0; i < (isHorizontal ? PALLET_COLUMNS : PALLET_ROWS); i++) {
@@ -308,7 +307,6 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib, bool matrical)
 			return POS_CALC_ERROR;
 		}
 	}
-
 
 	for ( j = 0, m = rectVector.size(); j < m; j++) 
 		delete rectVector[j];
