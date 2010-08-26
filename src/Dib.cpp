@@ -688,9 +688,9 @@ TODO: copy over file header ?
 Dib *Dib::convertGrayscale(Dib & src)
 {
 	UA_ASSERT(src.getBitsPerPixel() == 24 || src.getBitsPerPixel() == 8);
+	UA_ASSERT(src.getPixelBuffer() != NULL);
 
 	if (src.getBitsPerPixel() == 8) {
-
 		UA_DOUT(4, 9, "convertGrayscale: Already grayscale image.");
 		return new Dib(src);
 	}
@@ -1192,17 +1192,14 @@ void Dib::tpPresetFilter()
 
 	case 400:
 		UA_DOUT(4, 5, "tpPresetFilter: Applying DPI_400_KERNEL");
-		//convolve2DSlow(Dib::DPI_400_KERNEL, 3, 3);
 		convolveFast3x3(Dib::DPI_400_KERNEL);
 		break;
 
 	case 600:
 		UA_DOUT(4, 5, "tpPresetFilter: Applying BLANK_KERNEL");
-		//convolve2DSlow(Dib::BLANK_KERNEL, 3, 3);
 		convolveFast3x3(Dib::BLANK_KERNEL);
 
 		UA_DOUT(4, 5, "tpPresetFilter: Applying BLUR_KERNEL");
-		//convolve2DSlow(Dib::BLUR_KERNEL, 3, 3);
 		convolveFast3x3(Dib::BLUR_KERNEL);
 
 		break;
@@ -1212,7 +1209,7 @@ void Dib::tpPresetFilter()
 		break;
 
 	default:
-		UA_DOUT(4, 5, "tpPresetFilter: No filter applied (default)");
+		UA_DOUT(4, 5, "tpPresetFilter: No filter applied (default) dpi/" << getDpi());
 		break;
 	}
 }
@@ -1231,7 +1228,6 @@ void Dib::convolveFast3x3(const float (&k)[9])
 	float *imageIn = new float[size];
 
 	fill(imageOut, imageOut + size, 0.0f);
-
 	{
 		unsigned char *srcRowPtr = pixels, *srcPtr;
 		float *destPtr = imageIn;
@@ -1292,7 +1288,6 @@ void Dib::convolveFast3x3(const float (&k)[9])
 
 	delete[]imageIn;
 	delete[]imageOut;
-
 }
 
 //  slow version

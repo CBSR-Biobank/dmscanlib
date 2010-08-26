@@ -64,7 +64,6 @@ Decoder::Decoder(double g, unsigned s, unsigned t, unsigned c, double dist,
 	squareDev = s;
 	edgeThresh = t;
 	corrections = c;
-	imageBuf = NULL;
 	cellDistance = dist;
 	gapX = gx;
 	gapY = gy;
@@ -90,10 +89,6 @@ Decoder::~Decoder()
 		UA_ASSERT_NOT_NULL(b);
 		delete b;
 	}
-
-	if (imageBuf != NULL) {
-		free(imageBuf);
-	}
 }
 
 void Decoder::initCells(unsigned maxRows, unsigned maxCols)
@@ -104,6 +99,7 @@ void Decoder::initCells(unsigned maxRows, unsigned maxCols)
 	}
 }
 
+// reduces the blob to a smaller region (matrix outline)
 void Decoder::reduceBlobToMatrix(unsigned blobCount,Dib * dib, CvRect & inputBlob){
 	Dib croppedDib;
 	CBlobResult blobs;
@@ -114,8 +110,11 @@ void Decoder::reduceBlobToMatrix(unsigned blobCount,Dib * dib, CvRect & inputBlo
 		  inputBlob.y,
 		  inputBlob.x + inputBlob.width,
 		  inputBlob.y + inputBlob.height);
+	UA_ASSERT_NOT_NULL(croppedDib.getPixelBuffer());
 
 	img = croppedDib.generateIplImage();
+	UA_ASSERT_NOT_NULL(img);
+	UA_ASSERT_NOT_NULL(img->getIplImage());
 	
 	for (int i = 0; i < 5; i++) 
 		cvSmooth(img->getIplImage(), img->getIplImage(), CV_GAUSSIAN, 11, 11);
@@ -138,11 +137,7 @@ void Decoder::reduceBlobToMatrix(unsigned blobCount,Dib * dib, CvRect & inputBlo
 
 	/* ---- Grabs the largest blob in the blobs vector -----*/
 	bool reducedBlob = false;
-	CvRect largestBlob;
-	largestBlob.x =0;
-	largestBlob.y =0;
-	largestBlob.width = 0;
-	largestBlob.height = 0;
+	CvRect largestBlob = {0,0,0,0};
 
 	for (int i = 0; i < blobs.GetNumBlobs(); i++) {
 		CvRect currentBlob = blobs.GetBlob(i)->GetBoundingBox();
@@ -152,7 +147,7 @@ void Decoder::reduceBlobToMatrix(unsigned blobCount,Dib * dib, CvRect & inputBlo
 		}
 	}	
 
-	/* ---- Keep blobs that were successfully reduced-----*/
+	/* ---- Keep blob that was successfully reduced-----*/
 	if(reducedBlob){
 		largestBlob.x += inputBlob.x;
 		largestBlob.y += inputBlob.y;
@@ -177,7 +172,7 @@ struct BlobPosition{
 #define PALLET_COLUMNS 12
 #define PALLET_ROWS 8
 
-Decoder::ProcessResult Decoder::processImageRegions(Dib * dib, bool matrical)
+Decoder::ProcessResult Decoder::processImageRegions(Dib * dib)
 {
 	vector < CvRect > blobVector;
 	vector<struct BlobPosition * > rectVector;
@@ -399,9 +394,8 @@ void Decoder::showStats(DmtxDecode * dec, DmtxRegion * reg, DmtxMessage * msg)
 
 void Decoder::imageShowBarcodes(Dib & dib, bool regions)
 {
-
 	UA_DOUT(3, 3, "marking tags ");
-	if(barcodeInfos.size() == 0)
+	if(barcodeInfos.empty())
 		return;
 
 	RgbQuad quadWhite(255, 255, 255);	// change to white (shows up better in grayscale)
@@ -425,14 +419,6 @@ void Decoder::imageShowBarcodes(Dib & dib, bool regions)
 		dib.line(brCorner.X, tlCorner.Y, tlCorner.X, tlCorner.Y,
 			 highlightQuad);
 	}
-
-	unsigned logLevel = ua::Logger::Instance().levelGet(3);
-
-	if (logLevel == 0 || !regions)
-		return;
-
-	unsigned height = dib.getHeight() - 1;
-	unsigned width = dib.getWidth() - 1;
 }
 
 // this method needs to be thread safe

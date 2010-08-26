@@ -64,7 +64,7 @@ public:
 		OK
 	} ProcessResult;
 
-	ProcessResult processImageRegions(Dib * dib, bool metrical);
+	ProcessResult processImageRegions(Dib * dib);
 
 	void imageShowBarcodes(Dib & dib, bool regions);
 	vector<vector<string> > & getCells() { return cells; }
@@ -74,13 +74,6 @@ public:
 	/**
 	 * Called by subordinates to add a barcode. Returns NULL if the barcode has
 	 * previously been added.
-	 *
-	 * @param dec Pointer to the libdmtx decode structure.
-	 * @param reg Pointer to the libdmtx region structure.
-	 * @param msg Pointer to the libdmtx message structure.
-	 *
-	 * @return Pointer to the barcode object that was added or NULL if the
-	 * barcode has already been added.
 	 */
 	BarcodeInfo * addBarcodeInfo(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
 
@@ -112,11 +105,11 @@ protected:
 	double gapY;
 	TriInt profile;
 	bool isHorizontal;
+
 	vector<BarcodeInfo *> barcodeInfos;
 	map<string, BarcodeInfo *> barcodesMap;
 	vector<vector<string> > cells;
 
-	unsigned char * imageBuf;
 	OpenThreads::Mutex addBarcodeMutex;
 };
 

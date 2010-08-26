@@ -216,11 +216,14 @@ int slDecodeCommon(unsigned plateNum, Dib & dib, Decoder & decoder,
 	/*--- apply filters ---*/
 	filteredDib = Dib::convertGrayscale(dib);
 	UA_ASSERT_NOT_NULL(filteredDib);
+
 	filteredDib->tpPresetFilter();
+	UA_ASSERT_NOT_NULL(filteredDib);
 
 	UA_DEBUG(filteredDib->writeToFile("filtered.bmp"));
 
-	result = decoder.processImageRegions(filteredDib, metrical);
+	/*--- obtain barcodes ---*/
+	result = decoder.processImageRegions(filteredDib);
 
 	delete filteredDib;
 
