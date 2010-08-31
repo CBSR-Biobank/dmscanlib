@@ -179,6 +179,7 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib)
 
 	RgbQuad green(0,255,0);
 	RgbQuad yellow(255,255,0);
+	RgbQuad white(255,255,255);
 
 	double barcodeSizeInches = 0.13;
 	double minBlobWidth =  ((double)dib->getDpi()*barcodeSizeInches);
@@ -191,6 +192,12 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib)
 
 	double w = dib->getWidth() / ((double)(isHorizontal ? PALLET_COLUMNS : PALLET_ROWS));
 	double h =  dib->getHeight() / ((double)(isHorizontal ? PALLET_ROWS : PALLET_COLUMNS));
+
+	Dib  * blobDib;
+
+	if(ua::Logger::Instance().isDebug(3, 1)){
+		blobDib = new Dib(*dib);
+	}
 
 	/* -- generate blobs -- */
 	for (int j = 0; j < (isHorizontal ? PALLET_ROWS : PALLET_COLUMNS) ; j++) {
@@ -222,6 +229,10 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib)
 			img.width = (int)( w - gapX*dpi);
 			img.height = (int)(h - gapY*dpi);
 
+			if(ua::Logger::Instance().isDebug(3, 1)){
+				blobDib->rectangle(img.x,img.y,img.width,img.height,white);
+			}
+
 			reduceBlobToMatrix(position,dib,img);
 
 			if(img.width != 0 && img.height != 0 && 
@@ -237,20 +248,29 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib)
 			}
 		}
 	}
-	unsigned n,m,i,j;
 
-	/* -- record blob regions (if debug >= 1) -- */
+	unsigned n,m,i,j;
+	
 	if(ua::Logger::Instance().isDebug(3, 1)){
 
-		Dib blobDib(*dib);
-		RgbQuad white(255,255,255);
+		blobDib->writeToFile("blobs_grid.bmp");
+
+		UA_DOUT(1,4,"Created blobRegion Grid");
+
+		delete blobDib;
+		
+		//////////////////////
+
+		blobDib = new Dib(*dib);
 
 		for ( i = 0, n = blobVector.size(); i < n; i++) {
-			blobDib.rectangle(blobVector[i].x,blobVector[i].y,blobVector[i].width,blobVector[i].height,white);
+			blobDib->rectangle(blobVector[i].x,blobVector[i].y,blobVector[i].width,blobVector[i].height,white);
 		}
-		blobDib.writeToFile("blobRegions.bmp");
+		blobDib->writeToFile("blobs_reduced.bmp");
 
-		UA_DOUT(1,4,"Created blobRegion bitmap");
+		UA_DOUT(1,4,"Created blobRegion Reduced");
+		
+		delete blobDib;
 	}
 
 
