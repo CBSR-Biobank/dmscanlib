@@ -30,7 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "dmtx.h"
 #include "cv.h"
 #include "IplContainer.h"
-#include "TriInt.h"
+#include "ProfileSettings.h"
 
 #include <list>
 #include <string>
@@ -103,7 +103,7 @@ protected:
 	unsigned dpi;
 	double gapX;
 	double gapY;
-	TriInt profile;
+	ProfileSettings profile;
 	bool isHorizontal;
 
 	vector<BarcodeInfo *> barcodeInfos;

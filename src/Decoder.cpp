@@ -1,22 +1,22 @@
 /*
-Dmscanlib is a software library and standalone application that scans 
-and decodes libdmtx compatible test-tubes. It is currently designed 
-to decode 12x8 pallets that use 2D data-matrix laser etched test-tubes.
-Copyright (C) 2010 Canadian Biosample Repository
+ Dmscanlib is a software library and standalone application that scans
+ and decodes libdmtx compatible test-tubes. It is currently designed
+ to decode 12x8 pallets that use 2D data-matrix laser etched test-tubes.
+ Copyright (C) 2010 Canadian Biosample Repository
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 /*
  * Decoder.cpp
@@ -39,7 +39,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "BinRegion.h"
 #include "ProcessImageManager.h"
 
-
 #include <time.h>
 #include <iostream>
 #include <math.h>
@@ -54,11 +53,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 using namespace std;
 
-Decoder::Decoder(double g, unsigned s, unsigned t, unsigned c, double dist, 
-				 double gx, double gy,
-				 unsigned profileA, unsigned profileB, unsigned profileC, unsigned rh)
-				 : profile(profileA,profileB,profileC)
-{
+Decoder::Decoder(double g, unsigned s, unsigned t, unsigned c, double dist,
+		double gx, double gy, unsigned profileA, unsigned profileB,
+		unsigned profileC, unsigned rh) :
+	profile(profileA, profileB, profileC) {
 	ua::Logger::Instance().subSysHeaderSet(3, "Decoder");
 	scanGap = g;
 	squareDev = s;
@@ -67,20 +65,18 @@ Decoder::Decoder(double g, unsigned s, unsigned t, unsigned c, double dist,
 	cellDistance = dist;
 	gapX = gx;
 	gapY = gy;
-	isHorizontal = ( (rh != 0) ? true : false );
-
+	isHorizontal = ((rh != 0) ? true : false);
 	UA_DOUT_NL(1,4,"Loaded Profile: ");
-	for(int i=0; i < 96; i++){
-		if(i % 12 == 0) {
+	for (int i = 0; i < 96; i++) {
+		if (i % 12 == 0) {
 			UA_DOUT_NL(1,4,"\n");
 		}
-		UA_DOUT_NL(1, 4, profile.isSetBit(i));
+		UA_DOUT_NL(1, 4, profile[i]);
 	}
 	UA_DOUT_NL(1,4,"\n\n");
 }
 
-Decoder::~Decoder()
-{
+Decoder::~Decoder() {
 	BarcodeInfo *b;
 
 	while (barcodeInfos.size() > 0) {
@@ -91,8 +87,7 @@ Decoder::~Decoder()
 	}
 }
 
-void Decoder::initCells(unsigned maxRows, unsigned maxCols)
-{
+void Decoder::initCells(unsigned maxRows, unsigned maxCols) {
 	cells.resize(maxRows);
 	for (unsigned row = 0; row < maxRows; ++row) {
 		cells[row].resize(maxCols);
@@ -100,60 +95,59 @@ void Decoder::initCells(unsigned maxRows, unsigned maxCols)
 }
 
 // reduces the blob to a smaller region (matrix outline)
-void Decoder::reduceBlobToMatrix(unsigned blobCount,Dib * dib, CvRect & inputBlob){
+void Decoder::reduceBlobToMatrix(unsigned blobCount, Dib * dib,
+		CvRect & inputBlob) {
 	Dib croppedDib;
 	CBlobResult blobs;
 	IplImageContainer *img;
 
-	croppedDib.crop(*dib,
-		  inputBlob.x,
-		  inputBlob.y,
-		  inputBlob.x + inputBlob.width,
-		  inputBlob.y + inputBlob.height);
+	croppedDib.crop(*dib, inputBlob.x, inputBlob.y, inputBlob.x
+			+ inputBlob.width, inputBlob.y + inputBlob.height);
 	UA_ASSERT_NOT_NULL(croppedDib.getPixelBuffer());
 
 	img = croppedDib.generateIplImage();
 	UA_ASSERT_NOT_NULL(img);
 	UA_ASSERT_NOT_NULL(img->getIplImage());
-	
-	for (int i = 0; i < 5; i++) 
+
+	for (int i = 0; i < 5; i++)
 		cvSmooth(img->getIplImage(), img->getIplImage(), CV_GAUSSIAN, 11, 11);
-	cvThreshold(img->getIplImage(), img->getIplImage(), 50, 255, CV_THRESH_BINARY);
+	cvThreshold(img->getIplImage(), img->getIplImage(), 50, 255,
+			CV_THRESH_BINARY);
 
 	blobs = CBlobResult(img->getIplImage(), NULL, 0);
-	
-	switch(img->getHorizontalResolution()){
-		case 300:
-			blobs.Filter(blobs, B_EXCLUDE, CBlobGetArea(), B_LESS, 840);
-			break;
-		case 400:
-			blobs.Filter(blobs, B_EXCLUDE, CBlobGetArea(), B_LESS, 1900);
-			break;
-		case 600:
-			blobs.Filter(blobs, B_EXCLUDE, CBlobGetArea(), B_LESS, 2400);
-			break;
+
+	switch (img->getHorizontalResolution()) {
+	case 300:
+		blobs.Filter(blobs, B_EXCLUDE, CBlobGetArea(), B_LESS, 840);
+		break;
+	case 400:
+		blobs.Filter(blobs, B_EXCLUDE, CBlobGetArea(), B_LESS, 1900);
+		break;
+	case 600:
+		blobs.Filter(blobs, B_EXCLUDE, CBlobGetArea(), B_LESS, 2400);
+		break;
 	}
 	delete img;
 
 	/* ---- Grabs the largest blob in the blobs vector -----*/
 	bool reducedBlob = false;
-	CvRect largestBlob = {0,0,0,0};
+	CvRect largestBlob = { 0, 0, 0, 0 };
 
 	for (int i = 0; i < blobs.GetNumBlobs(); i++) {
 		CvRect currentBlob = blobs.GetBlob(i)->GetBoundingBox();
-		if(currentBlob.width*currentBlob.height > largestBlob.width*largestBlob.height){
+		if (currentBlob.width * currentBlob.height > largestBlob.width
+				* largestBlob.height) {
 			largestBlob = currentBlob;
 			reducedBlob = true;
 		}
-	}	
+	}
 
 	/* ---- Keep blob that was successfully reduced-----*/
-	if(reducedBlob){
+	if (reducedBlob) {
 		largestBlob.x += inputBlob.x;
 		largestBlob.y += inputBlob.y;
 		inputBlob = largestBlob;
-	}
-	else{
+	} else {
 		inputBlob.x = 0;
 		inputBlob.y = 0;
 		inputBlob.width = 0;
@@ -164,7 +158,7 @@ void Decoder::reduceBlobToMatrix(unsigned blobCount,Dib * dib, CvRect & inputBlo
 
 }
 
-struct BlobPosition{
+struct BlobPosition {
 	CvRect position;
 	CvRect blob;
 };
@@ -172,44 +166,44 @@ struct BlobPosition{
 #define PALLET_COLUMNS 12
 #define PALLET_ROWS 8
 
-Decoder::ProcessResult Decoder::processImageRegions(Dib * dib)
-{
-	vector < CvRect > blobVector;
-	vector<struct BlobPosition * > rectVector;
+Decoder::ProcessResult Decoder::processImageRegions(Dib * dib) {
+	vector<CvRect> blobVector;
+	vector<struct BlobPosition *> rectVector;
 
-	RgbQuad green(0,255,0);
-	RgbQuad yellow(255,255,0);
+	RgbQuad green(0, 255, 0);
+	RgbQuad yellow(255, 255, 0);
 
 	double barcodeSizeInches = 0.13;
-	double minBlobWidth =  ((double)dib->getDpi()*barcodeSizeInches);
-	double minBlobHeight = ((double)dib->getDpi()*barcodeSizeInches);
+	double minBlobWidth = ((double) dib->getDpi() * barcodeSizeInches);
+	double minBlobHeight = ((double) dib->getDpi() * barcodeSizeInches);
 
 	UA_DOUT(1,7,"Minimum blob width (pixels): " << minBlobWidth);
 	UA_DOUT(1,7,"Minimum blob height (pixels): " << minBlobHeight);
 
-	double dpi = (double)dib->getDpi();
+	double dpi = (double) dib->getDpi();
 
-	double w = dib->getWidth() / ((double)(isHorizontal ? PALLET_COLUMNS : PALLET_ROWS));
-	double h =  dib->getHeight() / ((double)(isHorizontal ? PALLET_ROWS : PALLET_COLUMNS));
+	double w = dib->getWidth() / ((double) (isHorizontal ? PALLET_COLUMNS
+			: PALLET_ROWS));
+	double h = dib->getHeight() / ((double) (isHorizontal ? PALLET_ROWS
+			: PALLET_COLUMNS));
 
 	/* -- generate blobs -- */
-	for (int j = 0; j < (isHorizontal ? PALLET_ROWS : PALLET_COLUMNS) ; j++) {
+	for (int j = 0; j < (isHorizontal ? PALLET_ROWS : PALLET_COLUMNS); j++) {
 		for (int i = 0; i < (isHorizontal ? PALLET_COLUMNS : PALLET_ROWS); i++) {
 
-			unsigned ix,iy;
+			unsigned ix, iy;
 
-			if(isHorizontal){
+			if (isHorizontal) {
 				// flip horiztonally
-				ix = (PALLET_COLUMNS - 1 ) - i;
+				ix = (PALLET_COLUMNS - 1) - i;
 				iy = j;
-			}
-			else{
-				ix =  (PALLET_COLUMNS - 1 ) - j;
-				iy =  (PALLET_ROWS - 1) - i;
+			} else {
+				ix = (PALLET_COLUMNS - 1) - j;
+				iy = (PALLET_ROWS - 1) - i;
 			}
 
-			unsigned position = ix + iy*PALLET_COLUMNS;
-			if(!profile.isSetBit(position)){
+			unsigned position = ix + iy * PALLET_COLUMNS;
+			if (!profile[position]) {
 				continue;
 			}
 
@@ -217,15 +211,15 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib)
 			double cy = j * h + h / 2.0;
 
 			CvRect img;
-			img.x = (int)(cx - w / 2.0 + (gapX*dpi) / 2.0);
-			img.y = (int)(cy - h / 2.0 + (gapY*dpi) / 2.0);
-			img.width = (int)( w - gapX*dpi);
-			img.height = (int)(h - gapY*dpi);
+			img.x = (int) (cx - w / 2.0 + (gapX * dpi) / 2.0);
+			img.y = (int) (cy - h / 2.0 + (gapY * dpi) / 2.0);
+			img.width = (int) (w - gapX * dpi);
+			img.height = (int) (h - gapY * dpi);
 
-			reduceBlobToMatrix(position,dib,img);
+			reduceBlobToMatrix(position, dib, img);
 
-			if(img.width != 0 && img.height != 0 && 
-				img.width >= minBlobWidth && img.height >= minBlobHeight){
+			if (img.width != 0 && img.height != 0 && img.width >= minBlobWidth
+					&& img.height >= minBlobHeight) {
 
 				struct BlobPosition * pair = new struct BlobPosition();
 				pair->position.x = ix;
@@ -237,33 +231,34 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib)
 			}
 		}
 	}
-	unsigned n,m,i,j;
+	unsigned n, m, i, j;
 
 	/* -- record blob regions (if debug >= 1) -- */
-	if(ua::Logger::Instance().isDebug(3, 1)){
+	if (ua::Logger::Instance().isDebug(3, 1)) {
 
 		Dib blobDib(*dib);
-		RgbQuad white(255,255,255);
+		RgbQuad white(255, 255, 255);
 
-		for ( i = 0, n = blobVector.size(); i < n; i++) {
-			blobDib.rectangle(blobVector[i].x,blobVector[i].y,blobVector[i].width,blobVector[i].height,white);
+		for (i = 0, n = blobVector.size(); i < n; i++) {
+			blobDib.rectangle(blobVector[i].x, blobVector[i].y,
+					blobVector[i].width, blobVector[i].height, white);
 		}
 		blobDib.writeToFile("blobRegions.bmp");
 
 		UA_DOUT(1,4,"Created blobRegion bitmap");
 	}
 
-
 	/* -- find barcodes -- */
-	ProcessImageManager imageProcessor(this, scanGap, squareDev, edgeThresh, corrections);
+	ProcessImageManager imageProcessor(this, scanGap, squareDev, edgeThresh,
+			corrections);
 	imageProcessor.generateBarcodes(dib, blobVector, barcodeInfos);
 
 	if (barcodeInfos.empty()) {
 		UA_DOUT(3, 5, "no barcodes were found.");
 
-		for ( j = 0, m = rectVector.size(); j < m; j++) 
+		for (j = 0, m = rectVector.size(); j < m; j++)
 			delete rectVector[j];
-		
+
 		return IMG_INVALID;
 	}
 
@@ -271,46 +266,46 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib)
 	width = dib->getWidth();
 	height = dib->getHeight();
 
-	initCells(PALLET_ROWS,PALLET_COLUMNS);
+	initCells(PALLET_ROWS, PALLET_COLUMNS);
 
 	for (i = 0, n = barcodeInfos.size(); i < n; ++i) {
 		DmtxPixelLoc & tlCorner = barcodeInfos[i]->getTopLeftCorner();
 		DmtxPixelLoc & brCorner = barcodeInfos[i]->getBotRightCorner();
 
-		double avgx = (tlCorner.X + brCorner.X)/2.0;
-		double avgy = (tlCorner.Y + brCorner.Y)/2.0;
+		double avgx = (tlCorner.X + brCorner.X) / 2.0;
+		double avgy = (tlCorner.Y + brCorner.Y) / 2.0;
 
 		bool foundGrid = false;
-		for ( j = 0, m = rectVector.size(); j < m; j++) {
+		for (j = 0, m = rectVector.size(); j < m; j++) {
 
 			// pt inside rectangle
-			if(avgx > rectVector[j]->blob.x && 
-			   avgx < rectVector[j]->blob.x + rectVector[j]->blob.width &&
-			   avgy > rectVector[j]->blob.y && 
-			   avgy < rectVector[j]->blob.y + rectVector[j]->blob.height){
-				    cells[ rectVector[j]->position.y ][ rectVector[j]->position.x  ] = barcodeInfos[i]->getMsg();
-					foundGrid = true;
-					break;
+			if (avgx > rectVector[j]->blob.x && avgx < rectVector[j]->blob.x
+					+ rectVector[j]->blob.width && avgy > rectVector[j]->blob.y
+					&& avgy < rectVector[j]->blob.y
+							+ rectVector[j]->blob.height) {
+				cells[rectVector[j]->position.y][rectVector[j]->position.x]
+						= barcodeInfos[i]->getMsg();
+				foundGrid = true;
+				break;
 			}
 		}
-		if(!foundGrid){
+		if (!foundGrid) {
 			UA_DOUT(3, 1, "found a barcode but could not locate the grid region");
 
-			for ( j = 0, m = rectVector.size(); j < m; j++) 
+			for (j = 0, m = rectVector.size(); j < m; j++)
 				delete rectVector[j];
-			
+
 			return POS_CALC_ERROR;
 		}
 	}
 
-	for ( j = 0, m = rectVector.size(); j < m; j++) 
+	for (j = 0, m = rectVector.size(); j < m; j++)
 		delete rectVector[j];
-	
-	return OK; 
+
+	return OK;
 }
 
-DmtxImage * Decoder::createDmtxImageFromDib(Dib & dib)
-{
+DmtxImage * Decoder::createDmtxImageFromDib(Dib & dib) {
 	int pack = DmtxPackCustom;
 	unsigned padding = dib.getRowPadBytes();
 
@@ -327,16 +322,15 @@ DmtxImage * Decoder::createDmtxImageFromDib(Dib & dib)
 	}
 
 	DmtxImage *image = dmtxImageCreate(dib.getPixelBuffer(), dib.getWidth(),
-					   dib.getHeight(), pack);
+			dib.getHeight(), pack);
 
 	//set the properties (pad bytes, flip)
 	dmtxImageSetProp(image, DmtxPropRowPadBytes, padding);
-	dmtxImageSetProp(image, DmtxPropImageFlip, DmtxFlipY);	// DIBs are flipped in Y
+	dmtxImageSetProp(image, DmtxPropImageFlip, DmtxFlipY); // DIBs are flipped in Y
 	return image;
 }
 
-void Decoder::showStats(DmtxDecode * dec, DmtxRegion * reg, DmtxMessage * msg)
-{
+void Decoder::showStats(DmtxDecode * dec, DmtxRegion * reg, DmtxMessage * msg) {
 	int height;
 	int dataWordLength;
 	int rotateInt;
@@ -353,71 +347,61 @@ void Decoder::showStats(DmtxDecode * dec, DmtxRegion * reg, DmtxMessage * msg)
 	dmtxMatrix3VMultiplyBy(&p01, reg->fit2raw);
 
 	dataWordLength = dmtxGetSymbolAttribute(DmtxSymAttribSymbolDataWords,
-						reg->sizeIdx);
+			reg->sizeIdx);
 
 	rotate = (2 * M_PI) + (atan2(reg->fit2raw[0][1], reg->fit2raw[1][1])
-			       - atan2(reg->fit2raw[1][0],
-				       reg->fit2raw[0][0])) / 2.0;
+			- atan2(reg->fit2raw[1][0], reg->fit2raw[0][0])) / 2.0;
 
-	rotateInt = (int)(rotate * 180 / M_PI + 0.5);
+	rotateInt = (int) (rotate * 180 / M_PI + 0.5);
 	if (rotateInt >= 360)
 		rotateInt -= 360;
 
 	fprintf(stdout, "--------------------------------------------------\n");
-	fprintf(stdout, "       Matrix Size: %d x %d\n",
-		dmtxGetSymbolAttribute(DmtxSymAttribSymbolRows, reg->sizeIdx),
-		dmtxGetSymbolAttribute(DmtxSymAttribSymbolCols, reg->sizeIdx));
-	fprintf(stdout, "    Data Codewords: %d (capacity %d)\n",
-		dataWordLength - msg->padCount, dataWordLength);
-	fprintf(stdout, "   Error Codewords: %d\n",
-		dmtxGetSymbolAttribute(DmtxSymAttribSymbolErrorWords,
-				       reg->sizeIdx));
-	fprintf(stdout, "      Data Regions: %d x %d\n",
-		dmtxGetSymbolAttribute(DmtxSymAttribHorizDataRegions,
-				       reg->sizeIdx),
-		dmtxGetSymbolAttribute(DmtxSymAttribVertDataRegions,
-				       reg->sizeIdx));
-	fprintf(stdout, "Interleaved Blocks: %d\n",
-		dmtxGetSymbolAttribute(DmtxSymAttribInterleavedBlocks,
-				       reg->sizeIdx));
+	fprintf(stdout, "       Matrix Size: %d x %d\n", dmtxGetSymbolAttribute(
+			DmtxSymAttribSymbolRows, reg->sizeIdx), dmtxGetSymbolAttribute(
+			DmtxSymAttribSymbolCols, reg->sizeIdx));
+	fprintf(stdout, "    Data Codewords: %d (capacity %d)\n", dataWordLength
+			- msg->padCount, dataWordLength);
+	fprintf(stdout, "   Error Codewords: %d\n", dmtxGetSymbolAttribute(
+			DmtxSymAttribSymbolErrorWords, reg->sizeIdx));
+	fprintf(stdout, "      Data Regions: %d x %d\n", dmtxGetSymbolAttribute(
+			DmtxSymAttribHorizDataRegions, reg->sizeIdx),
+			dmtxGetSymbolAttribute(DmtxSymAttribVertDataRegions, reg->sizeIdx));
+	fprintf(stdout, "Interleaved Blocks: %d\n", dmtxGetSymbolAttribute(
+			DmtxSymAttribInterleavedBlocks, reg->sizeIdx));
 	fprintf(stdout, "    Rotation Angle: %d\n", rotateInt);
-	fprintf(stdout, "          Corner 0: (%0.1f, %0.1f)\n", p00.X,
-		height - 1 - p00.Y);
-	fprintf(stdout, "          Corner 1: (%0.1f, %0.1f)\n", p10.X,
-		height - 1 - p10.Y);
-	fprintf(stdout, "          Corner 2: (%0.1f, %0.1f)\n", p11.X,
-		height - 1 - p11.Y);
-	fprintf(stdout, "          Corner 3: (%0.1f, %0.1f)\n", p01.X,
-		height - 1 - p01.Y);
+	fprintf(stdout, "          Corner 0: (%0.1f, %0.1f)\n", p00.X, height - 1
+			- p00.Y);
+	fprintf(stdout, "          Corner 1: (%0.1f, %0.1f)\n", p10.X, height - 1
+			- p10.Y);
+	fprintf(stdout, "          Corner 2: (%0.1f, %0.1f)\n", p11.X, height - 1
+			- p11.Y);
+	fprintf(stdout, "          Corner 3: (%0.1f, %0.1f)\n", p01.X, height - 1
+			- p01.Y);
 	fprintf(stdout, "--------------------------------------------------\n");
 }
 
-void Decoder::imageShowBarcodes(Dib & dib, bool regions)
-{
+void Decoder::imageShowBarcodes(Dib & dib, bool regions) {
 	UA_DOUT(3, 3, "marking tags ");
-	if(barcodeInfos.empty())
+	if (barcodeInfos.empty())
 		return;
 
-	RgbQuad quadWhite(255, 255, 255);	// change to white (shows up better in grayscale)
+	RgbQuad quadWhite(255, 255, 255); // change to white (shows up better in grayscale)
 	RgbQuad quadPink(255, 0, 255);
 	RgbQuad quadRed(255, 0, 0);
 
-	RgbQuad & highlightQuad =
-	    (dib.getBitsPerPixel() == 8 ? quadWhite : quadPink);
+	RgbQuad & highlightQuad = (dib.getBitsPerPixel() == 8 ? quadWhite
+			: quadPink);
 
 	for (unsigned i = 0, n = barcodeInfos.size(); i < n; ++i) {
 		BarcodeInfo & info = *barcodeInfos[i];
 		DmtxPixelLoc & tlCorner = info.getTopLeftCorner();
 		DmtxPixelLoc & brCorner = info.getBotRightCorner();
 
-		dib.line(tlCorner.X, tlCorner.Y, tlCorner.X, brCorner.Y,
-			 highlightQuad);
-		dib.line(tlCorner.X, brCorner.Y, brCorner.X, brCorner.Y,
-			 highlightQuad);
-		dib.line(brCorner.X, brCorner.Y, brCorner.X, tlCorner.Y,
-			 highlightQuad);
-		dib.line(brCorner.X, tlCorner.Y, tlCorner.X, tlCorner.Y,
-			 highlightQuad);
+		dib.line(tlCorner.X, tlCorner.Y, tlCorner.X, brCorner.Y, highlightQuad);
+		dib.line(tlCorner.X, brCorner.Y, brCorner.X, brCorner.Y, highlightQuad);
+		dib.line(brCorner.X, brCorner.Y, brCorner.X, tlCorner.Y, highlightQuad);
+		dib.line(brCorner.X, tlCorner.Y, tlCorner.X, tlCorner.Y, highlightQuad);
 	}
 }
 
@@ -427,7 +411,7 @@ BarcodeInfo * Decoder::addBarcodeInfo(DmtxDecode *dec, DmtxRegion *reg,
 	addBarcodeMutex.lock();
 	BarcodeInfo * info = NULL;
 
-	string str((char *)msg->output, msg->outputIdx);
+	string str((char *) msg->output, msg->outputIdx);
 
 	if (barcodesMap[str] == NULL) {
 		// this is a unique barcode
