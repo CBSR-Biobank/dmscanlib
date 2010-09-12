@@ -74,12 +74,9 @@ const char
 					"  --debug NUM          Sets debugging level. Debugging messages are output\n"
 					"                       to stdout. Only when built UA_HAVE_DEBUG on.\n"
 					"  --debugfile          Send debugging output to file named dmscanlib.log.\n"
-					"  --select             Opens the default scanner dialog.\n"
-					"  --capability         Query selected scanner for dpi and driver type settings.\n"
-					"  --test               Tests most functions in this project.\n"
-					"  --license            Displays the license.\n"
+					"  --select             Opens the scanner selection dialog.\n"
+					"  --capability         Query selected scanner for DPI and driver type settings.\n"
 					"  -h, --help           Displays this text.\n"
-					"  --about              Information about the developers.\n"
 					"\n"
 					"Scanner/Decoding Settings\n"
 					"  -d, --decode         Acquires an image from the scanner and Decodes the 2D barcodes.\n"
@@ -116,28 +113,6 @@ const char
 					"  -b, --bottom NUM     The bottom coordinate, in inches, for the scanning window.\n";
 
 
-const char * LICENCE =  "Dmscanlib is a software library and standalone application that scans\n" 
-						"and decodes libdmtx compatible test-tubes. It is currently designed \n" 
-						"to decode 12x8 pallets that use 2D data-matrix laser etched test-tubes.\n" 
-						"Copyright (C) 2010 Canadian Biosample Repository\n\n"
-
-						"This program is free software: you can redistribute it and/or modify\n" 
-						"it under the terms of the GNU General Public License as published by\n" 
-						"the Free Software Foundation, either version 3 of the License, or\n" 
-						"(at your option) any later version.\n\n" 
-
-						"This program is distributed in the hope that it will be useful,\n" 
-						"but WITHOUT ANY WARRANTY; without even the implied warranty of\n" 
-						"MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n" 
-						"GNU General Public License for more details.\n\n" 
-
-						"You should have received a copy of the GNU General Public License\n" 
-						"along with this program.  If not, see <http://www.gnu.org/licenses/>.\n";
-
-const char * ABOUT =	"Developers of the Data Matrix Pallet Scanning Library:\n\n"
-						"Lead Programmer - Nelson Loyola\n"
-						"Programmer - Thomas Polasek\n";
-
 enum longOptID {
 	OPT_ID_BRIGHTNESS = 200,
 	OPT_ID_CELLDIST,
@@ -145,14 +120,11 @@ enum longOptID {
 	OPT_ID_CONTRAST,
 	OPT_ID_DEBUG,
 	OPT_ID_DEBUG_FILE,
-	OPT_ID_LICENSE,
-	OPT_ID_ABOUT,
 	OPT_ID_DPI,
 	OPT_ID_GAP,
 	OPT_ID_SELECT,
 	OPT_ID_CAPABILITY,
 	OPT_ID_SUPER,
-	OPT_ID_TEST,
 	OPT_ID_SQUARE_DEV,
 	OPT_ID_THRESHOLD,
 	OPT_ID_LEFT,
@@ -165,14 +137,12 @@ enum longOptID {
 CSimpleOptA::SOption longOptions[] = { 
 				{ OPT_ID_BRIGHTNESS, "--brightness",SO_REQ_SEP }, 
 				{ OPT_ID_CELLDIST, "--celldist", SO_REQ_SEP }, 
-				{OPT_ID_CORRECTIONS, "--corrections", SO_REQ_SEP }, 
+				{ OPT_ID_CORRECTIONS, "--corrections", SO_REQ_SEP },
 				{ OPT_ID_CONTRAST, "--contrast", SO_REQ_SEP }, 
 				{ 'd', "--decode", SO_NONE }, 
 				{ 'd', "-d", SO_NONE }, 
 				{ OPT_ID_DEBUG, "--debug", SO_REQ_SEP }, 
-				{OPT_ID_DEBUG_FILE, "--debugfile", SO_NONE },
-				{OPT_ID_LICENSE, "--license", SO_NONE }, 
-				{OPT_ID_ABOUT, "--about", SO_NONE }, 
+				{ OPT_ID_DEBUG_FILE, "--debugfile", SO_NONE },
 				{ OPT_ID_DPI, "--dpi",SO_REQ_SEP }, 
 				{ OPT_ID_GAP, "--gap", SO_REQ_SEP }, 
 				{ 'h', "--help",SO_NONE }, 
@@ -186,13 +156,12 @@ CSimpleOptA::SOption longOptions[] = {
 				{ 's', "--scan", SO_NONE }, 
 				{ 's', "-s",SO_NONE }, 
 				{ OPT_ID_CAPABILITY, "--capability", SO_NONE },
-				{OPT_ID_TEST, "--test", SO_NONE }, 
 				{ OPT_ID_SELECT, "--select",SO_NONE }, 
 				{ OPT_ID_SQUARE_DEV, "--square-dev", SO_REQ_SEP }, 
-				{OPT_ID_THRESHOLD, "--threshold", SO_REQ_SEP }, 
+				{ OPT_ID_THRESHOLD, "--threshold", SO_REQ_SEP },
 				{ OPT_ID_LEFT,"--left", SO_REQ_SEP }, 
 				{ OPT_ID_TOP, "--top", SO_REQ_SEP }, 
-				{OPT_ID_RIGHT, "--right", SO_REQ_SEP }, 
+				{ OPT_ID_RIGHT, "--right", SO_REQ_SEP },
 				{ OPT_ID_BOTTOM,"--bottom", SO_REQ_SEP }, 
 				{ 'l', "-l", SO_REQ_SEP }, 
 				{ 't',"-t", SO_REQ_SEP }, 
@@ -338,8 +307,6 @@ TestApp::TestApp(int argc, char ** argv) {
 		result = slSelectSourceAsDefault();
 	} else if (options.capability) {
 		result = capability();
-	} else if (options.test) {
-		result = test();
 	}
 
 	switch (result) {
@@ -460,80 +427,6 @@ int TestApp::capability() {
 	return SC_SUCCESS;
 }
 
-int TestApp::test() {
-	if (options.dpi == 0) {
-		cout << "ERROR: DPI not specified" << endl;
-		return SC_FAIL;
-	}
-
-	if ((options.left == 0.0) && (options.right == 0.0) && (options.top == 0.0)
-			&& (options.bottom == 0.0)) {
-
-		cout << "ERROR: Must provide plate offsets." << endl;
-		return SC_FAIL;
-	}
-
-	int result = SC_FAIL;
-
-	cout << "Initializing Test Procedure" << endl << endl;
-
-	cout << "==============Select Source================" << endl;
-	result = slSelectSourceAsDefault();
-	if (result != SC_SUCCESS) {
-		cout << "Failed to select source." << endl;
-		goto TEST_STOP;
-	}
-	cout << "===========================================" << endl;
-
-	cout << "==============Scan Image to File================" << endl;
-	result = slScanImage(options.debugLevel, options.dpi,
-			options.brightness, options.contrast, options.left, options.top,
-			options.right, options.bottom, "test.bmp");
-
-	if (result != SC_SUCCESS) {
-		cout << "Failed to scan image to file." << endl;
-		goto TEST_STOP;
-	}
-	cout << "===========================================" << endl;
-
-	cout << "==============Decode image from file================" << endl;
-	result = slDecodeImage(options.debugLevel, 1, "test.bmp", options.gap,
-			options.squareDev, options.threshold, options.corrections,
-			options.cellDistance,options.gapX,options.gapY,
-			options.profileA,options.profileB,options.profileC,options.isHoriztonal);
-
-	if (result != SC_SUCCESS) {
-		cout << "Failed to decode scanned image file." << endl;
-		goto TEST_STOP;
-	}
-
-	cout << "===========================================" << endl;
-
-	cout << "==============Scan & Decode Image================" << endl;
-	result = slDecodePlate(options.debugLevel, options.dpi,
-			options.brightness, options.contrast, 1, options.left, options.top,
-			options.right, options.bottom, options.gap, options.squareDev,
-			options.threshold, options.corrections, options.cellDistance,
-			options.gapX,options.gapY,
-			options.profileA,options.profileB,options.profileC,options.isHoriztonal);
-
-	if (result != SC_SUCCESS) {
-		cout << "Failed to scan & decode image." << endl;
-		goto TEST_STOP;
-	}
-
-	cout << "===========================================" << endl;
-
-	TEST_STOP:
-
-#ifdef _VISUALC_
-#ifdef _DEBUG
-	_CrtDumpMemoryLeaks();
-#endif
-#endif
-	return result;
-}
-
 void TestApp::usage() {
 	printf(USAGE_FMT, progname);
 }
@@ -613,32 +506,12 @@ bool TestApp::getCmdOptions(int argc, char ** argv) {
 				}
 				break;
 
-			case OPT_ID_LICENSE:
-				cout << endl;
-				cout << "======================================" << endl;
-				cout << LICENCE;
-				cout << "======================================" << endl;
-				exit(0);
-				break;
-
-			case OPT_ID_ABOUT:
-				cout << endl;
-				cout << "======================================" << endl;
-				cout << ABOUT;
-				cout << "======================================" << endl;
-				exit(0);
-				break;
-
 			case OPT_ID_SELECT:
 				options.select = true;
 				break;
 
 			case OPT_ID_CAPABILITY:
 				options.capability = true;
-				break;
-
-			case OPT_ID_TEST:
-				options.test = true;
 				break;
 
 			case OPT_ID_CONTRAST:
