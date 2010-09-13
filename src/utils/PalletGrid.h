@@ -25,11 +25,15 @@
 
 #include <string>
 
+struct CvRect;
+
 using namespace std;
 
 class PalletGrid {
 public:
-	enum Orientation { ORIENTATION_HORIZONTAL, ORIENTATION_VERTICAL };
+	enum Orientation {
+		ORIENTATION_HORIZONTAL, ORIENTATION_VERTICAL
+	};
 
 	static const unsigned NUM_CELLS = 96;
 
@@ -37,8 +41,11 @@ public:
 
 	static const unsigned MAX_COLS = 12;
 
-	PalletGrid(Orientation o);
+	PalletGrid(Orientation o, unsigned imgWidth, unsigned imgHeight,
+			unsigned cellWidth, unsigned cellHeight);
 	~PalletGrid();
+
+	void getImageCoordinates(unsigned row, unsigned col, CvRect & rect);
 
 	unsigned getPosition(unsigned row, unsigned col);
 
@@ -46,6 +53,11 @@ public:
 
 private:
 	unsigned orientation;
+	unsigned imgWidth;
+	unsigned imgHeight;
+	unsigned cellWidth;
+	unsigned cellHeight;
+
 };
 
 #endif /* PALLET_GRID_H_ */

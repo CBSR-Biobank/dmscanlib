@@ -24,11 +24,21 @@
 
 #include <sstream>
 
-PalletGrid::PalletGrid(Orientation o) {
+PalletGrid::PalletGrid(Orientation o, unsigned imgWidth, unsigned imgHeight,
+		unsigned cellWidth, unsigned cellHeight)
+{
 	orientation = o;
+	this->imgWidth = imgWidth;
+	this->imgHeight = imgHeight;
+	this->cellWidth = cellWidth;
+	this->cellHeight = cellHeight;
 }
 
 PalletGrid::~PalletGrid() {
+}
+
+void PalletGrid::getImageCoordinates(unsigned row, unsigned col, CvRect & rect) {
+
 }
 
 unsigned PalletGrid::getPosition(unsigned row, unsigned col) {

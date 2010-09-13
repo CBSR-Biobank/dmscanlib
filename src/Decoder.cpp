@@ -172,7 +172,8 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib) {
 	double dpi = (double) dib->getDpi();
 
 	PalletGrid grid(isHorizontal ? PalletGrid::ORIENTATION_HORIZONTAL
-			: PalletGrid::ORIENTATION_VERTICAL);
+			: PalletGrid::ORIENTATION_VERTICAL, dib->getWidth(), dib->getHeight(),
+			  gapX, gapY);
 
 	UA_DOUT(1,7,"Minimum blob width (pixels): " << minBlobWidth);
 	UA_DOUT(1,7,"Minimum blob height (pixels): " << minBlobHeight);
