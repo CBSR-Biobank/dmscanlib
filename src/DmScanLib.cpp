@@ -50,7 +50,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <sstream>
 #include <string>
 
-// XXX KERNELTEST
 #include <ctime>
 #include <cstdlib>
 #include <math.h>
@@ -188,20 +187,6 @@ int slScanImage(unsigned verbose, unsigned dpi, int brightness, int contrast,
 #endif
 }
 
-struct Pt2d{
-	int x;
-	int y;
-};
-
-Pt2d rotate(Pt2d point, Pt2d pivot,float radians){
-	
-	Pt2d rotated;
-	rotated.x = (int) (pivot.x + (point.x - pivot.x)*cos(radians) - (point.y - pivot.y)*sin(radians));
-	rotated.y = (int) (pivot.y + (point.x - pivot.x)*sin(radians) + (point.y - pivot.y)*cos(radians));
-	
-	return rotated;
-}
-
 int slDecodeCommon(unsigned plateNum, Dib & dib, Decoder & decoder,
 		const char *markedDibFilename) {
 
@@ -209,9 +194,7 @@ int slDecodeCommon(unsigned plateNum, Dib & dib, Decoder & decoder,
 	Dib *filteredDib;
 	Decoder::ProcessResult result;
 
-	UA_DOUT(1, 2, "Running slDecodeCommonCv");
-
-	UA_DOUT(1, 4, "DecodeCommon: metrical mode: " << metrical);
+	UA_DOUT(1, 5, "DecodeCommon: metrical mode: " << metrical);
 
 	/*--- apply filters ---*/
 	filteredDib = Dib::convertGrayscale(dib);
@@ -220,7 +203,8 @@ int slDecodeCommon(unsigned plateNum, Dib & dib, Decoder & decoder,
 	filteredDib->tpPresetFilter();
 	UA_ASSERT_NOT_NULL(filteredDib);
 
-	UA_DEBUG(filteredDib->writeToFile("filtered.bmp"));
+	UA_DEBUG(
+			filteredDib->writeToFile("filtered.bmp"));
 
 	/*--- obtain barcodes ---*/
 	result = decoder.processImageRegions(filteredDib);

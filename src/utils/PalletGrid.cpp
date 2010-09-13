@@ -1,8 +1,5 @@
-#ifndef __INC_ProfileSettings_h
-#define __INC_ProfileSettings_h
-
 /*
- * ProfileSettings.h
+ * CellPosition.cpp
  *
  * Dmscanlib is a software library and standalone application that scans
  * and decodes libdmtx compatible test-tubes. It is currently designed
@@ -25,17 +22,32 @@
 
 #include "PalletGrid.h"
 
-class ProfileSettings {
-public:
+#include <sstream>
 
-	static const unsigned NUM_WORDS = PalletGrid::NUM_CELLS / 32;
+PalletGrid::PalletGrid(Orientation o) {
+	orientation = o;
+}
 
-	ProfileSettings(unsigned word1, unsigned word2, unsigned word3);
+PalletGrid::~PalletGrid() {
+}
 
-	bool operator[] (unsigned x);
+unsigned PalletGrid::getPosition(unsigned row, unsigned col) {
+	unsigned position;
+	if (orientation == ORIENTATION_HORIZONTAL) {
+		position = MAX_COLS * (row + 1) - col;
+	} else {
+		position = MAX_COLS * (MAX_ROWS - col) - row;
+	}
 
-private:
-	vector<bool> bits;
-};
+	return position;
+}
 
-#endif /* __INC_ProfileSettings_h */
+void PalletGrid::getPositionStr(unsigned row, unsigned col, string & str) {
+	unsigned position = getPosition(row, col);
+	unsigned sbsRow = (position -1) / 12;
+	unsigned sbsCol = ((position - 1) % 12) - 1;
+	ostringstream out;
+	out << (char) ('A' + sbsRow) << sbsCol;
+	str = out.str();
+}
+

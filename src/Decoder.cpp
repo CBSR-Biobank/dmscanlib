@@ -1,28 +1,21 @@
 /*
- Dmscanlib is a software library and standalone application that scans
- and decodes libdmtx compatible test-tubes. It is currently designed
- to decode 12x8 pallets that use 2D data-matrix laser etched test-tubes.
- Copyright (C) 2010 Canadian Biosample Repository
-
- This program is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * Decoder.cpp
+ * Dmscanlib is a software library and standalone application that scans
+ * and decodes libdmtx compatible test-tubes. It is currently designed
+ * to decode 12x8 pallets that use 2D data-matrix laser etched test-tubes.
+ * Copyright (C) 2010 Canadian Biosample Repository
  *
- *  Created on: 22-May-2009
- *      Author: loyola
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #ifdef _VISUALC_
@@ -53,6 +46,11 @@
 
 using namespace std;
 
+struct BlobPosition {
+	CvPoint imgPosition;
+	CvRect blob;
+};
+
 Decoder::Decoder(double g, unsigned s, unsigned t, unsigned c, double dist,
 		double gx, double gy, unsigned profileA, unsigned profileB,
 		unsigned profileC, unsigned rh) :
@@ -66,14 +64,17 @@ Decoder::Decoder(double g, unsigned s, unsigned t, unsigned c, double dist,
 	gapX = gx;
 	gapY = gy;
 	isHorizontal = ((rh != 0) ? true : false);
-	UA_DOUT_NL(1,4,"Loaded Profile: ");
-	for (int i = 0; i < 96; i++) {
-		if (i % 12 == 0) {
-			UA_DOUT_NL(1,4,"\n");
-		}
-		UA_DOUT_NL(1, 4, profile[i]);
-	}
-	UA_DOUT_NL(1,4,"\n\n");
+
+	UA_DEBUG(
+			UA_DOUT_NL(1,4,"Loaded Profile: ");
+			for (int i = 0; i < 96; i++) {
+				if (i % 12 == 0) {
+					UA_DOUT_NL(1,4,"\n");
+				}
+				UA_DOUT_NL(1, 4, profile[i]);
+			}
+			UA_DOUT_NL(1,4,"\n\n");
+	);
 }
 
 Decoder::~Decoder() {
@@ -158,16 +159,8 @@ void Decoder::reduceBlobToMatrix(unsigned blobCount, Dib * dib,
 
 }
 
-struct BlobPosition {
-	CvRect position;
-	CvRect blob;
-};
-
-#define PALLET_COLUMNS 12
-#define PALLET_ROWS 8
-
 Decoder::ProcessResult Decoder::processImageRegions(Dib * dib) {
-	vector<CvRect> blobVector;
+	map<unsigned, CvRect> blobMap;
 	vector<struct BlobPosition *> rectVector;
 
 	RgbQuad green(0, 255, 0);
@@ -176,39 +169,29 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib) {
 	double barcodeSizeInches = 0.13;
 	double minBlobWidth = ((double) dib->getDpi() * barcodeSizeInches);
 	double minBlobHeight = ((double) dib->getDpi() * barcodeSizeInches);
+	double dpi = (double) dib->getDpi();
+
+	PalletGrid grid(isHorizontal ? PalletGrid::ORIENTATION_HORIZONTAL
+			: PalletGrid::ORIENTATION_VERTICAL);
 
 	UA_DOUT(1,7,"Minimum blob width (pixels): " << minBlobWidth);
 	UA_DOUT(1,7,"Minimum blob height (pixels): " << minBlobHeight);
 
-	double dpi = (double) dib->getDpi();
+	double w = dib->getWidth() / (double) PalletGrid::MAX_COLS;
+	double h = dib->getHeight() / (double) PalletGrid::MAX_ROWS;
 
-	double w = dib->getWidth() / ((double) (isHorizontal ? PALLET_COLUMNS
-			: PALLET_ROWS));
-	double h = dib->getHeight() / ((double) (isHorizontal ? PALLET_ROWS
-			: PALLET_COLUMNS));
 
 	/* -- generate blobs -- */
-	for (int j = 0; j < (isHorizontal ? PALLET_ROWS : PALLET_COLUMNS); j++) {
-		for (int i = 0; i < (isHorizontal ? PALLET_COLUMNS : PALLET_ROWS); i++) {
+	for (unsigned row = 0; row < PalletGrid::MAX_ROWS; row++) {
+		for (unsigned col = 0; col < PalletGrid::MAX_COLS; col++) {
 
-			unsigned ix, iy;
-
-			if (isHorizontal) {
-				// flip horiztonally
-				ix = (PALLET_COLUMNS - 1) - i;
-				iy = j;
-			} else {
-				ix = (PALLET_COLUMNS - 1) - j;
-				iy = (PALLET_ROWS - 1) - i;
-			}
-
-			unsigned position = ix + iy * PALLET_COLUMNS;
+			unsigned position = grid.getPosition(row, col);
 			if (!profile[position]) {
 				continue;
 			}
 
-			double cx = i * w + w / 2.0;
-			double cy = j * h + h / 2.0;
+			double cx = col * w + w / 2.0;
+			double cy = row * h + h / 2.0;
 
 			CvRect img;
 			img.x = (int) (cx - w / 2.0 + (gapX * dpi) / 2.0);
@@ -221,27 +204,28 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib) {
 			if (img.width != 0 && img.height != 0 && img.width >= minBlobWidth
 					&& img.height >= minBlobHeight) {
 
-				struct BlobPosition * pair = new struct BlobPosition();
-				pair->position.x = ix;
-				pair->position.y = iy;
-				pair->blob = img;
+				BlobPosition * blob = new BlobPosition();
+				blob->imgPosition.x = ix;
+				blob->imgPosition.y = iy;
+				blob->blob = img;
 				rectVector.push_back(pair);
 
-				blobVector.push_back(img);
+				blobMap[position] = img;
 			}
 		}
 	}
-	unsigned n, m, i, j;
 
 	/* -- record blob regions (if debug >= 1) -- */
+	unsigned n, m, i, j;
+
 	if (ua::Logger::Instance().isDebug(3, 1)) {
 
 		Dib blobDib(*dib);
 		RgbQuad white(255, 255, 255);
 
-		for (i = 0, n = blobVector.size(); i < n; i++) {
-			blobDib.rectangle(blobVector[i].x, blobVector[i].y,
-					blobVector[i].width, blobVector[i].height, white);
+		for (i = 0, n = blobMap.size(); i < n; i++) {
+			blobDib.rectangle(blobMap[i].x, blobMap[i].y,
+					blobMap[i].width, blobMap[i].height, white);
 		}
 		blobDib.writeToFile("blobRegions.bmp");
 
@@ -251,13 +235,13 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib) {
 	/* -- find barcodes -- */
 	ProcessImageManager imageProcessor(this, scanGap, squareDev, edgeThresh,
 			corrections);
-	imageProcessor.generateBarcodes(dib, blobVector, barcodeInfos);
+	imageProcessor.generateBarcodes(dib, blobMap, barcodeInfos);
 
 	if (barcodeInfos.empty()) {
 		UA_DOUT(3, 5, "no barcodes were found.");
 
 		for (j = 0, m = rectVector.size(); j < m; j++)
-			delete rectVector[j];
+		delete rectVector[j];
 
 		return IMG_INVALID;
 	}
@@ -279,11 +263,11 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib) {
 		for (j = 0, m = rectVector.size(); j < m; j++) {
 
 			// pt inside rectangle
-			if (avgx > rectVector[j]->blob.x && avgx < rectVector[j]->blob.x
+						if (avgx > rectVector[j]->blob.x && avgx <rectVector[j]->blob.x
 					+ rectVector[j]->blob.width && avgy > rectVector[j]->blob.y
 					&& avgy < rectVector[j]->blob.y
 							+ rectVector[j]->blob.height) {
-				cells[rectVector[j]->position.y][rectVector[j]->position.x]
+				cells[rectVector[j]->imgPosition.y][rectVector[j]->imgPosition.x]
 						= barcodeInfos[i]->getMsg();
 				foundGrid = true;
 				break;
