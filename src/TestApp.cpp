@@ -1,22 +1,22 @@
 /*
-Dmscanlib is a software library and standalone application that scans 
-and decodes libdmtx compatible test-tubes. It is currently designed 
-to decode 12x8 pallets that use 2D data-matrix laser etched test-tubes.
-Copyright (C) 2010 Canadian Biosample Repository
+ Dmscanlib is a software library and standalone application that scans 
+ and decodes libdmtx compatible test-tubes. It is currently designed 
+ to decode 12x8 pallets that use 2D data-matrix laser etched test-tubes.
+ Copyright (C) 2010 Canadian Biosample Repository
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 /*******************************************************************************
  * Canadian Biosample Repository
@@ -30,7 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifdef _VISUALC_
 #   define _CRTDBG_MAP_ALLOC
 #   pragma warning(disable : 4996)
-     //Scan for memory leaks in visual studio
+//Scan for memory leaks in visual studio
 #   ifdef _DEBUG
 #      define _CRTDBG_MAP_ALLOC
 #      include <stdlib.h>
@@ -112,7 +112,6 @@ const char
 					"  -r, --right NUM      The left coordinate, in inches, for the scanning window.\n"
 					"  -b, --bottom NUM     The bottom coordinate, in inches, for the scanning window.\n";
 
-
 enum longOptID {
 	OPT_ID_BRIGHTNESS = 200,
 	OPT_ID_CELLDIST,
@@ -134,40 +133,26 @@ enum longOptID {
 };
 
 /* Allowed command line arguments.  */
-CSimpleOptA::SOption longOptions[] = { 
-				{ OPT_ID_BRIGHTNESS, "--brightness",SO_REQ_SEP }, 
-				{ OPT_ID_CELLDIST, "--celldist", SO_REQ_SEP }, 
-				{ OPT_ID_CORRECTIONS, "--corrections", SO_REQ_SEP },
-				{ OPT_ID_CONTRAST, "--contrast", SO_REQ_SEP }, 
-				{ 'd', "--decode", SO_NONE }, 
-				{ 'd', "-d", SO_NONE }, 
-				{ OPT_ID_DEBUG, "--debug", SO_REQ_SEP }, 
-				{ OPT_ID_DEBUG_FILE, "--debugfile", SO_NONE },
-				{ OPT_ID_DPI, "--dpi",SO_REQ_SEP }, 
-				{ OPT_ID_GAP, "--gap", SO_REQ_SEP }, 
-				{ 'h', "--help",SO_NONE }, 
-				{ 'h', "--h", SO_NONE }, 
-				{ 'i', "--input", SO_REQ_SEP }, 
-				{'i', "-i", SO_REQ_SEP }, 
-				{ 'p', "--plate", SO_REQ_SEP }, 
-				{ 'p', "-p", SO_REQ_SEP }, 
-				{ 'o', "--output", SO_REQ_SEP },
-				{ 'o', "-o", SO_REQ_SEP }, 
-				{ 's', "--scan", SO_NONE }, 
-				{ 's', "-s",SO_NONE }, 
-				{ OPT_ID_CAPABILITY, "--capability", SO_NONE },
-				{ OPT_ID_SELECT, "--select",SO_NONE }, 
-				{ OPT_ID_SQUARE_DEV, "--square-dev", SO_REQ_SEP }, 
-				{ OPT_ID_THRESHOLD, "--threshold", SO_REQ_SEP },
-				{ OPT_ID_LEFT,"--left", SO_REQ_SEP }, 
-				{ OPT_ID_TOP, "--top", SO_REQ_SEP }, 
-				{ OPT_ID_RIGHT, "--right", SO_REQ_SEP },
-				{ OPT_ID_BOTTOM,"--bottom", SO_REQ_SEP }, 
-				{ 'l', "-l", SO_REQ_SEP }, 
-				{ 't',"-t", SO_REQ_SEP }, 
-				{ 'r', "-r", SO_REQ_SEP }, 
-				{ 'b', "-b",SO_REQ_SEP }, 
-				SO_END_OF_OPTIONS };
+CSimpleOptA::SOption longOptions[] = { { OPT_ID_BRIGHTNESS, "--brightness",
+		SO_REQ_SEP }, { OPT_ID_CELLDIST, "--celldist", SO_REQ_SEP }, {
+		OPT_ID_CORRECTIONS, "--corrections", SO_REQ_SEP }, { OPT_ID_CONTRAST,
+		"--contrast", SO_REQ_SEP }, { 'd', "--decode", SO_NONE }, { 'd', "-d",
+		SO_NONE }, { OPT_ID_DEBUG, "--debug", SO_REQ_SEP }, {
+		OPT_ID_DEBUG_FILE, "--debugfile", SO_NONE }, { OPT_ID_DPI, "--dpi",
+		SO_REQ_SEP }, { OPT_ID_GAP, "--gap", SO_REQ_SEP }, { 'h', "--help",
+		SO_NONE }, { 'h', "--h", SO_NONE }, { 'i', "--input", SO_REQ_SEP }, {
+		'i', "-i", SO_REQ_SEP }, { 'p', "--plate", SO_REQ_SEP }, { 'p', "-p",
+		SO_REQ_SEP }, { 'o', "--output", SO_REQ_SEP },
+		{ 'o', "-o", SO_REQ_SEP }, { 's', "--scan", SO_NONE }, { 's', "-s",
+				SO_NONE }, { OPT_ID_CAPABILITY, "--capability", SO_NONE }, {
+				OPT_ID_SELECT, "--select", SO_NONE }, { OPT_ID_SQUARE_DEV,
+				"--square-dev", SO_REQ_SEP }, { OPT_ID_THRESHOLD,
+				"--threshold", SO_REQ_SEP }, { OPT_ID_LEFT, "--left",
+				SO_REQ_SEP }, { OPT_ID_TOP, "--top", SO_REQ_SEP }, {
+				OPT_ID_RIGHT, "--right", SO_REQ_SEP }, { OPT_ID_BOTTOM,
+				"--bottom", SO_REQ_SEP }, { 'l', "-l", SO_REQ_SEP }, { 't',
+				"-t", SO_REQ_SEP }, { 'r', "-r", SO_REQ_SEP }, { 'b', "-b",
+				SO_REQ_SEP }, SO_END_OF_OPTIONS };
 
 #ifdef WIN32
 #define DIR_SEP_CHR '\\'
@@ -246,9 +231,9 @@ struct Options {
 
 		gapX = 0;
 		gapY = 0;
-		profileA = (unsigned)-1;
-		profileB = (unsigned)-1;
-		profileC = (unsigned)-1;
+		profileA = (unsigned) -1;
+		profileB = (unsigned) -1;
+		profileC = (unsigned) -1;
 	}
 };
 
@@ -301,7 +286,8 @@ TestApp::TestApp(int argc, char ** argv) {
 
 	if (options.decode) {
 		result = decode();
-	}if (options.scan) {
+	}
+	if (options.scan) {
 		result = scan();
 	} else if (options.select) {
 		result = slSelectSourceAsDefault();
@@ -354,8 +340,8 @@ int TestApp::decode() {
 		return slDecodeImage(options.debugLevel, options.plateNum,
 				options.infile, options.gap, options.squareDev,
 				options.threshold, options.corrections, options.cellDistance,
-				options.gapX,options.gapY,
-				options.profileA,options.profileB,options.profileC,options.isHoriztonal);
+				options.gapX, options.gapY, options.profileA, options.profileB,
+				options.profileC, options.isHoriztonal);
 	}
 
 	if ((options.left == 0.0) && (options.right == 0.0) && (options.top == 0.0)
@@ -369,13 +355,12 @@ int TestApp::decode() {
 		return SC_FAIL;
 	}
 
-	return slDecodePlate(options.debugLevel, options.dpi,
-			options.brightness, options.contrast, options.plateNum,
-			options.left, options.top, options.right, options.bottom,
-			options.gap, options.squareDev, options.threshold,
-			options.corrections, options.cellDistance,
-				options.gapX,options.gapY,
-				options.profileA,options.profileB,options.profileC,options.isHoriztonal);
+	return slDecodePlate(options.debugLevel, options.dpi, options.brightness,
+			options.contrast, options.plateNum, options.left, options.top,
+			options.right, options.bottom, options.gap, options.squareDev,
+			options.threshold, options.corrections, options.cellDistance,
+			options.gapX, options.gapY, options.profileA, options.profileB,
+			options.profileC, options.isHoriztonal);
 }
 
 int TestApp::scan() {
@@ -456,7 +441,6 @@ bool TestApp::getCmdOptions(int argc, char ** argv) {
 			case 'v':
 				options.isHoriztonal = false;
 				break;
-				
 
 			case 'h':
 				options.help = true;
@@ -497,8 +481,8 @@ bool TestApp::getCmdOptions(int argc, char ** argv) {
 				break;
 
 			case OPT_ID_DPI:
-				options.dpi = strtoul((const char *) args.OptionArg(),
-						&end, 10);
+				options.dpi
+						= strtoul((const char *) args.OptionArg(), &end, 10);
 				if (*end != 0) {
 					cerr << "invalid value for dpi: " << args.OptionArg()
 							<< endl;
@@ -606,10 +590,10 @@ bool TestApp::getCmdOptions(int argc, char ** argv) {
 	return true;
 }
 int main(int argc, char ** argv) {
-	#if defined(_VISUALC_) && defined(_DEBUG)
-			_CrtSetDbgFlag ( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
-	#endif
-	
+#if defined(_VISUALC_) && defined(_DEBUG)
+	_CrtSetDbgFlag ( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
+#endif
+
 	TestApp app(argc, argv);
 }
 
