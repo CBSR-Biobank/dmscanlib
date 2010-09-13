@@ -41,13 +41,22 @@ public:
 
 	static const unsigned MAX_COLS = 12;
 
-	PalletGrid(Orientation o, unsigned imgWidth, unsigned imgHeight,
-			unsigned cellWidth, unsigned cellHeight);
+	/**
+	 * Constructs a pallet grid with cells cellWidth pixels and
+	 * cellHeight pixels.
+	 *
+	 * @param o The orientation of the grid. Either ORIENTATION_HORIZONTAL
+	 * or ORIENTATION_VERTICAL.
+	 *
+	 * @param cellWidth The number of pixels for the cell width.
+	 *
+	 * @param cellHeight The number of pixels for the cell height.
+	 */
+	PalletGrid(Orientation o, unsigned cellWidth, unsigned cellHeight);
+
 	~PalletGrid();
 
 	void getImageCoordinates(unsigned row, unsigned col, CvRect & rect);
-
-	unsigned getPosition(unsigned row, unsigned col);
 
 	void getPositionStr(unsigned row, unsigned col, string & str);
 

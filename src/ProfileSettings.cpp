@@ -39,7 +39,8 @@ ProfileSettings::ProfileSettings(unsigned word1, unsigned word2, unsigned word3)
 	}
 }
 
-bool ProfileSettings::operator[] (unsigned x) {
-	UA_ASSERTS(x < PalletGrid::NUM_CELLS, "invalid bit requested " << x);
-	return bits[x];
+bool ProfileSettings::getCellEnabled(unsigned row, unsigned col) {
+	UA_ASSERTS(row < PalletGrid::MAX_ROWS, "invalid row requested " << row);
+	UA_ASSERTS(col < PalletGrid::MAX_COLS, "invalid column requested " << col);
+	return bits[PalletGrid::MAX_COLS * row + col];
 }

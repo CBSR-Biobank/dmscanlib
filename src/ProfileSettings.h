@@ -36,7 +36,15 @@ public:
 
 	ProfileSettings(unsigned word1, unsigned word2, unsigned word3);
 
-	bool operator[] (unsigned x);
+	/**
+	 * Returns wether or not the pallet location should be decoded.
+	 *
+	 * @param row a number between 0 and PalletGrid::MAX_ROWS - 1.
+	 * @param col a number between 0 and PalletGrid::MAX_COLS - 1.
+	 *
+	 * @return true if the cell should be decoded.
+	 */
+	bool getCellEnabled(unsigned row, unsigned col);
 
 private:
 	vector<bool> bits;

@@ -51,6 +51,9 @@ struct BlobPosition {
 	CvRect blob;
 };
 
+const double Decoder::BARCODE_SIDE_LENGTH_INCHES = 0.13;
+
+
 Decoder::Decoder(double g, unsigned s, unsigned t, unsigned c, double dist,
 		double gx, double gy, unsigned profileA, unsigned profileB,
 		unsigned profileC, unsigned rh) :
@@ -67,11 +70,11 @@ Decoder::Decoder(double g, unsigned s, unsigned t, unsigned c, double dist,
 
 	UA_DEBUG(
 			UA_DOUT_NL(1,4,"Loaded Profile: ");
-			for (int i = 0; i < 96; i++) {
-				if (i % 12 == 0) {
-					UA_DOUT_NL(1,4,"\n");
+			for (unsigned row = 0; row < PalletGrid::MAX_ROWS; ++row) {
+				for (unsigned col = 0; col< PalletGrid::MAX_COLS; ++col) {
+					UA_DOUT_NL(1, 4, profile.getCellEnabled(row, col));
 				}
-				UA_DOUT_NL(1, 4, profile[i]);
+				UA_DOUT_NL(1,4,"\n");
 			}
 			UA_DOUT_NL(1,4,"\n\n");
 	);
@@ -166,46 +169,34 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib) {
 	RgbQuad green(0, 255, 0);
 	RgbQuad yellow(255, 255, 0);
 
-	double barcodeSizeInches = 0.13;
-	double minBlobWidth = ((double) dib->getDpi() * barcodeSizeInches);
-	double minBlobHeight = ((double) dib->getDpi() * barcodeSizeInches);
-	double dpi = (double) dib->getDpi();
+	dpi = dib->getDpi();
+	double minBlobWidth = dpi * BARCODE_SIDE_LENGTH_INCHES;
+	double minBlobHeight = dpi * BARCODE_SIDE_LENGTH_INCHES;
+	unsigned gapXpixels = static_cast<unsigned>(dpi * gapX);
+	unsigned gapYpixels = static_cast<unsigned>(dpi * gapY);
 
 	PalletGrid grid(isHorizontal ? PalletGrid::ORIENTATION_HORIZONTAL
-			: PalletGrid::ORIENTATION_VERTICAL, dib->getWidth(), dib->getHeight(),
-			  gapX, gapY);
+			: PalletGrid::ORIENTATION_VERTICAL, gapXpixels, gapYpixels);
 
 	UA_DOUT(1,7,"Minimum blob width (pixels): " << minBlobWidth);
 	UA_DOUT(1,7,"Minimum blob height (pixels): " << minBlobHeight);
 
-	double w = dib->getWidth() / (double) PalletGrid::MAX_COLS;
-	double h = dib->getHeight() / (double) PalletGrid::MAX_ROWS;
-
-
 	/* -- generate blobs -- */
 	for (unsigned row = 0; row < PalletGrid::MAX_ROWS; row++) {
 		for (unsigned col = 0; col < PalletGrid::MAX_COLS; col++) {
-
-			unsigned position = grid.getPosition(row, col);
-			if (!profile[position]) {
+			if (!profile.getCellEnabled(row, col)) {
 				continue;
 			}
 
-			double cx = col * w + w / 2.0;
-			double cy = row * h + h / 2.0;
-
 			CvRect img;
-			img.x = (int) (cx - w / 2.0 + (gapX * dpi) / 2.0);
-			img.y = (int) (cy - h / 2.0 + (gapY * dpi) / 2.0);
-			img.width = (int) (w - gapX * dpi);
-			img.height = (int) (h - gapY * dpi);
+			grid.getImageCoordinates(row, col, img);
 
 			reduceBlobToMatrix(position, dib, img);
 
 			if (img.width != 0 && img.height != 0 && img.width >= minBlobWidth
 					&& img.height >= minBlobHeight) {
 
-				BlobPosition * blob = new BlobPosition();
+				BlobPosition * blob = newBlobPosition();
 				blob->imgPosition.x = ix;
 				blob->imgPosition.y = iy;
 				blob->blob = img;
@@ -225,8 +216,8 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib) {
 		RgbQuad white(255, 255, 255);
 
 		for (i = 0, n = blobMap.size(); i < n; i++) {
-			blobDib.rectangle(blobMap[i].x, blobMap[i].y,
-					blobMap[i].width, blobMap[i].height, white);
+			blobDib.rectangle(blobMap[i].x, blobMap[i].y, blobMap[i].width,
+					blobMap[i].height, white);
 		}
 		blobDib.writeToFile("blobRegions.bmp");
 
@@ -242,7 +233,7 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib) {
 		UA_DOUT(3, 5, "no barcodes were found.");
 
 		for (j = 0, m = rectVector.size(); j < m; j++)
-		delete rectVector[j];
+			delete rectVector[j];
 
 		return IMG_INVALID;
 	}
@@ -264,7 +255,7 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib) {
 		for (j = 0, m = rectVector.size(); j < m; j++) {
 
 			// pt inside rectangle
-						if (avgx > rectVector[j]->blob.x && avgx <rectVector[j]->blob.x
+			if (avgx > rectVector[j]->blob.x && avgx < rectVector[j]->blob.x
 					+ rectVector[j]->blob.width && avgy > rectVector[j]->blob.y
 					&& avgy < rectVector[j]->blob.y
 							+ rectVector[j]->blob.height) {
@@ -400,7 +391,7 @@ BarcodeInfo * Decoder::addBarcodeInfo(DmtxDecode *dec, DmtxRegion *reg,
 
 	if (barcodesMap[str] == NULL) {
 		// this is a unique barcode
-		info = new BarcodeInfo(dec, reg, msg);
+		info = newBarcodeInfo(dec, reg, msg);
 		UA_ASSERT_NOT_NULL(info);
 		barcodesMap[str] = info;
 		barcodeInfos.push_back(info);

@@ -2,7 +2,7 @@
  * CellPosition.cpp
  *
  * Dmscanlib is a software library and standalone application that scans
- * and decodes libdmtx compatible test-tubes. It is currently designed
+ * and decodes Libdmtx compatible test-tubes. It is currently designed
  * to decode 12x8 pallets that use 2D data-matrix laser etched test-tubes.
  * Copyright (C) 2010 Canadian Biosample Repository
  *
@@ -21,12 +21,13 @@
  */
 
 #include "PalletGrid.h"
+#include "UaAssert.h"
+#include "cxtypes.h"
+
 
 #include <sstream>
 
-PalletGrid::PalletGrid(Orientation o, unsigned imgWidth, unsigned imgHeight,
-		unsigned cellWidth, unsigned cellHeight)
-{
+PalletGrid::PalletGrid(Orientation o, unsigned cellWidth, unsigned cellHeight) {
 	orientation = o;
 	this->imgWidth = imgWidth;
 	this->imgHeight = imgHeight;
@@ -38,26 +39,25 @@ PalletGrid::~PalletGrid() {
 }
 
 void PalletGrid::getImageCoordinates(unsigned row, unsigned col, CvRect & rect) {
+	UA_ASSERT(row < MAX_ROWS);
+	UA_ASSERT(col < MAX_COLS);
 
-}
-
-unsigned PalletGrid::getPosition(unsigned row, unsigned col) {
-	unsigned position;
 	if (orientation == ORIENTATION_HORIZONTAL) {
-		position = MAX_COLS * (row + 1) - col;
+		rect.x = cellWidth * (MAX_COLS - col - 1);
+		rect.y = cellHeight * (MAX_ROWS - row - 1);
+	} else if (orientation == ORIENTATION_VERTICAL) {
+		rect.x = cellHeight * (MAX_COLS - col - 1);
+		rect.y = cellWidth * (MAX_ROWS - row - 1);
 	} else {
-		position = MAX_COLS * (MAX_ROWS - col) - row;
+		UA_ASSERTS(false, "orientation invalid: " << orientation);
 	}
-
-	return position;
 }
 
 void PalletGrid::getPositionStr(unsigned row, unsigned col, string & str) {
-	unsigned position = getPosition(row, col);
-	unsigned sbsRow = (position -1) / 12;
-	unsigned sbsCol = ((position - 1) % 12) - 1;
+	UA_ASSERT(row < MAX_ROWS);
+	UA_ASSERT(col < MAX_COLS);
+
 	ostringstream out;
-	out << (char) ('A' + sbsRow) << sbsCol;
+	out << (char) ('A' + row) << col;
 	str = out.str();
 }
-

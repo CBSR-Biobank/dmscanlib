@@ -82,6 +82,7 @@ private:
 
 	static const unsigned PALLET_ROWS = 8;
 	static const unsigned PALLET_COLUMNS = 12;
+	static const double BARCODE_SIDE_LENGTH_INCHES;
 
 	double scanGap;
 	unsigned squareDev;
