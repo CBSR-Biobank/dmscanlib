@@ -48,11 +48,16 @@ public:
 	 * @param o The orientation of the grid. Either ORIENTATION_HORIZONTAL
 	 * or ORIENTATION_VERTICAL.
 	 *
-	 * @param cellWidth The number of pixels for the cell width.
+	 * @param imgWidth The width of the image in pixels.
 	 *
-	 * @param cellHeight The number of pixels for the cell height.
+	 * @param imgHeight The height of the image in pixels.
+	 *
+	 * @param gapX The horizontal gap between cells in pixels.
+	 *
+	 * @param gapY The vertical gap between cells in pixels.
 	 */
-	PalletGrid(Orientation o, unsigned cellWidth, unsigned cellHeight);
+	PalletGrid(Orientation o, unsigned imgWidth, unsigned imgHeight,
+			unsigned gapX, unsigned gapY);
 
 	~PalletGrid();
 
@@ -62,10 +67,10 @@ public:
 
 private:
 	unsigned orientation;
-	unsigned imgWidth;
-	unsigned imgHeight;
 	unsigned cellWidth;
 	unsigned cellHeight;
+	unsigned gapX;
+	unsigned gapY;
 
 };
 

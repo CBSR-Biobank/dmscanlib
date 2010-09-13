@@ -32,6 +32,7 @@
 #include "BinRegion.h"
 #include "ProcessImageManager.h"
 
+#include <sstream>
 #include <time.h>
 #include <iostream>
 #include <math.h>
@@ -46,18 +47,12 @@
 
 using namespace std;
 
-struct BlobPosition {
-	CvPoint imgPosition;
-	CvRect blob;
-};
-
 const double Decoder::BARCODE_SIDE_LENGTH_INCHES = 0.13;
-
 
 Decoder::Decoder(double g, unsigned s, unsigned t, unsigned c, double dist,
 		double gx, double gy, unsigned profileA, unsigned profileB,
 		unsigned profileC, unsigned rh) :
-	profile(profileA, profileB, profileC) {
+	profile(profileA, profileB, profileC), palletGrid(NULL) {
 	ua::Logger::Instance().subSysHeaderSet(3, "Decoder");
 	scanGap = g;
 	squareDev = s;
@@ -68,45 +63,34 @@ Decoder::Decoder(double g, unsigned s, unsigned t, unsigned c, double dist,
 	gapY = gy;
 	isHorizontal = ((rh != 0) ? true : false);
 
-	UA_DEBUG(
-			UA_DOUT_NL(1,4,"Loaded Profile: ");
-			for (unsigned row = 0; row < PalletGrid::MAX_ROWS; ++row) {
-				for (unsigned col = 0; col< PalletGrid::MAX_COLS; ++col) {
-					UA_DOUT_NL(1, 4, profile.getCellEnabled(row, col));
-				}
-				UA_DOUT_NL(1,4,"\n");
-			}
-			UA_DOUT_NL(1,4,"\n\n");
-	);
+#ifdef _DEBUG
+	ostringstream out;
+	for (unsigned row = 0; row < PalletGrid::MAX_ROWS; ++row) {
+		for (unsigned col = 0; col < PalletGrid::MAX_COLS; ++col) {
+			out << profile.getCellEnabled(row, col);
+		}
+		out << endl;
+	}
+	UA_DOUT(1, 4, "Loaded Profile: \n" << out.str());
+#endif
 }
 
 Decoder::~Decoder() {
-	BarcodeInfo *b;
-
-	while (barcodeInfos.size() > 0) {
-		b = barcodeInfos.back();
-		barcodeInfos.pop_back();
-		UA_ASSERT_NOT_NULL(b);
-		delete b;
-	}
-}
-
-void Decoder::initCells(unsigned maxRows, unsigned maxCols) {
-	cells.resize(maxRows);
-	for (unsigned row = 0; row < maxRows; ++row) {
-		cells[row].resize(maxCols);
-	}
 }
 
 // reduces the blob to a smaller region (matrix outline)
-void Decoder::reduceBlobToMatrix(unsigned blobCount, Dib * dib,
-		CvRect & inputBlob) {
+void Decoder::reduceBlobToMatrix(Dib * dib, CvRect & inputBlob) {
 	Dib croppedDib;
 	CBlobResult blobs;
 	IplImageContainer *img;
 
 	croppedDib.crop(*dib, inputBlob.x, inputBlob.y, inputBlob.x
 			+ inputBlob.width, inputBlob.y + inputBlob.height);
+#ifdef _DEBUG
+	ostringstream name;
+	name << "blob-" << inputBlob.x << "-" << inputBlob.y << ".bmp";
+	croppedDib.writeToFile(name.str().c_str());
+#endif
 	UA_ASSERT_NOT_NULL(croppedDib.getPixelBuffer());
 
 	img = croppedDib.generateIplImage();
@@ -156,27 +140,23 @@ void Decoder::reduceBlobToMatrix(unsigned blobCount, Dib * dib,
 		inputBlob.y = 0;
 		inputBlob.width = 0;
 		inputBlob.height = 0;
-		UA_DOUT(1,1,"could not reduce blob #" << blobCount);
 		return;
 	}
 
 }
 
 Decoder::ProcessResult Decoder::processImageRegions(Dib * dib) {
-	map<unsigned, CvRect> blobMap;
-	vector<struct BlobPosition *> rectVector;
-
-	RgbQuad green(0, 255, 0);
-	RgbQuad yellow(255, 255, 0);
-
 	dpi = dib->getDpi();
+	unsigned gapXpixels = static_cast<unsigned> (dpi * gapX);
+	unsigned gapYpixels = static_cast<unsigned> (dpi * gapY);
 	double minBlobWidth = dpi * BARCODE_SIDE_LENGTH_INCHES;
 	double minBlobHeight = dpi * BARCODE_SIDE_LENGTH_INCHES;
-	unsigned gapXpixels = static_cast<unsigned>(dpi * gapX);
-	unsigned gapYpixels = static_cast<unsigned>(dpi * gapY);
+	CvRect rect;
 
-	PalletGrid grid(isHorizontal ? PalletGrid::ORIENTATION_HORIZONTAL
-			: PalletGrid::ORIENTATION_VERTICAL, gapXpixels, gapYpixels);
+	palletGrid = new PalletGrid(
+			isHorizontal ? PalletGrid::ORIENTATION_HORIZONTAL
+					: PalletGrid::ORIENTATION_VERTICAL, dib->getWidth(),
+			dib->getHeight(), gapXpixels, gapYpixels);
 
 	UA_DOUT(1,7,"Minimum blob width (pixels): " << minBlobWidth);
 	UA_DOUT(1,7,"Minimum blob height (pixels): " << minBlobHeight);
@@ -188,95 +168,48 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib) {
 				continue;
 			}
 
-			CvRect img;
-			grid.getImageCoordinates(row, col, img);
+			palletGrid->getImageCoordinates(row, col, rect);
+			reduceBlobToMatrix(dib, rect);
 
-			reduceBlobToMatrix(position, dib, img);
-
-			if (img.width != 0 && img.height != 0 && img.width >= minBlobWidth
-					&& img.height >= minBlobHeight) {
-
-				BlobPosition * blob = newBlobPosition();
-				blob->imgPosition.x = ix;
-				blob->imgPosition.y = iy;
-				blob->blob = img;
-				rectVector.push_back(pair);
-
-				blobMap[position] = img;
+			if ((rect.width != 0) && (rect.height != 0) && (rect.width
+					>= minBlobWidth) && (rect.height >= minBlobHeight)) {
+				BarcodeInfo info;
+				info.setPreProcessBoundingBox(rect);
+				barcodeInfos[row][col] = info;
 			}
 		}
 	}
 
-	/* -- record blob regions (if debug >= 1) -- */
-	unsigned n, m, i, j;
-
-	if (ua::Logger::Instance().isDebug(3, 1)) {
-
-		Dib blobDib(*dib);
-		RgbQuad white(255, 255, 255);
-
-		for (i = 0, n = blobMap.size(); i < n; i++) {
-			blobDib.rectangle(blobMap[i].x, blobMap[i].y, blobMap[i].width,
-					blobMap[i].height, white);
+#ifdef _DEBUG
+	// record blob regions
+	Dib blobDib(*dib);
+	RgbQuad white(255, 255, 255);
+	for (unsigned row = 0, rows = barcodeInfos.size(); row < rows; ++row) {
+		for (unsigned col = 0, cols = barcodeInfos[row].size(); col < cols; ++col) {
+			CvRect & rect = barcodeInfos[row][col].getPreProcessBoundingBox();
+			blobDib.rectangle(rect.x, rect.y, rect.width, rect.height, white);
 		}
-		blobDib.writeToFile("blobRegions.bmp");
-
-		UA_DOUT(1,4,"Created blobRegion bitmap");
 	}
+	blobDib.writeToFile("blobRegions.bmp");
+#endif
 
-	/* -- find barcodes -- */
 	ProcessImageManager imageProcessor(this, scanGap, squareDev, edgeThresh,
 			corrections);
-	imageProcessor.generateBarcodes(dib, blobMap, barcodeInfos);
+	imageProcessor.generateBarcodes(dib, barcodeInfos);
 
-	if (barcodeInfos.empty()) {
-		UA_DOUT(3, 5, "no barcodes were found.");
-
-		for (j = 0, m = rectVector.size(); j < m; j++)
-			delete rectVector[j];
-
-		return IMG_INVALID;
-	}
-
-	/* -- load barcodes into the appropiate cell region -- */
-	width = dib->getWidth();
-	height = dib->getHeight();
-
-	initCells(PALLET_ROWS, PALLET_COLUMNS);
-
-	for (i = 0, n = barcodeInfos.size(); i < n; ++i) {
-		DmtxPixelLoc & tlCorner = barcodeInfos[i]->getTopLeftCorner();
-		DmtxPixelLoc & brCorner = barcodeInfos[i]->getBotRightCorner();
-
-		double avgx = (tlCorner.X + brCorner.X) / 2.0;
-		double avgy = (tlCorner.Y + brCorner.Y) / 2.0;
-
-		bool foundGrid = false;
-		for (j = 0, m = rectVector.size(); j < m; j++) {
-
-			// pt inside rectangle
-			if (avgx > rectVector[j]->blob.x && avgx < rectVector[j]->blob.x
-					+ rectVector[j]->blob.width && avgy > rectVector[j]->blob.y
-					&& avgy < rectVector[j]->blob.y
-							+ rectVector[j]->blob.height) {
-				cells[rectVector[j]->imgPosition.y][rectVector[j]->imgPosition.x]
-						= barcodeInfos[i]->getMsg();
-				foundGrid = true;
-				break;
+	unsigned decodeCount = 0;
+	for (unsigned row = 0, rows = barcodeInfos.size(); row < rows; ++row) {
+		for (unsigned col = 0, cols = barcodeInfos[row].size(); col < cols; ++col) {
+			if (barcodeInfos[row][col].getMsg().length() > 0) {
+				++decodeCount;
 			}
 		}
-		if (!foundGrid) {
-			UA_DOUT(3, 1, "found a barcode but could not locate the grid region");
-
-			for (j = 0, m = rectVector.size(); j < m; j++)
-				delete rectVector[j];
-
-			return POS_CALC_ERROR;
-		}
 	}
 
-	for (j = 0, m = rectVector.size(); j < m; j++)
-		delete rectVector[j];
+	if (decodeCount == 0) {
+		UA_DOUT(3, 5, "no barcodes were found.");
+		return IMG_INVALID;
+	}
 
 	return OK;
 }
@@ -369,35 +302,19 @@ void Decoder::imageShowBarcodes(Dib & dib, bool regions) {
 	RgbQuad & highlightQuad = (dib.getBitsPerPixel() == 8 ? quadWhite
 			: quadPink);
 
-	for (unsigned i = 0, n = barcodeInfos.size(); i < n; ++i) {
-		BarcodeInfo & info = *barcodeInfos[i];
-		DmtxPixelLoc & tlCorner = info.getTopLeftCorner();
-		DmtxPixelLoc & brCorner = info.getBotRightCorner();
-
-		dib.line(tlCorner.X, tlCorner.Y, tlCorner.X, brCorner.Y, highlightQuad);
-		dib.line(tlCorner.X, brCorner.Y, brCorner.X, brCorner.Y, highlightQuad);
-		dib.line(brCorner.X, brCorner.Y, brCorner.X, tlCorner.Y, highlightQuad);
-		dib.line(brCorner.X, tlCorner.Y, tlCorner.X, tlCorner.Y, highlightQuad);
+	map<CvPoint, BarcodeInfo>::iterator it;
+	for (unsigned row = 0, rows = barcodeInfos.size(); row < rows; ++row) {
+		for (unsigned col = 0, cols = barcodeInfos[row].size(); col < cols; ++col) {
+			CvRect rect = barcodeInfos[row][col].getPostProcessBoundingBox();
+			dib.rectangle(rect.x, rect.y, rect.x + rect.width, rect.y
+					+ rect.height, highlightQuad);
+		}
 	}
 }
 
-// this method needs to be thread safe
-BarcodeInfo * Decoder::addBarcodeInfo(DmtxDecode *dec, DmtxRegion *reg,
-		DmtxMessage *msg) {
-	addBarcodeMutex.lock();
-	BarcodeInfo * info = NULL;
+string & Decoder::getBarcode(unsigned row, unsigned col) {
+	UA_ASSERT(row < PalletGrid::MAX_ROWS);
+	UA_ASSERT(col < PalletGrid::MAX_COLS);
 
-	string str((char *) msg->output, msg->outputIdx);
-
-	if (barcodesMap[str] == NULL) {
-		// this is a unique barcode
-		info = newBarcodeInfo(dec, reg, msg);
-		UA_ASSERT_NOT_NULL(info);
-		barcodesMap[str] = info;
-		barcodeInfos.push_back(info);
-		UA_DOUT(3, 9, "Succesfully added barcode: " << info->getMsg());
-	}
-
-	addBarcodeMutex.unlock();
-	return info;
+	return barcodeInfos[row][col].getMsg();
 }

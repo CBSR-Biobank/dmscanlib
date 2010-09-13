@@ -24,15 +24,24 @@
 #include "UaAssert.h"
 #include "cxtypes.h"
 
-
 #include <sstream>
 
-PalletGrid::PalletGrid(Orientation o, unsigned cellWidth, unsigned cellHeight) {
+PalletGrid::PalletGrid(Orientation o, unsigned imgWidth, unsigned imgHeight,
+		unsigned gapX, unsigned gapY) {
 	orientation = o;
-	this->imgWidth = imgWidth;
-	this->imgHeight = imgHeight;
-	this->cellWidth = cellWidth;
-	this->cellHeight = cellHeight;
+
+	if (orientation == ORIENTATION_HORIZONTAL) {
+		cellWidth = imgWidth / MAX_COLS;
+		cellHeight = imgHeight / MAX_ROWS;
+	} else if (orientation == ORIENTATION_VERTICAL) {
+		cellWidth = imgWidth / MAX_ROWS;
+		cellHeight = imgHeight / MAX_COLS;
+	} else {
+		UA_ASSERTS(false, "orientation invalid: " << orientation);
+	}
+
+	this->gapX = gapX;
+	this->gapY = gapY;
 }
 
 PalletGrid::~PalletGrid() {
@@ -43,14 +52,17 @@ void PalletGrid::getImageCoordinates(unsigned row, unsigned col, CvRect & rect) 
 	UA_ASSERT(col < MAX_COLS);
 
 	if (orientation == ORIENTATION_HORIZONTAL) {
-		rect.x = cellWidth * (MAX_COLS - col - 1);
-		rect.y = cellHeight * (MAX_ROWS - row - 1);
+		rect.x = cellWidth * (MAX_COLS - col - 1) + gapX;
+		rect.y = cellHeight * (MAX_ROWS - row - 1) + gapY;
 	} else if (orientation == ORIENTATION_VERTICAL) {
-		rect.x = cellHeight * (MAX_COLS - col - 1);
-		rect.y = cellWidth * (MAX_ROWS - row - 1);
+		rect.x = cellHeight * (MAX_COLS - col - 1) + gapY;
+		rect.y = cellWidth * (MAX_ROWS - row - 1) + gapX;
 	} else {
 		UA_ASSERTS(false, "orientation invalid: " << orientation);
 	}
+
+	rect.width = cellWidth - 2 * gapX;
+	rect.height = cellWidth - 2 * gapY;
 }
 
 void PalletGrid::getPositionStr(unsigned row, unsigned col, string & str) {

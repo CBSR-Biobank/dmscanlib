@@ -38,11 +38,14 @@ using namespace std;
 
 class Dib;
 class BinRegion;
+struct CvRect;
 
 class BarcodeInfo {
 public:
-	BarcodeInfo(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
+	BarcodeInfo();
 	~BarcodeInfo();
+
+	void postProcess(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
 
 	string & getMsg() {
 		return str;
@@ -51,44 +54,19 @@ public:
 		return strcmp(this->getMsg().c_str(),other->getMsg().c_str()) == 0;
 	}
 
-	void getCorners(DmtxVector2 & p00, DmtxVector2 & p10,
-			DmtxVector2 & p11, DmtxVector2 & p01);
-	DmtxPixelLoc & getTopLeftCorner();
-	DmtxPixelLoc & getBotRightCorner();
-
-	void setColBinRegion(BinRegion * c) {
-		UA_ASSERT_NOT_NULL(c);
-		colBinRegion = c;
-	}
-
-	BinRegion & getColBinRegion() {
-		UA_ASSERT_NOT_NULL(colBinRegion);
-		return *colBinRegion;
-	}
-
-	void setRowBinRegion(BinRegion * c) {
-		UA_ASSERT_NOT_NULL(c);
-		rowBinRegion = c;
-	}
-
-	BinRegion & getRowBinRegion() {
-		UA_ASSERT_NOT_NULL(rowBinRegion);
-		return *rowBinRegion;
-	}
+	void setPreProcessBoundingBox(CvRect & rect);
+	CvRect & getPreProcessBoundingBox();
+	CvRect & getPostProcessBoundingBox() ;
 	void alignCoordinates(int x, int y);
 
-	static void removeItems(vector<BarcodeInfo *>  & msgInfos);
+
 	static void debugShowItems(vector<BarcodeInfo *>  & msgInfos);
 
 private:
 	string str;
 	DmtxVector2 p00, p10, p11, p01;
-	BinRegion * colBinRegion;
-	BinRegion * rowBinRegion;
-	DmtxPixelLoc topLeft;
-	DmtxPixelLoc botRight;
-
-	void getBoundingBox() ;
+	CvRect preRect;
+	CvRect postRect;
 
 	friend ostream & operator<<(ostream & os, BarcodeInfo & m);
 	friend struct BarcodeInfoSort;

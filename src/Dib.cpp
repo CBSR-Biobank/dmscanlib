@@ -1029,7 +1029,6 @@ IplImageContainer *Dib::generateIplImage()
 	return iplContainer;
 }
 
-
 void Dib::rectangle(unsigned x, unsigned y, unsigned width, unsigned height,
 		    RgbQuad & quad)
 {
@@ -1040,72 +1039,6 @@ void Dib::rectangle(unsigned x, unsigned y, unsigned width, unsigned height,
 
 }
 
-struct Pt2d{
-	int x;
-	int y;
-};
-
-Pt2d rotater(Pt2d point, Pt2d pivot,float radians){
-
-	Pt2d rotated;
-	rotated.x = (int) (pivot.x + (point.x - pivot.x)*cos(radians) - (point.y - pivot.y)*sin(radians));
-	rotated.y = (int) (pivot.y + (point.x - pivot.x)*sin(radians) + (point.y - pivot.y)*cos(radians));
-
-	return rotated;
-}
-void Dib::rectangleRotated(unsigned x, unsigned y, unsigned width, unsigned height,
-					RgbQuad & quad,float radians)
-{
-	Pt2d pivot,start,end;
-	
-	pivot.x = x;
-	pivot.y = y;
-
-	//line 1
-	start.x = x;
-	start.y = y;
-	end.x = x;
-	end.y = y + height;
-	
-	start = rotater(start,pivot,radians);
-	end = rotater(end,pivot,radians);
-
-	line(start.x, start.y, end.x, end.y, quad);
-
-
-	//line 2
-	start.x = x;
-	start.y = y;
-	end.x = x + width;
-	end.y = y ;
-
-	start = rotater(start,pivot,radians);
-	end = rotater(end,pivot,radians);
-
-	line(start.x, start.y, end.x, end.y, quad);
-
-	//line 3
-	start.x = x + width;
-	start.y = y;
-	end.x = x + width;
-	end.y = y + height;
-
-	start = rotater(start,pivot,radians);
-	end = rotater(end,pivot,radians);
-
-	line(start.x, start.y, end.x, end.y, quad);
-
-	//line 4
-	start.x = x ;
-	start.y = y + height;
-	end.x = x + width;
-	end.y = y + height;
-
-	start = rotater(start,pivot,radians);
-	end = rotater(end,pivot,radians);
-
-	line(start.x, start.y, end.x, end.y, quad);
-}
 /*
  * generate x,y coordinates to draw a line from x0,y0 to x1,y1 and output the
  * coordinates in the same direction that they are drawn.
@@ -1183,8 +1116,6 @@ void Dib::line(unsigned x0, unsigned y0, unsigned x1, unsigned y1,
 		}
 	}
 }
-
-
 
 void Dib::tpPresetFilter()
 {

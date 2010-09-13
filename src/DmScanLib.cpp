@@ -138,17 +138,15 @@ int isValidDpi(int dpi) {
 #endif
 }
 
-void formatCellMessages(unsigned plateNum, vector<vector<string> >&cells,
+void formatCellMessages(unsigned plateNum, Decoder & decoder,
 		string & msg) {
 	ostringstream out;
 	out << "#Plate,Row,Col,Barcode" << endl;
-	for (unsigned row = 0, numRows = cells.size(); row < numRows; ++row) {
-		for (unsigned col = 0, numCols = cells[row].size(); col < numCols; ++col) {
-			if (cells[row][col].length() == 0)
-				continue;
 
-			out << plateNum << "," << (char) ('A' + row) << "," << col + 1
-					<< "," << cells[row][col] << endl;
+	for (unsigned row = 0; row < PalletGrid::MAX_ROWS; ++row) {
+		for (unsigned col = 0; col < PalletGrid::MAX_COLS; ++col) {
+			out << plateNum << "," << row << "," << col << ","
+					<< decoder.getBarcode(row, col) << endl;
 		}
 	}
 	msg = out.str();
@@ -344,7 +342,7 @@ int slDecodeImage(unsigned verbose, unsigned plateNum, const char *filename,
 
 	if (result == SC_SUCCESS) {
 		string msg;
-		formatCellMessages(plateNum, decoder.getCells(), msg);
+		formatCellMessages(plateNum, decoder, msg);
 		saveResults(msg);
 	}
 	return result;

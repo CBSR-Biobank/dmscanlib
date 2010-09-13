@@ -37,7 +37,7 @@ class ProcessImageManager;
 class BarcodeThread : public OpenThreads::Thread {
 public:
 	BarcodeThread(ProcessImageManager * manager, double scanGap, unsigned squareDev, unsigned edgeThresh,
-		      unsigned corrections, CvRect croppedOffset, Dib & dib);
+		      unsigned corrections, CvRect croppedOffset, Dib & dib, BarcodeInfo & info);
 
 	virtual ~ BarcodeThread() {
 	};
@@ -57,6 +57,7 @@ public:
 	unsigned edgeThresh;
 	unsigned corrections;
 	ProcessImageManager * manager;
+	BarcodeInfo & barcodeInfo;
 };
 
 #endif /* BARCODE_THREAD_H_ */

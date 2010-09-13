@@ -50,29 +50,21 @@ public:
 			unsigned profileC, unsigned isHorizontal);
 	virtual ~Decoder();
 
-	typedef enum {
+	enum ProcessResult {
 		IMG_INVALID, POS_INVALID, POS_CALC_ERROR, OK
-	} ProcessResult;
+	};
 
 	ProcessResult processImageRegions(Dib * dib);
 
 	void imageShowBarcodes(Dib & dib, bool regions);
-	vector<vector<string> > & getCells() {
-		return cells;
-	}
 
 	static DmtxImage * createDmtxImageFromDib(Dib & dib);
 
-	/**
-	 * Called by subordinates to add a barcode. Returns NULL if the barcode has
-	 * previously been added.
-	 */
-	BarcodeInfo * addBarcodeInfo(DmtxDecode *dec, DmtxRegion *reg,
-			DmtxMessage *msg);
+	string & getBarcode(unsigned row, unsigned col);
 
 private:
 
-	void reduceBlobToMatrix(unsigned blobCount, Dib * dib, CvRect & blob);
+	void reduceBlobToMatrix(Dib * dib, CvRect & blob);
 	void showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
 	void initCells(unsigned maxRow, unsigned maxCol);
 	static void getTubeBlobsFromDpi(Dib * dib, vector<CvRect> &blobVector,
@@ -96,10 +88,9 @@ private:
 	double gapY;
 	ProfileSettings profile;
 	bool isHorizontal;
+	PalletGrid * palletGrid;
 
-	vector<BarcodeInfo *> barcodeInfos;
-	map<string, BarcodeInfo *> barcodesMap;
-	vector<vector<string> > cells;
+	vector< vector<BarcodeInfo> > barcodeInfos;
 
 	OpenThreads::Mutex addBarcodeMutex;
 };
