@@ -31,6 +31,7 @@
 #include "BarcodeInfo.h"
 #include "BinRegion.h"
 #include "ProcessImageManager.h"
+#include "PalletGrid.h"
 
 #include <sstream>
 #include <time.h>
@@ -52,7 +53,7 @@ const double Decoder::BARCODE_SIDE_LENGTH_INCHES = 0.13;
 Decoder::Decoder(double g, unsigned s, unsigned t, unsigned c, double dist,
 		double gx, double gy, unsigned profileA, unsigned profileB,
 		unsigned profileC, unsigned rh) :
-	profile(profileA, profileB, profileC), palletGrid(NULL) {
+	palletGrid(NULL) {
 	ua::Logger::Instance().subSysHeaderSet(3, "Decoder");
 	scanGap = g;
 	squareDev = s;
@@ -63,21 +64,14 @@ Decoder::Decoder(double g, unsigned s, unsigned t, unsigned c, double dist,
 	gapY = gy;
 	isHorizontal = ((rh != 0) ? true : false);
 
+	profileWords.push_back(profileA);
+	profileWords.push_back(profileB);
+	profileWords.push_back(profileC);
+
 	barcodeInfos.resize(PalletGrid::MAX_ROWS);
 	for (unsigned row = 0; row < PalletGrid::MAX_ROWS; ++row) {
 		barcodeInfos[row].resize(PalletGrid::MAX_COLS);
 	}
-
-#ifdef _DEBUG
-	ostringstream out;
-	for (unsigned row = 0; row < PalletGrid::MAX_ROWS; ++row) {
-		for (unsigned col = 0; col < PalletGrid::MAX_COLS; ++col) {
-			out << profile.getCellEnabled(row, col);
-		}
-		out << endl;
-	}
-	UA_DOUT(1, 5, "Loaded Profile: \n" << out.str());
-#endif
 }
 
 Decoder::~Decoder() {
@@ -157,7 +151,18 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib) {
 	palletGrid = new PalletGrid(
 			isHorizontal ? PalletGrid::ORIENTATION_HORIZONTAL
 					: PalletGrid::ORIENTATION_VERTICAL, dib->getWidth(),
-			dib->getHeight(), gapXpixels, gapYpixels);
+			dib->getHeight(), gapXpixels, gapYpixels, profileWords);
+
+#ifdef _DEBUG
+	ostringstream out;
+	for (unsigned row = 0; row < PalletGrid::MAX_ROWS; ++row) {
+		for (unsigned col = 0; col < PalletGrid::MAX_COLS; ++col) {
+			out << palletGrid->getCellEnabled(row, col);
+		}
+		out << endl;
+	}
+	UA_DOUT(1, 5, "Loaded Profile: \n" << out.str());
+#endif
 
 	UA_DOUT(1,7,"Minimum blob width (pixels): " << minBlobWidth);
 	UA_DOUT(1,7,"Minimum blob height (pixels): " << minBlobHeight);
@@ -165,16 +170,16 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib) {
 	// generate blobs
 	for (unsigned row = 0; row < PalletGrid::MAX_ROWS; row++) {
 		for (unsigned col = 0; col < PalletGrid::MAX_COLS; col++) {
-			if (!profile.getCellEnabled(row, col)) {
+			if (!palletGrid->getCellEnabled(row, col))
 				continue;
-			}
 
 			palletGrid->getImageCoordinates(row, col, rect);
-			if (reduceBlobToMatrix(dib, rect)) {
-				BarcodeInfo * info = new BarcodeInfo();
-				info->setPreProcessBoundingBox(rect);
-				barcodeInfos[row][col] = info;
-			}
+			if (!reduceBlobToMatrix(dib, rect))
+				continue;
+
+			BarcodeInfo * info = new BarcodeInfo();
+			info->setPreProcessBoundingBox(rect);
+			barcodeInfos[row][col] = info;
 		}
 	}
 

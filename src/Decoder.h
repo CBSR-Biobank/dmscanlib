@@ -24,7 +24,6 @@
 #include "dmtx.h"
 #include "cv.h"
 #include "IplContainer.h"
-#include "ProfileSettings.h"
 
 #include <list>
 #include <string>
@@ -41,6 +40,7 @@ class Dib;
 struct RgbQuad;
 class BarcodeInfo;
 class BinRegion;
+class PalletGrid;
 
 class Decoder {
 public:
@@ -64,7 +64,7 @@ public:
 
 private:
 
-	void reduceBlobToMatrix(Dib * dib, CvRect & blob);
+	bool reduceBlobToMatrix(Dib * dib, CvRect & blob);
 	void showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
 	void initCells(unsigned maxRow, unsigned maxCol);
 	static void getTubeBlobsFromDpi(Dib * dib, vector<CvRect> &blobVector,
@@ -86,8 +86,8 @@ private:
 	unsigned dpi;
 	double gapX;
 	double gapY;
-	ProfileSettings profile;
 	bool isHorizontal;
+	vector<unsigned> profileWords;
 	PalletGrid * palletGrid;
 
 	vector< vector<BarcodeInfo *> > barcodeInfos;

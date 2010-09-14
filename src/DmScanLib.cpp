@@ -34,7 +34,7 @@
 #include "Dib.h"
 #include "Util.h"
 #include "BarcodeInfo.h"
-#include "structs.h"
+#include "PalletGrid.h"
 
 #ifdef WIN32
 #include "ImageGrabber.h"
