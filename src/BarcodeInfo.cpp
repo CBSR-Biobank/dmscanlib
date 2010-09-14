@@ -71,10 +71,6 @@ CvRect & BarcodeInfo::getPreProcessBoundingBox() {
 }
 
 CvRect & BarcodeInfo::getPostProcessBoundingBox() {
-	if ((postRect.x > -1) && (postRect.y > -1)) {
-		return postRect;
-	}
-
 	DmtxPixelLoc topLeft;
 	DmtxPixelLoc botRight;
 
@@ -131,7 +127,7 @@ CvRect & BarcodeInfo::getPostProcessBoundingBox() {
 	return postRect;
 }
 
-void BarcodeInfo::alignCoordinates(int x, int y){
+void BarcodeInfo::translate(int x, int y){
 	p00.X += x;
 	p00.Y += y;
 

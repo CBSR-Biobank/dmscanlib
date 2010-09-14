@@ -30,7 +30,7 @@
 
 BarcodeThread::BarcodeThread(ProcessImageManager * manager, double scanGap,
 		unsigned squareDev, unsigned edgeThresh, unsigned corrections,
-		CvRect croppedOffset, Dib & d, BarcodeInfo & info) :
+		CvRect & croppedOffset, Dib & d, BarcodeInfo & info) :
 	dib(d), barcodeInfo(info) {
 	this->manager = manager;
 	this->scanGap = scanGap;
@@ -94,7 +94,7 @@ void BarcodeThread::run() {
 			barcodeInfo.postProcess(dec, reg, msg);
 
 			if ((croppedOffset.width != 0) && (croppedOffset.height != 0))
-				barcodeInfo.alignCoordinates(croppedOffset.x, croppedOffset.y);
+				barcodeInfo.translate(croppedOffset.x, croppedOffset.y);
 
 			CvRect & rect = barcodeInfo.getPostProcessBoundingBox();
 

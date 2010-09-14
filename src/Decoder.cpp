@@ -317,11 +317,11 @@ void Decoder::imageShowBarcodes(Dib & dib, bool regions) {
 	map<CvPoint, BarcodeInfo>::iterator it;
 	for (unsigned row = 0, rows = barcodeInfos.size(); row < rows; ++row) {
 		for (unsigned col = 0, cols = barcodeInfos[row].size(); col < cols; ++col) {
-			if ( barcodeInfos[row][col] == NULL) continue;
+			if ((barcodeInfos[row][col] == NULL) || !barcodeInfos[row][col]->isValid())
+					continue;
 
 			CvRect rect = barcodeInfos[row][col]->getPostProcessBoundingBox();
-			dib.rectangle(rect.x, rect.y, rect.x + rect.width, rect.y
-					+ rect.height, highlightQuad);
+			dib.rectangle(rect.x, rect.y, rect.width, rect.height, highlightQuad);
 		}
 	}
 }
@@ -330,7 +330,8 @@ const char * Decoder::getBarcode(unsigned row, unsigned col) {
 	UA_ASSERT(row < PalletGrid::MAX_ROWS);
 	UA_ASSERT(col < PalletGrid::MAX_COLS);
 
-	if (barcodeInfos[row][col] == NULL) return NULL;
+	if ((barcodeInfos[row][col] == NULL) || !barcodeInfos[row][col]->isValid())
+		return NULL;
 
 
 	return barcodeInfos[row][col]->getMsg().c_str();

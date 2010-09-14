@@ -1,5 +1,5 @@
-#ifndef MESSABE_INFO_H_
-#define MESSABE_INFO_H_
+#ifndef BARCODE_INFO_H_
+#define BARCODE_INFO_H_
 /*
 Dmscanlib is a software library and standalone application that scans 
 and decodes libdmtx compatible test-tubes. It is currently designed 
@@ -19,12 +19,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/*
- * Calibrator.h
- *
- *  Created on: 5-Jun-2009
- *      Author: loyola
- */
 
 #include "Decoder.h"
 #include "dmtx.h"
@@ -47,9 +41,14 @@ public:
 
 	void postProcess(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
 
+	bool isValid() {
+		return (str.length() > 0);
+	}
+
 	string & getMsg() {
 		return str;
 	}
+
 	bool equals(BarcodeInfo * other){
 		return strcmp(this->getMsg().c_str(),other->getMsg().c_str()) == 0;
 	}
@@ -57,7 +56,7 @@ public:
 	void setPreProcessBoundingBox(CvRect & rect);
 	CvRect & getPreProcessBoundingBox();
 	CvRect & getPostProcessBoundingBox() ;
-	void alignCoordinates(int x, int y);
+	void translate(int x, int y);
 
 
 	static void debugShowItems(vector<BarcodeInfo *>  & msgInfos);
@@ -78,5 +77,5 @@ struct BarcodeInfoSort {
 	bool operator()(BarcodeInfo* const& a, BarcodeInfo* const& b);
 };
 
-#endif /* MESSABE_INFO_H_ */
+#endif /* BARCODE_INFO_H_ */
 
