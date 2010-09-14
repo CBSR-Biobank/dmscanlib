@@ -63,6 +63,11 @@ Decoder::Decoder(double g, unsigned s, unsigned t, unsigned c, double dist,
 	gapY = gy;
 	isHorizontal = ((rh != 0) ? true : false);
 
+	barcodeInfos.resize(PalletGrid::MAX_ROWS);
+	for (unsigned row = 0; row < PalletGrid::MAX_ROWS; ++row) {
+		barcodeInfos[row].resize(PalletGrid::MAX_COLS);
+	}
+
 #ifdef _DEBUG
 	ostringstream out;
 	for (unsigned row = 0; row < PalletGrid::MAX_ROWS; ++row) {
@@ -76,6 +81,13 @@ Decoder::Decoder(double g, unsigned s, unsigned t, unsigned c, double dist,
 }
 
 Decoder::~Decoder() {
+	for (unsigned row = 0; row < PalletGrid::MAX_ROWS; row++) {
+		for (unsigned col = 0; col < PalletGrid::MAX_COLS; col++) {
+			if (barcodeInfos[row][col] != NULL) {
+				delete barcodeInfos[row][col];
+			}
+		}
+	}
 }
 
 // reduces the blob to a smaller region (matrix outline)
@@ -173,8 +185,8 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib) {
 
 			if ((rect.width != 0) && (rect.height != 0) && (rect.width
 					>= minBlobWidth) && (rect.height >= minBlobHeight)) {
-				BarcodeInfo info;
-				info.setPreProcessBoundingBox(rect);
+				BarcodeInfo * info = new BarcodeInfo();
+				info->setPreProcessBoundingBox(rect);
 				barcodeInfos[row][col] = info;
 			}
 		}
@@ -186,7 +198,7 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib) {
 	RgbQuad white(255, 255, 255);
 	for (unsigned row = 0, rows = barcodeInfos.size(); row < rows; ++row) {
 		for (unsigned col = 0, cols = barcodeInfos[row].size(); col < cols; ++col) {
-			CvRect & rect = barcodeInfos[row][col].getPreProcessBoundingBox();
+			CvRect & rect = barcodeInfos[row][col]->getPreProcessBoundingBox();
 			blobDib.rectangle(rect.x, rect.y, rect.width, rect.height, white);
 		}
 	}
@@ -200,7 +212,7 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib) {
 	unsigned decodeCount = 0;
 	for (unsigned row = 0, rows = barcodeInfos.size(); row < rows; ++row) {
 		for (unsigned col = 0, cols = barcodeInfos[row].size(); col < cols; ++col) {
-			if (barcodeInfos[row][col].getMsg().length() > 0) {
+			if (barcodeInfos[row][col]->getMsg().length() > 0) {
 				++decodeCount;
 			}
 		}
@@ -305,16 +317,21 @@ void Decoder::imageShowBarcodes(Dib & dib, bool regions) {
 	map<CvPoint, BarcodeInfo>::iterator it;
 	for (unsigned row = 0, rows = barcodeInfos.size(); row < rows; ++row) {
 		for (unsigned col = 0, cols = barcodeInfos[row].size(); col < cols; ++col) {
-			CvRect rect = barcodeInfos[row][col].getPostProcessBoundingBox();
+			if ( barcodeInfos[row][col] == NULL) continue;
+
+			CvRect rect = barcodeInfos[row][col]->getPostProcessBoundingBox();
 			dib.rectangle(rect.x, rect.y, rect.x + rect.width, rect.y
 					+ rect.height, highlightQuad);
 		}
 	}
 }
 
-string & Decoder::getBarcode(unsigned row, unsigned col) {
+const char * Decoder::getBarcode(unsigned row, unsigned col) {
 	UA_ASSERT(row < PalletGrid::MAX_ROWS);
 	UA_ASSERT(col < PalletGrid::MAX_COLS);
 
-	return barcodeInfos[row][col].getMsg();
+	if (barcodeInfos[row][col] == NULL) return NULL;
+
+
+	return barcodeInfos[row][col]->getMsg().c_str();
 }

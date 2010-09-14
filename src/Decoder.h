@@ -60,7 +60,7 @@ public:
 
 	static DmtxImage * createDmtxImageFromDib(Dib & dib);
 
-	string & getBarcode(unsigned row, unsigned col);
+	const char * getBarcode(unsigned row, unsigned col);
 
 private:
 
@@ -90,7 +90,7 @@ private:
 	bool isHorizontal;
 	PalletGrid * palletGrid;
 
-	vector< vector<BarcodeInfo> > barcodeInfos;
+	vector< vector<BarcodeInfo *> > barcodeInfos;
 
 	OpenThreads::Mutex addBarcodeMutex;
 };

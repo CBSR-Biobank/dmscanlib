@@ -87,12 +87,12 @@ void ProcessImageManager::threadHandler(vector<BarcodeThread *> & threads,
 }
 
 void ProcessImageManager::generateBarcodes(Dib * dib, vector<
-		vector<BarcodeInfo> > & barcodeInfos) {
+		vector<BarcodeInfo *> > & barcodeInfos) {
 	vector<BarcodeThread *> threads;
 
 	for (unsigned row = 0, rows = barcodeInfos.size(); row < rows; ++row) {
 		for (unsigned col = 0, cols = barcodeInfos[row].size(); col < cols; ++col) {
-			CvRect & rect = barcodeInfos[row][col].getPreProcessBoundingBox();
+			CvRect & rect = barcodeInfos[row][col]->getPreProcessBoundingBox();
 
 			/*---thread controller (limit # threads to THREAD_NUM)----*/
 			threadHandler(threads, THREAD_NUM);
@@ -103,7 +103,7 @@ void ProcessImageManager::generateBarcodes(Dib * dib, vector<
 
 			BarcodeThread *thread = new BarcodeThread(this, scanGap, squareDev,
 					edgeThresh, corrections, rect, croppedDib,
-					barcodeInfos[row][col]);
+					*barcodeInfos[row][col]);
 
 			allThreads.push_back(thread);
 			threads.push_back(thread);

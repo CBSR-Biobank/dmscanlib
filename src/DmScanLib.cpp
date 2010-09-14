@@ -145,8 +145,10 @@ void formatCellMessages(unsigned plateNum, Decoder & decoder,
 
 	for (unsigned row = 0; row < PalletGrid::MAX_ROWS; ++row) {
 		for (unsigned col = 0; col < PalletGrid::MAX_COLS; ++col) {
+			const char * msg = decoder.getBarcode(row, col);
+			if (msg == NULL) continue;
 			out << plateNum << "," << row << "," << col << ","
-					<< decoder.getBarcode(row, col) << endl;
+					<< msg << endl;
 		}
 	}
 	msg = out.str();

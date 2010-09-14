@@ -43,7 +43,7 @@ public:
 	~ProcessImageManager();
 
 	void generateBarcodes(Dib * dib,
-			vector<vector<BarcodeInfo> > & barcodeInfos);
+			vector<vector<BarcodeInfo *> > & barcodeInfos);
 
 	Decoder * getDecoder() {
 		return decoder;
