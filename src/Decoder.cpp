@@ -93,16 +93,10 @@ Decoder::~Decoder() {
 // reduces the blob to a smaller region (matrix outline)
 void Decoder::reduceBlobToMatrix(Dib * dib, CvRect & inputBlob) {
 	Dib croppedDib;
-	CBlobResult blobs;
 	IplImageContainer *img;
 
 	croppedDib.crop(*dib, inputBlob.x, inputBlob.y, inputBlob.x
 			+ inputBlob.width, inputBlob.y + inputBlob.height);
-#ifdef _DEBUG
-	ostringstream name;
-	name << "blob-" << inputBlob.x << "-" << inputBlob.y << ".bmp";
-	croppedDib.writeToFile(name.str().c_str());
-#endif
 	UA_ASSERT_NOT_NULL(croppedDib.getPixelBuffer());
 
 	img = croppedDib.generateIplImage();
@@ -114,7 +108,7 @@ void Decoder::reduceBlobToMatrix(Dib * dib, CvRect & inputBlob) {
 	cvThreshold(img->getIplImage(), img->getIplImage(), 50, 255,
 			CV_THRESH_BINARY);
 
-	blobs = CBlobResult(img->getIplImage(), NULL, 0);
+	CBlobResult blobs(img->getIplImage(), NULL, 0);
 
 	switch (img->getHorizontalResolution()) {
 	case 300:
@@ -134,7 +128,7 @@ void Decoder::reduceBlobToMatrix(Dib * dib, CvRect & inputBlob) {
 	CvRect largestBlob = { 0, 0, 0, 0 };
 
 	for (int i = 0; i < blobs.GetNumBlobs(); i++) {
-		CvRect currentBlob = blobs.GetBlob(i)->GetBoundingBox();
+		CvRect & currentBlob = blobs.GetBlob(i)->GetBoundingBox();
 		if (currentBlob.width * currentBlob.height > largestBlob.width
 				* largestBlob.height) {
 			largestBlob = currentBlob;
@@ -147,12 +141,19 @@ void Decoder::reduceBlobToMatrix(Dib * dib, CvRect & inputBlob) {
 		largestBlob.x += inputBlob.x;
 		largestBlob.y += inputBlob.y;
 		inputBlob = largestBlob;
+
+#ifdef _DEBUG
+		ostringstream name;
+		croppedDib.crop(*dib, inputBlob.x, inputBlob.y, inputBlob.x
+				+ inputBlob.width, inputBlob.y + inputBlob.height);
+		name << "blob-" << inputBlob.x << "-" << inputBlob.y << ".bmp";
+		croppedDib.writeToFile(name.str().c_str());
+#endif
 	} else {
 		inputBlob.x = 0;
 		inputBlob.y = 0;
 		inputBlob.width = 0;
 		inputBlob.height = 0;
-		return;
 	}
 
 }
@@ -317,11 +318,13 @@ void Decoder::imageShowBarcodes(Dib & dib, bool regions) {
 	map<CvPoint, BarcodeInfo>::iterator it;
 	for (unsigned row = 0, rows = barcodeInfos.size(); row < rows; ++row) {
 		for (unsigned col = 0, cols = barcodeInfos[row].size(); col < cols; ++col) {
-			if ((barcodeInfos[row][col] == NULL) || !barcodeInfos[row][col]->isValid())
-					continue;
+			if ((barcodeInfos[row][col] == NULL)
+					|| !barcodeInfos[row][col]->isValid())
+				continue;
 
 			CvRect rect = barcodeInfos[row][col]->getPostProcessBoundingBox();
-			dib.rectangle(rect.x, rect.y, rect.width, rect.height, highlightQuad);
+			dib.rectangle(rect.x, rect.y, rect.width, rect.height,
+					highlightQuad);
 		}
 	}
 }
@@ -332,7 +335,6 @@ const char * Decoder::getBarcode(unsigned row, unsigned col) {
 
 	if ((barcodeInfos[row][col] == NULL) || !barcodeInfos[row][col]->isValid())
 		return NULL;
-
 
 	return barcodeInfos[row][col]->getMsg().c_str();
 }

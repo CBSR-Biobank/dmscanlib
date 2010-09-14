@@ -108,7 +108,7 @@ public:
 	void JoinBlob( CBlob *blob );
 
 	//! Get bounding box
-	CvRect GetBoundingBox();
+	CvRect & GetBoundingBox();
 	//! Get bounding ellipse
 	CvBox2D GetEllipse();
 
