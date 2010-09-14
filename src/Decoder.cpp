@@ -76,7 +76,7 @@ Decoder::Decoder(double g, unsigned s, unsigned t, unsigned c, double dist,
 		}
 		out << endl;
 	}
-	UA_DOUT(1, 4, "Loaded Profile: \n" << out.str());
+	UA_DOUT(1, 5, "Loaded Profile: \n" << out.str());
 #endif
 }
 
@@ -91,7 +91,7 @@ Decoder::~Decoder() {
 }
 
 // reduces the blob to a smaller region (matrix outline)
-void Decoder::reduceBlobToMatrix(Dib * dib, CvRect & inputBlob) {
+bool Decoder::reduceBlobToMatrix(Dib * dib, CvRect & inputBlob) {
 	Dib croppedDib;
 	IplImageContainer *img;
 
@@ -141,20 +141,8 @@ void Decoder::reduceBlobToMatrix(Dib * dib, CvRect & inputBlob) {
 		largestBlob.x += inputBlob.x;
 		largestBlob.y += inputBlob.y;
 		inputBlob = largestBlob;
-
-#ifdef _DEBUG
-		ostringstream name;
-		croppedDib.crop(*dib, inputBlob.x, inputBlob.y, inputBlob.x
-				+ inputBlob.width, inputBlob.y + inputBlob.height);
-		name << "blob-" << inputBlob.x << "-" << inputBlob.y << ".bmp";
-		croppedDib.writeToFile(name.str().c_str());
-#endif
-	} else {
-		inputBlob.x = 0;
-		inputBlob.y = 0;
-		inputBlob.width = 0;
-		inputBlob.height = 0;
 	}
+	return reducedBlob;
 
 }
 
@@ -174,7 +162,7 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib) {
 	UA_DOUT(1,7,"Minimum blob width (pixels): " << minBlobWidth);
 	UA_DOUT(1,7,"Minimum blob height (pixels): " << minBlobHeight);
 
-	/* -- generate blobs -- */
+	// generate blobs
 	for (unsigned row = 0; row < PalletGrid::MAX_ROWS; row++) {
 		for (unsigned col = 0; col < PalletGrid::MAX_COLS; col++) {
 			if (!profile.getCellEnabled(row, col)) {
@@ -182,10 +170,7 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib) {
 			}
 
 			palletGrid->getImageCoordinates(row, col, rect);
-			reduceBlobToMatrix(dib, rect);
-
-			if ((rect.width != 0) && (rect.height != 0) && (rect.width
-					>= minBlobWidth) && (rect.height >= minBlobHeight)) {
+			if (reduceBlobToMatrix(dib, rect)) {
 				BarcodeInfo * info = new BarcodeInfo();
 				info->setPreProcessBoundingBox(rect);
 				barcodeInfos[row][col] = info;
@@ -213,7 +198,7 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib) {
 	unsigned decodeCount = 0;
 	for (unsigned row = 0, rows = barcodeInfos.size(); row < rows; ++row) {
 		for (unsigned col = 0, cols = barcodeInfos[row].size(); col < cols; ++col) {
-			if (barcodeInfos[row][col]->getMsg().length() > 0) {
+			if (barcodeInfos[row][col]->isValid()) {
 				++decodeCount;
 			}
 		}
