@@ -31,14 +31,18 @@ PalletGrid::PalletGrid(Orientation o, unsigned imgWidth, unsigned imgHeight,
 	orientation = o;
 
 	if (orientation == ORIENTATION_HORIZONTAL) {
+	    imgValid = imgWidth > imgHeight;
 		cellWidth = imgWidth / MAX_COLS;
 		cellHeight = imgHeight / MAX_ROWS;
 	} else if (orientation == ORIENTATION_VERTICAL) {
+        imgValid = imgWidth < imgHeight;
 		cellWidth = imgWidth / MAX_ROWS;
 		cellHeight = imgHeight / MAX_COLS;
 	} else {
 		UA_ASSERTS(false, "orientation invalid: " << orientation);
 	}
+
+	if (!imgValid) return;
 
 	this->gapX = gapX;
 	this->gapY = gapY;
@@ -69,8 +73,8 @@ void PalletGrid::getImageCoordinates(unsigned row, unsigned col, CvRect & rect) 
 		rect.x = cellWidth * (MAX_COLS - col - 1) + gapX;
 		rect.y = cellHeight * row + gapY;
 	} else if (orientation == ORIENTATION_VERTICAL) {
-		rect.x = cellHeight * (MAX_COLS - col - 1) + gapY;
-		rect.y = cellWidth * (MAX_ROWS - row - 1) + gapX;
+		rect.x = cellWidth * row + gapX;
+		rect.y = cellHeight * col + gapY;
 	} else {
 		UA_ASSERTS(false, "orientation invalid: " << orientation);
 	}

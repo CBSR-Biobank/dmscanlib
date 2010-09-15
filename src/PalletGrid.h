@@ -76,15 +76,22 @@ public:
 	 */
 	bool getCellEnabled(unsigned row, unsigned col);
 
+	bool isImageValid() {
+	    return imgValid;
+	}
+
 private:
 	static const unsigned NUM_WORDS = PalletGrid::NUM_CELLS / 32;
 
-	unsigned orientation;
+	Orientation orientation;
+    unsigned imgWidth;
+    unsigned imgHeight;
 	unsigned cellWidth;
 	unsigned cellHeight;
 	unsigned gapX;
 	unsigned gapY;
 	vector<bool> bits;
+	bool imgValid;
 
 };
 

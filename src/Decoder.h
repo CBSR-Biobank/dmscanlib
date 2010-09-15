@@ -24,6 +24,7 @@
 #include "dmtx.h"
 #include "cv.h"
 #include "IplContainer.h"
+#include "PalletGrid.h"
 
 #include <list>
 #include <string>
@@ -40,18 +41,15 @@ class Dib;
 struct RgbQuad;
 class BarcodeInfo;
 class BinRegion;
-class PalletGrid;
 
 class Decoder {
 public:
 	Decoder(double scanGap, unsigned squareDev, unsigned edgeThresh,
-			unsigned corrections, double cellDistance, double gapX,
-			double gapY, unsigned profileA, unsigned profileB,
-			unsigned profileC, unsigned isHorizontal);
+			unsigned corrections, double cellDistance, PalletGrid * palletGrid);
 	virtual ~Decoder();
 
 	enum ProcessResult {
-		IMG_INVALID, POS_INVALID, POS_CALC_ERROR, OK
+		IMG_INVALID, OK
 	};
 
 	ProcessResult processImageRegions(Dib * dib);
@@ -84,10 +82,6 @@ private:
 	unsigned width;
 	unsigned height;
 	unsigned dpi;
-	double gapX;
-	double gapY;
-	bool isHorizontal;
-	vector<unsigned> profileWords;
 	PalletGrid * palletGrid;
 
 	vector< vector<BarcodeInfo *> > barcodeInfos;

@@ -52,8 +52,6 @@ const int SC_INVALID_DPI = -3;
 const int SC_INVALID_PLATE_NUM = -4;
 const int SC_INVALID_VALUE = -5;
 const int SC_INVALID_IMAGE = -6;
-const int SC_INVALID_POSITION = -7;
-const int SC_POS_CALC_ERROR = -8;
 const int SC_INCORRECT_DPI_SCANNED = -9;
 
 
@@ -178,7 +176,7 @@ typedef int (*SL_DECODE_PLATE)(unsigned verbose, unsigned dpi, int brightness,
 		double bottom, double scanGap, unsigned squareDev,
 		unsigned edgeThresh, unsigned corrections, double cellDistance, 
 		double gapX, double gapY,
-		unsigned profileA,unsigned profileB, unsigned profileC, unsigned isHoriztonal);
+		unsigned profileA,unsigned profileB, unsigned profileC, unsigned isVertical);
 
 
 /**
@@ -229,7 +227,7 @@ typedef int (*SL_DECODE_IMAGE)(unsigned verbose, unsigned plateNum,
 		const char * filename, double scanGap, unsigned squareDev,
 		unsigned edgeThresh, unsigned corrections, double cellDistance, 
 		double gapX, double gapY,
-		unsigned profileA,unsigned profileB, unsigned profileC, unsigned isHoriztonal);
+		unsigned profileA,unsigned profileB, unsigned profileC, unsigned isVertical);
 
 #ifdef __cplusplus
 }
