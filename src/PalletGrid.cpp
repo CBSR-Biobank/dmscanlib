@@ -44,6 +44,7 @@ PalletGrid::PalletGrid(Orientation o, unsigned imgWidth, unsigned imgHeight,
 	this->gapY = gapY;
 
 	// load the profile
+	bits.resize(NUM_CELLS);
 	UA_ASSERTS(profileWords.size() == 3, "invalid size for profileWords");
 	unsigned mask;
 	for (unsigned i = 0; i < NUM_WORDS; ++i) {
@@ -66,7 +67,7 @@ void PalletGrid::getImageCoordinates(unsigned row, unsigned col, CvRect & rect) 
 
 	if (orientation == ORIENTATION_HORIZONTAL) {
 		rect.x = cellWidth * (MAX_COLS - col - 1) + gapX;
-		rect.y = cellHeight * (MAX_ROWS - row - 1) + gapY;
+		rect.y = cellHeight * row + gapY;
 	} else if (orientation == ORIENTATION_VERTICAL) {
 		rect.x = cellHeight * (MAX_COLS - col - 1) + gapY;
 		rect.y = cellWidth * (MAX_ROWS - row - 1) + gapX;
