@@ -29,6 +29,7 @@
 #include "ProcessImageManager.h"
 #include "cxtypes.h"
 
+#include <stdio.h>
 #include <sstream>
 
 BarcodeThread::BarcodeThread(ProcessImageManager * manager, double scanGap,

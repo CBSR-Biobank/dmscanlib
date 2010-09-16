@@ -43,9 +43,6 @@ int slSelectSourceAsDefault() {
     return SC_FAIL;
 }
 
-/*
- * Please note that the 32nd bit should be ignored. 
- */
 int slGetScannerCapability() {
     return 0xFF; // supports WIA and DPI: 300,400,600
 }

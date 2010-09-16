@@ -20,7 +20,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <stdio.h>
 #include "cv.h"
 #include "BlobResult.h"
 #include "IplContainer.h"
@@ -29,6 +28,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <windows.h>
 #endif
 
+#include <memory>
+
+using namespace std;
 
 /* File information header
  * provides general information about the file
@@ -88,8 +90,9 @@ public:
 	void readFromFile(const char * filename) ;
 	bool writeToFile(const char * filename);
 
+	static auto_ptr<Dib> convertGrayscale(Dib & src);
+	static auto_ptr<Dib> crop(Dib &src, unsigned x0, unsigned y0, unsigned x1, unsigned y1);
 
-	static Dib * convertGrayscale(Dib & src);
 	void tpPresetFilter();
 
 #ifdef WIN32
@@ -110,21 +113,9 @@ public:
 	inline void setPixelGrayscale(unsigned row, unsigned col, unsigned char value);
 	unsigned char * getPixelsNoPadding();
 	void setPixelsNoPadding(unsigned char * pixels);
-	void crop(Dib &src, unsigned x0, unsigned y0, unsigned x1, unsigned y1);
 
-	void sobelEdgeDetectionWithMask(Dib & src, int mask1[3][3],
-			int mask2[3][3]);
-
-	void sobelEdgeDetection(Dib & src);
-	void laplaceEdgeDetection(Dib & src);
-	void histEqualization(Dib & src);
 	void line(unsigned x0, unsigned y0, unsigned x1, unsigned y1, RgbQuad & quad);
 	void rectangle(unsigned x, unsigned y, unsigned width, unsigned height,RgbQuad & quad);
-	void grayscale(Dib & src);
-	void gaussianBlur(Dib & src);
-	void blur(Dib & src);
-	void unsharp(Dib & src);
-	void expandColours(int start, int end);
 	unsigned getDpi();
 
 	IplImageContainer*  generateIplImage();

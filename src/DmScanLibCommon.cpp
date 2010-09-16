@@ -31,17 +31,8 @@
 #include "Decoder.h"
 #include "Dib.h"
 #include "TimeUtil.h"
-#include "BarcodeInfo.h"
-#include "PalletGrid.h"
 
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <string>
-#include <ctime>
-#include <cstdlib>
-#include <math.h>
-#include <memory>
+#include <stdio.h>
 
 #if defined(USE_NVWA)
 #   include "debug_new.h"
@@ -104,7 +95,6 @@ int slDecodeCommon(unsigned plateNum, Dib & dib, double scanGap,
         const char *markedDibFilename) {
 
     bool metrical = false;
-    Dib *filteredDib;
     Decoder::ProcessResult result;
 
     PalletGrid::Orientation orientation =
@@ -133,8 +123,7 @@ int slDecodeCommon(unsigned plateNum, Dib & dib, double scanGap,
     UA_DOUT(1, 5, "DecodeCommon: metrical mode: " << metrical);
 
     /*--- apply filters ---*/
-    filteredDib = Dib::convertGrayscale(dib);
-    UA_ASSERT_NOT_NULL(filteredDib);
+    auto_ptr<Dib> filteredDib(Dib::convertGrayscale(dib));
 
     filteredDib->tpPresetFilter();
     UA_DEBUG(
@@ -142,9 +131,7 @@ int slDecodeCommon(unsigned plateNum, Dib & dib, double scanGap,
     );
 
     /*--- obtain barcodes ---*/
-    result = decoder.processImageRegions(filteredDib);
-
-    delete filteredDib;
+    result = decoder.processImageRegions(filteredDib.get());
 
     decoder.imageShowBarcodes(dib, 0);
     if (result == Decoder::OK)

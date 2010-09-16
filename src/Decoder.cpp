@@ -31,6 +31,7 @@
 #include "ProcessImageManager.h"
 #include "PalletGrid.h"
 
+#include <stdio.h>
 #include <sstream>
 #include <time.h>
 #include <iostream>
