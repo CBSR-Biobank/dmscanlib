@@ -27,10 +27,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include "ImageGrabber.h"
-#include "DmScanLib.h"
+//#include "DmScanLib.h"
 #include "UaLogger.h"
 #include "UaAssert.h"
-#include "Util.h"
+
 #include <math.h>
 
 #if defined(USE_NVWA)
