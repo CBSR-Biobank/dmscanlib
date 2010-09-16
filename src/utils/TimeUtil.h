@@ -40,9 +40,6 @@ typedef struct timeval slTime;
 
 class Util {
 public:
-	static bool strToNum(const char * str, int & number, unsigned base = 0);
-	static bool strToNum(string & str, int & number, unsigned base = 0);
-	static bool strToNum(string & str, double & number);
 	static void getTime(slTime & tm);
 	static void getTimestamp(std::string & str_r);
 	static void difftiime(slTime & start, slTime & end, slTime & diff);

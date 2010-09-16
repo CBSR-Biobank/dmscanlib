@@ -27,7 +27,6 @@
 #include "UaLogger.h"
 #include "UaAssert.h"
 #include "Dib.h"
-#include "Util.h"
 #include "BarcodeInfo.h"
 #include "BinRegion.h"
 #include "ProcessImageManager.h"
