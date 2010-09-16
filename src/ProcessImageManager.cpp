@@ -100,12 +100,11 @@ void ProcessImageManager::generateBarcodes(Dib * dib, vector<
 			/*---thread controller (limit # threads to THREAD_NUM)----*/
 			threadHandler(threads, THREAD_NUM);
 
-			Dib croppedDib;
-			croppedDib.crop(*dib, rect.x, rect.y, rect.x + rect.width, rect.y
-					+ rect.height);
+			auto_ptr<Dib> croppedDib = Dib::crop(*dib, rect.x, rect.y,
+			        rect.x + rect.width, rect.y + rect.height);
 
-			BarcodeThread *thread = new BarcodeThread(this, scanGap, squareDev,
-					edgeThresh, corrections, rect, croppedDib,
+			BarcodeThread * thread = new BarcodeThread(this, scanGap, squareDev,
+					edgeThresh, corrections, rect, *croppedDib.get(),
 					*barcodeInfos[row][col]);
 
 			allThreads.push_back(thread);

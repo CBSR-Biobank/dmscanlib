@@ -153,8 +153,6 @@ Dib::Dib(unsigned width, unsigned height, unsigned colorBits) :
 	if (paletteSize > 0) {
 		colorPalette = new RgbQuad[paletteSize];
 		setPalette();
-		UA_DOUT(4, 5, "constructor: color palette created: size "
-				<< paletteSize * sizeof(RgbQuad));
 	}
 
 	rowBytes = getRowBytes(infoHeader->width, infoHeader->bitCount);
@@ -163,7 +161,7 @@ Dib::Dib(unsigned width, unsigned height, unsigned colorBits) :
 
 	isAllocated = true;
 	pixels = new unsigned char[infoHeader->imageSize];
-	memset(pixels, 255, infoHeader->imageSize);
+	//memset(pixels, 255, infoHeader->imageSize);
 	UA_DOUT(4, 5, "constructor: image size is " << infoHeader->imageSize);
 }
 
@@ -188,7 +186,7 @@ void Dib::deallocate() {
 		delete[] colorPalette;
 	}
 
-	if ((isAllocated) && (pixels != NULL)) {
+	if (isAllocated && (pixels != NULL)) {
 		delete[] pixels;
 	}
 }
@@ -552,10 +550,9 @@ inline void Dib::setPixelGrayscale(unsigned row, unsigned col,
 }
 
 /*
- * DIBs are flipped in Y;
+ * [a,b)
  */
-//[a,b)
-bool bound(unsigned min, unsigned & x, unsigned max) {
+bool Dib::bound(unsigned min, unsigned & x, unsigned max) {
 	bool valueChanged = false;
 
 	if (x < min) {
@@ -569,79 +566,43 @@ bool bound(unsigned min, unsigned & x, unsigned max) {
 	return valueChanged;
 }
 
+/*
+ * DIBs are flipped in Y
+ */
 auto_ptr<Dib> Dib::crop(Dib & src, unsigned x0, unsigned y0, unsigned x1, unsigned y1) {
 	UA_ASSERT_NOT_NULL(src.infoHeader);
 	UA_ASSERT(x1 > x0);
 	UA_ASSERT(y1 > y0);
 
-	// FIXME adjust width and height
-	auto_ptr<Dib> dest(new Dib(src.infoHeader->width, src.infoHeader->height,
-			src.infoHeader->bitCount));
-
-	if (infoHeader != NULL)
-		delete infoHeader;
-	infoHeader = new BitmapInfoHeader;
-
-	*infoHeader = *src.infoHeader;
-	bytesPerPixel = src.bytesPerPixel;
-
-	if (x1 < x0) {
-		UA_DOUT(1,1,"cropped regions cannot have negative width ");
-		x1 = x0 + 1;
-
-	}
-	if (y1 < y0) {
-		UA_DOUT(1,1,"cropped regions cannot have negative height");
-		y1 = y0 + 1;
-	}
-
-	bound(0, x0, infoHeader->width);
-	bound(0, x1, infoHeader->width);
-	bound(0, y0, infoHeader->height);
-	bound(0, y1, infoHeader->height);
+	bound(0, x0, src.infoHeader->width);
+	bound(0, x1, src.infoHeader->width);
+	bound(0, y0, src.infoHeader->height);
 	bound(0, y1, src.infoHeader->height);
 
-	infoHeader->width = x1 - x0;
-	infoHeader->height = y1 - y0;
+    unsigned width = x1 - x0;
+    unsigned height = y1 - y0;
 
-	rowBytes = getRowBytes(infoHeader->width, infoHeader->bitCount);
-	rowPaddingBytes = rowBytes - (infoHeader->width * bytesPerPixel);
+    auto_ptr<Dib> dest(new Dib(width, height, src.infoHeader->bitCount));
 
-	infoHeader->imageSize = infoHeader->height * rowBytes;
-
-	unsigned paletteSize = getPaletteSize(src.infoHeader->bitCount);
-	if (paletteSize > 0) {
-		if (colorPalette != NULL)
-			delete[] colorPalette;
-		colorPalette = new RgbQuad[paletteSize];
-		memcpy(colorPalette, src.colorPalette, paletteSize * sizeof(RgbQuad));
-	}
-
-	if (pixels != NULL)
-		delete[] pixels;
-
-	pixels = new unsigned char[infoHeader->imageSize];
-	isAllocated = true;
+    dest->infoHeader->hPixelsPerMeter = src.infoHeader->hPixelsPerMeter;
+    dest->infoHeader->vPixelsPerMeter = src.infoHeader->vPixelsPerMeter;
 
 	unsigned char *srcRowPtr = src.pixels + (src.infoHeader->height - y1)
-			* src.rowBytes + x0 * bytesPerPixel;
-	unsigned char *destRowPtr = pixels;
-
+			* src.rowBytes + x0 * dest->bytesPerPixel;
+	unsigned char *destRowPtr = dest->pixels;
 	unsigned row = 0;
-	while (row < infoHeader->height) {
 
-		memcpy(destRowPtr, srcRowPtr, infoHeader->width);
-		memset(destRowPtr + infoHeader->width, 0, rowPaddingBytes);
+	while (row < height) {
+		memcpy(destRowPtr, srcRowPtr, width);
+		memset(destRowPtr + width, 0, dest->rowPaddingBytes);
 
 		++row;
 		srcRowPtr += src.rowBytes;
-		destRowPtr += rowBytes;
+		destRowPtr += dest->rowBytes;
 	}
+	return dest;
 }
 
-/*
- TODO: copy over file header ?
- */
 auto_ptr<Dib> Dib::convertGrayscale(Dib & src) {
 	UA_ASSERT(src.getBitsPerPixel() == 24 || src.getBitsPerPixel() == 8);
 	UA_ASSERT(src.getPixelBuffer() != NULL);
@@ -694,12 +655,11 @@ auto_ptr<Dib> Dib::convertGrayscale(Dib & src) {
  *
  * cvmat: Matrices are stored row by row. All of the rows are padded (4 bytes).
  */
-IplImageContainer *Dib::generateIplImage() {
+auto_ptr<IplImageContainer> Dib::generateIplImage() {
 	UA_ASSERTS(infoHeader != NULL, "NULL infoHeader specified to generateIplImage");
 	UA_ASSERTS(infoHeader->bitCount == 8, "generateIplImage requires an unsigned 8bit image");
 	UA_ASSERTS(pixels != NULL,"NULL pixel data specified to generateIplImage");
 
-	IplImageContainer *iplContainer;
 	IplImage *image = NULL;
 	CvMat hdr, *matrix = NULL;
 	CvSize size;
@@ -714,7 +674,7 @@ IplImageContainer *Dib::generateIplImage() {
 
 	cvFlip(image, image, 0);
 
-	iplContainer = new IplImageContainer(NULL);
+    auto_ptr<IplImageContainer> iplContainer(new IplImageContainer(NULL));
 	iplContainer->setIplImage(image);
 	iplContainer->setHorizontalResolution(infoHeader->hPixelsPerMeter);
 	iplContainer->setVerticalResolution(infoHeader->vPixelsPerMeter);

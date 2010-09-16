@@ -94,6 +94,12 @@ int slDecodeCommon(unsigned plateNum, Dib & dib, double scanGap,
         unsigned profileB, unsigned profileC, unsigned isVertical,
         const char *markedDibFilename) {
 
+    unsigned dpi = dib.getDpi();
+    UA_DOUT(1, 3, "DecodeCommon: dpi/" << dpi);
+    if ((dpi != 300) && (dpi != 400) && (dpi != 600)) {
+        return SC_INVALID_DPI;
+    }
+
     bool metrical = false;
     Decoder::ProcessResult result;
 
@@ -101,7 +107,6 @@ int slDecodeCommon(unsigned plateNum, Dib & dib, double scanGap,
             (isVertical ? PalletGrid::ORIENTATION_VERTICAL
                     : PalletGrid::ORIENTATION_HORIZONTAL);
 
-    unsigned dpi = dib.getDpi();
     unsigned gapXpixels = static_cast<unsigned>(dpi * gapX);
     unsigned gapYpixels = static_cast<unsigned>(dpi * gapY);
 

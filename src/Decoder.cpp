@@ -76,20 +76,17 @@ Decoder::~Decoder() {
 }
 
 // reduces the blob to a smaller region (matrix outline)
-bool Decoder::reduceBlobToMatrix(Dib * dib, CvRect & inputBlob) {
-    Dib croppedDib;
-    IplImageContainer *img;
+bool Decoder::reduceBlobToMatrix(Dib & dib, CvRect & inputBlob) {
+    auto_ptr<Dib> croppedDib = Dib::crop(dib, inputBlob.x, inputBlob.y,
+            inputBlob.x + inputBlob.width, inputBlob.y + inputBlob.height);
+    UA_ASSERT_NOT_NULL(croppedDib->getPixelBuffer());
 
-    croppedDib.crop(*dib, inputBlob.x, inputBlob.y, inputBlob.x
-            + inputBlob.width, inputBlob.y + inputBlob.height);
-    UA_ASSERT_NOT_NULL(croppedDib.getPixelBuffer());
-
-    img = croppedDib.generateIplImage();
-    UA_ASSERT_NOT_NULL(img);
+    auto_ptr<IplImageContainer> img =  croppedDib->generateIplImage();
     UA_ASSERT_NOT_NULL(img->getIplImage());
 
-    for (int i = 0; i < 5; i++)
+    for (int i = 0; i < 5; i++) {
         cvSmooth(img->getIplImage(), img->getIplImage(), CV_GAUSSIAN, 11, 11);
+    }
     cvThreshold(img->getIplImage(), img->getIplImage(), 50, 255,
             CV_THRESH_BINARY);
 
@@ -106,7 +103,6 @@ bool Decoder::reduceBlobToMatrix(Dib * dib, CvRect & inputBlob) {
         blobs.Filter(blobs, B_EXCLUDE, CBlobGetArea(), B_LESS, 2400);
         break;
     }
-    delete img;
 
     /* ---- Grabs the largest blob in the blobs vector -----*/
     bool reducedBlob = false;
@@ -165,7 +161,7 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib) {
             UA_DOUT(1, 9, "row/" << row << " col/" << col << " rect/("
                     << rect.x << ", " << rect.y << "),(" << rect.x + rect.width
                     << ", " << rect.y + rect.height << ")");
-            if (!reduceBlobToMatrix(dib, rect)) continue;
+            if (!reduceBlobToMatrix(*dib, rect)) continue;
 
             BarcodeInfo * info = new BarcodeInfo();
             info->setPreProcessBoundingBox(rect);
@@ -176,7 +172,7 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib) {
     UA_DOUT(1, 7, "blob regions found: " << blobRegionCount);
 
     if (blobRegionCount == 0) {
-    	// no blobs found
+        // no blobs found
         return IMG_INVALID;
     }
 
@@ -187,10 +183,10 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib) {
     for (unsigned row = 0, rows = barcodeInfos.size(); row < rows; ++row) {
         for (unsigned col = 0, cols = barcodeInfos[row].size(); col < cols; ++col) {
             BarcodeInfo * info = barcodeInfos[row][col];
-        	if (info == NULL) continue;
+            if (info == NULL) continue;
 
-        	CvRect & rect = barcodeInfos[row][col]->getPreProcessBoundingBox();
-        	blobDib.rectangle(rect.x, rect.y, rect.width, rect.height, white);
+            CvRect & rect = barcodeInfos[row][col]->getPreProcessBoundingBox();
+            blobDib.rectangle(rect.x, rect.y, rect.width, rect.height, white);
         }
     }
     blobDib.writeToFile("blobRegions.bmp");
@@ -204,7 +200,7 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib) {
     for (unsigned row = 0, rows = barcodeInfos.size(); row < rows; ++row) {
         for (unsigned col = 0, cols = barcodeInfos[row].size(); col < cols; ++col) {
             BarcodeInfo * info = barcodeInfos[row][col];
-        	if ((info != NULL) && info->isValid()) {
+            if ((info != NULL) && info->isValid()) {
                 ++decodeCount;
             }
         }
@@ -234,7 +230,7 @@ DmtxImage * Decoder::createDmtxImageFromDib(Dib & dib) {
         break;
     }
 
-    DmtxImage *image = dmtxImageCreate(dib.getPixelBuffer(), dib.getWidth(),
+    DmtxImage * image = dmtxImageCreate(dib.getPixelBuffer(), dib.getWidth(),
             dib.getHeight(), pack);
 
     //set the properties (pad bytes, flip)
@@ -322,7 +318,7 @@ const char * Decoder::getBarcode(unsigned row, unsigned col) {
     UA_ASSERT(col < PalletGrid::MAX_COLS);
 
     BarcodeInfo * info = barcodeInfos[row][col];
-	if ((info == NULL) || !info->isValid()) return NULL;
+    if ((info == NULL) || !info->isValid()) return NULL;
 
     return info->getMsg().c_str();
 }

@@ -118,7 +118,7 @@ public:
 	void rectangle(unsigned x, unsigned y, unsigned width, unsigned height,RgbQuad & quad);
 	unsigned getDpi();
 
-	IplImageContainer*  generateIplImage();
+	auto_ptr<IplImageContainer>  generateIplImage();
 private:
 
 	static const float BLUR_KERNEL[9];
@@ -152,7 +152,7 @@ private:
 
 	void convolveFast3x3(const float(&kernel)[9]);
 	void convolve2DSlow(const float(&kernel) [9], int kernelSizeX, int kernelSizeY);
-	
+	static bool bound(unsigned min, unsigned & x, unsigned max);
 };
 
 

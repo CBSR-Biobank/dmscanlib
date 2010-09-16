@@ -62,7 +62,7 @@ public:
 
 private:
 
-	bool reduceBlobToMatrix(Dib * dib, CvRect & blob);
+	bool reduceBlobToMatrix(Dib & dib, CvRect & blob);
 	void showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
 	void initCells(unsigned maxRow, unsigned maxCol);
 	static void getTubeBlobsFromDpi(Dib * dib, vector<CvRect> &blobVector,
