@@ -27,11 +27,14 @@
 #include "UaLogger.h"
 #include "BarcodeInfo.h"
 #include "ProcessImageManager.h"
+#include "cxtypes.h"
+
+#include <sstream>
 
 BarcodeThread::BarcodeThread(ProcessImageManager * manager, double scanGap,
 		unsigned squareDev, unsigned edgeThresh, unsigned corrections,
 		CvRect & croppedOffset, Dib & d, BarcodeInfo & info) :
-	dib(d), barcodeInfo(info) {
+	dib(d), barcodeInfo(info), debug(true) {
 	this->manager = manager;
 	this->scanGap = scanGap;
 	this->squareDev = squareDev;
@@ -72,7 +75,7 @@ void BarcodeThread::run() {
 	dmtxDecodeSetProp(dec, DmtxPropSquareDevn, squareDev);
 	dmtxDecodeSetProp(dec, DmtxPropEdgeThresh, edgeThresh);
 
-	UA_DOUT(3, 7, "processImage: image width/" << width
+	UA_DOUT(3, 7, "BarcodeThread: image width/" << width
 			<< " image height/" << height
 			<< " row padding/" << dmtxImageGetProp(image,
 					DmtxPropRowPadBytes)
@@ -93,8 +96,9 @@ void BarcodeThread::run() {
 
 			barcodeInfo.postProcess(dec, reg, msg);
 
-			if ((croppedOffset.width != 0) && (croppedOffset.height != 0))
+			if ((croppedOffset.width != 0) && (croppedOffset.height != 0)) {
 				barcodeInfo.translate(croppedOffset.x, croppedOffset.y);
+			}
 
 			CvRect & rect = barcodeInfo.getPostProcessBoundingBox();
 
@@ -110,6 +114,12 @@ void BarcodeThread::run() {
 		UA_DOUT(3, 7,
 				"retrieved message from region " << regionCount++);
 	}
+
+#ifdef _DEBUG
+	if (debug) {
+		writeDiagnosticImage(dec);
+	}
+#endif
 
 	dmtxDecodeDestroy(&dec);
 	dmtxImageDestroy(&image);
@@ -128,5 +138,28 @@ bool BarcodeThread::isFinished() {
 	quitMutex.unlock();
 
 	return quitFlagBuf;
+}
+
+void BarcodeThread::writeDiagnosticImage(DmtxDecode *dec) {
+	int totalBytes, headerBytes;
+	int bytesWritten;
+	unsigned char *pnm;
+	FILE *fp;
+
+	ostringstream fname;
+	CvRect & rect = barcodeInfo.getPreProcessBoundingBox();
+	fname << "diagnostic-" << rect.x << "-" << rect.y << ".pnm";
+
+	fp = fopen(fname.str().c_str(), "wb");
+	UA_ASSERT_NOT_NULL(fp);
+
+	pnm = dmtxDecodeCreateDiagnostic(dec, &totalBytes, &headerBytes, 0);
+	UA_ASSERT_NOT_NULL(pnm);
+
+	bytesWritten = fwrite(pnm, sizeof(unsigned char), totalBytes, fp);
+	UA_ASSERT(bytesWritten == totalBytes);
+
+	free(pnm);
+	fclose(fp);
 }
 

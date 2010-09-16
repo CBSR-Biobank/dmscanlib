@@ -92,7 +92,10 @@ void ProcessImageManager::generateBarcodes(Dib * dib, vector<
 
 	for (unsigned row = 0, rows = barcodeInfos.size(); row < rows; ++row) {
 		for (unsigned col = 0, cols = barcodeInfos[row].size(); col < cols; ++col) {
-			CvRect & rect = barcodeInfos[row][col]->getPreProcessBoundingBox();
+            BarcodeInfo * info = barcodeInfos[row][col];
+            if (info == NULL) continue;
+
+			CvRect & rect = info->getPreProcessBoundingBox();
 
 			/*---thread controller (limit # threads to THREAD_NUM)----*/
 			threadHandler(threads, THREAD_NUM);

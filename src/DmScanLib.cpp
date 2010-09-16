@@ -178,6 +178,9 @@ int slScanImage(unsigned verbose, unsigned dpi, int brightness, int contrast,
     }
     Dib dib;
     dib.readFromHandle(h);
+    if (dib.getDpi() != dpi) {
+        return SC_INCORRECT_DPI_SCANNED;
+    }
     dib.writeToFile(filename);
     ig.freeImage(h);
     return SC_SUCCESS;
@@ -249,11 +252,11 @@ int slDecodeCommon(unsigned plateNum, Dib & dib, double scanGap,
         ; // do nothing
     }
 
+    // only get here if decoder returned Decoder::OK
     string msg;
     formatCellMessages(plateNum, decoder, msg);
     saveResults(msg);
 
-    // only get here if decoder returned Decoder::OK
     Util::getTime(endtime);
     Util::difftiime(starttime, endtime, timediff);
     UA_DOUT(1, 1, "slDecodeCommonCv: time taken: " << timediff);
@@ -307,15 +310,14 @@ int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
     }
 
     dib.readFromHandle(h);
-    dib.writeToFile("scanned.bmp");
-
     if (dib.getDpi() != dpi) {
-        result = SC_INCORRECT_DPI_SCANNED;
-    } else {
-        result = slDecodeCommon(plateNum, dib, scanGap, squareDev, edgeThresh,
-                corrections, cellDistance, gapX, gapY, profileA, profileB, profileC,
-                isVertical, "decode.bmp");
+        return SC_INCORRECT_DPI_SCANNED;
     }
+
+    dib.writeToFile("scanned.bmp");
+    result = slDecodeCommon(plateNum, dib, scanGap, squareDev, edgeThresh,
+    		corrections, cellDistance, gapX, gapY, profileA, profileB, profileC,
+    		isVertical, "decode.bmp");
 
     ig.freeImage(h);
     return result;

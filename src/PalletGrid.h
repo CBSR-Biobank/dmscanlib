@@ -84,8 +84,6 @@ private:
 	static const unsigned NUM_WORDS = PalletGrid::NUM_CELLS / 32;
 
 	Orientation orientation;
-    unsigned imgWidth;
-    unsigned imgHeight;
 	unsigned cellWidth;
 	unsigned cellHeight;
 	unsigned gapX;

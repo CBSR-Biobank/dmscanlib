@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 #include "cv.h"
+#include "dmtx.h"
 
 #include <vector>
 #include <OpenThreads/Mutex>
@@ -47,6 +48,8 @@ public:
 	bool isFinished();
 
  private:
+	void writeDiagnosticImage(DmtxDecode *dec);
+
 	OpenThreads::Mutex quitMutex;
 	volatile bool quitFlag;
 
@@ -58,6 +61,7 @@ public:
 	unsigned corrections;
 	ProcessImageManager * manager;
 	BarcodeInfo & barcodeInfo;
+	bool debug;
 };
 
 #endif /* BARCODE_THREAD_H_ */
