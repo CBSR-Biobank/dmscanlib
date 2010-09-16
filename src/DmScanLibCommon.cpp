@@ -38,10 +38,10 @@
 #include <fstream>
 #include <sstream>
 #include <string>
-
 #include <ctime>
 #include <cstdlib>
 #include <math.h>
+#include <memory>
 
 #if defined(USE_NVWA)
 #   include "debug_new.h"
@@ -120,15 +120,15 @@ int slDecodeCommon(unsigned plateNum, Dib & dib, double scanGap,
     profileWords.push_back(profileB);
     profileWords.push_back(profileC);
 
-    PalletGrid * palletGrid = new PalletGrid(orientation, dib.getWidth(),
-            dib.getHeight(), gapXpixels, gapYpixels, profileWords);
+    auto_ptr<PalletGrid> palletGrid(new PalletGrid(orientation, dib.getWidth(),
+            dib.getHeight(), gapXpixels, gapYpixels, profileWords));
 
     if (!palletGrid->isImageValid()) {
         return SC_INVALID_IMAGE;
     }
 
     Decoder decoder(scanGap, squareDev, edgeThresh, corrections, cellDistance,
-            palletGrid);
+            palletGrid.get());
 
     UA_DOUT(1, 5, "DecodeCommon: metrical mode: " << metrical);
 

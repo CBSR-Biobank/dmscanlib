@@ -28,7 +28,6 @@
 #include "UaAssert.h"
 #include "Dib.h"
 #include "BarcodeInfo.h"
-#include "BinRegion.h"
 #include "ProcessImageManager.h"
 #include "PalletGrid.h"
 

@@ -21,7 +21,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "BarcodeInfo.h"
 #include "UaLogger.h"
 #include "UaAssert.h"
-#include "BinRegion.h"
 #include "cxtypes.h"
 
 #if defined(USE_NVWA)
