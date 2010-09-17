@@ -27,11 +27,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * When an ASSERT fails, an error message is generated and the program exits.
  */
 
+#include <OpenThreads/Mutex>
+
 #include <assert.h>
 #include <iostream>
 #include <sstream>
 #include <vector>
-#include <OpenThreads/Mutex>
 
 #ifdef USE_NVWA
 #   include "debug_new.h"

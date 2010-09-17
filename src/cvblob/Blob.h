@@ -13,7 +13,7 @@ MODIFICATIONS (Modification, Author, Date):
 **************************************************************************/
 
 //! Disable warnings referred to 255 character truncation for the std:map
-#ifdef _WIN32
+#ifdef _VISUALC_
 #pragma warning( disable : 4786 )
 #endif
 

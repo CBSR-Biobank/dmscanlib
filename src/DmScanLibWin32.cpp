@@ -26,6 +26,7 @@
  ******************************************************************************/
 
 #include "DmScanLib.h"
+#include "DmScanLibInternal.h"
 #include "UaLogger.h"
 #include "UaAssert.h"
 #include "Decoder.h"
@@ -36,11 +37,6 @@
 
 #ifdef WIN32
 #include "ImageGrabber.h"
-#endif
-
-#ifdef _VISUALC_
-// disable warnings about fopen
-#pragma warning(disable : 4996)
 #endif
 
 #include <iostream>
@@ -155,11 +151,8 @@ int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
     HANDLE h;
     int result;
     Dib dib;
-    vector < vector < string > >cells;
-    Util::getTime(starttime);
-    Decoder decoder(scanGap, squareDev, edgeThresh, corrections,
-            cellDistance);
 
+    Util::getTime(starttime);
     h = ig.acquireImage(dpi, brightness, contrast, left, top, right,
             bottom);
     if (h == NULL) {
@@ -178,5 +171,6 @@ int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
     		isVertical, "decode.bmp");
 
     ig.freeImage(h);
+    UA_DOUT(1, 1, "slDecodeCommon returned: " << result);
     return result;
 }

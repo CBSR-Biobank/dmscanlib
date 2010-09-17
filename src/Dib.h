@@ -32,34 +32,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 using namespace std;
 
-/* File information header
- * provides general information about the file
- */
-struct BitmapFileHeader {
-	unsigned short type;
-	unsigned       size;
-	unsigned short reserved1;
-	unsigned short reserved2;
-	unsigned       offset;
-};
-
-/* Bitmap information header
- * provides information specific to the image data
- */
-struct BitmapInfoHeader{
-	unsigned       size;
-	unsigned       width;
-	unsigned       height;
-	unsigned short planes;
-	unsigned short bitCount;
-	unsigned       compression;
-	unsigned       imageSize;
-	unsigned       hPixelsPerMeter;
-	unsigned       vPixelsPerMeter;
-	unsigned       numColors;
-	unsigned       numColorsImp;
-};
-
 /* Colour palette
  */
 struct RgbQuad {
@@ -99,26 +71,19 @@ public:
 #ifdef WIN32
 	void readFromHandle(HANDLE handle);
 #endif
-	void init(unsigned width, unsigned height, unsigned colorBits,
-			unsigned pixelsPerMeter);
+	unsigned getDpi();
 	unsigned getHeight();
 	unsigned getWidth();
 	unsigned getRowPadBytes();
-	unsigned getInternalRowBytes();
 	unsigned getBitsPerPixel();
 	unsigned char * getPixelBuffer();
-	unsigned char * getRowPtr(unsigned row);
-	void getPixel(unsigned row, unsigned col, RgbQuad & quad);
 	unsigned char getPixelAvgGrayscale(unsigned row, unsigned col);
 	inline unsigned char getPixelGrayscale(unsigned row, unsigned col);
 	void setPixel(unsigned row, unsigned col, RgbQuad & quad);
 	inline void setPixelGrayscale(unsigned row, unsigned col, unsigned char value);
-	unsigned char * getPixelsNoPadding();
-	void setPixelsNoPadding(unsigned char * pixels);
 
 	void line(unsigned x0, unsigned y0, unsigned x1, unsigned y1, RgbQuad & quad);
 	void rectangle(unsigned x, unsigned y, unsigned width, unsigned height,RgbQuad & quad);
-	unsigned getDpi();
 
 	auto_ptr<IplImageContainer>  generateIplImage();
 private:
@@ -132,26 +97,27 @@ private:
     static const unsigned GAUSS_FACTORS[];
     static const unsigned GAUSS_SUM;
 
-
-
-	auto_ptr<BitmapInfoHeader> infoHeader;
-	RgbQuad * colorPalette;
+    unsigned size;
+    unsigned width;
+    unsigned imageSize;
+    unsigned height;
+    unsigned colorBits;
+    unsigned pixelsPerMeter;
+    unsigned paletteSize;
 	unsigned bytesPerPixel;
 	unsigned rowBytes;
 	unsigned rowPaddingBytes;
 	unsigned char * pixels;
 	bool isAllocated;
 
-	unsigned idx, dupe; // used by line drawing
-
+	void init(unsigned width, unsigned height, unsigned colorBits,
+			unsigned pixelsPerMeter);
 	void deallocate();
 	unsigned getPaletteSize(unsigned bitCount);
-	void setPalette();
 	void setPalette(RgbQuad * palette);
 	unsigned getRowBytes(unsigned width, unsigned bitCount);
 
 	void convolveFast3x3(const float(&kernel)[9]);
-	void convolve2DSlow(const float(&kernel) [9], int kernelSizeX, int kernelSizeY);
 	static bool bound(unsigned min, unsigned & x, unsigned max);
 };
 

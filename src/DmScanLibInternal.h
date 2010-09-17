@@ -26,7 +26,14 @@ extern slTime starttime; // for debugging
 extern slTime endtime;
 extern slTime timediff;
 
+class Dib;
+
 void configLogging(unsigned level, bool useFile = true);
 
+int slDecodeCommon(unsigned plateNum, Dib & dib, double scanGap,
+        unsigned squareDev, unsigned edgeThresh, unsigned corrections,
+        double cellDistance, double gapX, double gapY, unsigned profileA,
+        unsigned profileB, unsigned profileC, unsigned isVertical,
+        const char *markedDibFilename);
 
 #endif /* __INC_SCANLIB_INTERNAL_H */

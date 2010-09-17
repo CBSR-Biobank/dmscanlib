@@ -65,7 +65,7 @@
 				AdditionalDependencies="cv210.lib cxcore210.lib user32.lib libcmtd.lib OpenThreadsWin32.lib"
 				ShowProgress="0"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories=".\src\opencv\win32;.\src\openthreads"
+				AdditionalLibraryDirectories="lib\win32"
 				IgnoreDefaultLibraryNames=" libcmt.lib"
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -149,7 +149,7 @@
 				AdditionalDependencies=" cv210.lib cxcore210.lib user32.lib OpenThreadsWin32.lib"
 				ShowProgress="0"
 				LinkIncremental="0"
-				AdditionalLibraryDirectories=".\src\opencv\win32;.\src\openthreads;"
+				AdditionalLibraryDirectories="lib\win32"
 				IgnoreDefaultLibraryNames=""
 				ModuleDefinitionFile="dmscanlib.def"
 				GenerateDebugInformation="false"
@@ -284,10 +284,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\BinRegion.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\src\Decoder.cpp"
 				>
 			</File>
@@ -296,11 +292,15 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\DmScanLib.cpp"
+				RelativePath=".\src\DmScanLib_wrap.c"
 				>
 			</File>
 			<File
-				RelativePath=".\src\DmScanLib_wrap.c"
+				RelativePath=".\src\DmScanLibCommon.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\DmScanLibWin32.cpp"
 				>
 			</File>
 			<File
@@ -312,6 +312,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\PalletGrid.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\src\ProcessImageManager.cpp"
 				>
 			</File>
@@ -320,15 +324,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\TriInt.cpp"
+				RelativePath=".\src\utils\TimeUtilWin32.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\src\utils\UaLogger.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\src\utils\Util.cpp"
 				>
 			</File>
 			<Filter
@@ -378,10 +378,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\BinRegion.h"
-				>
-			</File>
-			<File
 				RelativePath=".\src\Decoder.h"
 				>
 			</File>
@@ -394,6 +390,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\DmScanLibInternal.h"
+				>
+			</File>
+			<File
 				RelativePath=".\src\ImageGrabber.h"
 				>
 			</File>
@@ -402,7 +402,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\processImageManager.h"
+				RelativePath=".\src\PalletGrid.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\ProcessImageManager.h"
 				>
 			</File>
 			<File
@@ -410,7 +414,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\TriInt.h"
+				RelativePath=".\src\utils\TimeUtil.h"
 				>
 			</File>
 			<File
@@ -419,10 +423,6 @@
 			</File>
 			<File
 				RelativePath=".\src\utils\UaLogger.h"
-				>
-			</File>
-			<File
-				RelativePath=".\src\utils\Util.h"
 				>
 			</File>
 			<Filter

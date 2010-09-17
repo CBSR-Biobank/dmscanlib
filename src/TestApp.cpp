@@ -47,7 +47,7 @@
 #   include "UaAssert.h"
 #   include "Decoder.h"
 #   include "Dib.h"
-#   include "Util.h"
+//#   include "TimeUtil.h"
 #   include "BarcodeInfo.h"
 #   include "ImageGrabber.h"
 #endif
@@ -57,7 +57,6 @@
 #include "UaLogger.h"
 
 #include <iostream>
-#include <bitset>
 #include <vector>
 
 #ifdef USE_NVWA

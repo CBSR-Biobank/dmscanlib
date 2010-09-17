@@ -22,6 +22,7 @@
 
 #include "PalletGrid.h"
 #include "UaAssert.h"
+#include "UaLogger.h"
 #include "cxtypes.h"
 
 #include <sstream>
@@ -41,6 +42,9 @@ PalletGrid::PalletGrid(Orientation o, unsigned imgWidth, unsigned imgHeight,
 	} else {
 		UA_ASSERTS(false, "orientation invalid: " << orientation);
 	}
+
+    UA_DOUT(1, 3, "PalletGrid: orientation/" << orientation << " width/" 
+		<< imgWidth << " height/" << imgHeight << " imgValid/" << imgValid);
 
 	if (!imgValid) return;
 
