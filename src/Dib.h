@@ -84,7 +84,8 @@ public:
 	Dib();
 	Dib(Dib & src);
 	Dib(IplImageContainer & src);
-	Dib(unsigned width, unsigned height, unsigned colorBits);
+	Dib(unsigned width, unsigned height, unsigned colorBits,
+			unsigned pixelsPerMeter);
 	Dib(char * filename);
 	~Dib();
 	void readFromFile(const char * filename) ;
@@ -98,7 +99,8 @@ public:
 #ifdef WIN32
 	void readFromHandle(HANDLE handle);
 #endif
-
+	void init(unsigned width, unsigned height, unsigned colorBits,
+			unsigned pixelsPerMeter);
 	unsigned getHeight();
 	unsigned getWidth();
 	unsigned getRowPadBytes();
@@ -132,8 +134,7 @@ private:
 
 
 
-	BitmapFileHeader * fileHeader;
-	BitmapInfoHeader * infoHeader;
+	auto_ptr<BitmapInfoHeader> infoHeader;
 	RgbQuad * colorPalette;
 	unsigned bytesPerPixel;
 	unsigned rowBytes;
@@ -144,7 +145,6 @@ private:
 	unsigned idx, dupe; // used by line drawing
 
 	void deallocate();
-	void copyInternals(Dib & src);
 	unsigned getPaletteSize(unsigned bitCount);
 	void setPalette();
 	void setPalette(RgbQuad * palette);

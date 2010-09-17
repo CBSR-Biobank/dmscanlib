@@ -1,26 +1,28 @@
-/*
- Dmscanlib is a software library and standalone application that scans
- and decodes libdmtx compatible test-tubes. It is currently designed
- to decode 12x8 pallets that use 2D data-matrix laser etched test-tubes.
- Copyright (C) 2010 Canadian Biosample Repository
-
- This program is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
 /*******************************************************************************
+ *
  * Device Independent Bitmap
- ******************************************************************************/
-
+ *
+ ******************************************************************************
+ *
+ * Dmscanlib is a software library and standalone application that scans
+ * and decodes libdmtx compatible test-tubes. It is currently designed
+ * to decode 12x8 pallets that use 2D data-matrix laser etched test-tubes.
+ * Copyright (C) 2010 Canadian Biosample Repository
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *****************************************************************************/
 #include "Dib.h"
 #include "UaLogger.h"
 #include "UaAssert.h"
@@ -71,22 +73,29 @@ const float Dib::DPI_400_KERNEL[9] =
 		{ 0.0587031f, 0.1222315f, 0.0587031f, 0.1222315f, 0.2762618f,
 				0.1222315f, 0.0587031f, 0.1222315f, 0.0587031f, };
 
-Dib::Dib():
-	fileHeader(NULL), infoHeader(NULL), colorPalette(NULL), pixels(NULL),
+Dib::Dib() :
+		infoHeader(new BitmapInfoHeader), colorPalette(NULL), pixels(NULL),
 			isAllocated(false) {
 	ua::Logger::Instance().subSysHeaderSet(4, "Dib");
 }
 
 Dib::Dib(Dib & src):
-	fileHeader(NULL), infoHeader(NULL), colorPalette(NULL), pixels(NULL),
+	infoHeader(new BitmapInfoHeader), colorPalette(NULL), pixels(NULL),
 			isAllocated(false) {
 	ua::Logger::Instance().subSysHeaderSet(4, "Dib");
-	copyInternals(src);
+	init(src.infoHeader->width, src.infoHeader->height,
+			src.infoHeader->bitCount, src.infoHeader->hPixelsPerMeter);
 	memcpy(pixels, src.pixels, infoHeader->imageSize);
 }
 
-Dib::Dib(IplImageContainer & img) {
+Dib::Dib(unsigned width, unsigned height, unsigned colorBits,
+		unsigned pixelsPerMeter) :
+		infoHeader(new BitmapInfoHeader), colorPalette(NULL) {
+	init(width, height, colorBits, pixelsPerMeter);
+}
 
+Dib::Dib(IplImageContainer & img) :
+			infoHeader(new BitmapInfoHeader), colorPalette(NULL) {
 	IplImage *src = img.getIplImage();
 
 	UA_ASSERTS(src->depth == IPL_DEPTH_8U,
@@ -97,56 +106,30 @@ Dib::Dib(IplImageContainer & img) {
 	cvFlip(src, src, 0);
 	matrix = cvGetMat(src, &hdr);
 
-	bytesPerPixel = 1;
-	rowBytes = src->widthStep;
-	rowPaddingBytes = src->widthStep - (src->width * 1);
-
-	fileHeader = NULL;
-	infoHeader = new BitmapInfoHeader;
-
-	infoHeader->size = 40; /* bytes in header should be 40 */
-	infoHeader->width = src->width;
-	infoHeader->height = src->height;
-	infoHeader->planes = 1;
-	infoHeader->bitCount = 8;
-	infoHeader->compression = 0;
-	infoHeader->hPixelsPerMeter = img.getHorizontalResolution();
-	infoHeader->vPixelsPerMeter = img.getVerticalResolution();
-	infoHeader->numColors = 256;
-	infoHeader->numColorsImp = 0;
-	infoHeader->imageSize = src->imageSize;
-
-	colorPalette = new RgbQuad[256];
-	for (unsigned i = 0; i < 256; ++i) {
-		colorPalette[i].set(i, i, i);
-	}
-
-	/*---------pixels-----------*/
-	isAllocated = true;
-	pixels = new unsigned char[src->imageSize];
-
-	/*IplImage is already padded */
+	init(src->width, src->height, 8, img.getHorizontalResolution());
 	memcpy(pixels, matrix->data.ptr, src->imageSize);
-	/*---------pixels-----------*/
-
 	cvFlip(src, src, 0);
 }
 
-Dib::Dib(unsigned width, unsigned height, unsigned colorBits) :
-	fileHeader(NULL), colorPalette(NULL) {
+Dib::Dib(char *filename) :
+	infoHeader(new BitmapInfoHeader), pixels(NULL), isAllocated(false) {
+	readFromFile(filename);
+}
+
+void Dib::init(unsigned width, unsigned height, unsigned colorBits,
+		unsigned pixelsPerMeter) {
 	bytesPerPixel = colorBits >> 3;
 
 	unsigned paletteSize = getPaletteSize(colorBits);
 
-	infoHeader = new BitmapInfoHeader;
 	infoHeader->size = 40;
 	infoHeader->width = width;
 	infoHeader->height = height;
 	infoHeader->planes = 1;
 	infoHeader->bitCount = colorBits;
 	infoHeader->compression = 0;
-	infoHeader->hPixelsPerMeter = 0;
-	infoHeader->vPixelsPerMeter = 0;
+	infoHeader->hPixelsPerMeter = pixelsPerMeter;
+	infoHeader->vPixelsPerMeter = pixelsPerMeter;
 	infoHeader->numColors = paletteSize;
 	infoHeader->numColorsImp = 0;
 
@@ -165,23 +148,11 @@ Dib::Dib(unsigned width, unsigned height, unsigned colorBits) :
 	UA_DOUT(4, 5, "constructor: image size is " << infoHeader->imageSize);
 }
 
-Dib::Dib(char *filename) :
-	fileHeader(NULL), infoHeader(NULL), pixels(NULL), isAllocated(false) {
-	readFromFile(filename);
-}
-
 Dib::~Dib() {
 	deallocate();
 }
 
 void Dib::deallocate() {
-	if (fileHeader != NULL) {
-		delete fileHeader;
-	}
-	if (infoHeader != NULL) {
-		delete infoHeader;
-	}
-
 	if (colorPalette != NULL) {
 		delete[] colorPalette;
 	}
@@ -210,31 +181,6 @@ void Dib::setPalette(RgbQuad * palette) {
 	memcpy(colorPalette, palette, paletteSize * sizeof(RgbQuad));
 }
 
-void Dib::copyInternals(Dib & src) {
-	if ((fileHeader != NULL) && (src.fileHeader != NULL)) {
-		*fileHeader = *src.fileHeader;
-	}
-	if (infoHeader == NULL) {
-		infoHeader = new BitmapInfoHeader;
-	}
-	*infoHeader = *src.infoHeader;
-
-	unsigned paletteSize = getPaletteSize(infoHeader->bitCount);
-	if (paletteSize > 0) {
-		colorPalette = new RgbQuad[paletteSize];
-		setPalette(src.colorPalette);
-	}
-
-	if (pixels == NULL) {
-		isAllocated = true;
-		pixels = new unsigned char[infoHeader->imageSize];
-		memset(pixels, 255, infoHeader->imageSize);
-	}
-	bytesPerPixel = src.bytesPerPixel;
-	rowBytes = src.rowBytes;
-	rowPaddingBytes = src.rowPaddingBytes;
-}
-
 unsigned Dib::getPaletteSize(unsigned bitCount) {
 	switch (bitCount) {
 	case 1:
@@ -259,37 +205,15 @@ void Dib::readFromHandle(HANDLE handle)
 		delete infoHeader;
 	}
 
-	infoHeader = new BitmapInfoHeader;
+	// if these conditions are not met the Dib cannot be processed
+	UA_ASSERT(dibHeaderPtr->biSize == 50);
+	UA_ASSERT(dibHeaderPtr->biPlanes == 1);
+	UA_ASSERT(dibHeaderPtr->biCompression == 0);
+	UA_ASSERT(dibHeaderPtr->biXPelsPerMeter == dibHeaderPtr->biYPelsPerMeter);
+	UA_ASSERT(dibHeaderPtr->biClrImportant == 0);
 
-	infoHeader->size = dibHeaderPtr->biSize;
-	infoHeader->width = dibHeaderPtr->biWidth;
-	infoHeader->height = dibHeaderPtr->biHeight;
-	infoHeader->planes = dibHeaderPtr->biPlanes;
-	infoHeader->bitCount = dibHeaderPtr->biBitCount;
-	infoHeader->compression = dibHeaderPtr->biCompression;
-	infoHeader->imageSize = dibHeaderPtr->biSizeImage;
-	infoHeader->hPixelsPerMeter = dibHeaderPtr->biXPelsPerMeter;
-	infoHeader->vPixelsPerMeter = dibHeaderPtr->biYPelsPerMeter;
-	infoHeader->numColors = dibHeaderPtr->biClrUsed;
-	infoHeader->numColorsImp = dibHeaderPtr->biClrImportant;
-
-	unsigned paletteSize = getPaletteSize(infoHeader->bitCount);
-	if (paletteSize > 0) {
-		colorPalette =
-		reinterpret_cast < RgbQuad * >(reinterpret_cast <
-				unsigned char
-				*>(dibHeaderPtr)
-				+ sizeof(BITMAPINFOHEADER));
-	}
-
-	pixels =
-	reinterpret_cast <
-	unsigned char *>(dibHeaderPtr) + sizeof(BITMAPINFOHEADER)
-	+ paletteSize * sizeof(RgbQuad);
-
-	bytesPerPixel = infoHeader->bitCount >> 3;
-	rowBytes = getRowBytes(infoHeader->width, infoHeader->bitCount);
-	rowPaddingBytes = rowBytes - (infoHeader->width * bytesPerPixel);
+	init(dibHeaderPtr->biWidth, dibHeaderPtr->biHeight,
+			dibHeaderPtr->biBitCount, dibHeaderPtr->biXPelsPerMeter);
 
 	UA_DOUT(4, 5, "readFromHandle: "
 			<< " size/" << infoHeader->size
@@ -315,11 +239,6 @@ void Dib::readFromFile(const char *filename) {
 		UA_ERROR("could not open file " << filename);
 	}
 
-	fileHeader = new BitmapFileHeader;
-	infoHeader = new BitmapInfoHeader;
-	memset(fileHeader, 0, sizeof(BitmapFileHeader));
-	memset(infoHeader, 0, sizeof(BitmapInfoHeader));
-
 	unsigned char fileHeaderRaw[0xE];
 	unsigned char infoHeaderRaw[0x28];
 	unsigned r;
@@ -329,23 +248,25 @@ void Dib::readFromFile(const char *filename) {
 	r = fread(infoHeaderRaw, sizeof(unsigned char), sizeof(infoHeaderRaw), fh);
 	UA_ASSERT(r = sizeof(infoHeaderRaw));
 
-	fileHeader->type = *(unsigned short *) &fileHeaderRaw[0];
-	fileHeader->size = *(unsigned *) &fileHeaderRaw[2];
-	fileHeader->reserved1 = *(unsigned short *) &fileHeaderRaw[6];
-	fileHeader->reserved2 = *(unsigned short *) &fileHeaderRaw[8];
-	fileHeader->offset = *(unsigned *) &fileHeaderRaw[0xA];
+	unsigned size = *(unsigned *) &infoHeaderRaw[0];
+	unsigned width = *(unsigned *) &infoHeaderRaw[0x12 - 0xE];
+	unsigned height = *(unsigned *) &infoHeaderRaw[0x16 - 0xE];
+	unsigned colorBits = *(unsigned short *) &infoHeaderRaw[0x1C - 0xE];
+	unsigned hPixelsPerMeter = *(unsigned *) &infoHeaderRaw[0x26 - 0xE];
+	unsigned vPixelsPerMeter = *(unsigned *) &infoHeaderRaw[0x2A - 0xE];
 
-	infoHeader->size = *(unsigned *) &infoHeaderRaw[0];
-	infoHeader->width = *(unsigned *) &infoHeaderRaw[0x12 - 0xE];
-	infoHeader->height = *(unsigned *) &infoHeaderRaw[0x16 - 0xE];
-	infoHeader->planes = *(unsigned short *) &infoHeaderRaw[0x1A - 0xE];
-	infoHeader->bitCount = *(unsigned short *) &infoHeaderRaw[0x1C - 0xE];
-	infoHeader->compression = *(unsigned *) &infoHeaderRaw[0x1E - 0xE];
-	infoHeader->imageSize = *(unsigned *) &infoHeaderRaw[0x22 - 0xE];
-	infoHeader->hPixelsPerMeter = *(unsigned *) &infoHeaderRaw[0x26 - 0xE];
-	infoHeader->vPixelsPerMeter = *(unsigned *) &infoHeaderRaw[0x2A - 0xE];
-	infoHeader->numColors = *(unsigned *) &infoHeaderRaw[0x2E - 0xE];
-	infoHeader->numColorsImp = *(unsigned *) &infoHeaderRaw[0x32 - 0xE];
+	unsigned planes = *(unsigned short *) &infoHeaderRaw[0x1A - 0xE];
+	unsigned compression = *(unsigned *) &infoHeaderRaw[0x1E - 0xE];
+	unsigned numColorsImp = *(unsigned *) &infoHeaderRaw[0x32 - 0xE];
+
+	// if these conditions are not met the Dib cannot be processed
+	UA_ASSERT(size == 40);
+	UA_ASSERT(planes == 1);
+	UA_ASSERT(compression == 0);
+	UA_ASSERT(hPixelsPerMeter == vPixelsPerMeter);
+	UA_ASSERT(numColorsImp == 0);
+
+	init(width, height, colorBits, hPixelsPerMeter);
 
 	unsigned paletteSize = getPaletteSize(infoHeader->bitCount);
 	if (paletteSize > 0) {
@@ -386,21 +307,13 @@ bool Dib::writeToFile(const char *filename) {
 	unsigned paletteSize = getPaletteSize(infoHeader->bitCount);
 	unsigned paletteBytes = paletteSize * sizeof(RgbQuad);
 
-	if (fileHeader != NULL) {
-		*(unsigned short *) &fileHeaderRaw[0] = fileHeader->type;
-		*(unsigned *) &fileHeaderRaw[2] = fileHeader->size;
-		*(unsigned short *) &fileHeaderRaw[6] = fileHeader->reserved1;
-		*(unsigned short *) &fileHeaderRaw[8] = fileHeader->reserved2;
-		*(unsigned *) &fileHeaderRaw[0xA] = fileHeader->offset;
-	} else {
-		*(unsigned short *) &fileHeaderRaw[0] = 0x4D42;
-		*(unsigned *) &fileHeaderRaw[2] = infoHeader->imageSize
-				+ sizeof(fileHeaderRaw) + sizeof(infoHeaderRaw) + paletteBytes;
-		*(unsigned short *) &fileHeaderRaw[6] = 0;
-		*(unsigned short *) &fileHeaderRaw[8] = 0;
-		*(unsigned *) &fileHeaderRaw[0xA] = sizeof(fileHeaderRaw)
-				+ sizeof(infoHeaderRaw) + paletteBytes;
-	}
+	*(unsigned short *) &fileHeaderRaw[0] = 0x4D42;
+	*(unsigned *) &fileHeaderRaw[2] = infoHeader->imageSize
+			+ sizeof(fileHeaderRaw) + sizeof(infoHeaderRaw) + paletteBytes;
+	*(unsigned short *) &fileHeaderRaw[6] = 0;
+	*(unsigned short *) &fileHeaderRaw[8] = 0;
+	*(unsigned *) &fileHeaderRaw[0xA] = sizeof(fileHeaderRaw)
+						+ sizeof(infoHeaderRaw) + paletteBytes;
 
 	*(unsigned *) &infoHeaderRaw[0] = infoHeader->size;
 	*(unsigned *) &infoHeaderRaw[0x12 - 0xE] = infoHeader->width;
@@ -570,7 +483,6 @@ bool Dib::bound(unsigned min, unsigned & x, unsigned max) {
  * DIBs are flipped in Y
  */
 auto_ptr<Dib> Dib::crop(Dib & src, unsigned x0, unsigned y0, unsigned x1, unsigned y1) {
-	UA_ASSERT_NOT_NULL(src.infoHeader);
 	UA_ASSERT(x1 > x0);
 	UA_ASSERT(y1 > y0);
 
@@ -582,7 +494,8 @@ auto_ptr<Dib> Dib::crop(Dib & src, unsigned x0, unsigned y0, unsigned x1, unsign
     unsigned width = x1 - x0;
     unsigned height = y1 - y0;
 
-    auto_ptr<Dib> dest(new Dib(width, height, src.infoHeader->bitCount));
+    auto_ptr<Dib> dest(new Dib(width, height, src.infoHeader->bitCount,
+    		src.infoHeader->hPixelsPerMeter));
 
     dest->infoHeader->hPixelsPerMeter = src.infoHeader->hPixelsPerMeter;
     dest->infoHeader->vPixelsPerMeter = src.infoHeader->vPixelsPerMeter;
@@ -616,7 +529,8 @@ auto_ptr<Dib> Dib::convertGrayscale(Dib & src) {
 
 	// 24bpp -> 8bpp
 	auto_ptr<Dib>
-			dest(new Dib(src.infoHeader->width, src.infoHeader->height, 8));
+			dest(new Dib(src.infoHeader->width, src.infoHeader->height, 8,
+					src.infoHeader->hPixelsPerMeter));
 
 	dest->infoHeader->hPixelsPerMeter = src.infoHeader->hPixelsPerMeter;
 	dest->infoHeader->vPixelsPerMeter = src.infoHeader->vPixelsPerMeter;
@@ -656,7 +570,6 @@ auto_ptr<Dib> Dib::convertGrayscale(Dib & src) {
  * cvmat: Matrices are stored row by row. All of the rows are padded (4 bytes).
  */
 auto_ptr<IplImageContainer> Dib::generateIplImage() {
-	UA_ASSERTS(infoHeader != NULL, "NULL infoHeader specified to generateIplImage");
 	UA_ASSERTS(infoHeader->bitCount == 8, "generateIplImage requires an unsigned 8bit image");
 	UA_ASSERTS(pixels != NULL,"NULL pixel data specified to generateIplImage");
 
@@ -701,7 +614,6 @@ void Dib::rectangle(unsigned x, unsigned y, unsigned width, unsigned height,
  */
 void Dib::line(unsigned x0, unsigned y0, unsigned x1, unsigned y1,
 		RgbQuad & quad) {
-	UA_ASSERT_NOT_NULL(infoHeader);
 	UA_ASSERT(y0 < infoHeader->height);
 	UA_ASSERT(y1 < infoHeader->height);
 	UA_ASSERT(x0 < infoHeader->width);
