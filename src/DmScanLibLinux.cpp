@@ -63,22 +63,5 @@ int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
         unsigned corrections, double cellDistance, double gapX, double gapY,
         unsigned profileA, unsigned profileB, unsigned profileC,
         unsigned isVertical) {
-    configLogging(verbose);
-    UA_DOUT(1, 3, "slDecodePlate: dpi/" << dpi
-            << " brightness/" << brightness
-            << " contrast/" << contrast
-            << " plateNum/" << plateNum
-            << " left/" << left
-            << " top/" << top
-            << " right/" << right
-            << " bottom/" << bottom
-            << " scanGap/" << scanGap
-            << " squareDev/" << squareDev
-            << " edgeThresh/" << edgeThresh
-            << " corrections/" << corrections
-            << " cellDistance/" << cellDistance
-            << " gapX/" << gapX
-            << " gapY/" << gapY
-            << " isVertical/" << isVertical);
     return SC_FAIL;
 }

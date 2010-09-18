@@ -668,14 +668,13 @@ void Dib::convolveFast3x3(const float(&k)[9]) {
 	UA_ASSERTS(colorBits == 8,
 			"convolveFast3x3 requires an unsigned 8bit image");
 
-	int nc = width;
-	int nr = height;
-	unsigned size = nr * nc;
+	unsigned size = height * width;
 
 	float *imageOut = new float[size];
 	float *imageIn = new float[size];
 
 	fill(imageOut, imageOut + size, 0.0f);
+
 	{
 		unsigned char *srcRowPtr = pixels, *srcPtr;
 		float *destPtr = imageIn;
@@ -689,7 +688,7 @@ void Dib::convolveFast3x3(const float(&k)[9]) {
 		}
 	}
 
-	int ncm1 = nc - 1, nrm1 = nr - 1;
+	int ncm1 = width - 1, nrm1 = height - 1;
 	float k00 = k[0];
 	float k01 = k[1];
 	float k02 = k[2];
@@ -700,16 +699,16 @@ void Dib::convolveFast3x3(const float(&k)[9]) {
 	float k21 = k[7];
 	float k22 = k[8];
 	for (int i = 1; i < nrm1; i++) {
-		float *r00 = imageIn + (i - 1) * nc;
+		float *r00 = imageIn + (i - 1) * width;
 		float *r01 = r00 + 1;
 		float *r02 = r01 + 1;
-		float *r10 = r00 + nc;
+		float *r10 = r00 + width;
 		float *r11 = r10 + 1;
 		float *r12 = r11 + 1;
-		float *r20 = r10 + nc;
+		float *r20 = r10 + width;
 		float *r21 = r20 + 1;
 		float *r22 = r21 + 1;
-		float *rOut = imageOut + i * nc + 1;
+		float *rOut = imageOut + i * width + 1;
 		for (int j = 1; j < ncm1; j++) {
 			*rOut++ = (k00 * *r00++) + (k01 * *r01++) + (k02 * *r02++) + (k10
 					* *r10++) + (k11 * *r11++) + (k12 * *r12++)
