@@ -58,7 +58,7 @@ public:
 	 * @param gapY The vertical gap between cells in pixels.
 	 */
 	PalletGrid(Orientation o, unsigned imgWidth, unsigned imgHeight,
-			unsigned gapX, unsigned gapY, vector<unsigned> & profileWords);
+			unsigned gapX, unsigned gapY, const unsigned (&profileWords)[3]);
 
 	~PalletGrid();
 
