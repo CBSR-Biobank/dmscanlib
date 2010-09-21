@@ -115,10 +115,7 @@ int slDecodeCommon(unsigned plateNum, Dib & dib, double scanGap,
     unsigned gapXpixels = static_cast<unsigned>(dpi * gapX);
     unsigned gapYpixels = static_cast<unsigned>(dpi * gapY);
 
-    vector<unsigned> profileWords;
-    profileWords.push_back(profileA);
-    profileWords.push_back(profileB);
-    profileWords.push_back(profileC);
+    const unsigned profileWords[3] = { profileA, profileB, profileC };
 
     auto_ptr<PalletGrid> palletGrid(new PalletGrid(orientation, dib.getWidth(),
             dib.getHeight(), gapXpixels, gapYpixels, profileWords));

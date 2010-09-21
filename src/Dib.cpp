@@ -557,15 +557,6 @@ auto_ptr<IplImageContainer> Dib::generateIplImage() {
 	return iplContainer;
 }
 
-void Dib::rectangle(unsigned x, unsigned y, unsigned width, unsigned height,
-		RgbQuad & quad) {
-	line(x, y, x, y + height, quad);
-	line(x, y, x + width, y, quad);
-	line(x + width, y, x + width, y + height, quad);
-	line(x, y + height, x + width, y + height, quad);
-
-}
-
 /*
  * generate x,y coordinates to draw a line from x0,y0 to x1,y1 and output the
  * coordinates in the same direction that they are drawn.
@@ -642,6 +633,15 @@ void Dib::line(unsigned x0, unsigned y0, unsigned x1, unsigned y1,
 	}
 }
 
+void Dib::rectangle(unsigned x, unsigned y, unsigned width, unsigned height,
+		RgbQuad & quad) {
+	line(x, y, x, y + height, quad);
+	line(x, y, x + width, y, quad);
+	line(x + width, y, x + width, y + height, quad);
+	line(x, y + height, x + width, y + height, quad);
+
+}
+
 void Dib::tpPresetFilter() {
 	switch (getDpi()) {
 
@@ -656,7 +656,6 @@ void Dib::tpPresetFilter() {
 
 		UA_DOUT(4, 5, "tpPresetFilter: Applying BLUR_KERNEL");
 		convolveFast3x3(Dib::BLUR_KERNEL);
-
 		break;
 
 	case 300:

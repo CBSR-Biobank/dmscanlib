@@ -28,7 +28,7 @@
 #include <sstream>
 
 PalletGrid::PalletGrid(Orientation o, unsigned imgWidth, unsigned imgHeight,
-		unsigned gapX, unsigned gapY, vector<unsigned> & profileWords) {
+		unsigned gapX, unsigned gapY, const unsigned (&profileWords)[3]) {
 	orientation = o;
 
 	if (orientation == ORIENTATION_HORIZONTAL) {
@@ -53,7 +53,6 @@ PalletGrid::PalletGrid(Orientation o, unsigned imgWidth, unsigned imgHeight,
 
 	// load the profile
 	bits.resize(NUM_CELLS);
-	UA_ASSERTS(profileWords.size() == 3, "invalid size for profileWords");
 	unsigned mask;
 	for (unsigned i = 0; i < NUM_WORDS; ++i) {
 		mask = 1;
