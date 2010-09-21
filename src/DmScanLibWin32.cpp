@@ -90,18 +90,19 @@ int slScanImage(unsigned verbose, unsigned dpi, int brightness, int contrast,
         double left, double top, double right, double bottom,
         const char *filename) {
     configLogging(verbose);
+    if (filename == NULL) {
+	    UA_DOUT(1, 3, "slScanImage: no file name specified");
+        return SC_FAIL;
+    }
+
     UA_DOUT(1, 3, "slScanImage: dpi/" << dpi
             << " brightness/" << brightness
             << " contrast/" << contrast
             << " left/" << left
             << " top/" << top << " right/" << right << " bottom/" <<
-            bottom);
+            bottom << " filename/" << filename);
 
     ImageGrabber ig;
-
-    if (filename == NULL) {
-        return SC_FAIL;
-    }
 
     HANDLE h = ig.acquireImage(dpi, brightness, contrast, left, top, right,
             bottom);
