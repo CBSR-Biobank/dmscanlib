@@ -111,7 +111,7 @@ private:
 	bool isAllocated;
 
 	void init(unsigned width, unsigned height, unsigned colorBits,
-			unsigned pixelsPerMeter);
+			unsigned pixelsPerMeter, bool allocatePixelBuf = true);
 	void deallocate();
 	unsigned getPaletteSize(unsigned bitCount);
 	void setPalette(RgbQuad * palette);

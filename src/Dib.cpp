@@ -139,7 +139,7 @@ Dib::Dib(char *filename) : pixels(NULL), isAllocated(false) {
 }
 
 void Dib::init(unsigned width, unsigned height, unsigned colorBits,
-		unsigned pixelsPerMeter) {
+		unsigned pixelsPerMeter, bool allocatePixelBuf) {
 
 	this->size = 40;
 	this->width = width;
@@ -153,9 +153,11 @@ void Dib::init(unsigned width, unsigned height, unsigned colorBits,
 	rowPaddingBytes = rowBytes - (width * bytesPerPixel);
 	imageSize = height * rowBytes;
 
-	isAllocated = true;
-	pixels = new unsigned char[imageSize];
-	memset(pixels, 255, imageSize);
+	if (allocatePixelBuf) {
+		isAllocated = true;
+		pixels = new unsigned char[imageSize];
+		memset(pixels, 255, imageSize);
+	}
 	UA_DOUT(4, 5, "constructor: image size is " << imageSize);
 }
 
@@ -198,14 +200,17 @@ void Dib::readFromHandle(HANDLE handle) {
 	BITMAPINFOHEADER *dibHeaderPtr = (BITMAPINFOHEADER *) GlobalLock(handle);
 
 	// if these conditions are not met the Dib cannot be processed
-	UA_ASSERT(dibHeaderPtr->biSize == 50);
+	UA_ASSERT(dibHeaderPtr->biSize == 40);
 	UA_ASSERT(dibHeaderPtr->biPlanes == 1);
 	UA_ASSERT(dibHeaderPtr->biCompression == 0);
 	UA_ASSERT(dibHeaderPtr->biXPelsPerMeter == dibHeaderPtr->biYPelsPerMeter);
 	UA_ASSERT(dibHeaderPtr->biClrImportant == 0);
 
 	init(dibHeaderPtr->biWidth, dibHeaderPtr->biHeight,
-			dibHeaderPtr->biBitCount, dibHeaderPtr->biXPelsPerMeter);
+			dibHeaderPtr->biBitCount, dibHeaderPtr->biXPelsPerMeter, false);
+
+	pixels = reinterpret_cast <unsigned char *>(dibHeaderPtr) 
+		+ sizeof(BITMAPINFOHEADER) + paletteSize * sizeof(RgbQuad);
 
 	UA_DOUT(4, 5, "readFromHandle: "
 			<< " size/" << size
