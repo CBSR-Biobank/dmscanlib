@@ -124,6 +124,7 @@ bool Decoder::reduceBlobToMatrix(Dib & dib, CvRect & inputBlob) {
         largestBlob.y += inputBlob.y;
         inputBlob = largestBlob;
     }
+
     return reducedBlob;
 
 }
@@ -161,7 +162,10 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib) {
             UA_DOUT(1, 9, "row/" << row << " col/" << col << " rect/("
                     << rect.x << ", " << rect.y << "),(" << rect.x + rect.width
                     << ", " << rect.y + rect.height << ")");
-            if (!reduceBlobToMatrix(*dib, rect)) continue;
+            
+			if (!reduceBlobToMatrix(*dib, rect) 
+				|| (rect.width < minBlobWidth) 
+				|| (rect.height < minBlobHeight)) continue;
 
             BarcodeInfo * info = new BarcodeInfo();
             info->setPreProcessBoundingBox(rect);
