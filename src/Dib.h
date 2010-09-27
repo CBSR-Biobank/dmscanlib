@@ -61,7 +61,7 @@ public:
 	Dib(char * filename);
 	~Dib();
 	void readFromFile(const char * filename) ;
-	bool writeToFile(const char * filename);
+	bool writeToFile(const char * filename) const;
 
 	static auto_ptr<Dib> convertGrayscale(Dib & src);
 	static auto_ptr<Dib> crop(Dib &src, unsigned x0, unsigned y0, unsigned x1, unsigned y1);
@@ -71,14 +71,14 @@ public:
 #ifdef WIN32
 	void readFromHandle(HANDLE handle);
 #endif
-	unsigned getDpi();
-	unsigned getHeight();
-	unsigned getWidth();
-	unsigned getRowPadBytes();
-	unsigned getBitsPerPixel();
-	unsigned char * getPixelBuffer();
-	unsigned char getPixelAvgGrayscale(unsigned row, unsigned col);
-	inline unsigned char getPixelGrayscale(unsigned row, unsigned col);
+	unsigned getDpi() const;
+	unsigned getHeight() const;
+	unsigned getWidth() const;
+	unsigned getRowPadBytes() const;
+	unsigned getBitsPerPixel() const;
+	unsigned char * getPixelBuffer() const;
+	unsigned char getPixelAvgGrayscale(unsigned row, unsigned col) const;
+	inline unsigned char getPixelGrayscale(unsigned row, unsigned col) const;
 	void setPixel(unsigned row, unsigned col, RgbQuad & quad);
 	inline void setPixelGrayscale(unsigned row, unsigned col, unsigned char value);
 
@@ -113,8 +113,8 @@ private:
 	void init(unsigned width, unsigned height, unsigned colorBits,
 			unsigned pixelsPerMeter, bool allocatePixelBuf = true);
 	void deallocate();
-	unsigned getPaletteSize(unsigned bitCount);
-	void setPalette(RgbQuad * palette);
+	unsigned getPaletteSize(unsigned bitCount) const;
+	void initPalette(RgbQuad * palette) const;
 	unsigned getRowBytes(unsigned width, unsigned bitCount);
 
 	void convolveFast3x3(const float(&kernel)[9]);

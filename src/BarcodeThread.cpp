@@ -34,9 +34,9 @@
 
 BarcodeThread::BarcodeThread(ProcessImageManager * manager, double scanGap,
         unsigned squareDev, unsigned edgeThresh, unsigned corrections,
-        CvRect & croppedOffset, Dib & dib, BarcodeInfo & info) :
-    image(Decoder::createDmtxImageFromDib(dib)), barcodeInfo(info),
-            debug(false) {
+        CvRect & croppedOffset, const Dib & d, BarcodeInfo & info) :
+        dib(d), image(Decoder::createDmtxImageFromDib(dib)), barcodeInfo(info),
+            debug(true) {
     this->manager = manager;
     this->scanGap = scanGap;
     this->squareDev = squareDev;
@@ -67,11 +67,9 @@ BarcodeThread::~BarcodeThread() {
 }
 
 void BarcodeThread::run() {
-    DmtxDecode *dec = NULL;
-    unsigned regionCount = 0;
     int minEdgeSize, maxEdgeSize;
 
-    dec = dmtxDecodeCreate(image, 1);
+    DmtxDecode *dec = dmtxDecodeCreate(image, 1);
     UA_ASSERT_NOT_NULL(dec);
 
     // slightly smaller than the new tube edge
@@ -88,7 +86,9 @@ void BarcodeThread::run() {
     dmtxDecodeSetProp(dec, DmtxPropSquareDevn, squareDev);
     dmtxDecodeSetProp(dec, DmtxPropEdgeThresh, edgeThresh);
 
-    UA_DOUT(3, 7, "BarcodeThread: image width/" << image->width
+    UA_DOUT(3, 7, "BarcodeThread: image (" << croppedOffset.x
+    		<< "," << croppedOffset.y
+    		<< ") width/" << image->width
             << " image height/" << image->height << " row padding/"
             << dmtxImageGetProp(image, DmtxPropRowPadBytes)
             << " image bits per pixel/"
@@ -96,6 +96,11 @@ void BarcodeThread::run() {
             << " image row size bytes/"
             << dmtxImageGetProp(image, DmtxPropRowSizeBytes));
 
+    if ((croppedOffset.x == 442) && (croppedOffset.y == 47)) {
+        UA_DOUT(3, 7, "here");
+    }
+
+    bool msgFound = false;
     while (1) {
         DmtxRegion *reg = NULL;
 
@@ -104,30 +109,32 @@ void BarcodeThread::run() {
 
         DmtxMessage *msg = dmtxDecodeMatrixRegion(dec, reg, corrections);
         if (msg != NULL) {
-
+        	msgFound = true;
             barcodeInfo.postProcess(dec, reg, msg);
 
             if ((croppedOffset.width != 0) && (croppedOffset.height != 0)) {
+            	// translate the barcode region information to the actual
+            	// image coordinates
                 barcodeInfo.translate(croppedOffset.x, croppedOffset.y);
             }
 
             CvRect & rect = barcodeInfo.getPostProcessBoundingBox();
 
-            UA_DOUT(3, 8, "message " // << *barcodeInfosIt - 1
-                    << ": " << barcodeInfo.getMsg()
-                    << " : tlCorner/" << rect.x << "," << rect.y
-                    << "  brCorner/" << rect.x + rect.width
-                    << "," << rect.y + rect.height);
+            UA_DOUT(3, 8, "BarcodeThread: message/"
+                    << barcodeInfo.getMsg()
+                    << " tlCorner/(" << rect.x << "," << rect.y
+                    << ")  brCorner/(" << rect.x + rect.width
+                    << "," << rect.y + rect.height << ")");
             dmtxMessageDestroy(&msg);
         }
         dmtxRegionDestroy(&reg);
-
-        UA_DOUT(3, 7,
-                "retrieved message from region " << regionCount++);
     }
 
 #ifdef _DEBUG
     if (debug) {
+    	if (!msgFound) {
+    		writeMissedDib();
+    	}
         writeDiagnosticImage(dec);
     }
 #endif
@@ -148,6 +155,12 @@ bool BarcodeThread::isFinished() {
     quitMutex.unlock();
 
     return quitFlagBuf;
+}
+
+void BarcodeThread::writeMissedDib() {
+    ostringstream fname;
+    fname << "missed-" << croppedOffset.x << "-" << croppedOffset.y << ".bmp";
+    dib.writeToFile(fname.str().c_str());
 }
 
 void BarcodeThread::writeDiagnosticImage(DmtxDecode *dec) {

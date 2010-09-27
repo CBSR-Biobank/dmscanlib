@@ -171,7 +171,7 @@ void Dib::deallocate() {
 	}
 }
 
-void Dib::setPalette(RgbQuad * colorPalette) {
+void Dib::initPalette(RgbQuad * colorPalette) const {
 	unsigned paletteSize = getPaletteSize(colorBits);
 	UA_ASSERT(paletteSize != 0);
 
@@ -181,7 +181,7 @@ void Dib::setPalette(RgbQuad * colorPalette) {
 	}
 }
 
-unsigned Dib::getPaletteSize(unsigned colorBits) {
+unsigned Dib::getPaletteSize(unsigned colorBits) const {
 	switch (colorBits) {
 	case 1:
 		return 2;
@@ -277,7 +277,7 @@ unsigned Dib::getRowBytes(unsigned width, unsigned colorBits) {
 	return static_cast<unsigned> (ceil((width * colorBits) / 32.0)) << 2;
 }
 
-bool Dib::writeToFile(const char *filename) {
+bool Dib::writeToFile(const char *filename) const {
 	UA_ASSERT_NOT_NULL(filename);
 	UA_ASSERT_NOT_NULL(pixels);
 
@@ -319,7 +319,7 @@ bool Dib::writeToFile(const char *filename) {
 	UA_ASSERT(r == sizeof(infoHeaderRaw));
 	if (paletteSize > 0) {
 		RgbQuad * colorPalette = new RgbQuad[paletteSize];
-		setPalette(colorPalette);
+		initPalette(colorPalette);
 		r = fwrite(colorPalette, sizeof(unsigned char), paletteBytes, fh);
 		UA_ASSERT(r == paletteBytes);
 		delete [] colorPalette;
@@ -330,34 +330,33 @@ bool Dib::writeToFile(const char *filename) {
 	return true;
 }
 
-unsigned Dib::getDpi() {
+unsigned Dib::getDpi() const {
 	// 1 inch = 0.0254 meters
 	return static_cast<unsigned> (pixelsPerMeter * 0.0254 + 0.5);
 }
 
-
-unsigned Dib::getHeight() {
+unsigned Dib::getHeight() const {
 	return height;
 }
 
-unsigned Dib::getWidth() {
+unsigned Dib::getWidth() const {
 	return width;
 }
 
-unsigned Dib::getRowPadBytes() {
+unsigned Dib::getRowPadBytes() const {
 	return rowPaddingBytes;
 }
 
-unsigned Dib::getBitsPerPixel() {
+unsigned Dib::getBitsPerPixel() const {
 	return colorBits;
 }
 
-unsigned char *Dib::getPixelBuffer() {
+unsigned char *Dib::getPixelBuffer() const {
 	UA_ASSERT_NOT_NULL(pixels);
 	return pixels;
 }
 
-unsigned char Dib::getPixelAvgGrayscale(unsigned row, unsigned col) {
+unsigned char Dib::getPixelAvgGrayscale(unsigned row, unsigned col) const {
 	UA_ASSERT(row < height);
 	UA_ASSERT(col < width);
 
@@ -375,7 +374,7 @@ unsigned char Dib::getPixelAvgGrayscale(unsigned row, unsigned col) {
 	return 0;
 }
 
-inline unsigned char Dib::getPixelGrayscale(unsigned row, unsigned col) {
+inline unsigned char Dib::getPixelGrayscale(unsigned row, unsigned col) const {
 	UA_ASSERT(row < height);
 	UA_ASSERT(col < width);
 

@@ -109,8 +109,9 @@ bool Decoder::reduceBlobToMatrix(Dib & dib, CvRect & inputBlob) {
     CvRect largestBlob =
         { 0, 0, 0, 0 };
 
-    for (int i = 0; i < blobs.GetNumBlobs(); i++) {
-        CvRect & currentBlob = blobs.GetBlob(i)->GetBoundingBox();
+    for (int i = 0, n = blobs.GetNumBlobs(); i < n; i++) {
+    	CBlob * blob = blobs.GetBlob(i);
+        CvRect & currentBlob = blob->GetBoundingBox();
         if (currentBlob.width * currentBlob.height > largestBlob.width
                 * largestBlob.height) {
             largestBlob = currentBlob;
@@ -218,7 +219,7 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib) {
     return OK;
 }
 
-DmtxImage * Decoder::createDmtxImageFromDib(Dib & dib) {
+DmtxImage * Decoder::createDmtxImageFromDib(const Dib & dib) {
     int pack = DmtxPackCustom;
     unsigned padding = dib.getRowPadBytes();
 

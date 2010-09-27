@@ -56,7 +56,7 @@ public:
 
 	void imageShowBarcodes(Dib & dib, bool regions);
 
-	static DmtxImage * createDmtxImageFromDib(Dib & dib);
+	static DmtxImage * createDmtxImageFromDib(const Dib & dib);
 
 	const char * getBarcode(unsigned row, unsigned col);
 
