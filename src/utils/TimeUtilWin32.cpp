@@ -1,5 +1,3 @@
-#ifndef UTIL_H_
-#define UTIL_H_
 /*
 Dmscanlib is a software library and standalone application that scans 
 and decodes libdmtx compatible test-tubes. It is currently designed 
@@ -20,45 +18,38 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/*
- * Util.h
- *
- *  Created on: Jun 4, 2009
- *      Author: nelson
- */
+#include "TimeUtil.h"
 
-#include <string>
-#include <sstream>
+#include <stdlib.h>
+#include <stdio.h>
+#include <iostream>
+#include <time.h>
+#include <sys/timeb.h>
 
-using namespace std;
-
-#if defined (WIN32) && ! defined(__MINGW32__)
-typedef time_t slTime;
-#else
-typedef struct timeval slTime;
-#endif
-
-class Util {
-public:
-	static bool strToNum(const char * str, int & number, unsigned base = 0);
-	static bool strToNum(string & str, int & number, unsigned base = 0);
-	static bool strToNum(string & str, double & number);
-	static void getTime(slTime & tm);
-	static void getTimestamp(std::string & str_r);
-	static void difftiime(slTime & start, slTime & end, slTime & diff);
-
-private:
-};
-
-template <typename T>
-string to_string(T const& value) {
-    stringstream sstr;
-    sstr << value;
-    return sstr.str();
+void Util::getTime(slTime & tm) {
+	time(&tm);
 }
 
-#ifndef _VISUALC_
-ostream & operator<<(ostream &os, slTime & tm);
-#endif
+void Util::getTimestamp(std::string & str_r) {
+    char buf_a[100];
 
-#endif /* UTIL_H_ */
+   time_t ltime;
+   struct _timeb tstruct;
+   char timebuf[26];
+   errno_t err;
+
+   time( &ltime );
+   err = ctime_s(timebuf, 26, &ltime);
+   if (err) {
+      cerr << "ctime_s failed due to an invalid argument.";
+      exit(1);
+   }
+   _ftime_s( &tstruct );
+   sprintf_s(buf_a, "%.8s:%03u ", timebuf + 11, tstruct.millitm);
+
+    str_r = buf_a;
+}
+
+void Util::difftiime(slTime & start, slTime & end, slTime & diff) {
+	diff = end - start;
+}

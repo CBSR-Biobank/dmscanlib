@@ -21,15 +21,29 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "BarcodeInfo.h"
 #include "UaLogger.h"
 #include "UaAssert.h"
-#include "BinRegion.h"
+#include "cxtypes.h"
 
 #if defined(USE_NVWA)
 #   include "debug_new.h"
 #endif
 
 
-BarcodeInfo::BarcodeInfo(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg) :
-	colBinRegion(NULL), rowBinRegion(NULL) {
+BarcodeInfo::BarcodeInfo() {
+	postRect.x = -1;
+	postRect.y = -1;
+	postRect.width = 0;
+	postRect.height = 0;
+}
+
+BarcodeInfo::~BarcodeInfo() {
+
+}
+
+void BarcodeInfo::postProcess(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg) {
+	UA_ASSERT_NOT_NULL(dec);
+	UA_ASSERT_NOT_NULL(reg);
+	UA_ASSERT_NOT_NULL(msg);
+
 	str.assign((char *)msg->output, msg->outputIdx);
 
 	int height = dmtxDecodeGetProp(dec, DmtxPropHeight);
@@ -44,22 +58,21 @@ BarcodeInfo::BarcodeInfo(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg) :
 	p10.Y = height - 1 - p10.Y;
 	p11.Y = height - 1 - p11.Y;
 	p01.Y = height - 1 - p01.Y;
-	getBoundingBox();
+	getPostProcessBoundingBox();
 }
 
-BarcodeInfo::~BarcodeInfo() {
+void BarcodeInfo::setPreProcessBoundingBox(CvRect & rect) {
+	preRect = rect;
 }
 
-
-void BarcodeInfo::getCorners(DmtxVector2 & rp00, DmtxVector2 & rp10,
-		DmtxVector2 & rp11, DmtxVector2 & rp01) {
-	rp00 = p00;
-	rp10 = p10;
-	rp11 = p11;
-	rp01 = p01;
+CvRect & BarcodeInfo::getPreProcessBoundingBox() {
+	return preRect;
 }
 
-void BarcodeInfo::getBoundingBox() {
+CvRect & BarcodeInfo::getPostProcessBoundingBox() {
+	DmtxPixelLoc topLeft;
+	DmtxPixelLoc botRight;
+
 	topLeft.X = (int) p00.X;
 	topLeft.Y = (int) p00.Y;
 	botRight.X = (int) p00.X;
@@ -104,17 +117,16 @@ void BarcodeInfo::getBoundingBox() {
 	if ((int) p01.Y > botRight.Y) {
 		botRight.Y = (int) p01.Y;
 	}
+
+	postRect.x = topLeft.X;
+	postRect.y = topLeft.Y;
+	postRect.width = botRight.X - topLeft.X;
+	postRect.height = botRight.Y - topLeft.Y;
+
+	return postRect;
 }
 
-DmtxPixelLoc & BarcodeInfo::getTopLeftCorner() {
-	return topLeft;
-}
-
-DmtxPixelLoc & BarcodeInfo::getBotRightCorner() {
-	return botRight;
-}
-
-void BarcodeInfo::alignCoordinates(int x, int y){
+void BarcodeInfo::translate(int x, int y){
 	p00.X += x;
 	p00.Y += y;
 
@@ -126,26 +138,8 @@ void BarcodeInfo::alignCoordinates(int x, int y){
 
 	p01.X += x;
 	p01.Y += y;
-	
-	getBoundingBox();
-}
 
-
-void BarcodeInfo::removeItems(vector<BarcodeInfo *>  & msgInfos) {
-	while (msgInfos.size() > 0) {
-		BarcodeInfo * info = msgInfos.back();
-		msgInfos.pop_back();
-		delete info;
-	}
-}
-
-void BarcodeInfo::debugShowItems(vector<BarcodeInfo *>  & msgInfos) {
-	unsigned numTags = msgInfos.size();
-	UA_DOUT(1, 1, "debugTags: tags found: " << numTags);
-	for (unsigned i = 0; i < numTags; ++i) {
-		BarcodeInfo & info = *msgInfos[i];
-		UA_DOUT(1, 1, "debugTags: tag " << i << ": " << info);
-	}
+	getPostProcessBoundingBox();
 }
 
 ostream & operator<<(ostream &os, BarcodeInfo & m) {
@@ -154,34 +148,4 @@ ostream & operator<<(ostream &os, BarcodeInfo & m) {
 	<< "(" << m.p11.X << ", " << m.p11.Y << "), "
 	<< "(" << m.p01.X << ", " << m.p01.Y << ")";
 	return os;
-}
-
-/* should only be invoked by Decoder::sortRegions().
- *
- * Need to sort right to left, then top to bottom. That is how Biobank
- * numbers the tubes.
- */
-bool BarcodeInfoSort::operator()(BarcodeInfo* const& a, BarcodeInfo* const& b) {
-	UA_ASSERT_NOT_NULL(a->colBinRegion);
-	UA_ASSERT_NOT_NULL(a->rowBinRegion);
-	UA_ASSERT_NOT_NULL(b->colBinRegion);
-	UA_ASSERT_NOT_NULL(b->rowBinRegion);
-
-	unsigned aColRank = a->getColBinRegion().getRank();
-	unsigned aRowRank = a->getRowBinRegion().getRank();
-	unsigned bColRank = b->getColBinRegion().getRank();
-	unsigned bRowRank = b->getRowBinRegion().getRank();
-
-#ifndef _VISUALC_
-	UA_ASSERT(aColRank != numeric_limits<unsigned int>::max());
-	UA_ASSERT(aRowRank != numeric_limits<unsigned int>::max());
-	UA_ASSERT(bColRank != numeric_limits<unsigned int>::max());
-	UA_ASSERT(bRowRank != numeric_limits<unsigned int>::max());
-#endif
-
-	int diff = aRowRank - bRowRank;
-	if (diff == 0) {
-		return (aColRank > bColRank);
-	}
-	return (diff < 0);
 }

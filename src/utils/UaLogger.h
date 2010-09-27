@@ -27,11 +27,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * When an ASSERT fails, an error message is generated and the program exits.
  */
 
+#include <OpenThreads/Mutex>
+
 #include <assert.h>
 #include <iostream>
 #include <sstream>
 #include <vector>
-#include <OpenThreads/Mutex>
 
 #ifdef USE_NVWA
 #   include "debug_new.h"
@@ -191,14 +192,5 @@ extern std::ostream cdebug;
 		}                                                                    \
 		while(0)
 
-
-
-#define UA_DOUT_NL(subsys, level, display)                                      \
-		do {                                                                 \
-			if (ua::Logger::Instance().isDebug(subsys, level)) {             \
-				ua::cdebug  << display;										\
-			}                                                                \
-		}                                                                    \
-		while(0)
 
 #endif /* __INC_bkDebug_h */

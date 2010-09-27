@@ -20,7 +20,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <stdio.h>
 #include "cv.h"
 #include "cvBlob/BlobResult.h"
 #include "IplContainer.h"
@@ -29,34 +28,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <windows.h>
 #endif
 
+#include <memory>
 
-/* File information header
- * provides general information about the file
- */
-struct BitmapFileHeader {
-	unsigned short type;
-	unsigned       size;
-	unsigned short reserved1;
-	unsigned short reserved2;
-	unsigned       offset;
-};
-
-/* Bitmap information header
- * provides information specific to the image data
- */
-struct BitmapInfoHeader{
-	unsigned       size;
-	unsigned       width;
-	unsigned       height;
-	unsigned short planes;
-	unsigned short bitCount;
-	unsigned       compression;
-	unsigned       imageSize;
-	unsigned       hPixelsPerMeter;
-	unsigned       vPixelsPerMeter;
-	unsigned       numColors;
-	unsigned       numColorsImp;
-};
+using namespace std;
 
 /* Colour palette
  */
@@ -82,53 +56,36 @@ public:
 	Dib();
 	Dib(Dib & src);
 	Dib(IplImageContainer & src);
-	Dib(unsigned width, unsigned height, unsigned colorBits);
+	Dib(unsigned width, unsigned height, unsigned colorBits,
+			unsigned pixelsPerMeter);
 	Dib(char * filename);
 	~Dib();
 	void readFromFile(const char * filename) ;
-	bool writeToFile(const char * filename);
+	bool writeToFile(const char * filename) const;
 
+	static auto_ptr<Dib> convertGrayscale(Dib & src);
+	static auto_ptr<Dib> crop(Dib &src, unsigned x0, unsigned y0, unsigned x1, unsigned y1);
 
-	static Dib * convertGrayscale(Dib & src);
 	void tpPresetFilter();
 
 #ifdef WIN32
 	void readFromHandle(HANDLE handle);
 #endif
-
-	unsigned getHeight();
-	unsigned getWidth();
-	unsigned getRowPadBytes();
-	unsigned getInternalRowBytes();
-	unsigned getBitsPerPixel();
-	unsigned char * getPixelBuffer();
-	unsigned char * getRowPtr(unsigned row);
-	void getPixel(unsigned row, unsigned col, RgbQuad & quad);
-	unsigned char getPixelAvgGrayscale(unsigned row, unsigned col);
-	inline unsigned char getPixelGrayscale(unsigned row, unsigned col);
+	unsigned getDpi() const;
+	unsigned getHeight() const;
+	unsigned getWidth() const;
+	unsigned getRowPadBytes() const;
+	unsigned getBitsPerPixel() const;
+	unsigned char * getPixelBuffer() const;
+	unsigned char getPixelAvgGrayscale(unsigned row, unsigned col) const;
+	inline unsigned char getPixelGrayscale(unsigned row, unsigned col) const;
 	void setPixel(unsigned row, unsigned col, RgbQuad & quad);
 	inline void setPixelGrayscale(unsigned row, unsigned col, unsigned char value);
-	unsigned char * getPixelsNoPadding();
-	void setPixelsNoPadding(unsigned char * pixels);
-	void crop(Dib &src, unsigned x0, unsigned y0, unsigned x1, unsigned y1);
 
-	void sobelEdgeDetectionWithMask(Dib & src, int mask1[3][3],
-			int mask2[3][3]);
-
-	void sobelEdgeDetection(Dib & src);
-	void laplaceEdgeDetection(Dib & src);
-	void histEqualization(Dib & src);
 	void line(unsigned x0, unsigned y0, unsigned x1, unsigned y1, RgbQuad & quad);
 	void rectangle(unsigned x, unsigned y, unsigned width, unsigned height,RgbQuad & quad);
-	void rectangleRotated(unsigned x, unsigned y, unsigned width, unsigned height, RgbQuad & quad,float radians);
-	void grayscale(Dib & src);
-	void gaussianBlur(Dib & src);
-	void blur(Dib & src);
-	void unsharp(Dib & src);
-	void expandColours(int start, int end);
-	unsigned getDpi();
 
-	IplImageContainer*  generateIplImage();
+	auto_ptr<IplImageContainer>  generateIplImage();
 private:
 
 	static const float BLUR_KERNEL[9];
@@ -140,29 +97,28 @@ private:
     static const unsigned GAUSS_FACTORS[];
     static const unsigned GAUSS_SUM;
 
-
-
-	BitmapFileHeader * fileHeader;
-	BitmapInfoHeader * infoHeader;
-	RgbQuad * colorPalette;
+    unsigned size;
+    unsigned width;
+    unsigned imageSize;
+    unsigned height;
+    unsigned colorBits;
+    unsigned pixelsPerMeter;
+    unsigned paletteSize;
 	unsigned bytesPerPixel;
 	unsigned rowBytes;
 	unsigned rowPaddingBytes;
 	unsigned char * pixels;
 	bool isAllocated;
 
-	unsigned idx, dupe; // used by line drawing
-
+	void init(unsigned width, unsigned height, unsigned colorBits,
+			unsigned pixelsPerMeter, bool allocatePixelBuf = true);
 	void deallocate();
-	void copyInternals(Dib & src);
-	unsigned getPaletteSize(unsigned bitCount);
-	void setPalette();
-	void setPalette(RgbQuad * palette);
+	unsigned getPaletteSize(unsigned bitCount) const;
+	void initPalette(RgbQuad * palette) const;
 	unsigned getRowBytes(unsigned width, unsigned bitCount);
 
 	void convolveFast3x3(const float(&kernel)[9]);
-	void convolve2DSlow(const float(&kernel) [9], int kernelSizeX, int kernelSizeY);
-	
+	static bool bound(unsigned min, unsigned & x, unsigned max);
 };
 
 

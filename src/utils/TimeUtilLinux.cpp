@@ -18,48 +18,42 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/*
- * BinRegion.cpp
- *
- *  Created on: 5-Jun-2009
- *      Author: loyola
- */
+#include "TimeUtil.h"
 
-#include "BinRegion.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <iostream>
 
-#include <limits>
+#include <sys/time.h>
 
-#if defined(USE_NVWA)
-#   include "debug_new.h"
-#endif
-
-
-BinRegion::BinRegion(unsigned o, unsigned min, unsigned max) :
-	orientation(o), minimum(min), maximum(max), center(
-			numeric_limits<unsigned>::max()), rank(
-			numeric_limits<unsigned>::max()) {
+void Util::getTime(slTime & tm) {
+	gettimeofday(&tm, NULL);
 }
 
-BinRegion::~BinRegion() {
+void Util::getTimestamp(std::string & str_r) {
+    char buf_a[100];
+
+    // Fetch the current time
+    char time_a[100];
+    struct timeval thistime;
+
+    gettimeofday(&thistime, NULL);
+    strftime(time_a, sizeof(time_a), "%X", localtime(&thistime.tv_sec));
+    snprintf(buf_a, sizeof (buf_a), "%s:%03ld ", time_a,
+             thistime.tv_usec / 1000);
+
+    str_r = buf_a;
 }
 
-unsigned BinRegion::getCenter() {
-	if (center == numeric_limits<unsigned>::max()) {
-		center = (minimum + maximum) / 2;
+void Util::difftiime(slTime & start, slTime & end, slTime & diff) {
+	diff.tv_sec = end.tv_sec - start.tv_sec;
+	diff.tv_usec = end.tv_usec - start.tv_usec;
+	if (diff.tv_usec < 0) {
+		diff.tv_usec += 1000000;
 	}
-	return center;
 }
 
-void BinRegion::update(unsigned min, unsigned max) {
-	minimum = min;
-	maximum = max;
-}
-
-ostream & operator<<(ostream & os, BinRegion & r) {
-	os << "min/" << r.minimum << " max/" << r.maximum << " rank/" << r.rank;
+ostream & operator<<(ostream &os, slTime & tm) {
+	os << "sec/" << tm.tv_sec << " msec/" << tm.tv_usec/1000;
 	return os;
-}
-
-bool BinRegionSort::operator()(BinRegion* const & a, BinRegion* const & b) {
-	return (a->minimum < b->minimum);
 }

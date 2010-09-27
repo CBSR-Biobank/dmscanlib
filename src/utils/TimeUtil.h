@@ -1,3 +1,5 @@
+#ifndef UTIL_H_
+#define UTIL_H_
 /*
 Dmscanlib is a software library and standalone application that scans 
 and decodes libdmtx compatible test-tubes. It is currently designed 
@@ -17,25 +19,43 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "TriInt.h"
 
-TriInt::TriInt(unsigned int  a, unsigned int  b, unsigned int c){
-	this->a = a;
-	this->b = b;
-	this->c = c;
+/*
+ * Util.h
+ *
+ *  Created on: Jun 4, 2009
+ *      Author: nelson
+ */
+
+#include <string>
+#include <sstream>
+
+using namespace std;
+
+#if defined (WIN32) && ! defined(__MINGW32__)
+typedef time_t slTime;
+#else
+typedef struct timeval slTime;
+#endif
+
+class Util {
+public:
+	static void getTime(slTime & tm);
+	static void getTimestamp(std::string & str_r);
+	static void difftiime(slTime & start, slTime & end, slTime & diff);
+
+private:
+};
+
+template <typename T>
+string to_string(T const& value) {
+    stringstream sstr;
+    sstr << value;
+    return sstr.str();
 }
 
-bool TriInt::isSetBit(unsigned bit) {
-	if (bit >= 0 && bit < 96) {
-		if (bit < 32) {
-			return ((this->a & (1 << bit)) != 0);
+#ifndef _VISUALC_
+ostream & operator<<(ostream &os, slTime & tm);
+#endif
 
-		} else if (bit < 64) {
-			return ((this->b & (1 << (bit - 32))) != 0);
-
-		} else { // bit < 96
-			return ((this->c & (1 << (bit - 64))) != 0);
-		}
-	}
-	return false;
-}
+#endif /* UTIL_H_ */

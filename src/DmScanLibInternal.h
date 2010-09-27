@@ -1,3 +1,5 @@
+#ifndef __INC_SCANLIB_INTERNAL_H
+#define __INC_SCANLIB_INTERNAL_H
 /*
 Dmscanlib is a software library and standalone application that scans 
 and decodes libdmtx compatible test-tubes. It is currently designed 
@@ -17,16 +19,21 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef TRIINT
-#define TRIINT
 
-class TriInt{
-	private:
-		unsigned int a,b,c;
+#include "TimeUtil.h"
 
-	public:
-		TriInt(unsigned int  a, unsigned int  b, unsigned int c);
-		bool isSetBit(unsigned bit);
-};
+extern slTime starttime; // for debugging
+extern slTime endtime;
+extern slTime timediff;
 
-#endif
+class Dib;
+
+void configLogging(unsigned level, bool useFile = true);
+
+int slDecodeCommon(unsigned plateNum, Dib & dib, double scanGap,
+        unsigned squareDev, unsigned edgeThresh, unsigned corrections,
+        double cellDistance, double gapX, double gapY, unsigned profileA,
+        unsigned profileB, unsigned profileC, unsigned isVertical,
+        const char *markedDibFilename);
+
+#endif /* __INC_SCANLIB_INTERNAL_H */

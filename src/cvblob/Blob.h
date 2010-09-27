@@ -13,7 +13,7 @@ MODIFICATIONS (Modification, Author, Date):
 **************************************************************************/
 
 //! Disable warnings referred to 255 character truncation for the std:map
-#ifdef _WIN32
+#ifdef _VISUALC_
 #pragma warning( disable : 4786 )
 #endif
 
@@ -108,7 +108,7 @@ public:
 	void JoinBlob( CBlob *blob );
 
 	//! Get bounding box
-	CvRect GetBoundingBox();
+	CvRect & GetBoundingBox();
 	//! Get bounding ellipse
 	CvBox2D GetEllipse();
 

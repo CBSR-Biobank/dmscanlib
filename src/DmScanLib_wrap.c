@@ -197,12 +197,12 @@ extern int slDecodePlate(unsigned verbose, unsigned dpi, int brightness,
     int contrast, unsigned plateNum, double left, double top, double right,
     double bottom, double scanGap, unsigned squareDev,
     unsigned edgeThresh, unsigned corrections, double cellDistance, 
-     double gapX, double gapY,
-        unsigned profileA, unsigned profileB, unsigned profileC, unsigned isHorizontal);
+    double gapX, double gapY,
+    unsigned profileA, unsigned profileB, unsigned profileC, unsigned isVertical);
 extern int slDecodeImage(unsigned verbose, unsigned plateNum, char * filename,
         double scanGap, unsigned squareDev, unsigned edgeThresh, 
         unsigned corrections, double cellDistance, double gapX, double gapY,
-        unsigned profileA, unsigned profileB, unsigned profileC, unsigned isHorizontal);
+        unsigned profileA, unsigned profileB, unsigned profileC, unsigned isVertical);
 
 
 #ifdef __cplusplus

@@ -484,7 +484,7 @@ double CBlob::StdDev( IplImage *image )
 - DATA DE CREACI�: 2008/05/06
 - MODIFICACI�: Data. Autor. Descripci�.
 */
-CvRect CBlob::GetBoundingBox()
+CvRect & CBlob::GetBoundingBox()
 {
 	// it is calculated?
 	if( m_boundingBox.width != -1 )

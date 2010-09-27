@@ -52,8 +52,6 @@ const int SC_INVALID_DPI = -3;
 const int SC_INVALID_PLATE_NUM = -4;
 const int SC_INVALID_VALUE = -5;
 const int SC_INVALID_IMAGE = -6;
-const int SC_INVALID_POSITION = -7;
-const int SC_POS_CALC_ERROR = -8;
 const int SC_INCORRECT_DPI_SCANNED = -9;
 
 
@@ -129,34 +127,36 @@ typedef int (*SL_SCAN_IMAGE)(unsigned verbose, unsigned dpi, double left,
  * decoded. If the regions failed to decode then a red square is drawn around
  * it.
  *
- * @param verbose    The amount of logging information to generate. 1 is minimal
- *                   and 9 is very detailed. Logging information is appended to
- *                   file dmscanlib.log.
- * @param dpi        The dots per inch for the image. Possible values are 200,
- *                   300, 400, 600, 720, 800.
- * @param brightness a value between -1000 and 1000.
- * @param contrast   a value between -1000 and 1000.
- * @param plateNum   The plate number. Must be a number beteeen 1 and 5.
- * @param left       The left margin in inches.
- * @param top        The top margin in inches.
- * @param right      The width in inches.
- * @param bottom     The height in inches.
- * @param scanGap    The number of pixels to use for scan grid gap. This is a
- * 				     libdmtx parameter.
- * @param squareDev  Maximum  deviation  (degrees)  from  squareness between
- *                   adjacent barcode sides. Default value is N=40, but N=10
- *                   is  recommended for  flat  applications  like faxes and
- *                   other scanned documents. Barcode regions found with
- *                   corners <(90-N) or >(90+N) will be ignored by the decoder.
- * @param edgeThresh Set  the  minimum edge threshold as a percentage of
- *                   maximum. For example, an edge between a pure white and pure
- *                   black pixel would have  an  intensity  of  100.  Edges
- *                   with intensities below the indicated threshold will be
- *                   ignored  by  the  decoding  process. Lowering  the
- *                   threshold  will increase the amount of work to be done,
- *                   but may be necessary for low contrast or blurry images.
- * @param corrections The number of corrections to make while decoding.
+ * @param verbose      The amount of logging information to generate. 1 is minimal
+ *                     and 9 is very detailed. Logging information is appended to
+ *                     file dmscanlib.log.
+ * @param dpi          The dots per inch for the image. Possible values are 200,
+ *                     300, 400, 600, 720, 800.
+ * @param brightness   a value between -1000 and 1000.
+ * @param contrast     a value between -1000 and 1000.
+ * @param plateNum     The plate number. Must be a number beteeen 1 and 5.
+ * @param left         The left margin in inches.
+ * @param top          The top margin in inches.
+ * @param right        The width in inches.
+ * @param bottom       The height in inches.
+ * @param scanGap      The number of pixels to use for scan grid gap. This is a
+ * 				       libdmtx parameter.
+ * @param squareDev    Maximum  deviation  (degrees)  from  squareness between
+ *                     adjacent barcode sides. Default value is N=40, but N=10
+ *                     is  recommended for  flat  applications  like faxes and
+ *                     other scanned documents. Barcode regions found with
+ *                     corners <(90-N) or >(90+N) will be ignored by the decoder.
+ * @param edgeThresh   Set  the  minimum edge threshold as a percentage of
+ *                     maximum. For example, an edge between a pure white and pure
+ *                     black pixel would have  an  intensity  of  100.  Edges
+ *                     with intensities below the indicated threshold will be
+ *                     ignored  by  the  decoding  process. Lowering  the
+ *                     threshold  will increase the amount of work to be done,
+ *                     but may be necessary for low contrast or blurry images.
+ * @param corrections  The number of corrections to make while decoding.
  * @param cellDistance The distance in inches to use between cells.
+ * @param gapX         The grid cell width in inches.
+ * @param gapY         The grid cell height in inches.
  *
  * @return SC_SUCCESS if the decoding process was successful. SC_INVALID_IMAGE
  * if the scanned image is invalid. SC_INVALID_POSITION if no sample found on
@@ -176,7 +176,7 @@ typedef int (*SL_DECODE_PLATE)(unsigned verbose, unsigned dpi, int brightness,
 		double bottom, double scanGap, unsigned squareDev,
 		unsigned edgeThresh, unsigned corrections, double cellDistance, 
 		double gapX, double gapY,
-		unsigned profileA,unsigned profileB, unsigned profileC, unsigned isHoriztonal);
+		unsigned profileA,unsigned profileB, unsigned profileC, unsigned isVertical);
 
 
 /**
@@ -227,7 +227,7 @@ typedef int (*SL_DECODE_IMAGE)(unsigned verbose, unsigned plateNum,
 		const char * filename, double scanGap, unsigned squareDev,
 		unsigned edgeThresh, unsigned corrections, double cellDistance, 
 		double gapX, double gapY,
-		unsigned profileA,unsigned profileB, unsigned profileC, unsigned isHoriztonal);
+		unsigned profileA,unsigned profileB, unsigned profileC, unsigned isVertical);
 
 #ifdef __cplusplus
 }
