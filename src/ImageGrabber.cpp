@@ -356,6 +356,8 @@ HANDLE ImageGrabber::acquireImage(unsigned dpi, int brightness, int contrast,
 						&pxfers);
 				UA_DOUT(2, 1, "DG_CONTROL / DAT_PENDINGXFERS / MSG_RESET");
 				UA_WARN("User aborted transfer or failure");
+				errorCode = SC_INVALID_IMAGE;
+				handle = 0;
 				break;
 			}
 
