@@ -228,7 +228,16 @@ HANDLE ImageGrabber::acquireImage(unsigned dpi, int brightness, int contrast,
          || ((scannerCapability & CAP_DPI_600) && dpi == 600))) {
       errorCode = SC_INVALID_DPI;
       return NULL;
-   }
+   }   
+
+	double physicalWidth = getPhysicalDimensions(srcID, ICAP_PHYSICALWIDTH);
+	double physicalHeight = getPhysicalDimensions(srcID, ICAP_PHYSICALHEIGHT);
+
+	if ((left > physicalWidth) || (top > physicalHeight) 
+		|| (left + right > physicalWidth) || (top + bottom > physicalHeight)) {
+      errorCode = SC_INVALID_VALUE;
+      return NULL;
+	}
 
    errorCode = SC_SUCCESS;
 
@@ -386,6 +395,22 @@ HANDLE ImageGrabber::acquireImage(unsigned dpi, int brightness, int contrast,
    return (HANDLE) handle;
 }
 
+HANDLE ImageGrabber::acquireFlatbed(unsigned dpi, int brightness, int contrast) {
+	TW_IDENTITY srcID;
+	HWND hwnd;
+
+	if (!scannerSourceInit(hwnd, srcID)) {
+		return 0;
+	}
+
+	double physicalWidth = getPhysicalDimensions(srcID, ICAP_PHYSICALWIDTH);
+	double physicalHeight = getPhysicalDimensions(srcID, ICAP_PHYSICALHEIGHT);
+	
+   scannerSourceDeinit(hwnd, srcID);
+
+	return acquireImage(dpi, brightness, contrast, 0, 0, physicalWidth, physicalHeight);
+}
+
 DmtxImage* ImageGrabber::acquireDmtxImage(unsigned dpi, int brightness,
                                           int contrast) {
    UA_ASSERT_NOT_NULL(g_hLib);
@@ -466,7 +491,8 @@ int ImageGrabber::getScannerCapability() {
 }
 
 int ImageGrabber::getScannerCapabilityInternal(TW_IDENTITY & srcID) {
-   int capabilityCode = 0, xresolution = 0, yresolution = 0;
+   int capabilityCode = 0, xresolution = 0, yresolution = 0, 
+	   physicalwidth = 0, physicalheight = 0;
 
    setCapOneValue(&srcID, ICAP_UNITS, TWTY_UINT16, TWUN_INCHES);
    xresolution = getResolutionCapability(srcID, ICAP_XRESOLUTION);
@@ -575,36 +601,16 @@ int ImageGrabber::getResolutionCapability(TW_IDENTITY & srcID, TW_UINT16 cap) {
          UA_DOUT(2, 6, "Number of supported Dpi: " << pvalEnum->NumItems);
          UA_DOUT(2, 6, "Dpi ItemType: " << pvalEnum->ItemType);
 
-         for (index = 0; index < pvalEnum->NumItems; index++) {
+		 for (index = 0; index < pvalEnum->NumItems; index++) {
+			 UA_ASSERTS(pvalEnum->ItemType == TWTY_FIX32, 
+				 "invalid item type: " << pvalEnum->ItemType);
 
-            switch (pvalEnum->ItemType) {
+			 tempDpi
+				 = (unsigned int) twfix32ToFloat(
+				 *(TW_FIX32 *) (void *) (&pvalEnum->ItemList[index
+				 * 4]));
+			 UA_DOUT(2, 6, "Supports DPI (f32bit): " << tempDpi);
 
-               case TWTY_FIX32:
-                  tempDpi
-                     = (unsigned int) twfix32ToFloat(
-                        *(TW_FIX32 *) (void *) (&pvalEnum->ItemList[index
-                                                                    * 4]));
-                  UA_DOUT(2, 6, "Supports DPI (f32bit): " << tempDpi);
-                  break;
-
-               case TWTY_INT32:
-               case TWTY_UINT32:
-                  tempDpi = (unsigned int) (pvalEnum->ItemList[index * 4]);
-                  UA_DOUT(2, 6, "Supports DPI (32bit): " << tempDpi);
-                  break;
-
-               case TWTY_INT16:
-               case TWTY_UINT16:
-                  tempDpi = (unsigned int) (pvalEnum->ItemList[index * 2]);
-                  UA_DOUT(2, 6, "Supports DPI (16bit): " << tempDpi);
-                  break;
-
-               case TWTY_INT8:
-               case TWTY_UINT8:
-               case TWTY_BOOL:
-                  UA_WARN("ItemType is 8 bit");
-                  break;
-            }
             if (tempDpi == 300)
                capabilityCode |= CAP_DPI_300;
 
@@ -616,42 +622,23 @@ int ImageGrabber::getResolutionCapability(TW_IDENTITY & srcID, TW_UINT16 cap) {
          }
          break;
       }
+    
+		 //XXX Untested
+	  case TWON_ONEVALUE: {
+		  UA_DOUT(2, 5, "ConType = OneValue");
 
-         //XXX Untested
-      case TWON_ONEVALUE: {
-         UA_DOUT(2, 5, "ConType = OneValue");
+		  pTW_ONEVALUE pvalOneValue;
+		  unsigned int tempDpi = 0;
 
-         pTW_ONEVALUE pvalOneValue;
-         unsigned int tempDpi = 0;
+		  pvalOneValue = (pTW_ONEVALUE) GlobalLock(twCap.hContainer);
 
-         pvalOneValue = (pTW_ONEVALUE) GlobalLock(twCap.hContainer);
+		  UA_ASSERTS(pvalOneValue->ItemType == TWTY_FIX32, 
+			  "invalid item type: " << pvalOneValue->ItemType);
 
-         switch (pvalOneValue->ItemType) {
+		  tempDpi = (unsigned int) twfix32ToFloat(
+			  *(TW_FIX32 *) (void *) (&pvalOneValue->Item));
+		  UA_DOUT(2, 6, "Supports DPI (f32bit): " << tempDpi);
 
-            case TWTY_FIX32:
-               tempDpi = (unsigned int) twfix32ToFloat(
-                  *(TW_FIX32 *) (void *) (&pvalOneValue->Item));
-               UA_DOUT(2, 6, "Supports DPI (f32bit): " << tempDpi);
-               break;
-
-            case TWTY_INT32:
-            case TWTY_UINT32:
-               tempDpi = (unsigned int) (pvalOneValue->Item);
-               UA_DOUT(2, 6, "Supports DPI (32bit): " << tempDpi);
-               break;
-
-            case TWTY_INT16:
-            case TWTY_UINT16:
-               tempDpi = (unsigned int) (pvalOneValue->Item);
-               UA_DOUT(2, 6, "Supports DPI (16bit): " << tempDpi);
-               break;
-
-            case TWTY_INT8:
-            case TWTY_UINT8:
-            case TWTY_BOOL:
-               UA_WARN("ItemType is 8 bit");
-               break;
-         }
          if (tempDpi == 300)
             capabilityCode |= CAP_DPI_300;
 
@@ -663,61 +650,6 @@ int ImageGrabber::getResolutionCapability(TW_IDENTITY & srcID, TW_UINT16 cap) {
          break;
       }
 
-         //XXX Untested
-      case TWON_ARRAY: {
-         UA_DOUT(2, 5, "ConType = Array");
-         pTW_ARRAY pvalArray;
-         TW_UINT16 index;
-         unsigned int tempDpi = 0;
-
-         pvalArray = (pTW_ARRAY) GlobalLock(twCap.hContainer);
-         UA_ASSERT_NOT_NULL(pvalArray);
-
-         UA_DOUT(2, 6, "Number of supported Dpi: " << pvalArray->NumItems);
-
-         for (index = 0; index < pvalArray->NumItems; index++) {
-
-            switch (pvalArray->ItemType) {
-
-               case TWTY_FIX32:
-                  tempDpi
-                     = (unsigned int) twfix32ToFloat(
-                        *(TW_FIX32 *) (void *) (&pvalArray->ItemList[index
-                                                                     * 4]));
-                  UA_DOUT(2, 6, "Supports DPI (f32bit): " << tempDpi);
-                  break;
-
-               case TWTY_INT32:
-               case TWTY_UINT32:
-                  tempDpi = (unsigned int) (pvalArray->ItemList[index * 4]);
-                  UA_DOUT(2, 6, "Supports DPI (32bit): " << tempDpi);
-                  break;
-
-               case TWTY_INT16:
-               case TWTY_UINT16:
-                  tempDpi = (unsigned int) (pvalArray->ItemList[index * 2]);
-                  UA_DOUT(2, 6, "Supports DPI (16bit): " << tempDpi);
-                  break;
-
-               case TWTY_INT8:
-               case TWTY_UINT8:
-               case TWTY_BOOL:
-                  UA_WARN("ItemType is 8 bit");
-                  break;
-            }
-
-            if (tempDpi == 300)
-               capabilityCode |= CAP_DPI_300;
-
-            if (tempDpi == 400)
-               capabilityCode |= CAP_DPI_400;
-
-            if (tempDpi == 600)
-               capabilityCode |= CAP_DPI_600;
-         }
-         break;
-      }
-
       default:
          UA_WARN("Unexpected dpi contype");
          break;
@@ -725,6 +657,38 @@ int ImageGrabber::getResolutionCapability(TW_IDENTITY & srcID, TW_UINT16 cap) {
    GlobalUnlock(twCap.hContainer);
    GlobalFree(twCap.hContainer);
    return capabilityCode;
+}
+
+double ImageGrabber::getPhysicalDimensions(TW_IDENTITY & srcID, TW_UINT16 cap) {
+   bool result;
+   TW_CAPABILITY twCap;
+
+   twCap.Cap = cap;
+   twCap.ConType = TWON_DONTCARE16;
+   twCap.hContainer = NULL;
+
+   result = getCapability(&srcID, twCap);
+   UA_ASSERTS(result, "Failed to obtain valid dpi values");
+
+   UA_DOUT(2, 5, "twCap.ConType = " << twCap.ConType);
+
+   UA_ASSERTS(twCap.ConType ==  TWON_ONEVALUE, 
+	   "invalid con type: " << twCap.ConType);
+
+   pTW_ONEVALUE pvalOneValue;
+   double dimension = 0;
+
+   pvalOneValue = (pTW_ONEVALUE) GlobalLock(twCap.hContainer);
+
+   UA_ASSERTS(pvalOneValue->ItemType == TWTY_FIX32, 
+	   "invalid item type: " << pvalOneValue->ItemType);
+
+   dimension = twfix32ToFloat(*(TW_FIX32 *) (void *) (&pvalOneValue->Item));
+
+   GlobalUnlock(twCap.hContainer);
+   GlobalFree(twCap.hContainer);
+   UA_DOUT(2, 5, "physical dimention " << cap << " is " << dimension);
+   return dimension;
 }
 
 void ImageGrabber::getCustomDsData(TW_IDENTITY * srcId) {

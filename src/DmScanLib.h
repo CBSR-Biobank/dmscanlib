@@ -89,7 +89,6 @@ typedef int (*SL_SELECT_SOURCE_AS_DEFAULT)();
 EXPORT int slGetScannerCapability();
 typedef int (*SL_GET_SCANNER_CAPABILITY)();
 
-
 /**
  * Scans an image for the specified dimensions. The image is in Windows BMP
  * format.
@@ -115,6 +114,27 @@ EXPORT int slScanImage(unsigned verbose, unsigned dpi, int brightness,
 
 typedef int (*SL_SCAN_IMAGE)(unsigned verbose, unsigned dpi, double left,
 		double top, double right, double bottom, const char * filename);
+
+
+/**
+ * Scans the whole flatbed region. The image is in Windows BMP format.
+ *
+ * @param verbose    The amount of logging information to generate. 1 is minimal
+ *                   and 9 is very detailed. Logging information is appended to
+ *                   file dmscanlib.log.
+ * @param dpi        The dots per inch for the image. Possible values are 200,
+ *                   300, 400, 600, 720, 800.
+ * @param brightness a value between -1000 and 1000.
+ * @param contrast   a value between -1000 and 1000.
+ * @param filename   The file name to save the bitmap to.
+ *
+ * @return SC_SUCCESS if valid. SC_FAIL unable to scan an image.
+ */
+EXPORT int slScanFlatbed(unsigned verbose, unsigned dpi, int brightness,
+		int contrast, const char * filename);
+
+typedef int (*SL_SCAN_FLATBED)(unsigned verbose, unsigned dpi, 
+	const char * filename);
 
 /**
  * From the regions specified in the INI file for the corresponding plate,

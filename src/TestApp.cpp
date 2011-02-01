@@ -65,111 +65,114 @@
 
 using namespace std;
 
-const char
-        * USAGE_FMT =
-                "Usage: %s [OPTIONS]\n"
-                    "Test tool for dmscanlib library."
-                    "\n"
-                    "  --debug NUM          Sets debugging level. Debugging messages are output\n"
-                    "                       to stdout. Only when built UA_HAVE_DEBUG on.\n"
-                    "  --debugfile          Send debugging output to file named dmscanlib.log.\n"
-                    "  --select             Opens the scanner selection dialog.\n"
-                    "  --capability         Query selected scanner for DPI and driver type settings.\n"
-                    "  -h, --help           Displays this text.\n"
-                    "\n"
-                    "Scanner/Decoding Settings\n"
-                    "  -d, --decode         Acquires an image from the scanner and Decodes the 2D barcodes.\n"
-                    "                       Use with --plate option.\n"
-                    "  --super				Super decode common.\n"
-                    "  -s, --scan           Scans an image.\n"
-                    "  -p, --plate NUM      The plate number to use.\n"
-                    "  -i, --input FILE     Use the specified DIB image file instead of scanner.\n"
-                    "  -o, --output FILE    Saves the image to the specified file name.\n"
-                    "\n"
-                    "  --dpi NUM            Dots per inch to use with scanner.\n"
-                    "  --brightness NUM     The brightness setting to be used for scanning.\n"
-                    "  --contrast NUM       The contrast setting to be used for scanning.\n"
-                    "  --square-dev NUM     Maximum  deviation  (degrees)  from  squareness between adjacent\n"
-                    "                       barcode sides. Default value is N=40, but  N=10  is  recommended\n"
-                    "                       for  flat  applications  like faxes and other scanned documents.\n"
-                    "                       Barcode regions found with corners <(90-N) or  >(90+N)  will  be\n"
-                    "                       ignored by the decoder.\n"
-                    "  --threshold NUM      Set  the  minimum edge threshold as a percentage of maximum. For\n"
-                    "                       example, an edge between a pure white and pure black pixel would\n"
-                    "                       have  an  intensity  of  100.  Edges  with intensities below the\n"
-                    "                       indicated threshold will be ignored  by  the  decoding  process.\n"
-                    "                       Lowering  the  threshold  will increase the amount of work to be\n"
-                    "                       done, but may be necessary for low contrast or blurry images.\n"
-                    "  --corrections NUM    The number of corrections to make.\n"
-                    "  --celldist NUM       Distance between tube cells in inches.\n"
-                    "  --gap NUM            Use scan grid with gap of NUM inches (or less) between lines.\n"
-                    "  -v, --vertical       Pallet is in vertical orientation (default is horizontal).\n"
-                    "\n"
-                    "Scanning Coordinates\n"
-                    "  -l, --left NUM       The left coordinate, in inches, for the scanning window.\n"
-                    "  -t, --top NUM        The top coordinate, in inches, for the scanning window.\n"
-                    "  -r, --right NUM      The left coordinate, in inches, for the scanning window.\n"
-                    "  -b, --bottom NUM     The bottom coordinate, in inches, for the scanning window.\n";
+const char * USAGE_FMT =
+	"Usage: %s [OPTIONS]\n"
+	"Test tool for dmscanlib library."
+	"\n"
+	"  --debug NUM          Sets debugging level. Debugging messages are output\n"
+	"                       to stdout. Only when built UA_HAVE_DEBUG on.\n"
+	"  --debugfile          Send debugging output to file named dmscanlib.log.\n"
+	"  --select             Opens the scanner selection dialog.\n"
+	"  --capability         Query selected scanner for DPI and driver type settings.\n"
+	"  -h, --help           Displays this text.\n"
+	"\n"
+	"Scanner/Decoding Settings\n"
+	"  -d, --decode         Acquires an image from the scanner and Decodes the 2D barcodes.\n"
+	"                       Use with --plate option.\n"
+	"  --super				Super decode common.\n"
+	"  -s, --scan           Scans an image.\n"
+	"  -p, --plate NUM      The plate number to use.\n"
+	"  -i, --input FILE     Use the specified DIB image file instead of scanner.\n"
+	"  -o, --output FILE    Saves the image to the specified file name.\n"
+	"\n"
+	"  --dpi NUM            Dots per inch to use with scanner.\n"
+	"  --brightness NUM     The brightness setting to be used for scanning.\n"
+	"  --contrast NUM       The contrast setting to be used for scanning.\n"
+	"  --square-dev NUM     Maximum  deviation  (degrees)  from  squareness between adjacent\n"
+	"                       barcode sides. Default value is N=40, but  N=10  is  recommended\n"
+	"                       for  flat  applications  like faxes and other scanned documents.\n"
+	"                       Barcode regions found with corners <(90-N) or  >(90+N)  will  be\n"
+	"                       ignored by the decoder.\n"
+	"  --threshold NUM      Set  the  minimum edge threshold as a percentage of maximum. For\n"
+	"                       example, an edge between a pure white and pure black pixel would\n"
+	"                       have  an  intensity  of  100.  Edges  with intensities below the\n"
+	"                       indicated threshold will be ignored  by  the  decoding  process.\n"
+	"                       Lowering  the  threshold  will increase the amount of work to be\n"
+	"                       done, but may be necessary for low contrast or blurry images.\n"
+	"  --corrections NUM    The number of corrections to make.\n"
+	"  --celldist NUM       Distance between tube cells in inches.\n"
+	"  --gap NUM            Use scan grid with gap of NUM inches (or less) between lines.\n"
+	"  -v, --vertical       Pallet is in vertical orientation (default is horizontal).\n"
+	"\n"
+	"Scanning Coordinates\n"
+	"  -l, --left NUM       The left coordinate, in inches, for the scanning window.\n"
+	"  -t, --top NUM        The top coordinate, in inches, for the scanning window.\n"
+	"  -r, --right NUM      The left coordinate, in inches, for the scanning window.\n"
+	"  -b, --bottom NUM     The bottom coordinate, in inches, for the scanning window.\n"
+	"  -f, --flatbed        Scan the whole flatbed region\n";
 
 enum longOptID {
-    OPT_ID_BRIGHTNESS = 200,
-    OPT_ID_CELLDIST,
-    OPT_ID_CORRECTIONS,
-    OPT_ID_CONTRAST,
-    OPT_ID_DEBUG,
-    OPT_ID_DEBUG_FILE,
-    OPT_ID_DPI,
-    OPT_ID_GAP,
-    OPT_ID_VERTICAL,
-    OPT_ID_SELECT,
-    OPT_ID_CAPABILITY,
-    OPT_ID_SUPER,
-    OPT_ID_SQUARE_DEV,
-    OPT_ID_THRESHOLD,
-    OPT_ID_LEFT,
-    OPT_ID_TOP,
-    OPT_ID_RIGHT,
-    OPT_ID_BOTTOM
+	OPT_ID_BRIGHTNESS = 200,
+	OPT_ID_CELLDIST,
+	OPT_ID_CORRECTIONS,
+	OPT_ID_CONTRAST,
+	OPT_ID_DEBUG,
+	OPT_ID_DEBUG_FILE,
+	OPT_ID_DPI,
+	OPT_ID_GAP,
+	OPT_ID_VERTICAL,
+	OPT_ID_SELECT,
+	OPT_ID_CAPABILITY,
+	OPT_ID_SUPER,
+	OPT_ID_SQUARE_DEV,
+	OPT_ID_THRESHOLD,
+	OPT_ID_LEFT,
+	OPT_ID_TOP,
+	OPT_ID_RIGHT,
+	OPT_ID_BOTTOM,
+	OPT_ID_FLATBED
 };
 
 /* Allowed command line arguments.  */
 CSimpleOptA::SOption longOptions[] =
-    {
-        { OPT_ID_BRIGHTNESS, "--brightness", SO_REQ_SEP },
-        { OPT_ID_CELLDIST, "--celldist", SO_REQ_SEP },
-        { OPT_ID_CORRECTIONS, "--corrections", SO_REQ_SEP },
-        { OPT_ID_CONTRAST, "--contrast", SO_REQ_SEP },
-        { 'd', "--decode", SO_NONE },
-        { 'd', "-d", SO_NONE },
-        { OPT_ID_DEBUG, "--debug", SO_REQ_SEP },
-        { OPT_ID_DEBUG_FILE, "--debugfile", SO_NONE },
-        { OPT_ID_DPI, "--dpi", SO_REQ_SEP },
-        { OPT_ID_GAP, "--gap", SO_REQ_SEP },
-        { OPT_ID_VERTICAL, "--vertical", SO_NONE },
-        { 'v', "-v", SO_NONE },
-        { 'h', "--help", SO_NONE },
-        { 'h', "--h", SO_NONE },
-        { 'i', "--input", SO_REQ_SEP },
-        { 'i', "-i", SO_REQ_SEP },
-        { 'p', "--plate", SO_REQ_SEP },
-        { 'p', "-p", SO_REQ_SEP },
-        { 'o', "--output", SO_REQ_SEP },
-        { 'o', "-o", SO_REQ_SEP },
-        { 's', "--scan", SO_NONE },
-        { 's', "-s", SO_NONE },
-        { OPT_ID_CAPABILITY, "--capability", SO_NONE },
-        { OPT_ID_SELECT, "--select", SO_NONE },
-        { OPT_ID_SQUARE_DEV, "--square-dev", SO_REQ_SEP },
-        { OPT_ID_THRESHOLD, "--threshold", SO_REQ_SEP },
-        { OPT_ID_LEFT, "--left", SO_REQ_SEP },
-        { OPT_ID_TOP, "--top", SO_REQ_SEP },
-        { OPT_ID_RIGHT, "--right", SO_REQ_SEP },
-        { OPT_ID_BOTTOM, "--bottom", SO_REQ_SEP },
-        { 'l', "-l", SO_REQ_SEP },
-        { 't', "-t", SO_REQ_SEP },
-        { 'r', "-r", SO_REQ_SEP },
-        { 'b', "-b", SO_REQ_SEP },
-    SO_END_OF_OPTIONS };
+{
+	{ OPT_ID_BRIGHTNESS, "--brightness", SO_REQ_SEP },
+	{ OPT_ID_CELLDIST, "--celldist", SO_REQ_SEP },
+	{ OPT_ID_CORRECTIONS, "--corrections", SO_REQ_SEP },
+	{ OPT_ID_CONTRAST, "--contrast", SO_REQ_SEP },
+	{ 'd', "--decode", SO_NONE },
+	{ 'd', "-d", SO_NONE },
+	{ OPT_ID_DEBUG, "--debug", SO_REQ_SEP },
+	{ OPT_ID_DEBUG_FILE, "--debugfile", SO_NONE },
+	{ OPT_ID_DPI, "--dpi", SO_REQ_SEP },
+	{ OPT_ID_GAP, "--gap", SO_REQ_SEP },
+	{ OPT_ID_VERTICAL, "--vertical", SO_NONE },
+	{ 'v', "-v", SO_NONE },
+	{ 'h', "--help", SO_NONE },
+	{ 'h', "--h", SO_NONE },
+	{ 'i', "--input", SO_REQ_SEP },
+	{ 'i', "-i", SO_REQ_SEP },
+	{ 'p', "--plate", SO_REQ_SEP },
+	{ 'p', "-p", SO_REQ_SEP },
+	{ 'o', "--output", SO_REQ_SEP },
+	{ 'o', "-o", SO_REQ_SEP },
+	{ 's', "--scan", SO_NONE },
+	{ 's', "-s", SO_NONE },
+	{ OPT_ID_CAPABILITY, "--capability", SO_NONE },
+	{ OPT_ID_SELECT, "--select", SO_NONE },
+	{ OPT_ID_SQUARE_DEV, "--square-dev", SO_REQ_SEP },
+	{ OPT_ID_THRESHOLD, "--threshold", SO_REQ_SEP },
+	{ OPT_ID_LEFT, "--left", SO_REQ_SEP },
+	{ OPT_ID_TOP, "--top", SO_REQ_SEP },
+	{ OPT_ID_RIGHT, "--right", SO_REQ_SEP },
+	{ OPT_ID_BOTTOM, "--bottom", SO_REQ_SEP },
+	{ OPT_ID_FLATBED, "--flatbed", SO_NONE },
+	{ 'l', "-l", SO_REQ_SEP },
+	{ 't', "-t", SO_REQ_SEP },
+	{ 'r', "-r", SO_REQ_SEP },
+	{ 'b', "-b", SO_REQ_SEP },
+	{ 'f', "-f", SO_NONE },
+	SO_END_OF_OPTIONS };
 
 #ifdef WIN32
 #define DIR_SEP_CHR '\\'
@@ -208,6 +211,7 @@ struct Options {
     unsigned profileB;
     unsigned profileC;
     bool isVertical;
+	bool flatbed;
 
     Options() {
 
@@ -246,6 +250,8 @@ struct Options {
         top = 0.0;
         right = 0.0;
         bottom = 0.0;
+
+		flatbed = false;
 
         gapX = 0;
         gapY = 0;
@@ -375,11 +381,15 @@ int TestApp::decode() {
 }
 
 int TestApp::scan() {
-
     if (options.dpi == 0) {
         cerr << "ERROR: DPI not specified" << endl;
         return SC_FAIL;
     }
+
+	if (options.flatbed) {
+        return slScanFlatbed(options.debugLevel, options.dpi, options.brightness,
+            options.contrast, options.outfile);
+	}
 
     return slScanImage(options.debugLevel, options.dpi, options.brightness,
             options.contrast, options.left, options.top, options.right,
@@ -590,6 +600,11 @@ bool TestApp::getCmdOptions(int argc, char ** argv) {
                 }
                 break;
             }
+
+			case 'f':
+			case OPT_ID_FLATBED:
+				options.flatbed = true;
+				break;
 
             default:
                 return false;

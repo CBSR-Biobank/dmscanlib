@@ -193,6 +193,8 @@ extern int slGetScannerCapability();
 extern int slScanImage(unsigned verbose, unsigned dpi, int brightness,
         int contrast, double left, double top, double right, double bottom,
         char * filename);
+extern int slScanFlatbed(unsigned verbose, unsigned dpi, int brightness,
+		int contrast, const char * filename);
 extern int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, 
     int contrast, unsigned plateNum, double left, double top, double right,
     double bottom, double scanGap, unsigned squareDev,
@@ -276,6 +278,33 @@ SWIGEXPORT jint JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_DmScanLibW
   result = (int)slScanImage(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9);
   jresult = (jint)result; 
   if (arg9) (*jenv)->ReleaseStringUTFChars(jenv, jarg9, (const char *)arg9);
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_DmScanLibWin32WrapperJNI_slScanFlatbed(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2, jint jarg3, jint jarg4, jstring jarg5) {
+  jint jresult = 0 ;
+  unsigned int arg1 ;
+  unsigned int arg2 ;
+  int arg3 ;
+  int arg4 ;
+  char *arg5 = (char *) 0 ;
+  int result;
+  
+  (void)jenv;
+  (void)jcls;
+  arg1 = (unsigned int)jarg1; 
+  arg2 = (unsigned int)jarg2; 
+  arg3 = (int)jarg3; 
+  arg4 = (int)jarg4; 
+  arg5 = 0;
+  if (jarg5) {
+    arg5 = (char *)(*jenv)->GetStringUTFChars(jenv, jarg5, 0);
+    if (!arg5) return 0;
+  }
+  result = (int)slScanFlatbed(arg1,arg2,arg3,arg4,(char const *)arg5);
+  jresult = (jint)result; 
+  if (arg5) (*jenv)->ReleaseStringUTFChars(jenv, jarg5, (const char *)arg5);
   return jresult;
 }
 
