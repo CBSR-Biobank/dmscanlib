@@ -13,11 +13,13 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// English (United States) resources
+// English (U.S.) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 #pragma code_page(1252)
+#endif //_WIN32
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
@@ -51,8 +53,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,9,8,0
- PRODUCTVERSION 0,9,8,0
+ FILEVERSION 1,0,0,0
+ PRODUCTVERSION 1,0,0,0
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -69,7 +71,7 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "Canadian Biosample Repository"
             VALUE "FileDescription", "Scan data matrix based pallets and decode them."
-            VALUE "FileVersion", "0.9.8.0"
+            VALUE "FileVersion", "1.0.0.0"
             VALUE "InternalName", "dmscanlib"
             VALUE "LegalCopyright", "Copyright (C) 2010, GPL v3"
             VALUE "OriginalFilename", "dmscanlib.exe"
@@ -83,7 +85,7 @@ BEGIN
     END
 END
 
-#endif    // English (United States) resources
+#endif    // English (U.S.) resources
 /////////////////////////////////////////////////////////////////////////////
 
 
