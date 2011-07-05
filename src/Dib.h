@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "cv.h"
-#include "cvBlob/BlobResult.h"
+#include "cvblob/BlobResult.h"
 #include "IplContainer.h"
 
 #ifdef WIN32
