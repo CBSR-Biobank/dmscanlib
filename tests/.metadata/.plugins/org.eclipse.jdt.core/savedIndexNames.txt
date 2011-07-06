@@ -1,0 +1,1 @@
+INDEX VERSION 1.126+/home/thomas/workspace/scanlib/tests/.metadata/.plugins/org.eclipse.jdt.core
