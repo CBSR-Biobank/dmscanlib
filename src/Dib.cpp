@@ -260,6 +260,7 @@ void Dib::readFromFile(const char *filename) {
 	unsigned compression = *(unsigned *) &infoHeaderRaw[0x1E - 0xE];
 	unsigned numColorsImp = *(unsigned *) &infoHeaderRaw[0x32 - 0xE];
 
+	//FIXME this is required for gimp-based cropped images.
 	// if these conditions are not met the Dib cannot be processed
 	//UA_ASSERT(size == 40);
 	UA_ASSERT(planes == 1);
