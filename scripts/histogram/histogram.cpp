@@ -1,68 +1,104 @@
 #include <cv.h>
+#include <cvaux.h>
 #include <highgui.h>
 #include <stdio.h>
 
-using namespace cv;
+IplImage* image= 0;
+IplImage* imgHistogram = 0;
+IplImage* gray= 0;
 
-int main( int argc, char** argv )
-{
-    Mat src;
-    if( argc != 2 || !(src=imread(argv[1], 1)).data )
+CvHistogram* hist;
+
+
+
+int main( int argc, char** argv ){
+
+    if( argc != 2 || !(image = cvLoadImage(argv[1])) )
         return -1;
 
+    //size of the histogram -1D histogram
+    int bins = 256;
+    int hsize[] = {bins};
 
-    Mat hsv;
-    cvtColor(src, hsv, CV_BGR2HSV);
+    //max and min value of the histogram
+    float max_value = 0, min_value = 0;
 
-    // let's quantize the hue to 30 levels
-    // and the saturation to 32 levels
-    int hbins = 30, sbins = 32;
-    int histSize[] = {hbins, sbins};
-    // hue varies from 0 to 179, see cvtColor
-    float hranges[] = { 0, 180 };
-    // saturation varies from 0 (black-gray-white) to
-    // 255 (pure spectrum color)
-    float sranges[] = { 0, 256 };
-    const float* ranges[] = { hranges, sranges };
-    MatND hist;
-    // we compute the histogram from the 0-th and 1-st channels
-    int channels[] = {0, 1};
+    //value and normalized value
+    float value;
+    int normalized;
 
-    calcHist( &hsv, 1, channels, Mat(), // do not use mask
-        hist, 2, histSize, ranges,
-        true, // the histogram is uniform
-        false );
-    double maxVal=0;
-    minMaxLoc(hist, 0, &maxVal, 0, 0);
+    //ranges - grayscale 0 to 256
+    float xranges[] = { 0, 256 };
+    float* ranges[] = { xranges };
 
-    int scale = 20;
-    Mat histImg = Mat::zeros(255, hbins*sbins, CV_8UC3);
+    //create an 8 bit single channel image to hold a
+    //grayscale version of the original picture
+    gray = cvCreateImage( cvGetSize(image), 8, 1 );
+    cvCvtColor( image, gray, CV_BGR2GRAY );
 
+    //Create 3 windows to show the results
+    cvNamedWindow("original",1);
+    cvNamedWindow("gray",1);
+    cvNamedWindow("histogram",1);
 
+    //planes to obtain the histogram, in this case just one
+    IplImage* planes[] = { gray };
 
-    for( int h = 0; h < hbins; h++ )
-        for( int s = 0; s < sbins; s++ )
-        {
-            float binVal = hist.at<float>(h, s);
-            int intensity = cvRound(binVal*255/maxVal);
- 	        
-		 printf("%d,",intensity);
+    //get the histogram and some info about it
+    hist = cvCreateHist( 1, hsize, CV_HIST_ARRAY, ranges,1);
+    cvCalcHist( planes, hist, 0, NULL);
+    cvGetMinMaxHistValue( hist, &min_value, &max_value);
+    printf("min: %f, max: %f\n", min_value, max_value);
 
-		
-            
-		rectangle( histImg, Point(h*sbins + s, 255),
-                         Point( h*sbins + s, 255-intensity),
-                         Scalar::all(255),
-                         CV_FILLED);
-        	
-	}
+    //cvSave( "hist.xml", hist->bins );
+	//FIXME
+	//cv::normalize(hist.mat, hist.mat, 1, 0, cv::NORM_L1);
 
-    namedWindow( "Source", 1 );
-    imshow( "Source", src );
+    //create an 8 bits single channel image to hold the histogram
+    //paint it white
 
-    namedWindow( "H-S Histogram", 1 );
-    imshow( "H-S Histogram", histImg );
+CvHistogram* hist2 = 0;
+CvArr* bins2 = cvLoad( "hist.xml" );
+int new_hist_type = CV_IS_MATND(bins2) ? CV_HIST_ARRAY :
+CV_HIST_SPARSE;
 
-    waitKey();
+int dummy_size = 5;
+hist2 = cvCreateHist( 1, &dummy_size, new_hist_type, 0, 1 );
+
+if( new_hist_type == CV_HIST_ARRAY )
+{
+cvReleaseData( hist2->bins );
+hist2->mat = *(CvMatND*)bins2;
+hist2->bins = &hist2->mat;
+cvIncRefData( hist2->bins );
+
+}
+else
+{
+cvReleaseSparseMat( (CvSparseMat**)&hist2->bins );
+hist2->bins = bins2;
+}
+
+    printf("CV_COMP_CORREL: %3.5f\n",cvCompareHist(hist,hist2,CV_COMP_CORREL));
+
+    imgHistogram = cvCreateImage(cvSize(bins, 300),8,1);
+    cvRectangle(imgHistogram, cvPoint(0,0), cvPoint(256,300), CV_RGB(255,255,255),-1);
+
+    //draw the histogram :P
+    for(int i=0; i < bins; i++){
+            value = cvQueryHistValue_1D( hist, i);
+            normalized = cvRound(value*300/max_value);
+            cvLine(imgHistogram,cvPoint(i,300), cvPoint(i,300-normalized), CV_RGB(0,0,0));
+    }
+    cvReleaseHist( &hist );
+
+    //show the image results
+    cvShowImage( "original", image );
+    cvShowImage( "gray", gray );
+    cvShowImage( "histogram", imgHistogram );
+
+    cvWaitKey();
+
+    return 0;
 }
 
