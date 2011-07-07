@@ -2,7 +2,10 @@
 #include <cvaux.h>
 #include <highgui.h>
 #include <stdio.h>
+#include <math.h>
 #include <dirent.h>
+#include <vector>
+#include <string>
 
 
 #define HISTOGRAM_RESOLUTION 256
@@ -28,8 +31,8 @@ CvHistogram* generateHistogram( IplImage* image){
 
     CvHistogram* hist = cvCreateHist( 1, hsize, CV_HIST_ARRAY, ranges,1);
     cvCalcHist( planes, hist, 0, NULL);
-
     cvReleaseImage(&gray);
+
 
     return hist;
 }
@@ -79,6 +82,54 @@ void drawHistogram(IplImage* imgHistogram, CvHistogram* hist,CvScalar color){
 }
 
 
+//FIXME release mat?
+double averageHistogramValue(CvHistogram* hist){
+	CvMat mat;
+ 	cvGetMat( hist->bins, &mat, 0, 1 );
+ 
+	if(mat.cols != 1){
+		printf("ERROR: histogram contained more than one column\n");
+		exit(-1);
+	}
+
+	double sum = 0;
+	for(int row = 0; row < mat.rows;row++){
+		sum += cvmGet(&mat,row,0);
+	}
+	return sum/mat.rows;
+}
+
+//CV_COMP_CORREL clone
+double customCorrelation(CvHistogram* h1,CvHistogram* h2){
+         CvMat mat1;
+         CvMat mat2;
+	 double avgh1;
+	 double avgh2;
+
+         cvGetMat( h1->bins, &mat1, 0, 1 );
+    	 cvGetMat( h2->bins, &mat2, 0, 1 );
+
+	 //cvSave( "saveme.xml",&mat1 );
+ 
+	 avgh1 = averageHistogramValue(h1);
+	 avgh2 = averageHistogramValue(h2);
+         
+         printf("mat1: %d/rows %d/cols %3.3f/avg\n",mat1.rows,mat1.cols,avgh1);
+	 printf("mat2: %d/rows %d/cols %3.3f/avg\n",mat2.rows,mat2.cols,avgh2);
+
+	 double top = 0;
+	 double bottomLeft = 0;
+	 double bottomRight = 0;
+	 for(int i=0; i < mat1.rows; i++){
+		top += (cvmGet(&mat1,i,0) - avgh1)*(cvmGet(&mat2,i,0) - avgh2);
+		bottomLeft += pow(cvmGet(&mat1,i,0) - avgh1,2);
+		bottomRight += pow(cvmGet(&mat2,i,0) - avgh2,2);
+	 }
+	 return top/sqrt(bottomLeft*bottomRight);
+}
+
+
+
 int listdir(const char *path) {
   struct dirent *entry;
   DIR *dp;
@@ -96,21 +147,24 @@ int listdir(const char *path) {
   return 0;
 }
 
-int main( int argc, char** argv ){
+
+int histogramCompareImage(int argc, char** argv ){
+
     IplImage* image = NULL;
 
-    if( argc != 2 || !(image = cvLoadImage(argv[1])) )
-        return -1;
+    if( argc != 2 || !(image = cvLoadImage(argv[1])) ){
+        return -1 ;
+    }
 
-    listdir(argv[1]);
+    //listdir(argv[1]);
    
     CvHistogram* hist = generateHistogram(image);
     CvHistogram* hist2 = loadHistogram();
 
     //cv::normalize(hist.mat, hist.mat, 1, 0, cv::NORM_L1);
-    
+    printf("CUSTOM: %3.9f\n",customCorrelation(hist,hist2));
   
-    printf("CV_COMP_CORREL: %3.5f\n",cvCompareHist(hist,hist2,CV_COMP_CORREL));
+    printf("CV_COMP_CORREL: %3.9f\n",cvCompareHist(hist,hist2,CV_COMP_CORREL));
 
     cvNamedWindow("histogram",1);
    
@@ -133,5 +187,54 @@ int main( int argc, char** argv ){
     cvWaitKey();
 
     return 0;
+}
+
+
+int averageHistogramsInDirectory(int argc, char** argv ){
+    
+    std::string directory;
+
+    std::vector<CvHistogram *> histograms;
+
+
+    if( argc == 2)
+	directory  = std::string(argv[1]);
+    else
+	return -1;
+
+    CvHistogram* hist2 = loadHistogram();
+
+    struct dirent *entry;
+    DIR *dp;
+    dp = opendir(directory.c_str());
+    if (dp == NULL) {
+	 perror("opendir");
+	 return -1;
+    }
+	 
+    while((entry = readdir(dp))){
+	    std::string filename = std::string(entry->d_name);
+	    if(filename.find(".bmp") ==std::string::npos)
+	    	continue;
+
+	    printf("Loading image: %s\n",filename.c_str());
+	    IplImage* image = cvLoadImage((directory + filename).c_str());
+	    CvHistogram* hist = generateHistogram(image);
+		
+	    printf("CUSTOM: %3.9f\n",customCorrelation(hist,hist2));  
+    	    printf("CV_COMP_CORREL: %3.9f\n",cvCompareHist(hist,hist2,CV_COMP_CORREL));
+
+	    cvReleaseHist( &hist );
+	    cvReleaseImage(&image);
+    }
+    closedir(dp);
+    return 0;
+
+}
+
+
+int main( int argc, char** argv ){
+    
+    return averageHistogramsInDirectory(argc,argv);
 }
 
