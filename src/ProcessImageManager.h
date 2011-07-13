@@ -50,7 +50,7 @@ public:
 	}
 
 private:
-	static const unsigned THREAD_NUM = 8;
+	static const unsigned THREAD_NUM = 8; //PYRX was 8
 	static const unsigned JOIN_TIMEOUT_SEC = 10;
 	static const unsigned THRESHOLD_JOIN = 1;
 

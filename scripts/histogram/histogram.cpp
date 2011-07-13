@@ -10,8 +10,7 @@
 
 #define HISTOGRAM_RESOLUTION 256
 
-
-void normalizeHistogram(CvHistogram* hist){
+void normalizeHistogram(CvHistogram* hist) {
 
 	CvMat mat;
 	cvGetMat(hist->bins, &mat, 0, 1);
@@ -22,11 +21,11 @@ void normalizeHistogram(CvHistogram* hist){
 	for (int i = 0; i < HISTOGRAM_RESOLUTION; i++) {
 		float value = cvQueryHistValue_1D( hist, i);
 		int normalized = cvRound(value * 300 / max_value);
-		cvmSet(&mat, i, 0,normalized);
+		cvmSet(&mat, i, 0, normalized);
 	}
 }
 
-void roundHistogram(CvHistogram* hist){
+void roundHistogram(CvHistogram* hist) {
 
 	CvMat mat;
 	cvGetMat(hist->bins, &mat, 0, 1);
@@ -38,20 +37,18 @@ void roundHistogram(CvHistogram* hist){
 	for (int i = 0; i < HISTOGRAM_RESOLUTION; i++)
 		buffer[i] = cvQueryHistValue_1D( hist, i);
 
-	#define ROUNDWIDTH 5
-	for (int i = ROUNDWIDTH; i < HISTOGRAM_RESOLUTION-ROUNDWIDTH; i++) {
+#define ROUNDWIDTH 5
+	for (int i = ROUNDWIDTH; i < HISTOGRAM_RESOLUTION - ROUNDWIDTH; i++) {
 
 		double avg = 0;
 
-		for(int j = i-ROUNDWIDTH; j <= i + ROUNDWIDTH; j++)
+		for (int j = i - ROUNDWIDTH; j <= i + ROUNDWIDTH; j++)
 			avg += buffer[j];
-		avg /= ROUNDWIDTH*2 + 1 ;
+		avg /= ROUNDWIDTH * 2 + 1;
 
-		cvmSet(&mat, i, 0,(int)(avg));
+		cvmSet(&mat, i, 0, (int) (avg));
 	}
 }
-
-
 
 CvHistogram* generateHistogram(IplImage* image) {
 
@@ -110,7 +107,6 @@ CvHistogram* loadHistogram() {
 	return hist;
 }
 
-
 void saveHistogram(CvHistogram* hist, char * file) {
 	cvSave(file, hist->bins);
 }
@@ -129,8 +125,7 @@ void drawHistogram(IplImage* imgHistogram, CvHistogram* hist, CvScalar color) {
 	//draw the histogram :P
 	for (int i = 0; i < HISTOGRAM_RESOLUTION; i++) {
 		float value = cvQueryHistValue_1D( hist, i);
-		cvLine(imgHistogram, cvPoint(i, 300), cvPoint(i, 300 - value),
-				color);
+		cvLine(imgHistogram, cvPoint(i, 300), cvPoint(i, 300 - value), color);
 	}
 }
 
@@ -241,7 +236,8 @@ int histogramCompareImage(int argc, char** argv) {
 
 	return 0;
 }
-void createHistogramWindow(const char * windowName,CvHistogram* hist,CvScalar color){
+void createHistogramWindow(const char * windowName, CvHistogram* hist,
+		CvScalar color) {
 	cvNamedWindow(windowName, 1);
 	IplImage* imgHistogram = cvCreateImage(cvSize(HISTOGRAM_RESOLUTION, 300), 8,
 			3);
@@ -251,10 +247,9 @@ void createHistogramWindow(const char * windowName,CvHistogram* hist,CvScalar co
 }
 
 struct HistogramWrapper {
-  CvHistogram * hist;
-  std::string filename;
-} ;
-
+	CvHistogram * hist;
+	std::string filename;
+};
 
 int averageHistogramsInDirectory(int argc, char** argv) {
 
@@ -280,7 +275,8 @@ int averageHistogramsInDirectory(int argc, char** argv) {
 
 	while ((entry = readdir(dp))) {
 		std::string filename = std::string(entry->d_name);
-		if (filename.find(".bmp") == std::string::npos || filename.find("missed") == std::string::npos)
+		if (filename.find(".bmp") == std::string::npos
+				)//|| filename.find("missed") == std::string::npos
 			continue;
 
 		printf("Loading image: %s\n", filename.c_str());
@@ -316,9 +312,8 @@ int averageHistogramsInDirectory(int argc, char** argv) {
 
 	CvMat* bufferMatrix;
 
-
-	CvHistogram * avgHist =loadHistogram();
-	createHistogramWindow("average",avgHist,CV_RGB(0,255,0));
+	CvHistogram * avgHist = loadHistogram();
+	createHistogramWindow("average", avgHist, CV_RGB(0,255,0));
 	cvWaitKey();
 
 	for (it = histograms.begin(); it < histograms.end(); it++) {
@@ -336,25 +331,25 @@ int averageHistogramsInDirectory(int argc, char** argv) {
 
 		double correlation = customCorrelation(hist, hist2);
 
-		if(correlation < 0.7){
-		char stringBuffer [100];
-		sprintf (stringBuffer,"%s: %3.9f\n",(*it).filename.c_str(), correlation);
-		createHistogramWindow(stringBuffer,hist,CV_RGB(255,0,0));
-		cvWaitKey();
+		if (correlation < 0.7) {
+			char stringBuffer[100];
+			sprintf(stringBuffer, "%s: %3.9f\n", (*it).filename.c_str(),
+					correlation);
+			createHistogramWindow(stringBuffer, hist, CV_RGB(255,0,0));
+			cvWaitKey();
 		}
-
 
 	}
 
 	// average
 	for (int i = 0; i < avgHistMatrix->rows; i++) {
 		cvmSet(avgHistMatrix, i, 0,
-				(int)cvmGet(avgHistMatrix, i, 0) / histograms.size());
+				(int) cvmGet(avgHistMatrix, i, 0) / histograms.size());
 	}
 
 	cvSave("average2.xml", avgHistMatrix);
 
-/*
+	/*
 	 float xranges[] = { 0, 256 };
 	 float* ranges[] = { xranges };
 	 int hsize[] = { HISTOGRAM_RESOLUTION };
@@ -365,8 +360,7 @@ int averageHistogramsInDirectory(int argc, char** argv) {
 	 avgHist->bins = &avgHist->mat;
 	 cvIncRefData( avgHist->bins );
 
-*/
-
+	 */
 
 	return 0;
 }
