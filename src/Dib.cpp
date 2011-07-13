@@ -452,7 +452,7 @@ bool Dib::bound(unsigned min, unsigned & x, unsigned max) {
 /*
  * DIBs are flipped in Y
  */
-auto_ptr<Dib> Dib::crop(Dib & src, unsigned x0, unsigned y0, unsigned x1,
+Dib * Dib::crop(Dib & src, unsigned x0, unsigned y0, unsigned x1,
 		unsigned y1) {
 	UA_ASSERT(x1 > x0);
 	UA_ASSERT(y1 > y0);
@@ -465,8 +465,7 @@ auto_ptr<Dib> Dib::crop(Dib & src, unsigned x0, unsigned y0, unsigned x1,
 	unsigned width = x1 - x0;
 	unsigned height = y1 - y0;
 
-	auto_ptr<Dib> dest(
-			new Dib(width, height, src.colorBits, src.pixelsPerMeter));
+	Dib * dest =  new Dib(width, height, src.colorBits, src.pixelsPerMeter);
 
 	unsigned char *srcRowPtr = src.pixels + (src.height - y1) * src.rowBytes
 			+ x0 * dest->bytesPerPixel;

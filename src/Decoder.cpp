@@ -84,12 +84,14 @@ Decoder::~Decoder() {
 
 // reduces the blob to a smaller region (matrix outline)
 bool Decoder::reduceBlobToMatrix(Dib & dib, CvRect & inputBlob) {
-    auto_ptr<Dib> croppedDib = Dib::crop(dib, inputBlob.x, inputBlob.y,
+    Dib * croppedDib = Dib::crop(dib, inputBlob.x, inputBlob.y,
             inputBlob.x + inputBlob.width, inputBlob.y + inputBlob.height);
     UA_ASSERT_NOT_NULL(croppedDib->getPixelBuffer());
 
     auto_ptr<IplImageContainer> img =  croppedDib->generateIplImage();
     UA_ASSERT_NOT_NULL(img->getIplImage());
+
+    delete croppedDib;
 
     for (int i = 0; i < 5; i++) {
         cvSmooth(img->getIplImage(), img->getIplImage(), CV_GAUSSIAN, 11, 11);
@@ -132,6 +134,7 @@ bool Decoder::reduceBlobToMatrix(Dib & dib, CvRect & inputBlob) {
         largestBlob.y += inputBlob.y;
         inputBlob = largestBlob;
     }
+
 
     return reducedBlob;
 
@@ -207,6 +210,7 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib) {
     ProcessImageManager imageProcessor(this, scanGap, squareDev, edgeThresh,
             corrections);
     imageProcessor.generateBarcodes(dib, barcodeInfos);
+
 
     unsigned decodeCount = 0;
     for (unsigned row = 0, rows = barcodeInfos.size(); row < rows; ++row) {
