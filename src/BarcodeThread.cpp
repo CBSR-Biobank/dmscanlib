@@ -49,6 +49,8 @@ BarcodeThread::BarcodeThread(ProcessImageManager * manager, double scanGap,
     quitMutex.lock();
     this->quitFlag = false;
     quitMutex.unlock();
+
+
     dpi = dib->getDpi();
 
     UA_ASSERTS((dpi == 300) || (dpi == 400) || (dpi == 600),

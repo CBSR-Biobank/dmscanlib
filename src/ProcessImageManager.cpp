@@ -54,20 +54,9 @@ ProcessImageManager::~ProcessImageManager() {
 
 //inclusive first exclusive last
 void ProcessImageManager::threadProcessRange(vector<BarcodeThread *> & threads,
-		unsigned int _first, unsigned int _last) {
+		unsigned int first, unsigned int last) {
 
 	time_t timeStart, timeEnd;
-
-	unsigned int first, last;
-
-	if (_last < _first) {
-		first = _last;
-		last = _first;
-		UA_DOUT(3, 1, "WARNING: range is switched in ProcessImageManager.");
-	} else {
-		first = _first;
-		last = _last;
-	}
 
 	for (unsigned int i = first; i < last; i++)
 		threads[i]->start();
