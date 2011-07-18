@@ -30,14 +30,16 @@
 #pragma warning(disable : 4996)
 #endif
 
+#include <stdio.h>
+
 #include "DmScanLib.h"
 #include "UaLogger.h"
 #include "UaAssert.h"
 #include "Decoder.h"
 #include "Dib.h"
 #include "TimeUtil.h"
+#include "DmScanLibCommon.h"
 
-#include <stdio.h>
 
 #if defined(USE_NVWA)
 #   include "debug_new.h"

@@ -29,7 +29,6 @@
 #include "ImageGrabber.h"
 #include "UaLogger.h"
 #include "UaAssert.h"
-
 #include <math.h>
 
 #if defined(USE_NVWA)

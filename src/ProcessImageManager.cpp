@@ -28,9 +28,6 @@
 
 #ifdef WIN32
 #include <windows.h>
-#define SLEEP Sleep
-#else 
-#define SLEEP sleep
 #endif
 
 #include <map>
@@ -46,7 +43,6 @@ ProcessImageManager::ProcessImageManager(Decoder * decoder, double scanGap,
 
 ProcessImageManager::~ProcessImageManager() {
 	for (unsigned i = 0, n = allThreads.size(); i < n; ++i) {
-
 
 		delete allThreads[i];
 	}
@@ -78,7 +74,12 @@ void ProcessImageManager::threadProcessRange(vector<BarcodeThread *> & threads,
 			break;
 		}
 
-		usleep(500);
+		//sleep 1ms
+		#ifdef WIN32
+				Sleep(1);
+		#else
+				usleep(1000);
+		#endif
 	}
 
 }
@@ -133,7 +134,8 @@ void ProcessImageManager::generateBarcodes(Dib * dib,
 					rect.x + rect.width, rect.y + rect.height);
 
 			BarcodeThread * thread = new BarcodeThread(this, scanGap, squareDev,
-					edgeThresh, corrections, rect, croppedDib, *barcodeInfos[row][col]);
+					edgeThresh, corrections, rect, croppedDib,
+					*barcodeInfos[row][col]);
 
 			allThreads.push_back(thread);
 			threads.push_back(thread);

@@ -50,6 +50,9 @@ using namespace std;
 #if defined(USE_NVWA)
 #   include "debug_new.h"
 #endif
+
+
+
 /* File information header
  * provides general information about the file
  */
@@ -77,6 +80,7 @@ struct BitmapInfoHeader {
 	unsigned numColors;
 	unsigned numColorsImp;
 };
+
 
 const double Dib::UNSHARP_RAD = 8.0;
 const double Dib::UNSHARP_DEPTH = 1.1;
