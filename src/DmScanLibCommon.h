@@ -8,8 +8,7 @@
 #ifndef DMSCANLIBCOMMON_H_
 #define DMSCANLIBCOMMON_H_
 
-#include "Dib.h"
-
+class Dib;
 
 void configLogging(unsigned level, bool useFile);
 

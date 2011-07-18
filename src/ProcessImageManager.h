@@ -50,8 +50,8 @@ public:
 	}
 
 private:
-	static const unsigned THREAD_NUM = 8;
-	static const unsigned JOIN_TIMEOUT_SEC = 10;
+	static const unsigned THREAD_NUM;
+	static const unsigned JOIN_TIMEOUT_SEC;
 
 	double scanGap;
 	unsigned squareDev;

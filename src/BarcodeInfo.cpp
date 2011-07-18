@@ -36,7 +36,6 @@ BarcodeInfo::BarcodeInfo() {
 }
 
 BarcodeInfo::~BarcodeInfo() {
-
 }
 
 void BarcodeInfo::postProcess(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg) {
@@ -59,6 +58,18 @@ void BarcodeInfo::postProcess(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg
 	p11.Y = height - 1 - p11.Y;
 	p01.Y = height - 1 - p01.Y;
 	getPostProcessBoundingBox();
+}
+
+bool BarcodeInfo::isValid() {
+	return (str.length() > 0);
+}
+
+string & BarcodeInfo::getMsg() {
+	return str;
+}
+
+bool BarcodeInfo::equals(BarcodeInfo * other){
+	return strcmp(this->getMsg().c_str(),other->getMsg().c_str()) == 0;
 }
 
 void BarcodeInfo::setPreProcessBoundingBox(CvRect & rect) {

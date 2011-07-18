@@ -32,6 +32,9 @@
 
 #include <map>
 
+const unsigned ProcessImageManager::THREAD_NUM = 8;
+const unsigned ProcessImageManager::JOIN_TIMEOUT_SEC = ProcessImageManager::THREAD_NUM*2;
+
 ProcessImageManager::ProcessImageManager(Decoder * decoder, double scanGap,
 		unsigned squareDev, unsigned edgeThresh, unsigned corrections) {
 	this->scanGap = scanGap;

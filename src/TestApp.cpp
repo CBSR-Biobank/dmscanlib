@@ -164,56 +164,52 @@ CSimpleOptA::SOption longOptions[] = { { OPT_ID_BRIGHTNESS, "--brightness",
 				SO_REQ_SEP }, { 'r', "-r", SO_REQ_SEP },
 		{ 'b', "-b", SO_REQ_SEP }, { 'f', "-f", SO_NONE }, SO_END_OF_OPTIONS };
 
-
-
-
 Options::Options() {
 
 #ifdef WIN32
-        brightness = 9999;
-        contrast = 9999;
+	brightness = 9999;
+	contrast = 9999;
 #else
 
-        brightness = numeric_limits<int>::max();
-        contrast = numeric_limits<int>::max();
+	brightness = numeric_limits<int>::max();
+	contrast = numeric_limits<int>::max();
 #endif
 
-        dpi = 0;
-        decode = false;
-        debugfile = false;
-        debugLevel = 0;
+	dpi = 0;
+	decode = false;
+	debugfile = false;
+	debugLevel = 0;
 
-        help = false;
-        scan = false;
-        select = false;
-        capability = false;
-        test = false;
-        isVertical = false;
+	help = false;
+	scan = false;
+	select = false;
+	capability = false;
+	test = false;
+	isVertical = false;
 
-        infile = NULL;
-        outfile = NULL;
-        plateNum = 0;
+	infile = NULL;
+	outfile = NULL;
+	plateNum = 0;
 
-        cellDistance = 0.345;
-        gap = 0.085;
-        corrections = 10;
-        squareDev = 15;
-        threshold = 5;
+	cellDistance = 0.345;
+	gap = 0.085;
+	corrections = 10;
+	squareDev = 15;
+	threshold = 5;
 
-        left = 0.0;
-        top = 0.0;
-        right = 0.0;
-        bottom = 0.0;
+	left = 0.0;
+	top = 0.0;
+	right = 0.0;
+	bottom = 0.0;
 
-		flatbed = false;
+	flatbed = false;
 
-        gapX = 0;
-        gapY = 0;
-        profileA = (unsigned) -1;
-        profileB = (unsigned) -1;
-        profileC = (unsigned) -1;
-    }
-
+	gapX = 0;
+	gapY = 0;
+	profileA = (unsigned) -1;
+	profileB = (unsigned) -1;
+	profileC = (unsigned) -1;
+}
 
 const char * TestApp::INI_FILE_NAME = "dmscanlib.ini";
 

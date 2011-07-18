@@ -27,26 +27,34 @@
 
 #include <sstream>
 
+const unsigned PalletGrid::MAX_ROWS = 8;
+const unsigned PalletGrid::MAX_COLS = 12;
+const unsigned PalletGrid::NUM_CELLS = PalletGrid::MAX_ROWS
+		* PalletGrid::MAX_COLS;
+
 PalletGrid::PalletGrid(Orientation o, unsigned imgWidth, unsigned imgHeight,
-		unsigned gapX, unsigned gapY, const unsigned (&profileWords)[3]) {
+		unsigned gapX, unsigned gapY, const unsigned(&profileWords)[3]) {
 	orientation = o;
 
 	if (orientation == ORIENTATION_HORIZONTAL) {
-	    imgValid = imgWidth > imgHeight;
+		imgValid = imgWidth > imgHeight;
 		cellWidth = imgWidth / MAX_COLS;
 		cellHeight = imgHeight / MAX_ROWS;
 	} else if (orientation == ORIENTATION_VERTICAL) {
-        imgValid = imgWidth < imgHeight;
+		imgValid = imgWidth < imgHeight;
 		cellWidth = imgWidth / MAX_ROWS;
 		cellHeight = imgHeight / MAX_COLS;
 	} else {
 		UA_ASSERTS(false, "orientation invalid: " << orientation);
 	}
 
-    UA_DOUT(1, 3, "PalletGrid: orientation/" << orientation << " width/" 
-		<< imgWidth << " height/" << imgHeight << " imgValid/" << imgValid);
+	UA_DOUT(
+			1,
+			3,
+			"PalletGrid: orientation/" << orientation << " width/" << imgWidth << " height/" << imgHeight << " imgValid/" << imgValid);
 
-	if (!imgValid) return;
+	if (!imgValid)
+		return;
 
 	this->gapX = gapX;
 	this->gapY = gapY;
@@ -54,7 +62,7 @@ PalletGrid::PalletGrid(Orientation o, unsigned imgWidth, unsigned imgHeight,
 	// load the profile
 	bits.resize(NUM_CELLS);
 	unsigned mask;
-	for (unsigned i = 0; i < NUM_WORDS; ++i) {
+	for (unsigned i = 0; i < NUM_CELLS / 32; ++i) {
 		mask = 1;
 		for (unsigned j = 0; j < 32; ++j) {
 			if (profileWords[i] & mask) {
@@ -68,7 +76,8 @@ PalletGrid::PalletGrid(Orientation o, unsigned imgWidth, unsigned imgHeight,
 PalletGrid::~PalletGrid() {
 }
 
-void PalletGrid::getImageCoordinates(unsigned row, unsigned col, CvRect & rect) {
+void PalletGrid::getImageCoordinates(unsigned row, unsigned col,
+		CvRect & rect) {
 	UA_ASSERT(row < MAX_ROWS);
 	UA_ASSERT(col < MAX_COLS);
 
@@ -94,7 +103,6 @@ void PalletGrid::getPositionStr(unsigned row, unsigned col, string & str) {
 	out << (char) ('A' + row) << col;
 	str = out.str();
 }
-
 
 bool PalletGrid::getCellEnabled(unsigned row, unsigned col) {
 	UA_ASSERTS(row < PalletGrid::MAX_ROWS, "invalid row requested " << row);

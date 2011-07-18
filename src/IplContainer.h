@@ -33,10 +33,13 @@ public:
 	IplImageContainer(IplImage * image);
 	IplImageContainer();
 	~IplImageContainer();
+
 	IplImage * getIplImage();
 	void setIplImage(IplImage * image);
+
 	unsigned getHorizontalResolution();
 	unsigned getVerticalResolution();
+
 	void setHorizontalResolution(unsigned pixelPerMeter);
 	void setVerticalResolution(unsigned pixelPerMeter);
 

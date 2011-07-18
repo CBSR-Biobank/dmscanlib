@@ -62,6 +62,10 @@ public:
 
 private:
 
+	static const unsigned PALLET_ROWS;
+	static const unsigned PALLET_COLUMNS;
+	static const double BARCODE_SIDE_LENGTH_INCHES;
+
 	bool reduceBlobToMatrix(Dib & dib, CvRect & blob);
 	void showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
 	void initCells(unsigned maxRow, unsigned maxCol);
@@ -70,9 +74,6 @@ private:
 	static void getTubeBlobs(Dib * dib, int threshold, int blobsize,
 			int blurRounds, int border, vector<CvRect> & blobVector);
 
-	static const unsigned PALLET_ROWS = 8;
-	static const unsigned PALLET_COLUMNS = 12;
-	static const double BARCODE_SIDE_LENGTH_INCHES;
 
 	double scanGap;
 	unsigned squareDev;

@@ -36,11 +36,9 @@ public:
 		ORIENTATION_HORIZONTAL, ORIENTATION_VERTICAL
 	};
 
-	static const unsigned MAX_ROWS = 8;
-
-	static const unsigned MAX_COLS = 12;
-
-	static const unsigned NUM_CELLS = MAX_ROWS * MAX_COLS;
+	static const unsigned MAX_ROWS;
+	static const unsigned MAX_COLS;
+	static const unsigned NUM_CELLS;
 
 	/**
 	 * Constructs a pallet grid with cells cellWidth pixels and
@@ -62,10 +60,6 @@ public:
 
 	~PalletGrid();
 
-	void getImageCoordinates(unsigned row, unsigned col, CvRect & rect);
-
-	void getPositionStr(unsigned row, unsigned col, string & str);
-
 	/**
 	 * Returns wether or not the pallet location should be decoded.
 	 *
@@ -76,12 +70,15 @@ public:
 	 */
 	bool getCellEnabled(unsigned row, unsigned col);
 
+	void getImageCoordinates(unsigned row, unsigned col, CvRect & rect);
+
+	void getPositionStr(unsigned row, unsigned col, string & str);
+
 	bool isImageValid() {
 	    return imgValid;
 	}
 
 private:
-	static const unsigned NUM_WORDS = PalletGrid::NUM_CELLS / 32;
 
 	Orientation orientation;
 	unsigned cellWidth;

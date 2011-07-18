@@ -82,6 +82,8 @@ struct BitmapInfoHeader {
 };
 
 
+
+
 const double Dib::UNSHARP_RAD = 8.0;
 const double Dib::UNSHARP_DEPTH = 1.1;
 const unsigned Dib::GAUSS_WIDTH = 12;
@@ -267,6 +269,7 @@ void Dib::readFromFile(const char *filename) {
 	//FIXME this is required for gimp-based cropped images.
 	// if these conditions are not met the Dib cannot be processed
 	//UA_ASSERT(size == 40);
+
 	UA_ASSERT(planes == 1);
 	UA_ASSERT(compression == 0);
 	UA_ASSERT(hPixelsPerMeter == vPixelsPerMeter);

@@ -9,9 +9,6 @@
 #define TESTAPP_H_
 
 
-
-#include <limits>
-#include <stdio.h>
 using namespace std;
 
 struct Options {

@@ -69,8 +69,10 @@ public:
 	bool writeToFile(const char * filename) const;
 
 	static auto_ptr<Dib> convertGrayscale(Dib & src);
+
 	static Dib * crop(Dib &src, unsigned x0, unsigned y0, unsigned x1,
 			unsigned y1);
+
 	auto_ptr<IplImageContainer> generateIplImage();
 	void tpPresetFilter();
 
