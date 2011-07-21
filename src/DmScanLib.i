@@ -6,6 +6,8 @@ extern int slGetScannerCapability();
 extern int slScanImage(unsigned verbose, unsigned dpi, int brightness,
         int contrast, double left, double top, double right, double bottom,
         char * filename);
+extern int slScanFlatbed(unsigned verbose, unsigned dpi, int brightness,
+		int contrast, const char * filename);
 extern int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, 
     int contrast, unsigned plateNum, double left, double top, double right,
     double bottom, double scanGap, unsigned squareDev,
@@ -24,6 +26,8 @@ extern int slGetScannerCapability();
 extern int slScanImage(unsigned verbose, unsigned dpi, int brightness,
         int contrast, double left, double top, double right, double bottom,
         char * filename);
+extern int slScanFlatbed(unsigned verbose, unsigned dpi, int brightness,
+		int contrast, const char * filename);
 extern int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, 
     int contrast, unsigned plateNum, double left, double top, double right,
     double bottom, double scanGap, unsigned squareDev,

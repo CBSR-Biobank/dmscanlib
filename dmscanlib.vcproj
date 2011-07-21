@@ -236,7 +236,7 @@
 				AdditionalDependencies=" cv210.lib cxcore210.lib user32.lib OpenThreadsWin32.lib"
 				ShowProgress="0"
 				LinkIncremental="0"
-				AdditionalLibraryDirectories=".\src\opencv\win32;.\src\openthreads;"
+				AdditionalLibraryDirectories="lib\win32"
 				IgnoreDefaultLibraryNames=""
 				ModuleDefinitionFile="dmscanlib.def"
 				GenerateDebugInformation="false"

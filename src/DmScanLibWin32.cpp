@@ -119,6 +119,34 @@ int slScanImage(unsigned verbose, unsigned dpi, int brightness, int contrast,
     return SC_SUCCESS;
 }
 
+int slScanFlatbed(unsigned verbose, unsigned dpi, int brightness, int contrast,
+        const char *filename) {
+    configLogging(verbose);
+    if (filename == NULL) {
+	    UA_DOUT(1, 3, "slScanFlatbed: no file name specified");
+        return SC_FAIL;
+    }
+
+    UA_DOUT(1, 3, "slScanFlatbed: dpi/" << dpi
+            << " brightness/" << brightness << " contrast/" << contrast 
+			<< " filename/" << filename);
+
+    ImageGrabber ig;
+
+    HANDLE h = ig.acquireFlatbed(dpi, brightness, contrast);
+    if (h == NULL) {
+        return ig.getErrorCode();
+    }
+    Dib dib;
+    dib.readFromHandle(h);
+    if (dib.getDpi() != dpi) {
+        return SC_INCORRECT_DPI_SCANNED;
+    }
+    dib.writeToFile(filename);
+    ig.freeImage(h);
+    return SC_SUCCESS;
+}
+
 int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
         unsigned plateNum, double left, double top, double right,
         double bottom, double scanGap, unsigned squareDev, unsigned edgeThresh,

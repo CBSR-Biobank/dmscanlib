@@ -63,6 +63,9 @@ public:
 
 	HANDLE acquireImage(unsigned dpi, int brightness, int contrast,
 		double top, double left, double bottom, double right);
+
+	HANDLE acquireFlatbed(unsigned dpi, int brightness, int contrast);
+
 	DmtxImage* acquireDmtxImage(unsigned dpi, int brightness, int contrast);
 	void freeImage(HANDLE handle);
 
@@ -98,6 +101,7 @@ private:
 
 	int getScannerCapabilityInternal(TW_IDENTITY & srcID);
 	int getResolutionCapability(TW_IDENTITY & srcID, TW_UINT16 cap);
+	double getPhysicalDimensions(TW_IDENTITY & srcID, TW_UINT16 cap);
 
 	static const char * TWAIN_DLL_FILENAME;
 

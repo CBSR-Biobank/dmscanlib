@@ -30,14 +30,16 @@
 #pragma warning(disable : 4996)
 #endif
 
+#include <stdio.h>
+
 #include "DmScanLib.h"
 #include "UaLogger.h"
 #include "UaAssert.h"
 #include "Decoder.h"
 #include "Dib.h"
 #include "TimeUtil.h"
+#include "DmScanLibCommon.h"
 
-#include <stdio.h>
 
 #if defined(USE_NVWA)
 #   include "debug_new.h"
@@ -52,152 +54,147 @@ slTime timediff;
 static bool loggingInitialized = false;
 
 void configLogging(unsigned level, bool useFile = true) {
-    if (!loggingInitialized) {
-        if (useFile) {
-            ua::LoggerSinkFile::Instance().setFile("dmscanlib.log");
-            ua::LoggerSinkFile::Instance().showHeader(true);
-            ua::logstream.sink(ua::LoggerSinkFile::Instance());
-        } else {
-            ua::LoggerSinkStdout::Instance().showHeader(true);
-            ua::logstream.sink(ua::LoggerSinkStdout::Instance());
-        }
-        ua::Logger::Instance().subSysHeaderSet(1, "DmScanLib");
-        loggingInitialized = true;
-    }
+	if (!loggingInitialized) {
+		if (useFile) {
+			ua::LoggerSinkFile::Instance().setFile("dmscanlib.log");
+			ua::LoggerSinkFile::Instance().showHeader(true);
+			ua::logstream.sink(ua::LoggerSinkFile::Instance());
+		} else {
+			ua::LoggerSinkStdout::Instance().showHeader(true);
+			ua::logstream.sink(ua::LoggerSinkStdout::Instance());
+		}
+		ua::Logger::Instance().subSysHeaderSet(1, "DmScanLib");
+		loggingInitialized = true;
+	}
 
-    ua::Logger::Instance().levelSet(ua::LoggerImpl::allSubSys_m, level);
+	ua::Logger::Instance().levelSet(ua::LoggerImpl::allSubSys_m, level);
 }
 
 /*
  * Could not use C++ streams for Release version of DLL.
  */
 void saveResults(string & msg) {
-    FILE *fh = fopen("dmscanlib.txt", "w");
-    UA_ASSERT_NOT_NULL(fh);
-    fprintf(fh, "%s", msg.c_str());
-    fclose(fh);
+	FILE *fh = fopen("dmscanlib.txt", "w");
+	UA_ASSERT_NOT_NULL(fh);
+	fprintf(fh, "%s", msg.c_str());
+	fclose(fh);
 }
 
 void formatCellMessages(unsigned plateNum, Decoder & decoder, string & msg) {
-    ostringstream out;
-    out << "#Plate,Row,Col,Barcode" << endl;
+	ostringstream out;
+	out << "#Plate,Row,Col,Barcode" << endl;
 
-    for (unsigned row = 0; row < PalletGrid::MAX_ROWS; ++row) {
-        for (unsigned col = 0; col < PalletGrid::MAX_COLS; ++col) {
-            const char * msg = decoder.getBarcode(row, col);
-            if (msg == NULL) continue;
-            out << plateNum << "," << static_cast<char> ('A' + row) << ","
-                    << (col + 1) << "," << msg << endl;
-        }
-    }
-    msg = out.str();
+	for (unsigned row = 0; row < PalletGrid::MAX_ROWS; ++row) {
+		for (unsigned col = 0; col < PalletGrid::MAX_COLS; ++col) {
+			const char * msg = decoder.getBarcode(row, col);
+			if (msg == NULL
+				) continue;
+			out << plateNum << "," << static_cast<char>('A' + row) << ","
+					<< (col + 1) << "," << msg << endl;
+		}
+	}
+	msg = out.str();
 }
 
 int slDecodeCommon(unsigned plateNum, Dib & dib, double scanGap,
-        unsigned squareDev, unsigned edgeThresh, unsigned corrections,
-        double cellDistance, double gapX, double gapY, unsigned profileA,
-        unsigned profileB, unsigned profileC, unsigned isVertical,
-        const char *markedDibFilename) {
+		unsigned squareDev, unsigned edgeThresh, unsigned corrections,
+		double cellDistance, double gapX, double gapY, unsigned profileA,
+		unsigned profileB, unsigned profileC, unsigned isVertical,
+		const char *markedDibFilename) {
 
-    unsigned dpi = dib.getDpi();
-    UA_DOUT(1, 3, "DecodeCommon: dpi/" << dpi);
-    if ((dpi != 300) && (dpi != 400) && (dpi != 600)) {
-        return SC_INVALID_DPI;
-    }
+	unsigned dpi = dib.getDpi();
+	UA_DOUT(1, 3, "DecodeCommon: dpi/" << dpi);
+	if ((dpi != 300) && (dpi != 400) && (dpi != 600)) {
+		return SC_INVALID_DPI;
+	}
 
-    bool metrical = false;
-    Decoder::ProcessResult result;
+	bool metrical = false;
+	Decoder::ProcessResult result;
 
-    PalletGrid::Orientation orientation =
-            (isVertical ? PalletGrid::ORIENTATION_VERTICAL
-                    : PalletGrid::ORIENTATION_HORIZONTAL);
+	PalletGrid::Orientation orientation = (
+			isVertical ?
+					PalletGrid::ORIENTATION_VERTICAL :
+					PalletGrid::ORIENTATION_HORIZONTAL);
 
-    unsigned gapXpixels = static_cast<unsigned>(dpi * gapX);
-    unsigned gapYpixels = static_cast<unsigned>(dpi * gapY);
+	unsigned gapXpixels = static_cast<unsigned>(dpi * gapX);unsigned
+	gapYpixels = static_cast<unsigned>(dpi * gapY);
 
-    const unsigned profileWords[3] = { profileA, profileB, profileC };
+const	unsigned profileWords[3] = { profileA, profileB, profileC };
 
-    auto_ptr<PalletGrid> palletGrid(new PalletGrid(orientation, dib.getWidth(),
-            dib.getHeight(), gapXpixels, gapYpixels, profileWords));
+	auto_ptr<PalletGrid> palletGrid(
+			new PalletGrid(orientation, dib.getWidth(), dib.getHeight(),
+					gapXpixels, gapYpixels, profileWords));
 
-    if (!palletGrid->isImageValid()) {
-        return SC_INVALID_IMAGE;
-    }
+	if (!palletGrid->isImageValid()) {
+		return SC_INVALID_IMAGE;
+	}
 
-    Decoder decoder(scanGap, squareDev, edgeThresh, corrections, cellDistance,
-            palletGrid.get());
+	Decoder decoder(scanGap, squareDev, edgeThresh, corrections, cellDistance,
+			palletGrid.get());
 
-    UA_DOUT(1, 5, "DecodeCommon: metrical mode: " << metrical);
+	UA_DOUT(1, 5, "DecodeCommon: metrical mode: " << metrical);
 
-    /*--- apply filters ---*/
-    auto_ptr<Dib> filteredDib(Dib::convertGrayscale(dib));
+	/*--- apply filters ---*/
+	auto_ptr<Dib> filteredDib(Dib::convertGrayscale(dib));
 
-    filteredDib->tpPresetFilter();
-    UA_DEBUG(
-            filteredDib->writeToFile("filtered.bmp")
-    );
+	filteredDib->tpPresetFilter();
+	UA_DEBUG( filteredDib->writeToFile("filtered.bmp"));
 
-    /*--- obtain barcodes ---*/
-    result = decoder.processImageRegions(filteredDib.get());
+	/*--- obtain barcodes ---*/
+	result = decoder.processImageRegions(filteredDib.get());
 
-    decoder.imageShowBarcodes(dib, 0);
-    if (result == Decoder::OK)
-        dib.writeToFile(markedDibFilename);
-    else
-        dib.writeToFile("decode.partial.bmp");
+	decoder.imageShowBarcodes(dib, 0);
+	if (result == Decoder::OK)
+		dib.writeToFile(markedDibFilename);
+	else
+		dib.writeToFile("decode.partial.bmp");
 
-    switch (result) {
-    case Decoder::IMG_INVALID:
-        return SC_INVALID_IMAGE;
+	switch (result) {
+	case Decoder::IMG_INVALID:
+		return SC_INVALID_IMAGE;
 
-    default:
-        ; // do nothing
-    }
+	default:
+		; // do nothing
+	}
 
-    // only get here if decoder returned Decoder::OK
-    string msg;
-    formatCellMessages(plateNum, decoder, msg);
-    saveResults(msg);
+	// only get here if decoder returned Decoder::OK
+	string msg;
+	formatCellMessages(plateNum, decoder, msg);
+	saveResults(msg);
 
-    Util::getTime(endtime);
-    Util::difftiime(starttime, endtime, timediff);
-    UA_DOUT(1, 1, "slDecodeCommonCv: time taken: " << timediff);
-    return SC_SUCCESS;
+	Util::getTime(endtime);
+	Util::difftiime(starttime, endtime, timediff);
+	UA_DOUT(1, 1, "slDecodeCommonCv: time taken: " << timediff);
+	return SC_SUCCESS;
 }
 
 int slDecodeImage(unsigned verbose, unsigned plateNum, const char *filename,
-        double scanGap, unsigned squareDev, unsigned edgeThresh,
-        unsigned corrections, double cellDistance, double gapX, double gapY,
-        unsigned profileA, unsigned profileB, unsigned profileC,
-        unsigned isVertical) {
-    configLogging(verbose);
-    UA_DOUT(1, 3, "slDecodeImage: plateNum/" << plateNum
-            << " filename/" << filename
-            << " scanGap/" << scanGap
-            << " squareDev/" << squareDev
-            << " edgeThresh/" << edgeThresh
-            << " corrections/" << corrections
-            << " cellDistance/" << cellDistance
-            << " gapX/" << gapX
-            << " gapY/" << gapY
-            << " isVertical/" << isVertical);
+		double scanGap, unsigned squareDev, unsigned edgeThresh,
+		unsigned corrections, double cellDistance, double gapX, double gapY,
+		unsigned profileA, unsigned profileB, unsigned profileC,
+		unsigned isVertical) {
+	configLogging(verbose);
+	UA_DOUT(
+			1,
+			3,
+			"slDecodeImage: plateNum/" << plateNum << " filename/" << filename << " scanGap/" << scanGap << " squareDev/" << squareDev << " edgeThresh/" << edgeThresh << " corrections/" << corrections << " cellDistance/" << cellDistance << " gapX/" << gapX << " gapY/" << gapY << " isVertical/" << isVertical);
 
-    if ((plateNum < MIN_PLATE_NUM) || (plateNum > MAX_PLATE_NUM)) {
-        return SC_INVALID_PLATE_NUM;
-    }
+	if ((plateNum < MIN_PLATE_NUM) || (plateNum > MAX_PLATE_NUM)) {
+		return SC_INVALID_PLATE_NUM;
+	}
 
-    if (filename == NULL) {
-        return SC_FAIL;
-    }
+	if (filename == NULL) {
+		return SC_FAIL;
+	}
 
-    Util::getTime(starttime);
+	Util::getTime(starttime);
 
-    Dib dib;
-    dib.readFromFile(filename);
+	Dib dib;
+	dib.readFromFile(filename);
 
-    int result = slDecodeCommon(plateNum, dib, scanGap, squareDev, edgeThresh,
-            corrections, cellDistance, gapX, gapY, profileA, profileB, profileC,
-            isVertical, "decode.bmp");
-    return result;
+	int result = slDecodeCommon(plateNum, dib, scanGap, squareDev, edgeThresh,
+			corrections, cellDistance, gapX, gapY, profileA, profileB, profileC,
+			isVertical, "decode.bmp");
+	return result;
 }
 
