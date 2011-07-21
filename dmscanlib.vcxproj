@@ -1,6 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug-DLL|Win32">
+      <Configuration>Debug-DLL</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
       <Platform>Win32</Platform>
@@ -16,6 +20,13 @@
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-DLL|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <UseOfAtl>false</UseOfAtl>
+    <CharacterSet>Unicode</CharacterSet>
+    <WholeProgramOptimization>PGOptimize</WholeProgramOptimization>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseOfMfc>false</UseOfMfc>
@@ -30,6 +41,9 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug-DLL|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -46,6 +60,12 @@
     <OutDir Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|Win32'">$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|Win32'">$(Configuration)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|Win32'" />
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug-DLL|Win32'">$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug-DLL|Win32'">$(Configuration)\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug-DLL|Win32'" />
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Debug-DLL|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Debug-DLL|Win32'" />
+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Debug-DLL|Win32'" />
     <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
     <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" />
     <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" />
@@ -69,7 +89,7 @@
     <Link>
       <AdditionalDependencies>cv210.lib;cxcore210.lib;user32.lib;libcmtd.lib;OpenThreadsWin32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ShowProgress>NotSet</ShowProgress>
-      <AdditionalLibraryDirectories>.\src\opencv\win32;.\src\openthreads;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>lib\win32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries> libcmt.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
@@ -100,7 +120,7 @@
     <Link>
       <AdditionalDependencies>cv210.lib;cxcore210.lib;user32.lib;OpenThreadsWin32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ShowProgress>NotSet</ShowProgress>
-      <AdditionalLibraryDirectories>.\src\opencv\win32;.\src\openthreads;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>lib\win32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <ModuleDefinitionFile>dmscanlib.def</ModuleDefinitionFile>
       <GenerateDebugInformation>false</GenerateDebugInformation>
@@ -109,20 +129,55 @@
       <TargetMachine>MachineX86</TargetMachine>
     </Link>
   </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug-DLL|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <IntrinsicFunctions>false</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Neither</FavorSizeOrSpeed>
+      <OmitFramePointers>false</OmitFramePointers>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+      <AdditionalIncludeDirectories>.\src\cvblob;.\src\openthreads;.\src\opencv\include;src;src/libdmtx;src/loki;src/utils;$(JAVA_HOME)\include;$(JAVA_HOME)\include\win32;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_VISUALC_;_WIN32;__WIN32__;WIN32;_CONSOLE;UA_LOGGER;BUILD_DLL;THREADED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>false</MinimalRebuild>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>OldStyle</DebugInformationFormat>
+    </ClCompile>
+    <ProjectReference>
+      <LinkLibraryDependencies>true</LinkLibraryDependencies>
+    </ProjectReference>
+    <Link>
+      <AdditionalDependencies>cv210.lib;cxcore210.lib;user32.lib;OpenThreadsWin32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ShowProgress>NotSet</ShowProgress>
+      <AdditionalLibraryDirectories>.\src\opencv\win32;.\src\openthreads;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ModuleDefinitionFile>dmscanlib.def</ModuleDefinitionFile>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <SubSystem>Console</SubSystem>
+      <LinkTimeCodeGeneration>
+      </LinkTimeCodeGeneration>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\BarcodeInfo.cpp" />
     <ClCompile Include="src\BarcodeThread.cpp" />
-    <ClCompile Include="src\BinRegion.cpp" />
     <ClCompile Include="src\Decoder.cpp" />
     <ClCompile Include="src\Dib.cpp" />
+    <ClCompile Include="src\DmScanLib_wrap.c" />
+    <ClCompile Include="src\DmScanLibCommon.cpp" />
+    <ClCompile Include="src\DmScanLibWin32.cpp" />
     <ClCompile Include="src\ImageGrabber.cpp" />
     <ClCompile Include="src\IplContainer.cpp" />
+    <ClCompile Include="src\PalletGrid.cpp" />
     <ClCompile Include="src\ProcessImageManager.cpp" />
-    <ClCompile Include="src\DmScanLib.cpp" />
-    <ClCompile Include="src\DmScanLib_wrap.c" />
     <ClCompile Include="src\Testapp.cpp" />
+    <ClCompile Include="src\utils\TimeUtilWin32.cpp" />
     <ClCompile Include="src\utils\UaLogger.cpp" />
-    <ClCompile Include="src\utils\Util.cpp" />
     <ClCompile Include="src\libdmtx\Dmtx.c" />
     <ClCompile Include="src\cvblob\Blob.cpp" />
     <ClCompile Include="src\cvblob\BlobContour.cpp" />
@@ -133,17 +188,18 @@
   <ItemGroup>
     <ClInclude Include="src\BarcodeInfo.h" />
     <ClInclude Include="src\BarcodeThread.h" />
-    <ClInclude Include="src\BinRegion.h" />
     <ClInclude Include="src\Decoder.h" />
     <ClInclude Include="src\Dib.h" />
+    <ClInclude Include="src\DmScanLib.h" />
+    <ClInclude Include="src\DmScanLibInternal.h" />
     <ClInclude Include="src\ImageGrabber.h" />
     <ClInclude Include="src\IplContainer.h" />
-    <ClInclude Include="src\processImageManager.h" />
+    <ClInclude Include="src\PalletGrid.h" />
+    <ClInclude Include="src\ProcessImageManager.h" />
     <ClInclude Include="resource.h" />
-    <ClInclude Include="src\DmScanLib.h" />
+    <ClInclude Include="src\utils\TimeUtil.h" />
     <ClInclude Include="src\utils\UaAssert.h" />
     <ClInclude Include="src\utils\UaLogger.h" />
-    <ClInclude Include="src\utils\Util.h" />
     <ClInclude Include="src\libdmtx\Dmtx.h" />
     <ClInclude Include="src\utils\SimpleGlob.h" />
     <ClInclude Include="src\utils\SimpleOpt.h" />
