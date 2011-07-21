@@ -1,51 +1,34 @@
-/*
-libdmtx - Data Matrix Encoding/Decoding Library
-
-Copyright (C) 2008, 2009 Mike Laughton
-
-This library is free software; you can redistribute it and/or
-modify it under the terms of the GNU Lesser General Public
-License as published by the Free Software Foundation; either
-version 2.1 of the License, or (at your option) any later version.
-
-This library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public
-License along with this library; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-
-Contact: mike@dragonflylogic.com
-*/
-
-/* $Id: dmtximage.c 838 2009-05-13 18:30:16Z mblaughton $ */
-
 /**
- * @file dmtximage.c
- * @brief Image handling
+ * libdmtx - Data Matrix Encoding/Decoding Library
+ * Copyright 2008, 2009 Mike Laughton. All rights reserved.
+ *
+ * See LICENSE file in the main project directory for full
+ * terms of use and distribution.
+ *
+ * Contact: Mike Laughton <mike@dragonflylogic.com>
+ *
+ * \file dmtximage.c
+ * \brief Image handling
  */
 
 /**
- * libdmtx treats image data as a single 1D array of packed pixels. When
- * reading and writing barcodes, this array provides the sole mechanism for
- * pixel storage and libdmtx relies on the calling program to transfer
- * images to/from the outside world (e.g., saving to disk, acquiring camera
- * input, etc...).
+ * libdmtx stores image data as a large one-dimensional array of packed pixels,
+ * reading from the array when scanning barcodes and writing to it when creating
+ * a barcode. Beyond this interaction the calling program is responsible for
+ * populating and dispatching pixels between the image array and the outside
+ * world, whether that means loading an image from a file, acquiring camera
+ * input, displaying output to a screen, saving to disk, etc...
  *
- * By default, libdmtx treats the first pixel of an array as the top-left
- * location of an image, with horizontal rows working downward to the
- * final pixel at the bottom-right corner. If mapping a pixel buffer this
- * way produces an inverted image, then specify DmtxFlipY at image
- * creation time to remove the inversion. Note that DmtxFlipY has no
- * significant affect on performance since it only modifies the pixel
- * mapping math and does not alter any pixel data. If the image appears
- * correctly without any flips then specify DmtxFlipNone.
+ * By default, libdmtx treats the first pixel of an image array as the top-left
+ * corner of the physical image, with the final pixel landing at the bottom-
+ * right. However, if mapping a pixel buffer this way produces an inverted
+ * image the calling program can specify DmtxFlipY at image creation time to
+ * remove the inversion. This has a negligible effect on performance since it
+ * only modifies the pixel mapping math, and does not alter any pixel data.
  *
  * Regardless of how an image is stored internally, all libdmtx functions
- * consider coordinate (x=0,y=0) to represent the bottom-left pixel
- * location of an image.
+ * consider coordinate (0,0) to mathematically represent the bottom-left pixel
+ * location of an image using a right-handed coordinate system.
  *
  *                (0,HEIGHT-1)        (WIDTH-1,HEIGHT-1)
  *
@@ -69,9 +52,9 @@ Contact: mike@dragonflylogic.com
  */
 
 /**
- * @brief  XXX
- * @param  XXX
- * @return XXX
+ * \brief  XXX
+ * \param  XXX
+ * \return XXX
  */
 extern DmtxImage *
 dmtxImageCreate(unsigned char *pxl, int width, int height, int pack)
@@ -157,9 +140,9 @@ dmtxImageCreate(unsigned char *pxl, int width, int height, int pack)
 }
 
 /**
- * @brief  Free libdmtx image memory
- * @param  img pointer to img location
- * @return DmtxFail | DmtxPass
+ * \brief  Free libdmtx image memory
+ * \param  img pointer to img location
+ * \return DmtxFail | DmtxPass
  */
 extern DmtxPassFail
 dmtxImageDestroy(DmtxImage **img)
@@ -196,11 +179,10 @@ dmtxImageSetChannel(DmtxImage *img, int channelStart, int bitsPerChannel)
 }
 
 /**
- * @brief  Set image property
- * @param  img pointer to image
- * @return image width
+ * \brief  Set image property
+ * \param  img pointer to image
+ * \return image width
  */
-#ifndef CUSTOM_IMAGESETPROP
 extern DmtxPassFail
 dmtxImageSetProp(DmtxImage *img, int prop, int value)
 {
@@ -221,12 +203,11 @@ dmtxImageSetProp(DmtxImage *img, int prop, int value)
 
    return DmtxPass;
 }
-#endif
 
 /**
- * @brief  Get image width
- * @param  img pointer to image
- * @return image width
+ * \brief  Get image width
+ * \param  img pointer to image
+ * \return image width
  */
 extern int
 dmtxImageGetProp(DmtxImage *img, int prop)
@@ -261,11 +242,11 @@ dmtxImageGetProp(DmtxImage *img, int prop)
 }
 
 /**
- * @brief  Returns pixel offset for image
- * @param  img
- * @param  x coordinate
- * @param  y coordinate
- * @return pixe byte offset
+ * \brief  Returns pixel offset for image
+ * \param  img
+ * \param  x coordinate
+ * \param  y coordinate
+ * \return pixel byte offset
  */
 extern int
 dmtxImageGetByteOffset(DmtxImage *img, int x, int y)
@@ -373,12 +354,12 @@ dmtxImageSetPixelValue(DmtxImage *img, int x, int y, int channel, int value)
 }
 
 /**
- * @brief  Test whether image contains a coordinate expressed in integers
- * @param  img
- * @param  margin width
- * @param  x coordinate
- * @param  y coordinate
- * @return DmtxTrue | DmtxFalse
+ * \brief  Test whether image contains a coordinate expressed in integers
+ * \param  img
+ * \param  margin width
+ * \param  x coordinate
+ * \param  y coordinate
+ * \return DmtxTrue | DmtxFalse
  */
 extern DmtxBoolean
 dmtxImageContainsInt(DmtxImage *img, int margin, int x, int y)
@@ -393,11 +374,11 @@ dmtxImageContainsInt(DmtxImage *img, int margin, int x, int y)
 }
 
 /**
- * @brief  Test whether image contains a coordinate expressed in floating points
- * @param  img
- * @param  x coordinate
- * @param  y coordinate
- * @return DmtxTrue | DmtxFalse
+ * \brief  Test whether image contains a coordinate expressed in floating points
+ * \param  img
+ * \param  x coordinate
+ * \param  y coordinate
+ * \return DmtxTrue | DmtxFalse
  */
 extern DmtxBoolean
 dmtxImageContainsFloat(DmtxImage *img, double x, double y)

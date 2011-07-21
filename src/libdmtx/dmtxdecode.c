@@ -1,37 +1,21 @@
-/*
-libdmtx - Data Matrix Encoding/Decoding Library
-
-Copyright (C) 2008, 2009 Mike Laughton
-Copyright (C) 2009 Mackenzie Straight
-
-This library is free software; you can redistribute it and/or
-modify it under the terms of the GNU Lesser General Public
-License as published by the Free Software Foundation; either
-version 2.1 of the License, or (at your option) any later version.
-
-This library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public
-License along with this library; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-
-Contact: mike@dragonflylogic.com
-*/
-
-/* $Id: dmtxdecode.c 849 2009-07-30 15:29:54Z mblaughton $ */
-
 /**
- * @file dmtxdecode.c
- * @brief Decode regions
+ * libdmtx - Data Matrix Encoding/Decoding Library
+ * Copyright 2008, 2009 Mike Laughton. All rights reserved.
+ * Copyright 2009 Mackenzie Straight. All rights reserved.
+ *
+ * See LICENSE file in the main project directory for full
+ * terms of use and distribution.
+ *
+ * Contact: Mike Laughton <mike@dragonflylogic.com>
+ *
+ * \file dmtxdecode.c
+ * \brief Decode regions
  */
 
 /**
- * @brief  Initialize decode struct with default values
- * @param  img
- * @return Initialized DmtxDecode struct
+ * \brief  Initialize decode struct with default values
+ * \param  img
+ * \return Initialized DmtxDecode struct
  */
 extern DmtxDecode *
 dmtxDecodeCreate(DmtxImage *img, int scale)
@@ -72,9 +56,9 @@ dmtxDecodeCreate(DmtxImage *img, int scale)
 }
 
 /**
- * @brief  Deinitialize decode struct
- * @param  dec
- * @return void
+ * \brief  Deinitialize decode struct
+ * \param  dec
+ * \return void
  */
 extern DmtxPassFail
 dmtxDecodeDestroy(DmtxDecode **dec)
@@ -93,11 +77,11 @@ dmtxDecodeDestroy(DmtxDecode **dec)
 }
 
 /**
- * @brief  Set decoding behavior property
- * @param  dec
- * @param  prop
- * @param  value
- * @return DmtxPass | DmtxFail
+ * \brief  Set decoding behavior property
+ * \param  dec
+ * \param  prop
+ * \param  value
+ * \return DmtxPass | DmtxFail
  */
 extern DmtxPassFail
 dmtxDecodeSetProp(DmtxDecode *dec, int prop, int value)
@@ -154,10 +138,10 @@ dmtxDecodeSetProp(DmtxDecode *dec, int prop, int value)
 }
 
 /**
- * @brief  Get decoding behavior property
- * @param  dec
- * @param  prop
- * @return value
+ * \brief  Get decoding behavior property
+ * \param  dec
+ * \param  prop
+ * \return value
  */
 extern int
 dmtxDecodeGetProp(DmtxDecode *dec, int prop)
@@ -197,11 +181,11 @@ dmtxDecodeGetProp(DmtxDecode *dec, int prop)
 }
 
 /**
- * @brief  Returns xxx
- * @param  img
- * @param  Scaled x coordinate
- * @param  Scaled y coordinate
- * @return Scaled pixel offset
+ * \brief  Returns xxx
+ * \param  img
+ * \param  Scaled x coordinate
+ * \param  Scaled y coordinate
+ * \return Scaled pixel offset
  */
 extern unsigned char *
 dmtxDecodeGetCache(DmtxDecode *dec, int x, int y)
@@ -264,8 +248,7 @@ dmtxDecodeGetPixelValue(DmtxDecode *dec, int x, int y, int channel, int *value)
 }
 
 /**
- * @brief  Fill the region covered by the quadrilateral given by (p0,p1,p2,p3) in the cache.
- *
+ * \brief  Fill the region covered by the quadrilateral given by (p0,p1,p2,p3) in the cache.
  */
 static void
 CacheFillQuad(DmtxDecode *dec, DmtxPixelLoc p0, DmtxPixelLoc p1, DmtxPixelLoc p2, DmtxPixelLoc p3)
@@ -324,13 +307,12 @@ CacheFillQuad(DmtxDecode *dec, DmtxPixelLoc p0, DmtxPixelLoc p1, DmtxPixelLoc p2
 }
 
 /**
- * @brief  Convert fitted Data Matrix region into a decoded message
- * @param  dec
- * @param  reg
- * @param  fix
- * @return Decoded message
+ * \brief  Convert fitted Data Matrix region into a decoded message
+ * \param  dec
+ * \param  reg
+ * \param  fix
+ * \return Decoded message
  */
-#ifndef CUSTOM_DECODEMATRIXREGION
 extern DmtxMessage *
 dmtxDecodeMatrixRegion(DmtxDecode *dec, DmtxRegion *reg, int fix)
 {
@@ -353,7 +335,8 @@ dmtxDecodeMatrixRegion(DmtxDecode *dec, DmtxRegion *reg, int fix)
    ModulePlacementEcc200(msg->array, msg->code,
          reg->sizeIdx, DmtxModuleOnRed | DmtxModuleOnGreen | DmtxModuleOnBlue);
 
-   if(DecodeCheckErrors(msg->code, reg->sizeIdx, fix) != DmtxPass) {
+   if(RsDecode(msg->code, reg->sizeIdx, fix) == DmtxFail)
+   {
       dmtxMessageDestroy(&msg);
       return NULL;
    }
@@ -381,16 +364,14 @@ dmtxDecodeMatrixRegion(DmtxDecode *dec, DmtxRegion *reg, int fix)
 
    return msg;
 }
-#endif
 
 /**
- * @brief  Convert fitted Data Mosaic region into a decoded message
- * @param  dec
- * @param  reg
- * @param  fix
- * @return Decoded message
+ * \brief  Convert fitted Data Mosaic region into a decoded message
+ * \param  dec
+ * \param  reg
+ * \param  fix
+ * \return Decoded message
  */
-#ifndef CUSTOM_DECODEMOSAICREGION
 extern DmtxMessage *
 dmtxDecodeMosaicRegion(DmtxDecode *dec, DmtxRegion *reg, int fix)
 {
@@ -399,6 +380,19 @@ dmtxDecodeMosaicRegion(DmtxDecode *dec, DmtxRegion *reg, int fix)
    DmtxMessage *oMsg, *rMsg, *gMsg, *bMsg;
 
    colorPlane = reg->flowBegin.plane;
+
+   /**
+    * Consider performing a color cube fit here to identify exact RGB of
+    * all 6 "cube-like" corners based on pixels located within region. Then
+    * force each sample pixel to the "cube-like" corner based o which one
+    * is nearest "sqrt(dr^2+dg^2+db^2)" (except sqrt is unnecessary).
+    * colorPlane = reg->flowBegin.plane;
+    *
+    * To find RGB values of primary colors, perform something like a
+    * histogram except instead of going from black to color N, go from
+    * (127,127,127) to color. Use color bins along with distance to
+    * identify value. An additional method will be required to get actual
+    * RGB instead of just a plane in 3D. */
 
    reg->flowBegin.plane = 0; /* kind of a hack */
    rMsg = dmtxDecodeMatrixRegion(dec, reg, fix);
@@ -437,7 +431,6 @@ dmtxDecodeMosaicRegion(DmtxDecode *dec, DmtxRegion *reg, int fix)
 
    return oMsg;
 }
-#endif
 
 /**
  *
@@ -524,542 +517,16 @@ dmtxDecodeCreateDiagnostic(DmtxDecode *dec, int *totalBytes, int *headerBytes, i
 }
 
 /**
- * @brief  Translate encoded data stream into final output
- * @param  msg
- * @param  sizeIdx
- * @param  outputStart
- * @return void
- */
-static void
-DecodeDataStream(DmtxMessage *msg, int sizeIdx, unsigned char *outputStart)
-{
-   DmtxBoolean macro = DmtxFalse;
-   DmtxScheme encScheme;
-   unsigned char *ptr, *dataEnd;
-
-   msg->output = (outputStart == NULL) ? msg->output : outputStart;
-   msg->outputIdx = 0;
-
-   ptr = msg->code;
-   dataEnd = ptr + dmtxGetSymbolAttribute(DmtxSymAttribSymbolDataWords, sizeIdx);
-
-   /* Print macro header if first codeword triggers it */
-   if(*ptr == DmtxChar05Macro || *ptr == DmtxChar06Macro) {
-      PushOutputMacroHeader(msg, *ptr);
-      macro = DmtxTrue;
-   }
-
-   while(ptr < dataEnd) {
-
-      encScheme = GetEncodationScheme(ptr);
-      if(encScheme != DmtxSchemeAscii)
-         ptr++;
-
-      switch(encScheme) {
-         case DmtxSchemeAscii:
-            ptr = DecodeSchemeAscii(msg, ptr, dataEnd);
-            break;
-         case DmtxSchemeC40:
-         case DmtxSchemeText:
-            ptr = DecodeSchemeC40Text(msg, ptr, dataEnd, encScheme);
-            break;
-         case DmtxSchemeX12:
-            ptr = DecodeSchemeX12(msg, ptr, dataEnd);
-            break;
-         case DmtxSchemeEdifact:
-            ptr = DecodeSchemeEdifact(msg, ptr, dataEnd);
-            break;
-         case DmtxSchemeBase256:
-            ptr = DecodeSchemeBase256(msg, ptr, dataEnd);
-            break;
-         default:
-            /* error */
-            break;
-      }
-   }
-
-   /* Print macro trailer if required */
-   if(macro == DmtxTrue)
-      PushOutputMacroTrailer(msg);
-}
-
-/**
- * @brief  Determine next encodation scheme
- * @param  encScheme
- * @param  ptr
- * @return Pointer to next undecoded codeword
- */
-static int
-GetEncodationScheme(unsigned char *ptr)
-{
-   DmtxScheme encScheme;
-
-   switch(*ptr) {
-      case DmtxCharC40Latch:
-         encScheme = DmtxSchemeC40;
-         break;
-      case DmtxCharTextLatch:
-         encScheme = DmtxSchemeText;
-         break;
-      case DmtxCharX12Latch:
-         encScheme = DmtxSchemeX12;
-         break;
-      case DmtxCharEdifactLatch:
-         encScheme = DmtxSchemeEdifact;
-         break;
-      case DmtxCharBase256Latch:
-         encScheme = DmtxSchemeBase256;
-         break;
-      default:
-         encScheme = DmtxSchemeAscii;
-         break;
-   }
-
-   return encScheme;
-}
-
-/**
- *
- *
- */
-static void
-PushOutputWord(DmtxMessage *msg, int value)
-{
-   assert(value >= 0 && value < 256);
-
-   msg->output[msg->outputIdx++] = (unsigned char)value;
-}
-
-/**
- *
- *
- */
-static void
-PushOutputC40TextWord(DmtxMessage *msg, C40TextState *state, int value)
-{
-   assert(value >= 0 && value < 256);
-
-   msg->output[msg->outputIdx] = (unsigned char)value;
-
-   if(state->upperShift == DmtxTrue) {
-      assert(value < 128);
-      msg->output[msg->outputIdx] += 128;
-   }
-
-   msg->outputIdx++;
-
-   state->shift = DmtxC40TextBasicSet;
-   state->upperShift = DmtxFalse;
-}
-
-/**
- *
- *
- */
-static void
-PushOutputMacroHeader(DmtxMessage *msg, int macroType)
-{
-   PushOutputWord(msg, '[');
-   PushOutputWord(msg, ')');
-   PushOutputWord(msg, '>');
-   PushOutputWord(msg, 30); /* ASCII RS */
-   PushOutputWord(msg, '0');
-
-   assert(macroType == DmtxChar05Macro || macroType == DmtxChar06Macro);
-   if(macroType == DmtxChar05Macro)
-      PushOutputWord(msg, '5');
-   else
-      PushOutputWord(msg, '6');
-
-   PushOutputWord(msg, 29); /* ASCII GS */
-}
-
-/**
- *
- *
- */
-static void
-PushOutputMacroTrailer(DmtxMessage *msg)
-{
-   PushOutputWord(msg, 30); /* ASCII RS */
-   PushOutputWord(msg, 4);  /* ASCII EOT */
-}
-
-/**
- * @brief  Decode stream assuming standard ASCII encodation
- * @param  msg
- * @param  ptr
- * @param  dataEnd
- * @return Pointer to next undecoded codeword
- */
-static unsigned char *
-DecodeSchemeAscii(DmtxMessage *msg, unsigned char *ptr, unsigned char *dataEnd)
-{
-   int upperShift;
-   int codeword, digits;
-
-   upperShift = DmtxFalse;
-
-   while(ptr < dataEnd) {
-
-      codeword = (int)(*ptr);
-
-      if(GetEncodationScheme(ptr) != DmtxSchemeAscii)
-         return ptr;
-      else
-         ptr++;
-
-      if(upperShift == DmtxTrue) {
-         PushOutputWord(msg, codeword + 127);
-         upperShift = DmtxFalse;
-      }
-      else if(codeword == DmtxCharAsciiUpperShift) {
-         upperShift = DmtxTrue;
-      }
-      else if(codeword == DmtxCharAsciiPad) {
-         assert(dataEnd >= ptr);
-         assert(dataEnd - ptr <= INT_MAX);
-         msg->padCount = (int)(dataEnd - ptr);
-         return dataEnd;
-      }
-      else if(codeword <= 128) {
-         PushOutputWord(msg, codeword - 1);
-      }
-      else if(codeword <= 229) {
-         digits = codeword - 130;
-         PushOutputWord(msg, digits/10 + '0');
-         PushOutputWord(msg, digits - (digits/10)*10 + '0');
-      }
-   }
-
-   return ptr;
-}
-
-/**
- * @brief  Decode stream assuming C40 or Text encodation
- * @param  msg
- * @param  ptr
- * @param  dataEnd
- * @param  encScheme
- * @return Pointer to next undecoded codeword
- */
-static unsigned char *
-DecodeSchemeC40Text(DmtxMessage *msg, unsigned char *ptr, unsigned char *dataEnd, DmtxScheme encScheme)
-{
-   int i;
-   int packed;
-   int c40Values[3];
-   C40TextState state;
-
-   state.shift = DmtxC40TextBasicSet;
-   state.upperShift = DmtxFalse;
-
-   assert(encScheme == DmtxSchemeC40 || encScheme == DmtxSchemeText);
-
-   while(ptr < dataEnd) {
-
-      /* FIXME Also check that ptr+1 is safe to access */
-      packed = (*ptr << 8) | *(ptr+1);
-      c40Values[0] = ((packed - 1)/1600);
-      c40Values[1] = ((packed - 1)/40) % 40;
-      c40Values[2] =  (packed - 1) % 40;
-      ptr += 2;
-
-      for(i = 0; i < 3; i++) {
-         if(state.shift == DmtxC40TextBasicSet) { /* Basic set */
-            if(c40Values[i] <= 2) {
-               state.shift = c40Values[i] + 1;
-            }
-            else if(c40Values[i] == 3) {
-               PushOutputC40TextWord(msg, &state, ' ');
-            }
-            else if(c40Values[i] <= 13) {
-               PushOutputC40TextWord(msg, &state, c40Values[i] - 13 + '9'); /* 0-9 */
-            }
-            else if(c40Values[i] <= 39) {
-               if(encScheme == DmtxSchemeC40) {
-                  PushOutputC40TextWord(msg, &state, c40Values[i] - 39 + 'Z'); /* A-Z */
-               }
-               else if(encScheme == DmtxSchemeText) {
-                  PushOutputC40TextWord(msg, &state, c40Values[i] - 39 + 'z'); /* a-z */
-               }
-            }
-         }
-         else if(state.shift == DmtxC40TextShift1) { /* Shift 1 set */
-            PushOutputC40TextWord(msg, &state, c40Values[i]); /* ASCII 0 - 31 */
-         }
-         else if(state.shift == DmtxC40TextShift2) { /* Shift 2 set */
-            if(c40Values[i] <= 14) {
-               PushOutputC40TextWord(msg, &state, c40Values[i] + 33); /* ASCII 33 - 47 */
-            }
-            else if(c40Values[i] <= 21) {
-               PushOutputC40TextWord(msg, &state, c40Values[i] + 43); /* ASCII 58 - 64 */
-            }
-            else if(c40Values[i] <= 26) {
-               PushOutputC40TextWord(msg, &state, c40Values[i] + 69); /* ASCII 91 - 95 */
-            }
-            else if(c40Values[i] == 27) {
-               PushOutputC40TextWord(msg, &state, 0x1d); /* FNC1 -- XXX depends on position? */
-            }
-            else if(c40Values[i] == 30) {
-               state.upperShift = DmtxTrue;
-               state.shift = DmtxC40TextBasicSet;
-            }
-         }
-         else if(state.shift == DmtxC40TextShift3) { /* Shift 3 set */
-            if(encScheme == DmtxSchemeC40) {
-               PushOutputC40TextWord(msg, &state, c40Values[i] + 96);
-            }
-            else if(encScheme == DmtxSchemeText) {
-               if(c40Values[i] == 0)
-                  PushOutputC40TextWord(msg, &state, c40Values[i] + 96);
-               else if(c40Values[i] <= 26)
-                  PushOutputC40TextWord(msg, &state, c40Values[i] - 26 + 'Z'); /* A-Z */
-               else
-                  PushOutputC40TextWord(msg, &state, c40Values[i] - 31 + 127); /* { | } ~ DEL */
-            }
-         }
-      }
-
-      /* Unlatch if codeword 254 follows 2 codewords in C40/Text encodation */
-      if(*ptr == DmtxCharTripletUnlatch)
-         return ptr + 1;
-
-      /* Unlatch is implied if only one codeword remains */
-      if(dataEnd - ptr == 1)
-         return ptr;
-   }
-
-   return ptr;
-}
-
-/**
- * @brief  Decode stream assuming X12 encodation
- * @param  msg
- * @param  ptr
- * @param  dataEnd
- * @return Pointer to next undecoded codeword
- */
-static unsigned char *
-DecodeSchemeX12(DmtxMessage *msg, unsigned char *ptr, unsigned char *dataEnd)
-{
-   int i;
-   int packed;
-   int x12Values[3];
-
-   while(ptr < dataEnd) {
-
-      /* FIXME Also check that ptr+1 is safe to access */
-      packed = (*ptr << 8) | *(ptr+1);
-      x12Values[0] = ((packed - 1)/1600);
-      x12Values[1] = ((packed - 1)/40) % 40;
-      x12Values[2] =  (packed - 1) % 40;
-      ptr += 2;
-
-      for(i = 0; i < 3; i++) {
-         if(x12Values[i] == 0)
-            PushOutputWord(msg, 13);
-         else if(x12Values[i] == 1)
-            PushOutputWord(msg, 42);
-         else if(x12Values[i] == 2)
-            PushOutputWord(msg, 62);
-         else if(x12Values[i] == 3)
-            PushOutputWord(msg, 32);
-         else if(x12Values[i] <= 13)
-            PushOutputWord(msg, x12Values[i] + 44);
-         else if(x12Values[i] <= 90)
-            PushOutputWord(msg, x12Values[i] + 51);
-      }
-
-      /* Unlatch if codeword 254 follows 2 codewords in C40/Text encodation */
-      if(*ptr == DmtxCharTripletUnlatch)
-         return ptr + 1;
-
-      /* Unlatch is implied if only one codeword remains */
-      if(dataEnd - ptr == 1)
-         return ptr;
-   }
-
-   return ptr;
-}
-
-/**
- * @brief  Decode stream assuming EDIFACT encodation
- * @param  msg
- * @param  ptr
- * @param  dataEnd
- * @return Pointer to next undecoded codeword
- */
-static unsigned char *
-DecodeSchemeEdifact(DmtxMessage *msg, unsigned char *ptr, unsigned char *dataEnd)
-{
-   int i;
-   unsigned char unpacked[4];
-
-   while(ptr < dataEnd) {
-
-      /* FIXME Also check that ptr+2 is safe to access -- shouldn't be a
-         problem because I'm guessing you can guarantee there will always
-         be at least 3 error codewords */
-      unpacked[0] = (*ptr & 0xfc) >> 2;
-      unpacked[1] = (*ptr & 0x03) << 4 | (*(ptr+1) & 0xf0) >> 4;
-      unpacked[2] = (*(ptr+1) & 0x0f) << 2 | (*(ptr+2) & 0xc0) >> 6;
-      unpacked[3] = *(ptr+2) & 0x3f;
-
-      for(i = 0; i < 4; i++) {
-
-         /* Advance input ptr (4th value comes from already-read 3rd byte) */
-         if(i < 3)
-            ptr++;
-
-         /* Test for unlatch condition */
-         if(unpacked[i] == DmtxCharEdifactUnlatch) {
-            assert(msg->output[msg->outputIdx] == 0); /* XXX dirty why? */
-            return ptr;
-         }
-
-         PushOutputWord(msg, unpacked[i] ^ (((unpacked[i] & 0x20) ^ 0x20) << 1));
-      }
-
-      /* Unlatch is implied if fewer than 3 codewords remain */
-      if(dataEnd - ptr < 3) {
-         return ptr;
-      }
-   }
-
-   return ptr;
-
-/* XXX the following version should be safer, but requires testing before replacing the old version
-   int bits = 0;
-   int bitCount = 0;
-   int value;
-
-   while(ptr < dataEnd) {
-
-      if(bitCount < 6) {
-         bits = (bits << 8) | *(ptr++);
-         bitCount += 8;
-      }
-
-      value = bits >> (bitCount - 6);
-      bits -= (value << (bitCount - 6));
-      bitCount -= 6;
-
-      if(value == 0x1f) {
-         assert(bits == 0); // should be padded with zero-value bits
-         return ptr;
-      }
-      PushOutputWord(msg, value ^ (((value & 0x20) ^ 0x20) << 1));
-
-      // Unlatch implied if just completed triplet and 1 or 2 words are left
-      if(bitCount == 0 && dataEnd - ptr - 1 > 0 && dataEnd - ptr - 1 < 3)
-         return ptr;
-   }
-
-   assert(bits == 0); // should be padded with zero-value bits
-   assert(bitCount == 0); // should be padded with zero-value bits
-   return ptr;
-*/
-}
-
-/**
- * @brief  Decode stream assuming Base 256 encodation
- * @param  msg
- * @param  ptr
- * @param  dataEnd
- * @return Pointer to next undecoded codeword
- */
-static unsigned char *
-DecodeSchemeBase256(DmtxMessage *msg, unsigned char *ptr, unsigned char *dataEnd)
-{
-   int d0, d1;
-   int idx;
-   unsigned char *ptrEnd;
-
-   /* Find positional index used for unrandomizing */
-   assert(ptr + 1 >= msg->code);
-   assert(ptr + 1 - msg->code <= INT_MAX);
-   idx = (int)(ptr + 1 - msg->code);
-
-   d0 = UnRandomize255State(*(ptr++), idx++);
-   if(d0 == 0) {
-      ptrEnd = dataEnd;
-   }
-   else if(d0 <= 249) {
-      ptrEnd = ptr + d0;
-   }
-   else {
-      d1 = UnRandomize255State(*(ptr++), idx++);
-      ptrEnd = ptr + (d0 - 249) * 250 + d1;
-   }
-
-   if(ptrEnd > dataEnd) {
-      exit(40); /* XXX needs cleaner error handling */
-   }
-
-   while(ptr < ptrEnd) {
-      PushOutputWord(msg, UnRandomize255State(*(ptr++), idx++));
-   }
-
-   return ptr;
-}
-
-/**
- * @brief  Unrandomize 253 state
- * @param  codewordValue
- * @return codewordPosition
- */
-/**
-static unsigned char
-UnRandomize253State(unsigned char codewordValue, int codewordPosition)
-{
-   int pseudoRandom;
-   int tmp;
-
-   pseudoRandom = ((149 * codewordPosition) % 253) + 1;
-   tmp = codewordValue - pseudoRandom;
-   if(tmp < 1)
-      tmp += 254;
-
-   assert(tmp >= 0 && tmp < 256);
-
-   return (unsigned char)tmp;
-}
-*/
-
-/**
- * @brief  Unrandomize 255 state
- * @param  value
- * @param  idx
- * @return Unrandomized value
- */
-static unsigned char
-UnRandomize255State(unsigned char value, int idx)
-{
-   int pseudoRandom;
-   int tmp;
-
-   pseudoRandom = ((149 * idx) % 255) + 1;
-   tmp = value - pseudoRandom;
-   if(tmp < 0)
-      tmp += 256;
-
-   assert(tmp >= 0 && tmp < 256);
-
-   return (unsigned char)tmp;
-}
-
-/**
- * @brief  Increment counters used to determine module values
- * @param  img
- * @param  reg
- * @param  tally
- * @param  xOrigin
- * @param  yOrigin
- * @param  mapWidth
- * @param  mapHeight
- * @param  dir
- * @return void
+ * \brief  Increment counters used to determine module values
+ * \param  img
+ * \param  reg
+ * \param  tally
+ * \param  xOrigin
+ * \param  yOrigin
+ * \param  mapWidth
+ * \param  mapHeight
+ * \param  dir
+ * \return void
  */
 static void
 TallyModuleJumps(DmtxDecode *dec, DmtxRegion *reg, int tally[][24], int xOrigin, int yOrigin, int mapWidth, int mapHeight, DmtxDirection dir)
@@ -1162,11 +629,11 @@ TallyModuleJumps(DmtxDecode *dec, DmtxRegion *reg, int tally[][24], int xOrigin,
 }
 
 /**
- * @brief  Populate array with codeword values based on module colors
- * @param  msg
- * @param  img
- * @param  reg
- * @return DmtxPass | DmtxFail
+ * \brief  Populate array with codeword values based on module colors
+ * \param  msg
+ * \param  img
+ * \param  reg
+ * \return DmtxPass | DmtxFail
  */
 static DmtxPassFail
 PopulateArrayFromMatrix(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg)

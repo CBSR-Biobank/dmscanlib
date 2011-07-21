@@ -1,37 +1,21 @@
-/*
-libdmtx - Data Matrix Encoding/Decoding Library
-
-Copyright (C) 2008, 2009 Mike Laughton
-
-This library is free software; you can redistribute it and/or
-modify it under the terms of the GNU Lesser General Public
-License as published by the Free Software Foundation; either
-version 2.1 of the License, or (at your option) any later version.
-
-This library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public
-License along with this library; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-
-Contact: mike@dragonflylogic.com
-*/
-
-/* $Id: dmtxmatrix3.c 667 2009-02-10 19:48:01Z mblaughton $ */
-
 /**
- * @file dmtxmatrix3.c
- * @brief 2D Matrix (3x3) math
+ * libdmtx - Data Matrix Encoding/Decoding Library
+ * Copyright 2008, 2009 Mike Laughton. All rights reserved.
+ *
+ * See LICENSE file in the main project directory for full
+ * terms of use and distribution.
+ *
+ * Contact: Mike Laughton <mike@dragonflylogic.com>
+ *
+ * \file dmtxmatrix3.c
+ * \brief 2D Matrix (3x3) math
  */
 
 /**
- * @brief  Copy matrix contents
- * @param  m0 Copy target
- * @param  m1 Copy source
- * @return void
+ * \brief  Copy matrix contents
+ * \param  m0 Copy target
+ * \param  m1 Copy source
+ * \return void
  */
 extern void
 dmtxMatrix3Copy(DmtxMatrix3 m0, DmtxMatrix3 m1)
@@ -40,9 +24,9 @@ dmtxMatrix3Copy(DmtxMatrix3 m0, DmtxMatrix3 m1)
 }
 
 /**
- * @brief  Generate identity transformation matrix
- * @param  m Generated matrix
- * @return void
+ * \brief  Generate identity transformation matrix
+ * \param  m Generated matrix
+ * \return void
  *
  *      | 1  0  0 |
  *  m = | 0  1  0 |
@@ -68,11 +52,11 @@ dmtxMatrix3Identity(DmtxMatrix3 m)
 }
 
 /**
- * @brief  Generate translate transformation matrix
- * @param  m Generated matrix
- * @param  tx
- * @param  ty
- * @return void
+ * \brief  Generate translate transformation matrix
+ * \param  m Generated matrix
+ * \param  tx
+ * \param  ty
+ * \return void
  *
  *      | 1  0  0 |
  *  m = | 0  1  0 |
@@ -96,10 +80,10 @@ void dmtxMatrix3Translate(DmtxMatrix3 m, double tx, double ty)
 }
 
 /**
- * @brief  Generate rotate transformation
- * @param  m Generated matrix
- * @param  angle
- * @return void
+ * \brief  Generate rotate transformation
+ * \param  m Generated matrix
+ * \param  angle
+ * \return void
  *
  *     |  cos(a)  sin(a)  0 |
  * m = | -sin(a)  cos(a)  0 |
@@ -130,11 +114,11 @@ dmtxMatrix3Rotate(DmtxMatrix3 m, double angle)
 }
 
 /**
- * @brief  Generate scale transformation matrix
- * @param  m Generated matrix
- * @param  sx
- * @param  sy
- * @return void
+ * \brief  Generate scale transformation matrix
+ * \param  m Generated matrix
+ * \param  sx
+ * \param  sy
+ * \return void
  *
  *     | sx 0  0 |
  * m = | 0  sy 0 |
@@ -159,11 +143,11 @@ dmtxMatrix3Scale(DmtxMatrix3 m, double sx, double sy)
 }
 
 /**
- * @brief  Generate shear transformation matrix
- * @param  m Generated matrix
- * @param  shx
- * @param  shy
- * @return void
+ * \brief  Generate shear transformation matrix
+ * \param  m Generated matrix
+ * \param  shx
+ * \param  shy
+ * \return void
  *
  *     | 0    shy  0 |
  * m = | shx  0    0 |
@@ -178,12 +162,12 @@ dmtxMatrix3Shear(DmtxMatrix3 m, double shx, double shy)
 }
 
 /**
- * @brief  Generate top line skew transformation
- * @param  m
- * @param  b0
- * @param  b1
- * @param  sz
- * @return void
+ * \brief  Generate top line skew transformation
+ * \param  m
+ * \param  b0
+ * \param  b1
+ * \param  sz
+ * \return void
  *
  *     | b1/b0    0    (b1-b0)/(sz*b0) |
  * m = |   0    sz/b0         0        |
@@ -215,12 +199,12 @@ dmtxMatrix3LineSkewTop(DmtxMatrix3 m, double b0, double b1, double sz)
 }
 
 /**
- * @brief  Generate top line skew transformation (inverse)
- * @param  m
- * @param  b0
- * @param  b1
- * @param  sz
- * @return void
+ * \brief  Generate top line skew transformation (inverse)
+ * \param  m
+ * \param  b0
+ * \param  b1
+ * \param  sz
+ * \return void
  */
 extern void
 dmtxMatrix3LineSkewTopInv(DmtxMatrix3 m, double b0, double b1, double sz)
@@ -234,12 +218,12 @@ dmtxMatrix3LineSkewTopInv(DmtxMatrix3 m, double b0, double b1, double sz)
 }
 
 /**
- * @brief  Generate side line skew transformation
- * @param  m
- * @param  b0
- * @param  b1
- * @param  sz
- * @return void
+ * \brief  Generate side line skew transformation
+ * \param  m
+ * \param  b0
+ * \param  b1
+ * \param  sz
+ * \return void
  */
 extern void
 dmtxMatrix3LineSkewSide(DmtxMatrix3 m, double b0, double b1, double sz)
@@ -253,12 +237,12 @@ dmtxMatrix3LineSkewSide(DmtxMatrix3 m, double b0, double b1, double sz)
 }
 
 /**
- * @brief  Generate side line skew transformation (inverse)
- * @param  m
- * @param  b0
- * @param  b1
- * @param  sz
- * @return void
+ * \brief  Generate side line skew transformation (inverse)
+ * \param  m
+ * \param  b0
+ * \param  b1
+ * \param  sz
+ * \return void
  */
 extern void
 dmtxMatrix3LineSkewSideInv(DmtxMatrix3 m, double b0, double b1, double sz)
@@ -272,11 +256,11 @@ dmtxMatrix3LineSkewSideInv(DmtxMatrix3 m, double b0, double b1, double sz)
 }
 
 /**
- * @brief  Multiply two matrices to create a third
- * @param  mOut
- * @param  m0
- * @param  m1
- * @return void
+ * \brief  Multiply two matrices to create a third
+ * \param  mOut
+ * \param  m0
+ * \param  m1
+ * \return void
  */
 extern void
 dmtxMatrix3Multiply(DmtxMatrix3 mOut, DmtxMatrix3 m0, DmtxMatrix3 m1)
@@ -296,10 +280,10 @@ dmtxMatrix3Multiply(DmtxMatrix3 mOut, DmtxMatrix3 m0, DmtxMatrix3 m1)
 }
 
 /**
- * @brief  Multiply two matrices in place
- * @param  m0
- * @param  m1
- * @return void
+ * \brief  Multiply two matrices in place
+ * \param  m0
+ * \param  m1
+ * \return void
  */
 extern void
 dmtxMatrix3MultiplyBy(DmtxMatrix3 m0, DmtxMatrix3 m1)
@@ -311,11 +295,11 @@ dmtxMatrix3MultiplyBy(DmtxMatrix3 m0, DmtxMatrix3 m1)
 }
 
 /**
- * @brief  Multiply vector and matrix
- * @param  vOut Vector (output)
- * @param  vIn Vector (input)
- * @param  m Matrix to be multiplied
- * @return DmtxPass | DmtxFail
+ * \brief  Multiply vector and matrix
+ * \param  vOut Vector (output)
+ * \param  vIn Vector (input)
+ * \param  m Matrix to be multiplied
+ * \return DmtxPass | DmtxFail
  */
 extern int
 dmtxMatrix3VMultiply(DmtxVector2 *vOut, DmtxVector2 *vIn, DmtxMatrix3 m)
@@ -336,10 +320,10 @@ dmtxMatrix3VMultiply(DmtxVector2 *vOut, DmtxVector2 *vIn, DmtxMatrix3 m)
 }
 
 /**
- * @brief  Multiply vector and matrix in place
- * @param  v Vector (input and output)
- * @param  m Matrix to be multiplied
- * @return DmtxPass | DmtxFail
+ * \brief  Multiply vector and matrix in place
+ * \param  v Vector (input and output)
+ * \param  m Matrix to be multiplied
+ * \return DmtxPass | DmtxFail
  */
 extern int
 dmtxMatrix3VMultiplyBy(DmtxVector2 *v, DmtxMatrix3 m)
@@ -354,9 +338,9 @@ dmtxMatrix3VMultiplyBy(DmtxVector2 *v, DmtxMatrix3 m)
 }
 
 /**
- * @brief  Print matrix contents to STDOUT
- * @param  m
- * @return void
+ * \brief  Print matrix contents to STDOUT
+ * \param  m
+ * \return void
  */
 extern void
 dmtxMatrix3Print(DmtxMatrix3 m)

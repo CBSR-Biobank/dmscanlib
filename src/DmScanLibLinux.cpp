@@ -66,7 +66,6 @@ int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
     return SC_FAIL;
 }
 
-
 int slScanFlatbed(unsigned verbose, unsigned dpi, int brightness, int contrast,
         const char *filename) {
     return SC_FAIL;

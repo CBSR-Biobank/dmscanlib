@@ -1,37 +1,21 @@
-/*
-libdmtx - Data Matrix Encoding/Decoding Library
-
-Copyright (C) 2008, 2009 Mike Laughton
-
-This library is free software; you can redistribute it and/or
-modify it under the terms of the GNU Lesser General Public
-License as published by the Free Software Foundation; either
-version 2.1 of the License, or (at your option) any later version.
-
-This library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public
-License along with this library; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-
-Contact: mike@dragonflylogic.com
-*/
-
-/* $Id: dmtxmessage.c 667 2009-02-10 19:48:01Z mblaughton $ */
-
 /**
- * @file dmtxmessage.c
- * @brief Data message handling
+ * libdmtx - Data Matrix Encoding/Decoding Library
+ * Copyright 2008, 2009 Mike Laughton. All rights reserved.
+ *
+ * See LICENSE file in the main project directory for full
+ * terms of use and distribution.
+ *
+ * Contact: Mike Laughton <mike@dragonflylogic.com>
+ *
+ * \file dmtxmessage.c
+ * \brief Data message handling
  */
 
 /**
- * @brief  Allocate memory for message
- * @param  sizeIdx
- * @param  symbolFormat DmtxFormatMatrix | DmtxFormatMosaic
- * @return Address of allocated memory
+ * \brief  Allocate memory for message
+ * \param  sizeIdx
+ * \param  symbolFormat DmtxFormatMatrix | DmtxFormatMosaic
+ * \return Address of allocated memory
  */
 extern DmtxMessage *
 dmtxMessageCreate(int sizeIdx, int symbolFormat)
@@ -86,9 +70,9 @@ dmtxMessageCreate(int sizeIdx, int symbolFormat)
 }
 
 /**
- * @brief  Free memory previously allocated for message
- * @param  message
- * @return void
+ * \brief  Free memory previously allocated for message
+ * \param  message
+ * \return void
  */
 extern DmtxPassFail
 dmtxMessageDestroy(DmtxMessage **msg)

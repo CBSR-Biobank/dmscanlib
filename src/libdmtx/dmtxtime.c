@@ -1,30 +1,14 @@
-/*
-libdmtx - Data Matrix Encoding/Decoding Library
-
-Copyright (C) 2008, 2009 Mike Laughton
-
-This library is free software; you can redistribute it and/or
-modify it under the terms of the GNU Lesser General Public
-License as published by the Free Software Foundation; either
-version 2.1 of the License, or (at your option) any later version.
-
-This library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public
-License along with this library; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-
-Contact: mike@dragonflylogic.com
-*/
-
-/* $Id: dmtxtime.c 759 2009-02-26 16:48:59Z mblaughton $ */
-
 /**
- * @file dmtxtime.c
- * @brief Time handling
+ * libdmtx - Data Matrix Encoding/Decoding Library
+ * Copyright 2008, 2009 Mike Laughton. All rights reserved.
+ *
+ * See LICENSE file in the main project directory for full
+ * terms of use and distribution.
+ *
+ * Contact: Mike Laughton <mike@dragonflylogic.com>
+ *
+ * \file dmtxtime.c
+ * \brief Time handling
  */
 
 #define DMTX_USEC_PER_SEC 1000000
@@ -36,8 +20,8 @@ Contact: mike@dragonflylogic.com
 #define DMTX_TIME_PREC_USEC 1
 
 /**
- * @brief  GETTIMEOFDAY version
- * @return Time now
+ * \brief  GETTIMEOFDAY version
+ * \return Time now
  */
 extern DmtxTime
 dmtxTimeNow(void)
@@ -62,8 +46,8 @@ dmtxTimeNow(void)
 #define DMTX_TIME_PREC_USEC 1
 
 /**
- * @brief  MICROSOFT VC++ version
- * @return Time now
+ * \brief  MICROSOFT VC++ version
+ * \return Time now
  */
 extern DmtxTime
 dmtxTimeNow(void)
@@ -91,8 +75,8 @@ dmtxTimeNow(void)
 #define DMTX_TIME_PREC_USEC 1000000
 
 /**
- * @brief  Generic 1 second resolution version
- * @return Time now
+ * \brief  Generic 1 second resolution version
+ * \return Time now
  */
 extern DmtxTime
 dmtxTimeNow(void)
@@ -113,10 +97,10 @@ dmtxTimeNow(void)
 #endif
 
 /**
- * @brief  Add milliseconds to time t
- * @param  t
- * @param  msec
- * @return Adjusted time
+ * \brief  Add milliseconds to time t
+ * \param  t
+ * \param  msec
+ * \return Adjusted time
  */
 extern DmtxTime
 dmtxTimeAdd(DmtxTime t, long msec)
@@ -143,9 +127,9 @@ dmtxTimeAdd(DmtxTime t, long msec)
 }
 
 /**
- * @brief  Determine whether the received timeout has been exceeded
- * @param  timeout
- * @return 1 (true) | 0 (false)
+ * \brief  Determine whether the received timeout has been exceeded
+ * \param  timeout
+ * \return 1 (true) | 0 (false)
  */
 extern int
 dmtxTimeExceeded(DmtxTime timeout)

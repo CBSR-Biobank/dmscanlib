@@ -1,34 +1,18 @@
-#ifndef __DMTX_H__
-#define __DMTX_H__
-/*
-libdmtx - Data Matrix Encoding/Decoding Library
-
-Copyright (C) 2008, 2009 Mike Laughton
-
-This library is free software; you can redistribute it and/or
-modify it under the terms of the GNU Lesser General Public
-License as published by the Free Software Foundation; either
-version 2.1 of the License, or (at your option) any later version.
-
-This library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public
-License along with this library; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-
-Contact: mike@dragonflylogic.com
-*/
-
-/* $Id: dmtx.h 864 2009-09-03 20:08:29Z mblaughton $ */
-
 /**
- * @file dmtx.h
- * @brief Main libdmtx header
+ * libdmtx - Data Matrix Encoding/Decoding Library
+ * Copyright 2008, 2009 Mike Laughton. All rights reserved.
+ *
+ * See LICENSE file in the main project directory for full
+ * terms of use and distribution.
+ *
+ * Contact: Mike Laughton <mike@dragonflylogic.com>
+ *
+ * \file dmtx.h
+ * \brief Main libdmtx header
  */
 
+#ifndef __DMTX_H__
+#define __DMTX_H__
 
 #ifdef __cplusplus
 extern "C" {
@@ -48,7 +32,7 @@ extern "C" {
 #define M_PI_2    1.57079632679489661923
 #endif
 
-#define DmtxVersion              "0.7.2"
+#define DmtxVersion              "0.7.5"
 
 #define DmtxUndefined                 -1
 
@@ -76,6 +60,15 @@ extern "C" {
 #define DmtxModuleAssigned          0x10
 #define DmtxModuleVisited           0x20
 #define DmtxModuleData              0x40
+
+#define DMTX_CHECK_BOUNDS(l,i) (assert((i) >= 0 && (i) < (l)->length && (l)->length <= (l)->capacity))
+
+typedef enum {
+   DmtxStatusEncoding, /* Encoding is currently underway */
+   DmtxStatusComplete, /* Encoding is done and everything went well */
+   DmtxStatusInvalid,  /* Something bad happened that sometimes happens */
+   DmtxStatusFatal     /* Something happened that should never happen */
+} DmtxStatus;
 
 typedef enum {
    DmtxSchemeAutoFast        = -2,
@@ -254,6 +247,36 @@ typedef struct DmtxRay2_struct {
    DmtxVector2     p;
    DmtxVector2     v;
 } DmtxRay2;
+
+typedef unsigned char DmtxByte;
+
+/**
+ * @struct DmtxByteList
+ * @brief DmtxByteList
+ * Use signed int for length fields instead of size_t to play nicely with RS
+ * arithmetic
+ */
+typedef struct DmtxByteList_struct DmtxByteList;
+struct DmtxByteList_struct
+{
+   int length;
+   int capacity;
+   DmtxByte *b;
+};
+
+typedef struct DmtxEncodeStream_struct DmtxEncodeStream;
+struct DmtxEncodeStream_struct
+{
+   int currentScheme;         /* Current encodation scheme */
+   int inputNext;             /* Index of next unprocessed input word in queue */
+   int outputChainValueCount; /* Count of output values pushed within current scheme chain */
+   int outputChainWordCount;  /* Count of output words pushed within current scheme chain */
+   char *reason;              /* Reason for status */
+   int sizeIdx;               /* Symbol size of completed stream */
+   DmtxStatus status;
+   DmtxByteList *input;
+   DmtxByteList *output;
+};
 
 /**
  * @struct DmtxImage
@@ -558,7 +581,7 @@ extern double dmtxVector2Dot(const DmtxVector2 *v1, const DmtxVector2 *v2);
 extern double dmtxVector2Mag(const DmtxVector2 *v);
 extern double dmtxDistanceFromRay2(const DmtxRay2 *r, const DmtxVector2 *q);
 extern double dmtxDistanceAlongRay2(const DmtxRay2 *r, const DmtxVector2 *q);
-extern int dmtxRay2Intersect(/*@out@*/ DmtxVector2 *point, const DmtxRay2 *p0, const DmtxRay2 *p1);
+extern DmtxPassFail dmtxRay2Intersect(/*@out@*/ DmtxVector2 *point, const DmtxRay2 *p0, const DmtxRay2 *p1);
 extern DmtxPassFail dmtxPointAlongRay2(/*@out@*/ DmtxVector2 *point, const DmtxRay2 *r, double t);
 
 /* dmtxmatrix3.c */
@@ -582,6 +605,16 @@ extern void dmtxMatrix3Print(DmtxMatrix3 m);
 extern int dmtxSymbolModuleStatus(DmtxMessage *mapping, int sizeIdx, int row, int col);
 extern int dmtxGetSymbolAttribute(int attribute, int sizeIdx);
 extern int dmtxGetBlockDataSize(int sizeIdx, int blockIdx);
+
+/* dmtxbytelist.c */
+extern DmtxByteList dmtxByteListBuild(DmtxByte *storage, int capacity);
+extern void dmtxByteListInit(DmtxByteList *list, int length, DmtxByte value, DmtxPassFail *passFail);
+extern void dmtxByteListClear(DmtxByteList *list);
+extern DmtxBoolean dmtxByteListHasCapacity(DmtxByteList *list);
+extern void dmtxByteListCopy(DmtxByteList *dst, const DmtxByteList *src, DmtxPassFail *passFail);
+extern void dmtxByteListPush(DmtxByteList *list, DmtxByte value, DmtxPassFail *passFail);
+extern DmtxByte dmtxByteListPop(DmtxByteList *list, DmtxPassFail *passFail);
+extern void dmtxByteListPrint(DmtxByteList *list, char *prefix);
 
 extern char *dmtxVersion(void);
 

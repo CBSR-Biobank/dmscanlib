@@ -1,30 +1,14 @@
-/*
-libdmtx - Data Matrix Encoding/Decoding Library
-
-Copyright (C) 2008, 2009 Mike Laughton
-
-This library is free software; you can redistribute it and/or
-modify it under the terms of the GNU Lesser General Public
-License as published by the Free Software Foundation; either
-version 2.1 of the License, or (at your option) any later version.
-
-This library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public
-License along with this library; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-
-Contact: mike@dragonflylogic.com
-*/
-
-/* $Id: dmtx.c 763 2009-02-26 23:47:43Z mblaughton $ */
-
 /**
- * @file dmtx.c
- * @brief Main libdmtx source file
+ * libdmtx - Data Matrix Encoding/Decoding Library
+ * Copyright 2008, 2009 Mike Laughton. All rights reserved.
+ *
+ * See LICENSE file in the main project directory for full
+ * terms of use and distribution.
+ *
+ * Contact: Mike Laughton <mike@dragonflylogic.com>
+ *
+ * \file dmtx.c
+ * \brief Main libdmtx source file
  */
 
 #include <stdlib.h>
@@ -65,24 +49,37 @@ Contact: mike@dragonflylogic.com
 #endif
 
 /**
- * This use of #include to merge .c files together is deliberate, if unusual.
- * This allows library functions to be grouped in files of like-functionality
- * while still enabling static functions to be accessed across files.
+ * Use #include to merge the individual .c source files into a single combined
+ * file during preprocessing. This allows the project to be organized in files
+ * of like-functionality while still keeping a clean namespace. Specifically,
+ * internal functions can be static without losing the ability to access them
+ * "externally" from the other source files in this list.
  */
 
-#include "dmtxtime.c"
-#include "dmtxscangrid.c"
+#include "dmtxencode.c"
+#include "dmtxencodestream.c"
+#include "dmtxencodescheme.c"
+#include "dmtxencodeoptimize.c"
+#include "dmtxencodeascii.c"
+#include "dmtxencodec40textx12.c"
+#include "dmtxencodeedifact.c"
+#include "dmtxencodebase256.c"
+
+#include "dmtxdecode.c"
+#include "dmtxdecodescheme.c"
+
 #include "dmtxmessage.c"
 #include "dmtxregion.c"
-#include "dmtxdecode.c"
-#include "dmtxencode.c"
-#include "dmtxplacemod.c"
-#include "dmtxfec.c"
-#include "dmtxreedsol.c"
 #include "dmtxsymbol.c"
+#include "dmtxplacemod.c"
+#include "dmtxreedsol.c"
+#include "dmtxscangrid.c"
+
+#include "dmtximage.c"
+#include "dmtxbytelist.c"
+#include "dmtxtime.c"
 #include "dmtxvector2.c"
 #include "dmtxmatrix3.c"
-#include "dmtximage.c"
 
 extern char *
 dmtxVersion(void)
