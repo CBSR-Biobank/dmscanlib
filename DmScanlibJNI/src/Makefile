@@ -1,0 +1,41 @@
+#READ THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# please note that for the library to be correctly loaded on linux, 
+#the "lib" prefix is required on the library file.
+# in this case we are loading with System.loadLibrary("StrArray"). 
+# this means we need to have the file "libStrArray.so" in the java.library.path
+
+JNI_INCLUDE_PATH := /usr/lib/jvm/java-1.6.0-openjdk/include
+
+JAVA_FILE_MAIN := DmScanlib_JNI_Test
+LIB_FILE_NAME := DmScanlib
+JAVA_FILE_NAME := $(LIB_FILE_NAME)
+
+
+SCANLIB_OBJECTS =  DecodeProfile.class DecodeSettings.class ScanCoordinates.class ScanSettings.class ScanlibData.class
+JAVA_OBJECTS = $(SCANLIB_OBJECTS) $(LIB_FILE_NAME).class $(JAVA_FILE_MAIN).class 
+OBJECTS :=   $(JAVA_OBJECTS) $(LIB_FILE_NAME).h $(LIB_FILE_NAME).o lib$(LIB_FILE_NAME).so
+
+
+.PHONY : all
+all: ${OBJECTS}
+
+.PHONY : clean
+clean:
+	-rm -if ${OBJECTS}
+
+.PHONY : run	
+run:	
+	-java ${JAVA_FILE_MAIN}
+
+%.class : %.java
+	javac $^
+
+$(LIB_FILE_NAME).h :  $(JAVA_FILE_NAME).class
+	javah -jni $(JAVA_FILE_NAME)
+	-mv  $(JAVA_FILE_NAME).h $@
+
+$(LIB_FILE_NAME).o : $(LIB_FILE_NAME).cxx
+	g++ -fPIC -c -I$(JNI_INCLUDE_PATH) $^
+
+lib$(LIB_FILE_NAME).so : $(LIB_FILE_NAME).o
+	ld -G $^ -o $@
