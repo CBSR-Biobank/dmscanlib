@@ -56,7 +56,7 @@ public:
 	 * @param gapY The vertical gap between cells in pixels.
 	 */
 	PalletGrid(Orientation o, unsigned imgWidth, unsigned imgHeight,
-			unsigned gapX, unsigned gapY, const unsigned (&profileWords)[3]);
+			unsigned gapX, unsigned gapY, const unsigned(&profileWords)[3]);
 
 	~PalletGrid();
 
@@ -75,7 +75,7 @@ public:
 	void getPositionStr(unsigned row, unsigned col, string & str);
 
 	bool isImageValid() {
-	    return imgValid;
+		return imgValid;
 	}
 
 private:

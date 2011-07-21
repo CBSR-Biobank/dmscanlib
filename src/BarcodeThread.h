@@ -48,23 +48,26 @@ public:
     bool isFinished();
 
 private:
-    void writeMissedDib();
-    void writeDiagnosticImage(DmtxDecode *dec);
-
-    OpenThreads::Mutex quitMutex;
-    volatile bool quitFlag;
 
     Dib * dib;
     DmtxImage * image;
     CvRect croppedOffset;
+    ProcessImageManager * manager;
+    BarcodeInfo & barcodeInfo;
+
+    OpenThreads::Mutex quitMutex;
+    volatile bool quitFlag;
+
+    void writeMissedDib();
+    void writeDiagnosticImage(DmtxDecode *dec);
+
     double scanGap;
     unsigned squareDev;
     unsigned edgeThresh;
     unsigned corrections;
-    ProcessImageManager * manager;
-    BarcodeInfo & barcodeInfo;
-    bool debug;
     unsigned dpi;
+
+    bool debug;
 };
 
 #endif /* BARCODE_THREAD_H_ */

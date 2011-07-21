@@ -35,18 +35,11 @@ using namespace std;
 /* Colour palette
  */
 struct RgbQuad {
-	RgbQuad() {
-		set(0, 0, 0);
-	}
-	RgbQuad(unsigned char r, unsigned char g, unsigned char b) {
-		set(r, g, b);
-	}
-	void set(unsigned char r, unsigned char g, unsigned char b) {
-		rgbRed = r;
-		rgbGreen = g;
-		rgbBlue = b;
-		rgbReserved = 0;
-	}
+
+	RgbQuad();
+	RgbQuad(unsigned char r, unsigned char g, unsigned char b);
+	void set(unsigned char r, unsigned char g, unsigned char b);
+
 	unsigned char rgbRed;
 	unsigned char rgbGreen;
 	unsigned char rgbBlue;

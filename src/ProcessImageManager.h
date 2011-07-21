@@ -61,7 +61,6 @@ private:
 	vector<BarcodeThread *> allThreads;
 
 	void threadHandler(vector<BarcodeThread *> & threads);
-
 	void threadProcessRange(vector<BarcodeThread *> & threads, unsigned int first, unsigned int last);
 
 };

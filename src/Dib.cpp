@@ -51,8 +51,6 @@ using namespace std;
 #   include "debug_new.h"
 #endif
 
-
-
 /* File information header
  * provides general information about the file
  */
@@ -81,9 +79,6 @@ struct BitmapInfoHeader {
 	unsigned numColorsImp;
 };
 
-
-
-
 const double Dib::UNSHARP_RAD = 8.0;
 const double Dib::UNSHARP_DEPTH = 1.1;
 const unsigned Dib::GAUSS_WIDTH = 12;
@@ -105,6 +100,24 @@ const float Dib::BLANK_KERNEL[9] = { 0.06185567f, 0.12371134f, 0.06185567f,
 const float Dib::DPI_400_KERNEL[9] =
 		{ 0.0587031f, 0.1222315f, 0.0587031f, 0.1222315f, 0.2762618f,
 				0.1222315f, 0.0587031f, 0.1222315f, 0.0587031f, };
+
+
+RgbQuad::RgbQuad() {
+	set(0, 0, 0);
+}
+
+RgbQuad::RgbQuad(unsigned char r, unsigned char g, unsigned char b) {
+	set(r, g, b);
+}
+
+void RgbQuad::set(unsigned char r, unsigned char g, unsigned char b) {
+	rgbRed = r;
+	rgbGreen = g;
+	rgbBlue = b;
+	rgbReserved = 0;
+}
+
+
 
 Dib::Dib() :
 		pixels(NULL) {
@@ -459,8 +472,7 @@ bool Dib::bound(unsigned min, unsigned & x, unsigned max) {
 /*
  * DIBs are flipped in Y
  */
-Dib * Dib::crop(Dib & src, unsigned x0, unsigned y0, unsigned x1,
-		unsigned y1) {
+Dib * Dib::crop(Dib & src, unsigned x0, unsigned y0, unsigned x1, unsigned y1) {
 	UA_ASSERT(x1 > x0);
 	UA_ASSERT(y1 > y0);
 
@@ -472,7 +484,7 @@ Dib * Dib::crop(Dib & src, unsigned x0, unsigned y0, unsigned x1,
 	unsigned width = x1 - x0;
 	unsigned height = y1 - y0;
 
-	Dib * dest =  new Dib(width, height, src.colorBits, src.pixelsPerMeter);
+	Dib * dest = new Dib(width, height, src.colorBits, src.pixelsPerMeter);
 
 	unsigned char *srcRowPtr = src.pixels + (src.height - y1) * src.rowBytes
 			+ x0 * dest->bytesPerPixel;

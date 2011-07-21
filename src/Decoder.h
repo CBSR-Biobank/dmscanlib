@@ -74,7 +74,6 @@ private:
 	static void getTubeBlobs(Dib * dib, int threshold, int blobsize,
 			int blurRounds, int border, vector<CvRect> & blobVector);
 
-
 	double scanGap;
 	unsigned squareDev;
 	unsigned edgeThresh;
@@ -85,7 +84,7 @@ private:
 	unsigned dpi;
 	PalletGrid * palletGrid;
 
-	vector< vector<BarcodeInfo *> > barcodeInfos;
+	vector<vector<BarcodeInfo *> > barcodeInfos;
 
 	OpenThreads::Mutex addBarcodeMutex;
 };
