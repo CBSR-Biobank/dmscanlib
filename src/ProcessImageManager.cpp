@@ -24,15 +24,16 @@
 #include "Dib.h"
 #include "Decoder.h"
 #include "BarcodeInfo.h"
+#include <stdio.h>
 
 #ifdef WIN32
 #include <windows.h>
-#define SLEEP Sleep
-#else 
-#define SLEEP sleep
 #endif
 
 #include <map>
+
+const unsigned ProcessImageManager::THREAD_NUM = 8;
+const unsigned ProcessImageManager::JOIN_TIMEOUT_SEC = ProcessImageManager::THREAD_NUM*2;
 
 ProcessImageManager::ProcessImageManager(Decoder * decoder, double scanGap,
 		unsigned squareDev, unsigned edgeThresh, unsigned corrections) {
@@ -45,74 +46,104 @@ ProcessImageManager::ProcessImageManager(Decoder * decoder, double scanGap,
 
 ProcessImageManager::~ProcessImageManager() {
 	for (unsigned i = 0, n = allThreads.size(); i < n; ++i) {
+
 		delete allThreads[i];
 	}
 }
 
-void ProcessImageManager::threadHandler(vector<BarcodeThread *> & threads,
-		unsigned threshold) {
+//inclusive first exclusive last
+void ProcessImageManager::threadProcessRange(vector<BarcodeThread *> & threads,
+		unsigned int first, unsigned int last) {
+
 	time_t timeStart, timeEnd;
+
+	for (unsigned int i = first; i < last; i++)
+		threads[i]->start();
 
 	time(&timeStart);
 
-	vector<BarcodeThread *> unfinishedThreads;
+	while (true) {
+		bool done = true;
+		for (unsigned int j = first; j < last; j++)
+			if (!threads[j]->isFinished())
+				done = false;
 
-	while (1) {
-
-		for (unsigned j = 0; j < threads.size(); j++) {
-			BarcodeThread & thread = *threads[j];
-			if (!thread.isFinished()) {
-				unfinishedThreads.push_back(&thread);
-			}
-		}
-		threads = unfinishedThreads;
-		unfinishedThreads.clear();
-
-		if (threads.size() < threshold)
+		if (done)
 			break;
-			else
-			SLEEP(1);
 
-		/*----join----*/
-		if (threshold == THRESHOLD_JOIN) {
-			time(&timeEnd);
-			if (difftime(timeEnd, timeStart) >= JOIN_TIMEOUT_SEC) {
-				UA_DOUT(3, 1,
-						"Error:: Some threads have timed out.");
-				break;
-			}
+		time(&timeEnd);
+		if (difftime(timeEnd, timeStart) >= JOIN_TIMEOUT_SEC) {
+			UA_DOUT(3, 1, "Error:: Some threads have timed out.");
+			break;
 		}
 
+		//sleep 1ms
+		#ifdef WIN32
+				Sleep(1);
+		#else
+				usleep(1000);
+		#endif
 	}
+
 }
 
-void ProcessImageManager::generateBarcodes(Dib * dib, vector<
-		vector<BarcodeInfo *> > & barcodeInfos) {
+void ProcessImageManager::threadHandler(vector<BarcodeThread *> & threads) {
+
+	unsigned int threadCount =
+			(threads.size() < THREAD_NUM ) ? threads.size() : THREAD_NUM;
+
+	unsigned int remainder = ((threads.size()) % threadCount);
+
+	printf("remainder %d\n", remainder);
+
+	for (unsigned int i = 0; i < threads.size() - remainder; i += threadCount) {
+		UA_DOUT(
+				3,
+				5,
+				"Threads for barcodes finished: "<<i << "/" << i + threadCount-1);
+		threadProcessRange(threads, i, i + threadCount);
+
+	}
+
+	if (remainder > 0) {
+		UA_DOUT(
+				3,
+				5,
+				"Threads for barcodes finished(remainder): " << threads.size() - remainder << "/" << threads.size() - remainder-1 << " finished.");
+
+		threadProcessRange(threads, threads.size() - remainder, threads.size());
+	}
+
+	printf("done all\n");
+
+}
+
+void ProcessImageManager::generateBarcodes(Dib * dib,
+		vector<vector<BarcodeInfo *> > & barcodeInfos) {
 	vector<BarcodeThread *> threads;
 
 	for (unsigned row = 0, rows = barcodeInfos.size(); row < rows; ++row) {
-		for (unsigned col = 0, cols = barcodeInfos[row].size(); col < cols; ++col) {
-            BarcodeInfo * info = barcodeInfos[row][col];
-            if (info == NULL) continue;
+		for (unsigned col = 0, cols = barcodeInfos[row].size(); col < cols;
+				++col) {
+
+			BarcodeInfo * info = barcodeInfos[row][col];
+			if (info == NULL
+			)
+				continue;
 
 			CvRect & rect = info->getPreProcessBoundingBox();
 
-			/*---thread controller (limit # threads to THREAD_NUM)----*/
-			threadHandler(threads, THREAD_NUM);
-
-			auto_ptr<Dib> croppedDib = Dib::crop(*dib, rect.x, rect.y,
-			        rect.x + rect.width, rect.y + rect.height);
+			Dib * croppedDib = Dib::crop(*dib, rect.x, rect.y,
+					rect.x + rect.width, rect.y + rect.height);
 
 			BarcodeThread * thread = new BarcodeThread(this, scanGap, squareDev,
-					edgeThresh, corrections, rect, *croppedDib.get(),
+					edgeThresh, corrections, rect, croppedDib,
 					*barcodeInfos[row][col]);
 
 			allThreads.push_back(thread);
 			threads.push_back(thread);
-			thread->run();
 		}
 	}
+	threadHandler(threads);
 
-	/*---join---*/
-	threadHandler(threads, THRESHOLD_JOIN);
 }

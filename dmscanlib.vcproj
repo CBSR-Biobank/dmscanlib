@@ -69,6 +69,7 @@
 				IgnoreDefaultLibraryNames=" libcmt.lib"
 				GenerateDebugInformation="true"
 				SubSystem="1"
+				EntryPointSymbol="main"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -312,6 +313,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\main.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\src\PalletGrid.cpp"
 				>
 			</File>
@@ -390,6 +395,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\DmScanLibCommon.h"
+				>
+			</File>
+			<File
 				RelativePath=".\src\DmScanLibInternal.h"
 				>
 			</File>
@@ -411,6 +420,10 @@
 			</File>
 			<File
 				RelativePath=".\resource.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\TestApp.h"
 				>
 			</File>
 			<File

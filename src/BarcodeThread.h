@@ -39,7 +39,7 @@ class BarcodeThread: public OpenThreads::Thread {
 public:
     BarcodeThread(ProcessImageManager * manager, double scanGap,
             unsigned squareDev, unsigned edgeThresh, unsigned corrections,
-            CvRect & croppedOffset, const Dib & dib, BarcodeInfo & info);
+            CvRect & croppedOffset, Dib * dib, BarcodeInfo & info);
 
     virtual ~ BarcodeThread();
 
@@ -48,23 +48,26 @@ public:
     bool isFinished();
 
 private:
-    void writeMissedDib();
-    void writeDiagnosticImage(DmtxDecode *dec);
+
+    Dib * dib;
+    DmtxImage * image;
+    CvRect croppedOffset;
+    ProcessImageManager * manager;
+    BarcodeInfo & barcodeInfo;
 
     OpenThreads::Mutex quitMutex;
     volatile bool quitFlag;
 
-    const Dib & dib;
-    DmtxImage * image;
-    CvRect croppedOffset;
+    void writeMissedDib();
+    void writeDiagnosticImage(DmtxDecode *dec);
+
     double scanGap;
     unsigned squareDev;
     unsigned edgeThresh;
     unsigned corrections;
-    ProcessImageManager * manager;
-    BarcodeInfo & barcodeInfo;
-    bool debug;
     unsigned dpi;
+
+    bool debug;
 };
 
 #endif /* BARCODE_THREAD_H_ */

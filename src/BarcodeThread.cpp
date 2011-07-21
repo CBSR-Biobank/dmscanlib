@@ -34,9 +34,11 @@
 
 BarcodeThread::BarcodeThread(ProcessImageManager * manager, double scanGap,
         unsigned squareDev, unsigned edgeThresh, unsigned corrections,
-        CvRect & croppedOffset, const Dib & d, BarcodeInfo & info) :
-        dib(d), image(Decoder::createDmtxImageFromDib(dib)), barcodeInfo(info),
+        CvRect & croppedOffset, Dib * d, BarcodeInfo & info) :
+        dib(d), image(Decoder::createDmtxImageFromDib(*dib)), barcodeInfo(info),
             debug(true) {
+
+
     this->manager = manager;
     this->scanGap = scanGap;
     this->squareDev = squareDev;
@@ -47,7 +49,9 @@ BarcodeThread::BarcodeThread(ProcessImageManager * manager, double scanGap,
     quitMutex.lock();
     this->quitFlag = false;
     quitMutex.unlock();
-    dpi = dib.getDpi();
+
+
+    dpi = dib->getDpi();
 
     UA_ASSERTS((dpi == 300) || (dpi == 400) || (dpi == 600),
             "invalid DPI: " << dpi);
@@ -57,13 +61,15 @@ BarcodeThread::BarcodeThread(ProcessImageManager * manager, double scanGap,
         ostringstream fname;
         CvRect & rect = barcodeInfo.getPreProcessBoundingBox();
         fname << "preprocess-" << rect.x << "-" << rect.y << ".bmp";
-        dib.writeToFile(fname.str().c_str());
+        dib->writeToFile(fname.str().c_str());
     }
 #endif
 }
 
 BarcodeThread::~BarcodeThread() {
     dmtxImageDestroy(&image);
+	if (dib != NULL)
+		delete dib;
 }
 
 void BarcodeThread::run() {
@@ -73,10 +79,10 @@ void BarcodeThread::run() {
     UA_ASSERT_NOT_NULL(dec);
 
     // slightly smaller than the new tube edge
-    minEdgeSize = static_cast<unsigned> (0.08 * dpi);
+    minEdgeSize = (int)(0.08 * dpi);
 
     // slightly bigger than the Nunc edge
-    maxEdgeSize = static_cast<unsigned> (0.18 * dpi);
+    maxEdgeSize =(int)(0.18 * dpi);
 
     dmtxDecodeSetProp(dec, DmtxPropEdgeMin, minEdgeSize);
     dmtxDecodeSetProp(dec, DmtxPropEdgeMax, maxEdgeSize);
@@ -160,7 +166,7 @@ bool BarcodeThread::isFinished() {
 void BarcodeThread::writeMissedDib() {
     ostringstream fname;
     fname << "missed-" << croppedOffset.x << "-" << croppedOffset.y << ".bmp";
-    dib.writeToFile(fname.str().c_str());
+    dib->writeToFile(fname.str().c_str());
 }
 
 void BarcodeThread::writeDiagnosticImage(DmtxDecode *dec) {

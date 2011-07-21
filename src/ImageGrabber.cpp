@@ -29,7 +29,6 @@
 #include "ImageGrabber.h"
 #include "UaLogger.h"
 #include "UaAssert.h"
-
 #include <math.h>
 
 #if defined(USE_NVWA)
@@ -398,6 +397,8 @@ HANDLE ImageGrabber::acquireImage(unsigned dpi, int brightness, int contrast,
 HANDLE ImageGrabber::acquireFlatbed(unsigned dpi, int brightness, int contrast) {
 	TW_IDENTITY srcID;
 	HWND hwnd;
+      
+	errorCode = SC_FAIL;
 
 	if (!scannerSourceInit(hwnd, srcID)) {
 		return 0;
