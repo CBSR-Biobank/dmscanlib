@@ -79,10 +79,10 @@ void BarcodeThread::run() {
     UA_ASSERT_NOT_NULL(dec);
 
     // slightly smaller than the new tube edge
-    minEdgeSize = (0.08 * dpi);
+    minEdgeSize = (int)(0.08 * dpi);
 
     // slightly bigger than the Nunc edge
-    maxEdgeSize =(0.18 * dpi);
+    maxEdgeSize =(int)(0.18 * dpi);
 
     dmtxDecodeSetProp(dec, DmtxPropEdgeMin, minEdgeSize);
     dmtxDecodeSetProp(dec, DmtxPropEdgeMax, maxEdgeSize);

@@ -230,7 +230,7 @@ void Dib::readFromHandle(HANDLE handle) {
 	UA_ASSERT(dibHeaderPtr->biClrImportant == 0);
 
 	init(dibHeaderPtr->biWidth, dibHeaderPtr->biHeight,
-			dibHeaderPtr->biBitCount, dibHeaderPtr->biXPelsPerMeter, false);
+			dibHeaderPtr->biBitCount, dibHeaderPtr->biXPelsPerMeter);
 
 	pixels = reinterpret_cast <unsigned char *>(dibHeaderPtr)
 	+ sizeof(BITMAPINFOHEADER) + paletteSize * sizeof(RgbQuad);

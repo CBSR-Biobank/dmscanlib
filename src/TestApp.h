@@ -7,10 +7,6 @@
 
 #ifndef TESTAPP_H_
 #define TESTAPP_H_
-
-
-using namespace std;
-
 struct Options {
     unsigned dpi;
     char * infile;
