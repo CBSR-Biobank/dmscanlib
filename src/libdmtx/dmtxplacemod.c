@@ -1,30 +1,14 @@
-/*
-libdmtx - Data Matrix Encoding/Decoding Library
-
-Copyright (C) 2008, 2009 Mike Laughton
-
-This library is free software; you can redistribute it and/or
-modify it under the terms of the GNU Lesser General Public
-License as published by the Free Software Foundation; either
-version 2.1 of the License, or (at your option) any later version.
-
-This library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public
-License along with this library; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-
-Contact: mike@dragonflylogic.com
-*/
-
-/* $Id: dmtxplacemod.c 707 2009-02-17 21:20:15Z mblaughton $ */
-
 /**
- * @file dmtxplacemod.c
- * @brief Data Matrix module placement
+ * libdmtx - Data Matrix Encoding/Decoding Library
+ * Copyright 2008, 2009 Mike Laughton. All rights reserved.
+ *
+ * See LICENSE file in the main project directory for full
+ * terms of use and distribution.
+ *
+ * Contact: Mike Laughton <mike@dragonflylogic.com>
+ *
+ * \file dmtxplacemod.c
+ * \brief Data Matrix module placement
  */
 
 /**
@@ -70,12 +54,12 @@ dmtxSymbolModuleStatus(DmtxMessage *message, int sizeIdx, int symbolRow, int sym
 }
 
 /**
- * @brief  Logical relationship between bit and module locations
- * @param  modules
- * @param  codewords
- * @param  sizeIdx
- * @param  moduleOnColor
- * @return Number of codewords read
+ * \brief  Logical relationship between bit and module locations
+ * \param  modules
+ * \param  codewords
+ * \param  sizeIdx
+ * \param  moduleOnColor
+ * \return Number of codewords read
  */
 static int
 ModulePlacementEcc200(unsigned char *modules, unsigned char *codewords, int sizeIdx, int moduleOnColor)
@@ -141,15 +125,15 @@ ModulePlacementEcc200(unsigned char *modules, unsigned char *codewords, int size
 }
 
 /**
- * @brief  XXX
- * @param  modules
- * @param  mappingRows
- * @param  mappingCols
- * @param  row
- * @param  col
- * @param  codeword
- * @param  moduleOnColor
- * @return void
+ * \brief  XXX
+ * \param  modules
+ * \param  mappingRows
+ * \param  mappingCols
+ * \param  row
+ * \param  col
+ * \param  codeword
+ * \param  moduleOnColor
+ * \return void
  */
 static void
 PatternShapeStandard(unsigned char *modules, int mappingRows, int mappingCols, int row, int col, unsigned char *codeword, int moduleOnColor)
@@ -165,13 +149,13 @@ PatternShapeStandard(unsigned char *modules, int mappingRows, int mappingCols, i
 }
 
 /**
- * @brief  XXX
- * @param  modules
- * @param  mappingRows
- * @param  mappingCols
- * @param  codeword
- * @param  moduleOnColor
- * @return void
+ * \brief  XXX
+ * \param  modules
+ * \param  mappingRows
+ * \param  mappingCols
+ * \param  codeword
+ * \param  moduleOnColor
+ * \return void
  */
 static void
 PatternShapeSpecial1(unsigned char *modules, int mappingRows, int mappingCols, unsigned char *codeword, int moduleOnColor)
@@ -187,13 +171,13 @@ PatternShapeSpecial1(unsigned char *modules, int mappingRows, int mappingCols, u
 }
 
 /**
- * @brief  XXX
- * @param  modules
- * @param  mappingRows
- * @param  mappingCols
- * @param  codeword
- * @param  moduleOnColor
- * @return void
+ * \brief  XXX
+ * \param  modules
+ * \param  mappingRows
+ * \param  mappingCols
+ * \param  codeword
+ * \param  moduleOnColor
+ * \return void
  */
 static void
 PatternShapeSpecial2(unsigned char *modules, int mappingRows, int mappingCols, unsigned char *codeword, int moduleOnColor)
@@ -209,13 +193,13 @@ PatternShapeSpecial2(unsigned char *modules, int mappingRows, int mappingCols, u
 }
 
 /**
- * @brief  XXX
- * @param  modules
- * @param  mappingRows
- * @param  mappingCols
- * @param  codeword
- * @param  moduleOnColor
- * @return void
+ * \brief  XXX
+ * \param  modules
+ * \param  mappingRows
+ * \param  mappingCols
+ * \param  codeword
+ * \param  moduleOnColor
+ * \return void
  */
 static void
 PatternShapeSpecial3(unsigned char *modules, int mappingRows, int mappingCols, unsigned char *codeword, int moduleOnColor)
@@ -231,13 +215,13 @@ PatternShapeSpecial3(unsigned char *modules, int mappingRows, int mappingCols, u
 }
 
 /**
- * @brief  XXX
- * @param  modules
- * @param  mappingRows
- * @param  mappingCols
- * @param  codeword
- * @param  moduleOnColor
- * @return void
+ * \brief  XXX
+ * \param  modules
+ * \param  mappingRows
+ * \param  mappingCols
+ * \param  codeword
+ * \param  moduleOnColor
+ * \return void
  */
 static void
 PatternShapeSpecial4(unsigned char *modules, int mappingRows, int mappingCols, unsigned char *codeword, int moduleOnColor)
@@ -253,16 +237,16 @@ PatternShapeSpecial4(unsigned char *modules, int mappingRows, int mappingCols, u
 }
 
 /**
- * @brief  XXX
- * @param  modules
- * @param  mappingRows
- * @param  mappingCols
- * @param  row
- * @param  col
- * @param  codeword
- * @param  mask
- * @param  moduleOnColor
- * @return void
+ * \brief  XXX
+ * \param  modules
+ * \param  mappingRows
+ * \param  mappingCols
+ * \param  row
+ * \param  col
+ * \param  codeword
+ * \param  mask
+ * \param  moduleOnColor
+ * \return void
  */
 static void
 PlaceModule(unsigned char *modules, int mappingRows, int mappingCols, int row, int col, unsigned char *codeword, int mask, int moduleOnColor)

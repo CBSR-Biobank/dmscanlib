@@ -1,30 +1,14 @@
-/*
-libdmtx - Data Matrix Encoding/Decoding Library
-
-Copyright (C) 2008, 2009 Mike Laughton
-
-This library is free software; you can redistribute it and/or
-modify it under the terms of the GNU Lesser General Public
-License as published by the Free Software Foundation; either
-version 2.1 of the License, or (at your option) any later version.
-
-This library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public
-License along with this library; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-
-Contact: mike@dragonflylogic.com
-*/
-
-/* $Id: dmtxvector2.c 726 2009-02-19 22:17:48Z mblaughton $ */
-
 /**
- * @file dmtxvector2.c
- * @brief 2D Vector math
+ * libdmtx - Data Matrix Encoding/Decoding Library
+ * Copyright 2008, 2009 Mike Laughton. All rights reserved.
+ *
+ * See LICENSE file in the main project directory for full
+ * terms of use and distribution.
+ *
+ * Contact: Mike Laughton <mike@dragonflylogic.com>
+ *
+ * \file dmtxvector2.c
+ * \brief 2D Vector math
  */
 
 /**
@@ -175,9 +159,9 @@ dmtxDistanceAlongRay2(const DmtxRay2 *r, const DmtxVector2 *q)
 {
    DmtxVector2 vSubTmp;
 
-/* Assumes that v is a unit vector */
 #ifdef DEBUG
-   if(fabs(1.0 - dmtxVector2Mag(v)) > DmtxAlmostZero) {
+   /* Assumes that v is a unit vector */
+   if(fabs(1.0 - dmtxVector2Mag(&(r->v))) > DmtxAlmostZero) {
       ; /* XXX big error goes here */
    }
 #endif
@@ -189,7 +173,7 @@ dmtxDistanceAlongRay2(const DmtxRay2 *r, const DmtxVector2 *q)
  *
  *
  */
-extern int
+extern DmtxPassFail
 dmtxRay2Intersect(DmtxVector2 *point, const DmtxRay2 *p0, const DmtxRay2 *p1)
 {
    double numer, denom;

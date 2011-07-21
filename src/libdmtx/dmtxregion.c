@@ -1,40 +1,22 @@
-/*
-libdmtx - Data Matrix Encoding/Decoding Library
-
-Copyright (C) 2008, 2009 Mike Laughton
-
-This library is free software; you can redistribute it and/or
-modify it under the terms of the GNU Lesser General Public
-License as published by the Free Software Foundation; either
-version 2.1 of the License, or (at your option) any later version.
-
-This library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public
-License along with this library; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-
-Contact: mike@dragonflylogic.com
-*/
-
-/* $Id: dmtxregion.c 860 2009-08-20 21:00:31Z mblaughton $ */
+/**
+ * libdmtx - Data Matrix Encoding/Decoding Library
+ * Copyright 2008, 2009 Mike Laughton. All rights reserved.
+ *
+ * See LICENSE file in the main project directory for full
+ * terms of use and distribution.
+ *
+ * Contact: Mike Laughton <mike@dragonflylogic.com>
+ *
+ * \file dmtxregion.c
+ * \brief Detect barcode regions
+ */
 
 #define DMTX_HOUGH_RES 180
 
 /**
- * @file dmtxregion.c
- * @brief Detect barcode regions
- *
- * This file contains region detection logic.
- */
-
-/**
- * @brief  Create copy of existing region struct
- * @param  None
- * @return Initialized DmtxRegion struct
+ * \brief  Create copy of existing region struct
+ * \param  None
+ * \return Initialized DmtxRegion struct
  */
 extern DmtxRegion *
 dmtxRegionCreate(DmtxRegion *reg)
@@ -51,9 +33,9 @@ dmtxRegionCreate(DmtxRegion *reg)
 }
 
 /**
- * @brief  Destroy region struct
- * @param  reg
- * @return void
+ * \brief  Destroy region struct
+ * \param  reg
+ * \return void
  */
 extern DmtxPassFail
 dmtxRegionDestroy(DmtxRegion **reg)
@@ -69,17 +51,14 @@ dmtxRegionDestroy(DmtxRegion **reg)
 }
 
 /**
- * @brief  Find next barcode region
- * @param  dec Pointer to DmtxDecode information struct
- * @param  timeout Pointer to timeout time (NULL if none)
- * @return Detected region (if found)
+ * \brief  Find next barcode region
+ * \param  dec Pointer to DmtxDecode information struct
+ * \param  timeout Pointer to timeout time (NULL if none)
+ * \return Detected region (if found)
  */
-
-#ifndef CUSTOM_REGIONFINDNEXT
 extern DmtxRegion *
 dmtxRegionFindNext(DmtxDecode *dec, DmtxTime *timeout)
 {
-
    int locStatus;
    DmtxPixelLoc loc;
    DmtxRegion   *reg;
@@ -102,15 +81,13 @@ dmtxRegionFindNext(DmtxDecode *dec, DmtxTime *timeout)
 
    return NULL;
 }
-#endif
 
 /**
- * @brief  Scan individual pixel for presence of barcode edge
- * @param  dec Pointer to DmtxDecode information struct
- * @param  loc Pixel location
- * @return Detected region (if any)
+ * \brief  Scan individual pixel for presence of barcode edge
+ * \param  dec Pointer to DmtxDecode information struct
+ * \param  loc Pixel location
+ * \return Detected region (if any)
  */
-#ifndef CUSTOM_REGIONSCANPIXEL
 extern DmtxRegion *
 dmtxRegionScanPixel(DmtxDecode *dec, int x, int y)
 {
@@ -163,7 +140,6 @@ dmtxRegionScanPixel(DmtxDecode *dec, int x, int y)
    /* Found a valid matrix region */
    return dmtxRegionCreate(&reg);
 }
-#endif
 
 /**
  *
@@ -601,13 +577,13 @@ RightAngleTrueness(DmtxVector2 c0, DmtxVector2 c1, DmtxVector2 c2, double angle)
 }
 
 /**
- * @brief  Read color of Data Matrix module location
- * @param  dec
- * @param  reg
- * @param  symbolRow
- * @param  symbolCol
- * @param  sizeIdx
- * @return Averaged module color
+ * \brief  Read color of Data Matrix module location
+ * \param  dec
+ * \param  reg
+ * \param  symbolRow
+ * \param  symbolCol
+ * \param  sizeIdx
+ * \return Averaged module color
  */
 static int
 ReadModuleColor(DmtxDecode *dec, DmtxRegion *reg, int symbolRow, int symbolCol,
@@ -641,10 +617,10 @@ ReadModuleColor(DmtxDecode *dec, DmtxRegion *reg, int symbolRow, int symbolCol,
 }
 
 /**
- * @brief  Determine barcode size, expressed in modules
- * @param  image
- * @param  reg
- * @return DmtxPass | DmtxFail
+ * \brief  Determine barcode size, expressed in modules
+ * \param  image
+ * \param  reg
+ * \return DmtxPass | DmtxFail
  */
 static DmtxPassFail
 MatrixRegionFindSize(DmtxDecode *dec, DmtxRegion *reg)
@@ -780,13 +756,13 @@ MatrixRegionFindSize(DmtxDecode *dec, DmtxRegion *reg)
 }
 
 /**
- * @brief  Count the number of number of transitions between light and dark
- * @param  img
- * @param  reg
- * @param  xStart
- * @param  yStart
- * @param  dir
- * @return Jump count
+ * \brief  Count the number of number of transitions between light and dark
+ * \param  img
+ * \param  reg
+ * \param  xStart
+ * \param  yStart
+ * \param  dir
+ * \return Jump count
  */
 static int
 CountJumpTally(DmtxDecode *dec, DmtxRegion *reg, int xStart, int yStart, DmtxDirection dir)

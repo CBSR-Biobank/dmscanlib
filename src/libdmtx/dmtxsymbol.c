@@ -1,37 +1,21 @@
-/*
-libdmtx - Data Matrix Encoding/Decoding Library
-
-Copyright (C) 2008, 2009 Mike Laughton
-
-This library is free software; you can redistribute it and/or
-modify it under the terms of the GNU Lesser General Public
-License as published by the Free Software Foundation; either
-version 2.1 of the License, or (at your option) any later version.
-
-This library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public
-License along with this library; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-
-Contact: mike@dragonflylogic.com
-*/
-
-/* $Id: dmtxsymbol.c 667 2009-02-10 19:48:01Z mblaughton $ */
-
 /**
- * @file dmtxsymbol.c
- * @brief Data Matrix symbol attributes
+ * libdmtx - Data Matrix Encoding/Decoding Library
+ * Copyright 2008, 2009 Mike Laughton. All rights reserved.
+ *
+ * See LICENSE file in the main project directory for full
+ * terms of use and distribution.
+ *
+ * Contact: Mike Laughton <mike@dragonflylogic.com>
+ *
+ * \file dmtxsymbol.c
+ * \brief Data Matrix symbol attributes
  */
 
 /**
- * @brief  Retrieve property based on symbol size
- * @param  attribute
- * @param  sizeIdx
- * @return Attribute value
+ * \brief  Retrieve property based on symbol size
+ * \param  attribute
+ * \param  sizeIdx
+ * \return Attribute value
  */
 extern int
 dmtxGetSymbolAttribute(int attribute, int sizeIdx)
@@ -129,10 +113,10 @@ dmtxGetSymbolAttribute(int attribute, int sizeIdx)
 }
 
 /**
- * @brief  Retrieve data size for a specific symbol size and block number
- * @param  sizeIdx
- * @param  blockIdx
- * @return Attribute value
+ * \brief  Retrieve data size for a specific symbol size and block number
+ * \param  sizeIdx
+ * \param  blockIdx
+ * \return Attribute value
  */
 extern int
 dmtxGetBlockDataSize(int sizeIdx, int blockIdx)
@@ -143,22 +127,23 @@ dmtxGetBlockDataSize(int sizeIdx, int blockIdx)
 
    symbolDataWords = dmtxGetSymbolAttribute(DmtxSymAttribSymbolDataWords, sizeIdx);
    interleavedBlocks = dmtxGetSymbolAttribute(DmtxSymAttribInterleavedBlocks, sizeIdx);
-   count = (int)(symbolDataWords/interleavedBlocks);
 
    if(symbolDataWords < 1 || interleavedBlocks < 1)
       return DmtxUndefined;
+
+   count = (int)(symbolDataWords/interleavedBlocks);
 
    return (sizeIdx == DmtxSymbol144x144 && blockIdx < 8) ? count + 1 : count;
 }
 
 /**
- * @brief  Determine symbol size based on data size and requested properties
- * @param  dataWords
- * @param  sizeIdxRequest
- * @return Symbol size index (or DmtxUndefined if none)
+ * \brief  Determine symbol size based on data size and requested properties
+ * \param  dataWords
+ * \param  sizeIdxRequest
+ * \return Symbol size index (or DmtxUndefined if none)
  */
 static int
-FindCorrectSymbolSize(int dataWords, int sizeIdxRequest)
+FindSymbolSize(int dataWords, int sizeIdxRequest)
 {
    int sizeIdx;
    int idxBeg, idxEnd;

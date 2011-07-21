@@ -1,30 +1,14 @@
-/*
-libdmtx - Data Matrix Encoding/Decoding Library
-
-Copyright (C) 2008, 2009 Mike Laughton
-
-This library is free software; you can redistribute it and/or
-modify it under the terms of the GNU Lesser General Public
-License as published by the Free Software Foundation; either
-version 2.1 of the License, or (at your option) any later version.
-
-This library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public
-License along with this library; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-
-Contact: mike@dragonflylogic.com
-*/
-
-/* $Id: dmtxstatic.h 844 2009-06-24 21:52:36Z mblaughton $ */
-
 /**
- * @file dmtxstatic.h
- * @brief Static header
+ * libdmtx - Data Matrix Encoding/Decoding Library
+ * Copyright 2008, 2009 Mike Laughton. All rights reserved.
+ *
+ * See LICENSE file in the main project directory for full
+ * terms of use and distribution.
+ *
+ * Contact: Mike Laughton <mike@dragonflylogic.com>
+ *
+ * \file dmtxstatic.h
+ * \brief Static header
  */
 
 #ifndef __DMTXSTATIC_H__
@@ -33,25 +17,25 @@ Contact: mike@dragonflylogic.com
 #define DmtxAlmostZero          0.000001
 #define DmtxAlmostInfinity            -1
 
-#define DmtxCharC40Latch             230
-#define DmtxCharTextLatch            239
-#define DmtxCharX12Latch             238
-#define DmtxCharEdifactLatch         240
-#define DmtxCharBase256Latch         231
+#define DmtxValueC40Latch            230
+#define DmtxValueTextLatch           239
+#define DmtxValueX12Latch            238
+#define DmtxValueEdifactLatch        240
+#define DmtxValueBase256Latch        231
 
-#define DmtxCharTripletUnlatch       254
-#define DmtxCharEdifactUnlatch        31
+#define DmtxValueCTXUnlatch   254
+#define DmtxValueEdifactUnlatch       31
 
-#define DmtxCharAsciiPad             129
-#define DmtxCharAsciiUpperShift      235
-#define DmtxCharTripletShift1          0
-#define DmtxCharTripletShift2          1
-#define DmtxCharTripletShift3          2
-#define DmtxCharFNC1                 232
-#define DmtxCharStructuredAppend     233
-#define DmtxChar05Macro              236
-#define DmtxChar06Macro              237
-#define DmtxCharECI                  241
+#define DmtxValueAsciiPad            129
+#define DmtxValueAsciiUpperShift     235
+#define DmtxValueCTXShift1      0
+#define DmtxValueCTXShift2      1
+#define DmtxValueCTXShift3      2
+#define DmtxValueFNC1                232
+#define DmtxValueStructuredAppend    233
+#define DmtxValue05Macro             236
+#define DmtxValue06Macro             237
+#define DmtxValueECI                 241
 
 #define DmtxC40TextBasicSet            0
 #define DmtxC40TextShift1              1
@@ -70,6 +54,12 @@ Contact: mike@dragonflylogic.com
 
 #undef max
 #define max(X,Y) (((X) > (Y)) ? (X) : (Y))
+
+typedef enum {
+   DmtxEncodeNormal,  /* Use normal scheme behavior (e.g., ASCII auto) */
+   DmtxEncodeCompact, /* Use only compact format within scheme */
+   DmtxEncodeFull     /* Use only fully expanded format within scheme */
+} DmtxEncodeOption;
 
 typedef enum {
    DmtxRangeGood,
@@ -159,8 +149,12 @@ static DmtxPassFail BresLineStep(DmtxBresLine *line, int travel, int outward);
 /*static void WriteDiagnosticImage(DmtxDecode *dec, DmtxRegion *reg, char *imagePath);*/
 
 /* dmtxdecode.c */
+static void TallyModuleJumps(DmtxDecode *dec, DmtxRegion *reg, int tally[][24], int xOrigin, int yOrigin, int mapWidth, int mapHeight, DmtxDirection dir);
+static DmtxPassFail PopulateArrayFromMatrix(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
+
+/* dmtxdecodescheme.c */
 static void DecodeDataStream(DmtxMessage *msg, int sizeIdx, unsigned char *outputStart);
-static int GetEncodationScheme(unsigned char *ptr);
+static int GetEncodationScheme(unsigned char cw);
 static void PushOutputWord(DmtxMessage *msg, int value);
 static void PushOutputC40TextWord(DmtxMessage *msg, C40TextState *state, int value);
 static void PushOutputMacroHeader(DmtxMessage *msg, int macroType);
@@ -170,38 +164,10 @@ static unsigned char *DecodeSchemeC40Text(DmtxMessage *msg, unsigned char *ptr, 
 static unsigned char *DecodeSchemeX12(DmtxMessage *msg, unsigned char *ptr, unsigned char *dataEnd);
 static unsigned char *DecodeSchemeEdifact(DmtxMessage *msg, unsigned char *ptr, unsigned char *dataEnd);
 static unsigned char *DecodeSchemeBase256(DmtxMessage *msg, unsigned char *ptr, unsigned char *dataEnd);
-/* static unsigned char UnRandomize253State(unsigned char codewordValue, int codewordPosition); */
-static unsigned char UnRandomize255State(unsigned char value, int idx);
-static void TallyModuleJumps(DmtxDecode *dec, DmtxRegion *reg, int tally[][24], int xOrigin, int yOrigin, int mapWidth, int mapHeight, DmtxDirection dir);
-static DmtxPassFail PopulateArrayFromMatrix(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
 
 /* dmtxencode.c */
-static int AddPadChars(unsigned char *buf, int *bufSize, int paddedSize);
-static unsigned char Randomize253State(unsigned char codewordValue, int codewordPosition);
-static unsigned char Randomize255State(unsigned char codewordValue, int codewordPosition);
 static void PrintPattern(DmtxEncode *encode);
-static void InitChannel(DmtxChannel *channel, unsigned char *codewords, int length);
-static int EncodeDataCodewords(DmtxEncode *enc, unsigned char *buf, unsigned char *inputString, int inputSize, int *sizeIdx);
-static int EncodeSingleScheme(DmtxEncode *enc, unsigned char *buf, unsigned char *codewords, int length, DmtxScheme scheme);
-static int EncodeAutoBest(DmtxEncode *enc, unsigned char *buf, unsigned char *codewords, int length);
-/*static int EncodeAutoFast(unsigned char *buf, unsigned char *codewords, int length); */
-static DmtxChannel FindBestChannel(DmtxEncode *enc, DmtxChannelGroup group, DmtxScheme targetScheme);
-static DmtxPassFail EncodeNextWord(DmtxEncode *enc, DmtxChannel *channel, DmtxScheme targetScheme);
-static DmtxPassFail EncodeAsciiCodeword(DmtxChannel *channel);
-static DmtxPassFail EncodeTripletCodeword(DmtxEncode *enc, DmtxChannel *channel);
-static DmtxPassFail EncodeEdifactCodeword(DmtxEncode *enc, DmtxChannel *channel);
-static DmtxPassFail EncodeBase256Codeword(DmtxChannel *channel);
-static void ChangeEncScheme(DmtxChannel *channel, DmtxScheme targetScheme, int unlatchType);
-static void PushInputWord(DmtxChannel *channel, unsigned char codeword);
-static void PushTriplet(DmtxChannel *channel, DmtxTriplet *triplet);
-static void IncrementProgress(DmtxChannel *channel, int encodedUnits);
-static DmtxPassFail ProcessEndOfSymbolTriplet(DmtxEncode *enc, DmtxChannel *channel, DmtxTriplet *triplet, int tripletCount, int inputCount);
-static DmtxPassFail TestForEndOfSymbolEdifact(DmtxEncode *enc, DmtxChannel *channel);
-static int GetC40TextX12Words(int *outputWords, int inputWord, DmtxScheme encScheme);
-static DmtxTriplet GetTripletValues(unsigned char cw1, unsigned char cw2);
-static DmtxQuadruplet GetQuadrupletValues(unsigned char cw1, unsigned char cw2, unsigned char cw3);
-/*static void DumpChannel(DmtxChannel *channel);*/
-/*static void DumpChannelGroup(DmtxChannelGroup *group, int encTarget);*/
+static int EncodeDataCodewords(DmtxByteList *input, DmtxByteList *output, int sizeIdxRequest, DmtxScheme scheme);
 
 /* dmtxplacemod.c */
 static int ModulePlacementEcc200(unsigned char *modules, unsigned char *codewords, int sizeIdx, int moduleOnColor);
@@ -214,10 +180,13 @@ static void PlaceModule(unsigned char *modules, int mappingRows, int mappingCols
       unsigned char *codeword, int mask, int moduleOnColor);
 
 /* dmtxreedsol.c */
-static void GenReedSolEcc(DmtxMessage *msg, int sizeidx);
-static int DecodeCheckErrors(unsigned char *code, int sizeIdx, int fix);
-static int GfProduct(int a, int b);
-static int GfDoublify(int a, int b);
+static DmtxPassFail RsEncode(DmtxMessage *message, int sizeIdx);
+static DmtxPassFail RsDecode(unsigned char *code, int sizeIdx, int fix);
+static DmtxPassFail RsGenPoly(DmtxByteList *gen, int errorWordCount);
+static DmtxBoolean RsComputeSyndromes(DmtxByteList *syn, const DmtxByteList *rec, int blockErrorWords);
+static DmtxBoolean RsFindErrorLocatorPoly(DmtxByteList *elp, const DmtxByteList *syn, int errorWordCount, int maxCorrectable);
+static DmtxBoolean RsFindErrorLocations(DmtxByteList *loc, const DmtxByteList *elp);
+static DmtxPassFail RsRepairErrors(DmtxByteList *rec, const DmtxByteList *loc, const DmtxByteList *elp, const DmtxByteList *syn);
 
 /* dmtxscangrid.c */
 static DmtxScanGrid InitScanGrid(DmtxDecode *dec);
@@ -226,10 +195,78 @@ static int GetGridCoordinates(DmtxScanGrid *grid, /*@out@*/ DmtxPixelLoc *locPtr
 static void SetDerivedFields(DmtxScanGrid *grid);
 
 /* dmtxsymbol.c */
-static int FindCorrectSymbolSize(int dataWords, int symbolShape);
+static int FindSymbolSize(int dataWords, int sizeIdxRequest);
 
 /* dmtximage.c */
 static int GetBitsPerPixel(int pack);
+
+/* dmtxencodestream.c */
+static DmtxEncodeStream StreamInit(DmtxByteList *input, DmtxByteList *output);
+static void StreamCopy(DmtxEncodeStream *dst, DmtxEncodeStream *src);
+static void StreamMarkComplete(DmtxEncodeStream *stream, int sizeIdx);
+static void StreamMarkInvalid(DmtxEncodeStream *stream, int reasonIdx);
+static void StreamMarkFatal(DmtxEncodeStream *stream, int reasonIdx);
+static void StreamOutputChainAppend(DmtxEncodeStream *stream, DmtxByte value);
+static DmtxByte StreamOutputChainRemoveLast(DmtxEncodeStream *stream);
+static void StreamOutputSet(DmtxEncodeStream *stream, int index, DmtxByte value);
+static DmtxBoolean StreamInputHasNext(DmtxEncodeStream *stream);
+static DmtxByte StreamInputPeekNext(DmtxEncodeStream *stream);
+static DmtxByte StreamInputAdvanceNext(DmtxEncodeStream *stream);
+static void StreamInputAdvancePrev(DmtxEncodeStream *stream);
+
+/* dmtxencodescheme.c */
+static int EncodeSingleScheme(DmtxByteList *input, DmtxByteList *output, int sizeIdxRequest, DmtxScheme scheme);
+static void EncodeNextChunk(DmtxEncodeStream *stream, int scheme, int subScheme, int sizeIdxRequest);
+static void EncodeChangeScheme(DmtxEncodeStream *stream, DmtxScheme targetScheme, int unlatchType);
+static int GetRemainingSymbolCapacity(int outputLength, int sizeIdx);
+
+/* dmtxencodeoptimize.c */
+static int EncodeOptimizeBest(DmtxByteList *input, DmtxByteList *output, int sizeIdxRequest);
+static void StreamAdvanceFromBest(DmtxEncodeStream *streamNext,
+      DmtxEncodeStream *streamList, int targeteState, int sizeIdxRequest);
+static void AdvanceAsciiCompact(DmtxEncodeStream *streamNext, DmtxEncodeStream *streamList,
+      int state, int inputNext, int sizeIdxRequest);
+static void AdvanceCTX(DmtxEncodeStream *streamNext, DmtxEncodeStream *streamList,
+      int state, int inputNext, int ctxValueCount, int sizeIdxRequest);
+static void AdvanceEdifact(DmtxEncodeStream *streamNext, DmtxEncodeStream *streamList,
+      int state, int inputNext, int sizeIdxRequest);
+static int GetScheme(int state);
+static DmtxBoolean ValidStateSwitch(int fromState, int targetState);
+
+/* dmtxencodeascii.c */
+static void EncodeNextChunkAscii(DmtxEncodeStream *stream, int option);
+static void AppendValueAscii(DmtxEncodeStream *stream, DmtxByte value);
+static void CompleteIfDoneAscii(DmtxEncodeStream *stream, int sizeIdxRequest);
+static void PadRemainingInAscii(DmtxEncodeStream *stream, int sizeIdx);
+static DmtxByteList EncodeTmpRemainingInAscii(DmtxEncodeStream *stream, DmtxByte *storage, int capacity, DmtxPassFail *passFail);
+static DmtxByte Randomize253State(DmtxByte cwValue, int cwPosition);
+
+/* dmtxencodec40textx12.c */
+static void EncodeNextChunkCTX(DmtxEncodeStream *stream, int sizeIdxRequest);
+static void AppendValuesCTX(DmtxEncodeStream *stream, DmtxByteList *valueList);
+static void AppendUnlatchCTX(DmtxEncodeStream *stream);
+static void CompleteIfDoneCTX(DmtxEncodeStream *stream, int sizeIdxRequest);
+static void CompletePartialC40Text(DmtxEncodeStream *stream, DmtxByteList *valueList, int sizeIdxRequest);
+static void CompletePartialX12(DmtxEncodeStream *stream, DmtxByteList *valueList, int sizeIdxRequest);
+static DmtxBoolean PartialX12ChunkRemains(DmtxEncodeStream *stream);
+static void PushCTXValues(DmtxByteList *valueList, DmtxByte inputValue, int targetScheme, DmtxPassFail *passFail);
+static DmtxBoolean IsCTX(int scheme);
+static void ShiftValueListBy3(DmtxByteList *list, DmtxPassFail *passFail);
+
+/* dmtxencodeedifact.c */
+static void EncodeNextChunkEdifact(DmtxEncodeStream *stream);
+static void AppendValueEdifact(DmtxEncodeStream *stream, DmtxByte value);
+static void CompleteIfDoneEdifact(DmtxEncodeStream *stream, int sizeIdxRequest);
+
+/* dmtxencodebase256.c */
+static void EncodeNextChunkBase256(DmtxEncodeStream *stream);
+static void AppendValueBase256(DmtxEncodeStream *stream, DmtxByte value);
+static void CompleteIfDoneBase256(DmtxEncodeStream *stream, int sizeIdxRequest);
+static void UpdateBase256ChainHeader(DmtxEncodeStream *stream, int perfectSizeIdx);
+static void Base256OutputChainInsertFirst(DmtxEncodeStream *stream);
+static void Base256OutputChainRemoveFirst(DmtxEncodeStream *stream);
+static DmtxByte Randomize255State(DmtxByte cwValue, int cwPosition);
+static unsigned char UnRandomize255State(unsigned char value, int idx);
 
 static const int dmtxNeighborNone = 8;
 static const int dmtxPatternX[] = { -1,  0,  1,  1,  1,  0, -1, -1 };
@@ -237,99 +274,6 @@ static const int dmtxPatternY[] = { -1, -1, -1,  0,  1,  1,  1,  0 };
 static const DmtxPointFlow dmtxBlankEdge = { 0, 0, 0, DmtxUndefined, { -1, -1 } };
 
 /*@ +charint @*/
-
-/* Galois Field log values */
-static int logVal[] =
-   {-255, 255,   1, 240,   2, 225, 241,  53,   3,  38, 226, 133, 242,  43,  54, 210,
-       4, 195,  39, 114, 227, 106, 134,  28, 243, 140,  44,  23,  55, 118, 211, 234,
-       5, 219, 196,  96,  40, 222, 115, 103, 228,  78, 107, 125, 135,   8,  29, 162,
-     244, 186, 141, 180,  45,  99,  24,  49,  56,  13, 119, 153, 212, 199, 235,  91,
-       6,  76, 220, 217, 197,  11,  97, 184,  41,  36, 223, 253, 116, 138, 104, 193,
-     229,  86,  79, 171, 108, 165, 126, 145, 136,  34,   9,  74,  30,  32, 163,  84,
-     245, 173, 187, 204, 142,  81, 181, 190,  46,  88, 100, 159,  25, 231,  50, 207,
-      57, 147,  14,  67, 120, 128, 154, 248, 213, 167, 200,  63, 236, 110,  92, 176,
-       7, 161,  77, 124, 221, 102, 218,  95, 198,  90,  12, 152,  98,  48, 185, 179,
-      42, 209,  37, 132, 224,  52, 254, 239, 117, 233, 139,  22, 105,  27, 194, 113,
-     230, 206,  87, 158,  80, 189, 172, 203, 109, 175, 166,  62, 127, 247, 146,  66,
-     137, 192,  35, 252,  10, 183,  75, 216,  31,  83,  33,  73, 164, 144,  85, 170,
-     246,  65, 174,  61, 188, 202, 205, 157, 143, 169,  82,  72, 182, 215, 191, 251,
-      47, 178,  89, 151, 101,  94, 160, 123,  26, 112, 232,  21,  51, 238, 208, 131,
-      58,  69, 148,  18,  15,  16,  68,  17, 121, 149, 129,  19, 155,  59, 249,  70,
-     214, 250, 168,  71, 201, 156,  64,  60, 237, 130, 111,  20,  93, 122, 177, 150 };
-
-/* log(0) = -inf */
-static unsigned char indexOf[] =
-   { 255,   0,   1, 240,   2, 225, 241,  53,   3,  38, 226, 133, 242,  43,  54, 210,
-       4, 195,  39, 114, 227, 106, 134,  28, 243, 140,  44,  23,  55, 118, 211, 234,
-       5, 219, 196,  96,  40, 222, 115, 103, 228,  78, 107, 125, 135,   8,  29, 162,
-     244, 186, 141, 180,  45,  99,  24,  49,  56,  13, 119, 153, 212, 199, 235,  91,
-       6,  76, 220, 217, 197,  11,  97, 184,  41,  36, 223, 253, 116, 138, 104, 193,
-     229,  86,  79, 171, 108, 165, 126, 145, 136,  34,   9,  74,  30,  32, 163,  84,
-     245, 173, 187, 204, 142,  81, 181, 190,  46,  88, 100, 159,  25, 231,  50, 207,
-      57, 147,  14,  67, 120, 128, 154, 248, 213, 167, 200,  63, 236, 110,  92, 176,
-       7, 161,  77, 124, 221, 102, 218,  95, 198,  90,  12, 152,  98,  48, 185, 179,
-      42, 209,  37, 132, 224,  52, 254, 239, 117, 233, 139,  22, 105,  27, 194, 113,
-     230, 206,  87, 158,  80, 189, 172, 203, 109, 175, 166,  62, 127, 247, 146,  66,
-     137, 192,  35, 252,  10, 183,  75, 216,  31,  83,  33,  73, 164, 144,  85, 170,
-     246,  65, 174,  61, 188, 202, 205, 157, 143, 169,  82,  72, 182, 215, 191, 251,
-      47, 178,  89, 151, 101,  94, 160, 123,  26, 112, 232,  21,  51, 238, 208, 131,
-      58,  69, 148,  18,  15,  16,  68,  17, 121, 149, 129,  19, 155,  59, 249,  70,
-     214, 250, 168,  71, 201, 156,  64,  60, 237, 130, 111,  20,  93, 122, 177, 150 };
-
-/* Galois Field antilog values */
-static int aLogVal[] =
-   {   1,   2,   4,   8,  16,  32,  64, 128,  45,  90, 180,  69, 138,  57, 114, 228,
-     229, 231, 227, 235, 251, 219, 155,  27,  54, 108, 216, 157,  23,  46,  92, 184,
-      93, 186,  89, 178,  73, 146,   9,  18,  36,  72, 144,  13,  26,  52, 104, 208,
-     141,  55, 110, 220, 149,   7,  14,  28,  56, 112, 224, 237, 247, 195, 171, 123,
-     246, 193, 175, 115, 230, 225, 239, 243, 203, 187,  91, 182,  65, 130,  41,  82,
-     164, 101, 202, 185,  95, 190,  81, 162, 105, 210, 137,  63, 126, 252, 213, 135,
-      35,  70, 140,  53, 106, 212, 133,  39,  78, 156,  21,  42,  84, 168, 125, 250,
-     217, 159,  19,  38,  76, 152,  29,  58, 116, 232, 253, 215, 131,  43,  86, 172,
-     117, 234, 249, 223, 147,  11,  22,  44,  88, 176,  77, 154,  25,  50, 100, 200,
-     189,  87, 174, 113, 226, 233, 255, 211, 139,  59, 118, 236, 245, 199, 163, 107,
-     214, 129,  47,  94, 188,  85, 170, 121, 242, 201, 191,  83, 166,  97, 194, 169,
-     127, 254, 209, 143,  51, 102, 204, 181,  71, 142,  49,  98, 196, 165, 103, 206,
-     177,  79, 158,  17,  34,  68, 136,  61, 122, 244, 197, 167,  99, 198, 161, 111,
-     222, 145,  15,  30,  60, 120, 240, 205, 183,  67, 134,  33,  66, 132,  37,  74,
-     148,   5,  10,  20,  40,  80, 160, 109, 218, 153,  31,  62, 124, 248, 221, 151,
-       3,   6,  12,  24,  48,  96, 192, 173, 119, 238, 241, 207, 179,  75, 150,   1 };
-
-/* alpha**-inf = 0 */
-static unsigned char alphaTo[] =
-   {   1,   2,   4,   8,  16,  32,  64, 128,  45,  90, 180,  69, 138,  57, 114, 228,
-     229, 231, 227, 235, 251, 219, 155,  27,  54, 108, 216, 157,  23,  46,  92, 184,
-      93, 186,  89, 178,  73, 146,   9,  18,  36,  72, 144,  13,  26,  52, 104, 208,
-     141,  55, 110, 220, 149,   7,  14,  28,  56, 112, 224, 237, 247, 195, 171, 123,
-     246, 193, 175, 115, 230, 225, 239, 243, 203, 187,  91, 182,  65, 130,  41,  82,
-     164, 101, 202, 185,  95, 190,  81, 162, 105, 210, 137,  63, 126, 252, 213, 135,
-      35,  70, 140,  53, 106, 212, 133,  39,  78, 156,  21,  42,  84, 168, 125, 250,
-     217, 159,  19,  38,  76, 152,  29,  58, 116, 232, 253, 215, 131,  43,  86, 172,
-     117, 234, 249, 223, 147,  11,  22,  44,  88, 176,  77, 154,  25,  50, 100, 200,
-     189,  87, 174, 113, 226, 233, 255, 211, 139,  59, 118, 236, 245, 199, 163, 107,
-     214, 129,  47,  94, 188,  85, 170, 121, 242, 201, 191,  83, 166,  97, 194, 169,
-     127, 254, 209, 143,  51, 102, 204, 181,  71, 142,  49,  98, 196, 165, 103, 206,
-     177,  79, 158,  17,  34,  68, 136,  61, 122, 244, 197, 167,  99, 198, 161, 111,
-     222, 145,  15,  30,  60, 120, 240, 205, 183,  67, 134,  33,  66, 132,  37,  74,
-     148,   5,  10,  20,  40,  80, 160, 109, 218, 153,  31,  62, 124, 248, 221, 151,
-       3,   6,  12,  24,  48,  96, 192, 173, 119, 238, 241, 207, 179,  75, 150,   0 };
-/**
-static int rHvX[] =
-    { 256,  256,  255,  255,  254,  252,  250,  248,  246,  243,  241,  237,  234,  230,  226,
-      222,  217,  212,  207,  202,  196,  190,  184,  178,  171,  165,  158,  150,  143,  136,
-      128,  120,  112,  104,   96,   88,   79,   71,   62,   53,   44,   36,   27,   18,    9,
-        0,   -9,  -18,  -27,  -36,  -44,  -53,  -62,  -71,  -79,  -88,  -96, -104, -112, -120,
-     -128, -136, -143, -150, -158, -165, -171, -178, -184, -190, -196, -202, -207, -212, -217,
-     -222, -226, -230, -234, -237, -241, -243, -246, -248, -250, -252, -254, -255, -255, -256 };
-
-static int rHvY[] =
-    {   0,    9,   18,   27,   36,   44,   53,   62,   71,   79,   88,   96,  104,  112,  120,
-      128,  136,  143,  150,  158,  165,  171,  178,  184,  190,  196,  202,  207,  212,  217,
-      222,  226,  230,  234,  237,  241,  243,  246,  248,  250,  252,  254,  255,  255,  256,
-      256,  256,  255,  255,  254,  252,  250,  248,  246,  243,  241,  237,  234,  230,  226,
-      222,  217,  212,  207,  202,  196,  190,  184,  178,  171,  165,  158,  150,  143,  136,
-      128,  120,  112,  104,   96,   88,   79,   71,   62,   53,   44,   36,   27,   18,    9 };
-*/
 
 static int rHvX[] =
     {  256,  256,  256,  256,  255,  255,  255,  254,  254,  253,  252,  251,  250,  249,  248,
@@ -360,5 +304,31 @@ static int rHvY[] =
         66,   62,   58,   53,   49,   44,   40,   36,   31,   27,   22,   18,   13,    9,    4 };
 
 /*@ -charint @*/
+
+enum DmtxErrorMessage {
+   DmtxErrorUnknown,
+   DmtxErrorUnsupportedCharacter,
+   DmtxErrorNotOnByteBoundary,
+   DmtxErrorIllegalParameterValue,
+   DmtxErrorEmptyList,
+   DmtxErrorOutOfBounds,
+   DmtxErrorMessageTooLarge,
+   DmtxErrorCantCompactNonDigits,
+   DmtxErrorUnexpectedScheme,
+   DmtxErrorIncompleteValueList
+};
+
+static char *dmtxErrorMessage[] = {
+   "Unknown error",
+   "Unsupported character",
+   "Not on byte boundary",
+   "Illegal parameter value",
+   "Encountered empty list",
+   "Out of bounds",
+   "Message too large",
+   "Can't compact non-digits",
+   "Encountered unexpected scheme",
+   "Encountered incomplete value list"
+};
 
 #endif
