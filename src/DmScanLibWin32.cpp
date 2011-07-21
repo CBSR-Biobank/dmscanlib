@@ -181,6 +181,8 @@ int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
     int result;
     Dib dib;
 
+	time_t starttime;
+
     Util::getTime(starttime);
     h = ig.acquireImage(dpi, brightness, contrast, left, top, right,
             bottom);

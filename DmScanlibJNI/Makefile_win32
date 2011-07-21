@@ -4,7 +4,9 @@
 # in this case we are loading with System.loadLibrary("StrArray"). 
 # this means we need to have the file "libStrArray.so" in the java.library.path
 
-JNI_INCLUDE_PATH := /usr/lib/jvm/java-1.6.0-openjdk/include
+JAVA_HOME := "C:/Program Files/Java/jdk1.6.0_26"
+
+JNI_INCLUDE_PATH := $(JAVA_HOME)/include
 
 JAVA_FILE_MAIN := DmScanlib_JNI_Test
 LIB_FILE_NAME := DmScanlib
@@ -13,8 +15,7 @@ JAVA_FILE_NAME := $(LIB_FILE_NAME)
 
 SCANLIB_OBJECTS =  DecodeProfile.class DecodeSettings.class ScanCoordinates.class ScanSettings.class ScanlibData.class
 JAVA_OBJECTS = $(SCANLIB_OBJECTS) $(LIB_FILE_NAME).class $(JAVA_FILE_MAIN).class 
-OBJECTS :=   $(JAVA_OBJECTS) $(LIB_FILE_NAME).h $(LIB_FILE_NAME).o lib$(LIB_FILE_NAME).so
-
+OBJECTS :=   $(JAVA_OBJECTS) $(LIB_FILE_NAME).h $(LIB_FILE_NAME).dll
 
 .PHONY : all
 all: ${OBJECTS}
@@ -25,17 +26,14 @@ clean:
 
 .PHONY : run	
 run:	
-	-java ${JAVA_FILE_MAIN}
+	-$(JAVA_HOME)/bin/java ${JAVA_FILE_MAIN}
 
 %.class : %.java
-	javac $^
+	$(JAVA_HOME)/bin/javac $^
 
 $(LIB_FILE_NAME).h :  $(JAVA_FILE_NAME).class
-	javah -jni $(JAVA_FILE_NAME)
+	$(JAVA_HOME)/bin/javah -jni $(JAVA_FILE_NAME)
 	-mv  $(JAVA_FILE_NAME).h $@
 
-$(LIB_FILE_NAME).o : $(LIB_FILE_NAME).cxx
-	g++ -fPIC -c -I$(JNI_INCLUDE_PATH) $^
-
-lib$(LIB_FILE_NAME).so : $(LIB_FILE_NAME).o
-	ld -G $^ -o $@
+$(LIB_FILE_NAME).dll : $(LIB_FILE_NAME).cpp
+	g++ -I$(JNI_INCLUDE_PATH) -I$(JNI_INCLUDE_PATH)/win32 -Wl,--add-stdcall-alias -shared -o $@ $^

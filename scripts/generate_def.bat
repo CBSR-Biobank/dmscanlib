@@ -1,1 +1,0 @@
-pexports dmscanlib.dll | sed "s/^_\([[:alnum:]_]\+\)@[[:digit:]]\+/\1/" > scanlib.def
