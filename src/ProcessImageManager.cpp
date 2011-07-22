@@ -55,34 +55,11 @@ ProcessImageManager::~ProcessImageManager() {
 void ProcessImageManager::threadProcessRange(vector<BarcodeThread *> & threads,
 		unsigned int first, unsigned int last) {
 
-	time_t timeStart, timeEnd;
-
 	for (unsigned int i = first; i < last; i++)
 		threads[i]->start();
 
-	time(&timeStart);
-
-	while (true) {
-		bool done = true;
-		for (unsigned int j = first; j < last; j++)
-			if (!threads[j]->isFinished())
-				done = false;
-
-		if (done)
-			break;
-
-		time(&timeEnd);
-		if (difftime(timeEnd, timeStart) >= JOIN_TIMEOUT_SEC) {
-			UA_DOUT(3, 1, "Error:: Some threads have timed out.");
-			break;
-		}
-
-		//sleep 1ms
-		#ifdef WIN32
-				Sleep(1);
-		#else
-				usleep(1000);
-		#endif
+	for (unsigned int j = first; j < last; j++){
+		threads[j]->join();
 	}
 
 }
@@ -94,7 +71,6 @@ void ProcessImageManager::threadHandler(vector<BarcodeThread *> & threads) {
 
 	unsigned int remainder = ((threads.size()) % threadCount);
 
-	printf("remainder %d\n", remainder);
 
 	for (unsigned int i = 0; i < threads.size() - remainder; i += threadCount) {
 		UA_DOUT(
