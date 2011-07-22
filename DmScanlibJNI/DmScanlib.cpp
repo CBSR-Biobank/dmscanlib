@@ -346,7 +346,7 @@ JNIEXPORT jobject JNICALL Java_DmScanlib_slIsTwainAvailable(JNIEnv *env,
 
 	int twainAvailable = 5;
 
-	jobject returnObject = createScanlibDataObject(env, NULL,
+	jobject returnObject = createScanlibDataObject(env, 0,
 			(char *) "success", twainAvailable);
 
 	return returnObject;
@@ -357,7 +357,7 @@ JNIEXPORT jobject JNICALL Java_DmScanlib_slSelectSourceAsDefault(JNIEnv *env,
 
 	int selectSourceAsDefault = 6;
 
-	jobject returnObject = createScanlibDataObject(env, NULL,
+	jobject returnObject = createScanlibDataObject(env, 0,
 			(char *) "scanner 1", selectSourceAsDefault);
 
 	return returnObject;
@@ -368,7 +368,7 @@ JNIEXPORT jobject JNICALL Java_DmScanlib_slGetScannerCapability(JNIEnv *env,
 
 	int scannerCapability = 7;
 
-	jobject returnObject = createScanlibDataObject(env, NULL, (char *) "very capable", scannerCapability);
+	jobject returnObject = createScanlibDataObject(env, 0, (char *) "very capable", scannerCapability);
 
 	return returnObject;
 }
@@ -383,7 +383,7 @@ JNIEXPORT jobject JNICALL Java_DmScanlib_slScanFlatbed(JNIEnv *env, jclass obj,
 
 	jobject returnObject = createScanlibDataObject(
 			env,
-			NULL,
+			0,
 			(char *) filename,
 			scanSettings.getDpi() + scanSettings.getBrightness()
 					+ scanSettings.getContrast() + verbose);
@@ -405,7 +405,7 @@ JNIEXPORT jobject JNICALL Java_DmScanlib_slScanImage(JNIEnv *env, jclass obj,
 
 	jobject returnObject = createScanlibDataObject(
 			env,
-			NULL,
+			0,
 			(char *) filename,
 			scanSettings.getDpi() + scanSettings.getBrightness()
 					+ scanSettings.getContrast() + scanCoordinates.getBottom()
@@ -443,7 +443,7 @@ JNIEXPORT jobject JNICALL Java_DmScanlib_slDecodePlate(JNIEnv *env, jclass obj,
 
 	jobject returnObject = createScanlibDataObject(
 			env,
-			NULL,
+			0,
 			(char *) "henry jones",
 			scanSettings.getDpi() + scanSettings.getBrightness()
 					+ scanSettings.getContrast() + scanCoordinates.getBottom()
@@ -481,7 +481,7 @@ JNIEXPORT jobject JNICALL Java_DmScanlib_slDecodeImage(JNIEnv *env, jclass obj,
 
 	jobject returnObject = createScanlibDataObject(
 			env,
-			NULL,
+			0,
 			(char *) filename,
 			decodeProfileSumInt + decodeSettingsDbl + decodeSettingsInt
 					+ vertical + verbose);
