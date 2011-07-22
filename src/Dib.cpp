@@ -268,7 +268,7 @@ void Dib::readFromFile(const char *filename) {
 	r = fread(infoHeaderRaw, sizeof(unsigned char), sizeof(infoHeaderRaw), fh);
 	UA_ASSERT(r = sizeof(infoHeaderRaw));
 
-	unsigned size = *(unsigned *) &infoHeaderRaw[0];
+	//unsigned size = *(unsigned *) &infoHeaderRaw[0];
 	unsigned width = *(unsigned *) &infoHeaderRaw[0x12 - 0xE];
 	unsigned height = *(unsigned *) &infoHeaderRaw[0x16 - 0xE];
 	unsigned colorBits = *(unsigned short *) &infoHeaderRaw[0x1C - 0xE];

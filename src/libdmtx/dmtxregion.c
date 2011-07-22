@@ -56,7 +56,6 @@ dmtxRegionDestroy(DmtxRegion **reg)
  * \param  timeout Pointer to timeout time (NULL if none)
  * \return Detected region (if found)
  */
-#ifndef CUSTOM_REGIONFINDNEXT
 extern DmtxRegion *
 dmtxRegionFindNext(DmtxDecode *dec, DmtxTime *timeout)
 {
@@ -72,15 +71,14 @@ dmtxRegionFindNext(DmtxDecode *dec, DmtxTime *timeout)
 
       /* Scan location for presence of valid barcode region */
       reg = dmtxRegionScanPixel(dec, loc.X, loc.Y);
-      if(reg != NULL){
+      if(reg != NULL)
          return reg;
-      }
 
       /* Ran out of time? */
       if(timeout != NULL && dmtxTimeExceeded(*timeout))
          break;
    }
-  // printf("dmtxRegionFindNext not find loops: %d\n",i); //DEBUG STUFF
+
    return NULL;
 }
 
@@ -102,9 +100,11 @@ dmtxRegionScanPixel(DmtxDecode *dec, int x, int y)
    loc.Y = y;
 
    cache = dmtxDecodeGetCache(dec, loc.X, loc.Y);
-   if(cache == NULL || (int)(*cache & 0x80) != 0x00){
+   if(cache == NULL)
       return NULL;
-   }
+
+   if((int)(*cache & 0x80) != 0x00)
+      return NULL;
 
    /* Test for presence of any reasonable edge at this location */
    flowBegin = MatrixRegionSeekEdge(dec, loc);
