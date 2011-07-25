@@ -32,7 +32,7 @@ public class DmScanlib_JNI_Test {
 
 	boolean testFail = false;
 
-	for(int z= 0; z < 10 && (testFail == false); z++){ //1000*10000 iterations is about a minute
+	for(int z= 0; z < 100 && (testFail == false); z++){ //1000*10000 iterations is about a minute
 
 		int [] st = {-5,1,-2,3,-4,5,-60,7,-84,9};
 
@@ -131,6 +131,12 @@ public class DmScanlib_JNI_Test {
 				testFail = true;				
 				break;
 			}
+
+			if(sd.getReturnCodeEnum() != DmScanlibReturnCode.SC_SUCCESS){
+	     		        System.err.println("Invalid Enum Return Code");
+				testFail = true;				
+				break;
+       			}
 		
 		}
 	}
