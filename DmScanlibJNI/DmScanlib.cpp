@@ -4,6 +4,9 @@
 
 using namespace std;
 
+
+//FIXME FIXME ERROR HANDLING AT EVERY JNI CALL!!!!!!!!!!!!!!!!!
+
 //////////////////////////////////Scan Settings/////////////////////////////////////
 class ScanSettings {
 
