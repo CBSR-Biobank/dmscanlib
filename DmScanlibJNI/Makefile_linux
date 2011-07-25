@@ -11,7 +11,7 @@ LIB_FILE_NAME := DmScanlib
 JAVA_FILE_NAME := $(LIB_FILE_NAME)
 
 
-SCANLIB_OBJECTS =  DecodeProfile.class DecodeSettings.class ScanCoordinates.class ScanSettings.class ScanlibData.class
+SCANLIB_OBJECTS =  DecodeProfile.class DecodeSettings.class ScanCoordinates.class ScanSettings.class ScanlibData.class DmScanlibReturnCode.class
 JAVA_OBJECTS = $(SCANLIB_OBJECTS) $(LIB_FILE_NAME).class $(JAVA_FILE_MAIN).class 
 OBJECTS :=   $(JAVA_OBJECTS) $(LIB_FILE_NAME).h lib$(LIB_FILE_NAME).so
 

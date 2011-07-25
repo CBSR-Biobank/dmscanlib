@@ -18,6 +18,10 @@ public class DmScanlib_JNI_Test {
 
 	System.out.println("Ret code:" + sd.getReturnCode());
 	System.out.println("Ret msg:" + sd.getReturnMessage());
+
+        if(sd.getReturnCodeEnum() == DmScanlibReturnCode.SC_SUCCESS){
+	      System.out.println("Correct Return Code");
+        }
 		
 
 
