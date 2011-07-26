@@ -84,6 +84,7 @@ Decoder::~Decoder() {
 	}
 }
 
+// FIXME make this function work correclty.
 // reduces the blob to a smaller region (matrix outline)
 bool Decoder::reduceBlobToMatrix(Dib & dib, CvRect & inputBlob) {
 	Dib * croppedDib = Dib::crop(dib, inputBlob.x, inputBlob.y,
@@ -101,6 +102,30 @@ bool Decoder::reduceBlobToMatrix(Dib & dib, CvRect & inputBlob) {
 	cvThreshold(img->getIplImage(), img->getIplImage(), 50, 255,
 			CV_THRESH_BINARY);
 
+	/* ---- Find the test tube by applying circle-based pattern recognition -----*/
+	CvMemStorage* storage = cvCreateMemStorage(0);
+
+	CvSeq* results = cvHoughCircles(img->getIplImage(), storage,
+			CV_HOUGH_GRADIENT, 1, //reciprocal resolution scalar multiplier
+			inputBlob.width / 6);
+
+	for (int i = 0; i < results->total; i++) {
+
+		printf("found circle\n");
+
+		float* p = (float*) cvGetSeqElem(results, i);
+		CvRect largestBlob = { cvRound(p[0]) - cvRound(p[2]), cvRound(p[1])
+				- cvRound(p[2]), cvRound(p[0]) + cvRound(p[2]), cvRound(p[1])
+				+ cvRound(p[2]) };
+		largestBlob.x += inputBlob.x;
+		largestBlob.y += inputBlob.y;
+
+		inputBlob = largestBlob;
+		return true;
+
+	}
+	return true;
+
 	CBlobResult blobs(img->getIplImage(), NULL, 0);
 
 	switch (img->getHorizontalResolution()) {
@@ -116,27 +141,36 @@ bool Decoder::reduceBlobToMatrix(Dib & dib, CvRect & inputBlob) {
 	}
 
 	/* ---- Grabs the largest blob in the blobs vector -----*/
-	bool reducedBlob = false;
-	CvRect largestBlob = { 0, 0, 0, 0 };
+
+	CvPoint minOffset = cvPoint(inputBlob.width, inputBlob.height);
+	CvPoint maxOffset = cvPoint(0,0);
 
 	for (int i = 0, n = blobs.GetNumBlobs(); i < n; i++) {
+
 		CBlob * blob = blobs.GetBlob(i);
 		CvRect & currentBlob = blob->GetBoundingBox();
-		if (currentBlob.width * currentBlob.height
-				> largestBlob.width * largestBlob.height) {
-			largestBlob = currentBlob;
-			reducedBlob = true;
-		}
-	}
 
-	/* ---- Keep blob that was successfully reduced-----*/
-	if (reducedBlob) {
-		largestBlob.x += inputBlob.x;
-		largestBlob.y += inputBlob.y;
-		inputBlob = largestBlob;
-	}
+		if (currentBlob.x < minOffset.x)
+			minOffset.x = currentBlob.x;
 
-	return reducedBlob;
+		if (currentBlob.y < minOffset.y)
+			minOffset.y = currentBlob.y;
+
+		if (currentBlob.width + currentBlob.x > maxOffset.x)
+			maxOffset.x = currentBlob.width + currentBlob.x;
+
+		if (currentBlob.height + currentBlob.height > maxOffset.y)
+			maxOffset.y = currentBlob.height + currentBlob.y;
+
+	}
+	CvRect largestBlob = { minOffset.x, minOffset.y, maxOffset.x - minOffset.x,
+			maxOffset.y - minOffset.y };
+
+	largestBlob.x += inputBlob.x;
+	largestBlob.y += inputBlob.y;
+
+	inputBlob = largestBlob;
+	return true;
 
 }
 
@@ -175,8 +209,7 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib) {
 					9,
 					"row/" << row << " col/" << col << " rect/(" << rect.x << ", " << rect.y << "),(" << rect.x + rect.width << ", " << rect.y + rect.height << ")");
 
-			if (!reduceBlobToMatrix(*dib, rect) || (rect.width < minBlobWidth)
-					|| (rect.height < minBlobHeight))
+			if ((rect.width < minBlobWidth) || (rect.height < minBlobHeight))
 				continue;
 
 			BarcodeInfo * info = new BarcodeInfo();
@@ -200,7 +233,8 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib) {
 				++col) {
 			BarcodeInfo * info = barcodeInfos[row][col];
 			if (info == NULL
-				) continue;
+			)
+				continue;
 
 			CvRect & rect = barcodeInfos[row][col]->getPreProcessBoundingBox();
 			blobDib.rectangle(rect.x, rect.y, rect.width, rect.height, white);

@@ -41,6 +41,9 @@ sub decodeImage
 #print "Got barcode #: " . decodeImage("${imgDir}/001.bmp") . "\n";
 
 
+my $foundBarcodesSum = 0.0;
+my $expectedBarcodesSum = 0.0;
+
 my $decodedCount = 0.0;
 my $successCount = 0.0;
 
@@ -67,8 +70,10 @@ foreach(@images)
 
 			if(-e "${barcodesTextDir}/${fileNumber}.txt")
 			{
+				$foundBarcodesSum += `cat ${scanLibBarcodesFile} | wc -l`;
+				$expectedBarcodesSum += `cat ${barcodesTextDir}/${fileNumber}.txt | wc -l`;
+
 				if(length(`diff ${scanLibBarcodesFile} ${barcodesTextDir}/${fileNumber}.txt`) != 0){
-				
 					print "Barcodes Mismatch: ${scanLibBarcodesFile} && ${barcodesTextDir}/${fileNumber}.txt differ.\n";			
 				}
 				else{
@@ -90,6 +95,7 @@ foreach(@images)
 	}
 }
 print "\n";
+print "Total Barcodes Found: ($foundBarcodesSum/$expectedBarcodesSum).\n";
 print "Matched Barcodes: ($successCount/$decodedCount).\n";
 print "Accuracy: " . $successCount/$decodedCount*100.0 . "%\n";
 if($successCount != $decodedCount){
