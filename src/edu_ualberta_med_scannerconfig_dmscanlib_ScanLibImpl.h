@@ -30,56 +30,60 @@ extern "C" {
  * Method:    slIsTwainAvailable
  * Signature: ()Ledu/ualberta/med/scannerconfig/dmscanlib/ScanLibResult;
  */
-JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLibImpl_slIsTwainAvailable
-  (JNIEnv *, jobject);
+JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLibImpl_slIsTwainAvailable(
+		JNIEnv *, jobject);
 
 /*
  * Class:     edu_ualberta_med_scannerconfig_dmscanlib_ScanLibImpl
  * Method:    slSelectSourceAsDefault
  * Signature: ()Ledu/ualberta/med/scannerconfig/dmscanlib/ScanLibResult;
  */
-JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLibImpl_slSelectSourceAsDefault
-  (JNIEnv *, jobject);
+JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLibImpl_slSelectSourceAsDefault(
+		JNIEnv *, jobject);
 
 /*
  * Class:     edu_ualberta_med_scannerconfig_dmscanlib_ScanLibImpl
  * Method:    slGetScannerCapability
  * Signature: ()Ledu/ualberta/med/scannerconfig/dmscanlib/ScanLibResult;
  */
-JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLibImpl_slGetScannerCapability
-  (JNIEnv *, jobject);
+JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLibImpl_slGetScannerCapability(
+		JNIEnv *, jobject);
 
 /*
  * Class:     edu_ualberta_med_scannerconfig_dmscanlib_ScanLibImpl
  * Method:    slScanImage
  * Signature: (JJIIDDDDLjava/lang/String;)Ledu/ualberta/med/scannerconfig/dmscanlib/ScanLibResult;
  */
-JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLibImpl_slScanImage
-  (JNIEnv *, jobject, jlong, jlong, jint, jint, jdouble, jdouble, jdouble, jdouble, jstring);
+JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLibImpl_slScanImage(
+		JNIEnv *, jobject, jlong, jlong, jint, jint, jdouble, jdouble, jdouble,
+		jdouble, jstring);
 
 /*
  * Class:     edu_ualberta_med_scannerconfig_dmscanlib_ScanLibImpl
  * Method:    slScanFlatbed
  * Signature: (JJIILjava/lang/String;)Ledu/ualberta/med/scannerconfig/dmscanlib/ScanLibResult;
  */
-JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLibImpl_slScanFlatbed
-  (JNIEnv *, jobject, jlong, jlong, jint, jint, jstring);
+JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLibImpl_slScanFlatbed(
+		JNIEnv *, jobject, jlong, jlong, jint, jint, jstring);
 
 /*
  * Class:     edu_ualberta_med_scannerconfig_dmscanlib_ScanLibImpl
  * Method:    slDecodePlate
  * Signature: (JJIIJDDDDDJJJDDDJJJJ)Ledu/ualberta/med/scannerconfig/dmscanlib/DecodeResult;
  */
-JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLibImpl_slDecodePlate
-  (JNIEnv *, jobject, jlong, jlong, jint, jint, jlong, jdouble, jdouble, jdouble, jdouble, jdouble, jlong, jlong, jlong, jdouble, jdouble, jdouble, jlong, jlong, jlong, jlong);
+JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLibImpl_slDecodePlate(
+		JNIEnv *, jobject, jlong, jlong, jint, jint, jlong, jdouble, jdouble,
+		jdouble, jdouble, jdouble, jlong, jlong, jlong, jdouble, jdouble,
+		jdouble, jlong, jlong, jlong, jlong);
 
 /*
  * Class:     edu_ualberta_med_scannerconfig_dmscanlib_ScanLibImpl
  * Method:    slDecodeImage
  * Signature: (JJLjava/lang/String;DJJJDDDJJJJ)Ledu/ualberta/med/scannerconfig/dmscanlib/DecodeResult;
  */
-JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLibImpl_slDecodeImage
-  (JNIEnv *, jobject, jlong, jlong, jstring, jdouble, jlong, jlong, jlong, jdouble, jdouble, jdouble, jlong, jlong, jlong, jlong);
+JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLibImpl_slDecodeImage(
+		JNIEnv *, jobject, jlong, jlong, jstring, jdouble, jlong, jlong, jlong,
+		jdouble, jdouble, jdouble, jlong, jlong, jlong, jlong);
 
 #ifdef __cplusplus
 }

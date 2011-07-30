@@ -53,10 +53,10 @@
 #endif
 
 #include "DmScanLib.h"
+#include "DmScanLibInternal.h"
 #include "SimpleOpt.h"
 #include "UaLogger.h"
 #include "TestApp.h"
-#include "DmScanLibCommon.h"
 
 #include <iostream>
 #include <vector>

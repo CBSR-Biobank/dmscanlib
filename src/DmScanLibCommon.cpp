@@ -33,12 +33,12 @@
 #include <stdio.h>
 
 #include "DmScanLib.h"
+#include "DmScanLibInternal.h"
 #include "UaLogger.h"
 #include "UaAssert.h"
 #include "Decoder.h"
 #include "Dib.h"
 #include "TimeUtil.h"
-#include "DmScanLibCommon.h"
 
 
 #if defined(USE_NVWA)
@@ -53,7 +53,7 @@ slTime timediff;
 
 static bool loggingInitialized = false;
 
-void configLogging(unsigned level, bool useFile = true) {
+void configLogging(unsigned level, bool useFile) {
 	if (!loggingInitialized) {
 		if (useFile) {
 			ua::LoggerSinkFile::Instance().setFile("dmscanlib.log");
