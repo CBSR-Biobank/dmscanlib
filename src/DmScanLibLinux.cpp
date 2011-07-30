@@ -36,7 +36,7 @@
 using namespace std;
 
 int slIsTwainAvailable() {
-    return SC_TWAIN_UAVAIL;
+    return SC_TWAIN_UNAVAIL;
 }
 
 int slSelectSourceAsDefault() {

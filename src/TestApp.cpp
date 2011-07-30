@@ -251,8 +251,8 @@ TestApp::TestApp(int argc, char ** argv) {
 	case SC_FAIL:
 		cout << "return code is: SC_FAIL" << endl;
 		break;
-	case SC_TWAIN_UAVAIL:
-		cout << "return code is: SC_TWAIN_UAVAIL" << endl;
+	case SC_TWAIN_UNAVAIL:
+		cout << "return code is: SC_TWAIN_UNAVAIL" << endl;
 		break;
 	case SC_INVALID_DPI:
 		cout << "return code is: SC_INVALID_DPI" << endl;

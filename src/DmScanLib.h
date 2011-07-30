@@ -47,7 +47,7 @@ const unsigned MAX_PLATE_NUM = 5;
  */
 const int SC_SUCCESS = 0;
 const int SC_FAIL = -1;
-const int SC_TWAIN_UAVAIL = -2;
+const int SC_TWAIN_UNAVAIL = -2;
 const int SC_INVALID_DPI = -3;
 const int SC_INVALID_PLATE_NUM = -4;
 const int SC_INVALID_VALUE = -5;
@@ -64,7 +64,7 @@ const unsigned CAP_IS_SCANNER = 0x10;
 /**
  * Queries the availability of the TWAIN driver.
  *
- * @return SC_SUCCESS if available, and SC_TWAIN_UAVAIL if unavailable.
+ * @return SC_SUCCESS if available, and SC_TWAIN_UNAVAIL if unavailable.
  */
 EXPORT int slIsTwainAvailable();
 

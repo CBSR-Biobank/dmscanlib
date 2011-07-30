@@ -59,7 +59,7 @@ int slIsTwainAvailable() {
     if (ig.twainAvailable()) {
         return SC_SUCCESS;
     }
-    return SC_TWAIN_UAVAIL;
+    return SC_TWAIN_UNAVAIL;
 }
 
 int slSelectSourceAsDefault() {
