@@ -30,8 +30,6 @@
 #pragma warning(disable : 4996)
 #endif
 
-#include <stdio.h>
-
 #include "DmScanLib.h"
 #include "DmScanLibInternal.h"
 #include "UaLogger.h"
@@ -41,11 +39,13 @@
 #include "TimeUtil.h"
 
 
+#include <stdio.h>
+
 #if defined(USE_NVWA)
 #   include "debug_new.h"
 #endif
 
-using namespace std;
+//using namespace std;
 
 slTime starttime; // for debugging
 slTime endtime;
