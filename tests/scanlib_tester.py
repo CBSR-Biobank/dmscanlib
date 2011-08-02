@@ -28,7 +28,8 @@ class Barcode(object):
 	
 		matches = re.match(r".*message/(.*?) tlCorner/\((.*?)\).*brCorner/\((.*?)\)\n",message)
 
-		if matches == None or matches.group(1) == None or matches.group(2) == None or matches.group(3) == None: 
+		if matches == None or matches.group(1) == None or \
+		   matches.group(2) == None or matches.group(3) == None: 
 			return None
 
 		tlCorner = matches.group(2).split(",")
@@ -345,6 +346,7 @@ def main(argv):
 	
 	if sum(map(lambda x: int(x),[test,compare,show])) != 1: 
 		print "Invalid Options specified. Mutliple mode were selected."
+		usage()
 		exitProgramBad()
 
 	if test and imageDir != "" and resultsFileOutput != "":
@@ -366,6 +368,7 @@ def main(argv):
 
 	else:
 		print "Invalid Options specified."
+		usage()
 		exitProgramBad()
 
 if __name__ == "__main__":
