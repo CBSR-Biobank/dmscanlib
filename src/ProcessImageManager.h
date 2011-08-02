@@ -63,6 +63,7 @@ private:
 	void threadHandler(vector<BarcodeThread *> & threads);
 	void threadProcessRange(vector<BarcodeThread *> & threads, unsigned int first, unsigned int last);
 
+	void clearAllThreads();
 };
 
 #endif /* PROCESS_IMAGE_MANAGER_H_ */

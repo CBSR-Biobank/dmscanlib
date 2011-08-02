@@ -87,91 +87,94 @@ Decoder::~Decoder() {
 // FIXME make this function work correclty.
 // reduces the blob to a smaller region (matrix outline)
 bool Decoder::reduceBlobToMatrix(Dib & dib, CvRect & inputBlob) {
-	Dib * croppedDib = Dib::crop(dib, inputBlob.x, inputBlob.y,
-			inputBlob.x + inputBlob.width, inputBlob.y + inputBlob.height);
-	UA_ASSERT_NOT_NULL(croppedDib->getPixelBuffer());
 
-	auto_ptr<IplImageContainer> img = croppedDib->generateIplImage();
-	UA_ASSERT_NOT_NULL(img->getIplImage());
-
-	delete croppedDib;
-
-	for (int i = 0; i < 5; i++) {
-		cvSmooth(img->getIplImage(), img->getIplImage(), CV_GAUSSIAN, 11, 11);
-	}
-	cvThreshold(img->getIplImage(), img->getIplImage(), 50, 255,
-			CV_THRESH_BINARY);
-
-	/* ---- Find the test tube by applying circle-based pattern recognition -----*/
-	CvMemStorage* storage = cvCreateMemStorage(0);
-
-	CvSeq* results = cvHoughCircles(img->getIplImage(), storage,
-			CV_HOUGH_GRADIENT, 1, //reciprocal resolution scalar multiplier
-			inputBlob.width / 6);
-
-	for (int i = 0; i < results->total; i++) {
-
-		printf("found circle\n");
-
-		float* p = (float*) cvGetSeqElem(results, i);
-		CvRect largestBlob = { cvRound(p[0]) - cvRound(p[2]), cvRound(p[1])
-				- cvRound(p[2]), cvRound(p[0]) + cvRound(p[2]), cvRound(p[1])
-				+ cvRound(p[2]) };
-		largestBlob.x += inputBlob.x;
-		largestBlob.y += inputBlob.y;
-
-		inputBlob = largestBlob;
-		return true;
-
-	}
 	return true;
+	/*
+	 Dib * croppedDib = Dib::crop(dib, inputBlob.x, inputBlob.y,
+	 inputBlob.x + inputBlob.width, inputBlob.y + inputBlob.height);
+	 UA_ASSERT_NOT_NULL(croppedDib->getPixelBuffer());
 
-	CBlobResult blobs(img->getIplImage(), NULL, 0);
+	 auto_ptr<IplImageContainer> img = croppedDib->generateIplImage();
+	 UA_ASSERT_NOT_NULL(img->getIplImage());
 
-	switch (img->getHorizontalResolution()) {
-	case 300:
-		blobs.Filter(blobs, B_EXCLUDE, CBlobGetArea(), B_LESS, 840);
-		break;
-	case 400:
-		blobs.Filter(blobs, B_EXCLUDE, CBlobGetArea(), B_LESS, 1900);
-		break;
-	case 600:
-		blobs.Filter(blobs, B_EXCLUDE, CBlobGetArea(), B_LESS, 2400);
-		break;
-	}
+	 delete croppedDib;
 
-	/* ---- Grabs the largest blob in the blobs vector -----*/
+	 for (int i = 0; i < 5; i++) {
+	 cvSmooth(img->getIplImage(), img->getIplImage(), CV_GAUSSIAN, 11, 11);
+	 }
+	 cvThreshold(img->getIplImage(), img->getIplImage(), 50, 255,
+	 CV_THRESH_BINARY);
 
-	CvPoint minOffset = cvPoint(inputBlob.width, inputBlob.height);
-	CvPoint maxOffset = cvPoint(0,0);
+	 //* ---- Find the test tube by applying circle-based pattern recognition -----
+	 CvMemStorage* storage = cvCreateMemStorage(0);
 
-	for (int i = 0, n = blobs.GetNumBlobs(); i < n; i++) {
+	 CvSeq* results = cvHoughCircles(img->getIplImage(), storage,
+	 CV_HOUGH_GRADIENT, 1, //reciprocal resolution scalar multiplier
+	 inputBlob.width / 6);
 
-		CBlob * blob = blobs.GetBlob(i);
-		CvRect & currentBlob = blob->GetBoundingBox();
+	 for (int i = 0; i < results->total; i++) {
 
-		if (currentBlob.x < minOffset.x)
-			minOffset.x = currentBlob.x;
+	 printf("found circle\n");
 
-		if (currentBlob.y < minOffset.y)
-			minOffset.y = currentBlob.y;
+	 float* p = (float*) cvGetSeqElem(results, i);
+	 CvRect largestBlob = { cvRound(p[0]) - cvRound(p[2]), cvRound(p[1])
+	 - cvRound(p[2]), cvRound(p[0]) + cvRound(p[2]), cvRound(p[1])
+	 + cvRound(p[2]) };
+	 largestBlob.x += inputBlob.x;
+	 largestBlob.y += inputBlob.y;
 
-		if (currentBlob.width + currentBlob.x > maxOffset.x)
-			maxOffset.x = currentBlob.width + currentBlob.x;
+	 inputBlob = largestBlob;
+	 return true;
 
-		if (currentBlob.height + currentBlob.height > maxOffset.y)
-			maxOffset.y = currentBlob.height + currentBlob.y;
+	 }
 
-	}
-	CvRect largestBlob = { minOffset.x, minOffset.y, maxOffset.x - minOffset.x,
-			maxOffset.y - minOffset.y };
 
-	largestBlob.x += inputBlob.x;
-	largestBlob.y += inputBlob.y;
+	 CBlobResult blobs(img->getIplImage(), NULL, 0);
 
-	inputBlob = largestBlob;
-	return true;
+	 switch (img->getHorizontalResolution()) {
+	 case 300:
+	 blobs.Filter(blobs, B_EXCLUDE, CBlobGetArea(), B_LESS, 840);
+	 break;
+	 case 400:
+	 blobs.Filter(blobs, B_EXCLUDE, CBlobGetArea(), B_LESS, 1900);
+	 break;
+	 case 600:
+	 blobs.Filter(blobs, B_EXCLUDE, CBlobGetArea(), B_LESS, 2400);
+	 break;
+	 }
 
+	 //* ---- Grabs the largest blob in the blobs vector -----
+
+	 CvPoint minOffset = cvPoint(inputBlob.width, inputBlob.height);
+	 CvPoint maxOffset = cvPoint(0,0);
+
+	 for (int i = 0, n = blobs.GetNumBlobs(); i < n; i++) {
+
+	 CBlob * blob = blobs.GetBlob(i);
+	 CvRect & currentBlob = blob->GetBoundingBox();
+
+	 if (currentBlob.x < minOffset.x)
+	 minOffset.x = currentBlob.x;
+
+	 if (currentBlob.y < minOffset.y)
+	 minOffset.y = currentBlob.y;
+
+	 if (currentBlob.width + currentBlob.x > maxOffset.x)
+	 maxOffset.x = currentBlob.width + currentBlob.x;
+
+	 if (currentBlob.height + currentBlob.height > maxOffset.y)
+	 maxOffset.y = currentBlob.height + currentBlob.y;
+
+	 }
+	 CvRect largestBlob = { minOffset.x, minOffset.y, maxOffset.x - minOffset.x,
+	 maxOffset.y - minOffset.y };
+
+	 largestBlob.x += inputBlob.x;
+	 largestBlob.y += inputBlob.y;
+
+	 inputBlob = largestBlob;
+	 return true;
+	 */
 }
 
 Decoder::ProcessResult Decoder::processImageRegions(Dib * dib) {

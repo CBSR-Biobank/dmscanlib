@@ -402,7 +402,7 @@ JNIEXPORT jobject JNICALL Java_DmScanlib_slScanFlatbed(JNIEnv *env, jclass obj,
 
 	jobject returnObject = createScanlibDataObject(
 			env,
-			NULL,
+			0,
 			(char *) filename,
 			scanSettings.getDpi() + scanSettings.getBrightness()
 					+ scanSettings.getContrast() + verbose,(char *)"SC_SUCCESS");
@@ -424,7 +424,7 @@ JNIEXPORT jobject JNICALL Java_DmScanlib_slScanImage(JNIEnv *env, jclass obj,
 
 	jobject returnObject = createScanlibDataObject(
 			env,
-			NULL,
+			0,
 			(char *) filename,
 			scanSettings.getDpi() + scanSettings.getBrightness()
 					+ scanSettings.getContrast() + scanCoordinates.getBottom()
@@ -462,7 +462,7 @@ JNIEXPORT jobject JNICALL Java_DmScanlib_slDecodePlate(JNIEnv *env, jclass obj,
 
 	jobject returnObject = createScanlibDataObject(
 			env,
-			NULL,
+			0,
 			(char *) "henry jones",
 			scanSettings.getDpi() + scanSettings.getBrightness()
 					+ scanSettings.getContrast() + scanCoordinates.getBottom()
@@ -500,7 +500,7 @@ JNIEXPORT jobject JNICALL Java_DmScanlib_slDecodeImage(JNIEnv *env, jclass obj,
 
 	jobject returnObject = createScanlibDataObject(
 			env,
-			NULL,
+			0,
 			(char *) filename,
 			decodeProfileSumInt + decodeSettingsDbl + decodeSettingsInt
 					+ vertical + verbose,(char *)"SC_SUCCESS");
