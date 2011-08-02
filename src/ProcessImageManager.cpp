@@ -33,7 +33,8 @@
 #include <map>
 
 const unsigned ProcessImageManager::THREAD_NUM = 8;
-const unsigned ProcessImageManager::JOIN_TIMEOUT_SEC = ProcessImageManager::THREAD_NUM*2;
+const unsigned ProcessImageManager::JOIN_TIMEOUT_SEC =
+		ProcessImageManager::THREAD_NUM * 2;
 
 ProcessImageManager::ProcessImageManager(Decoder * decoder, double scanGap,
 		unsigned squareDev, unsigned edgeThresh, unsigned corrections) {
@@ -45,20 +46,25 @@ ProcessImageManager::ProcessImageManager(Decoder * decoder, double scanGap,
 }
 
 ProcessImageManager::~ProcessImageManager() {
+	clearAllThreads();
+}
+
+void ProcessImageManager::clearAllThreads() {
 	for (unsigned i = 0, n = allThreads.size(); i < n; ++i) {
 
 		delete allThreads[i];
 	}
+	allThreads.clear();
 }
 
-//inclusive first exclusive last
+//first is inclusive , last is exclusive
 void ProcessImageManager::threadProcessRange(vector<BarcodeThread *> & threads,
 		unsigned int first, unsigned int last) {
 
 	for (unsigned int i = first; i < last; i++)
 		threads[i]->start();
 
-	for (unsigned int j = first; j < last; j++){
+	for (unsigned int j = first; j < last; j++) {
 		threads[j]->join();
 	}
 
@@ -70,7 +76,6 @@ void ProcessImageManager::threadHandler(vector<BarcodeThread *> & threads) {
 			(threads.size() < THREAD_NUM ) ? threads.size() : THREAD_NUM;
 
 	unsigned int remainder = ((threads.size()) % threadCount);
-
 
 	for (unsigned int i = 0; i < threads.size() - remainder; i += threadCount) {
 		UA_DOUT(
@@ -103,9 +108,9 @@ void ProcessImageManager::generateBarcodes(Dib * dib,
 				++col) {
 
 			BarcodeInfo * info = barcodeInfos[row][col];
-			if (info == NULL
-			)
+			if (info == NULL) {
 				continue;
+			}
 
 			CvRect & rect = info->getPreProcessBoundingBox();
 
