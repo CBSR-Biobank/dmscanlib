@@ -108,7 +108,6 @@ int slDecodeCommon(unsigned plateNum, Dib & dib, double scanGap,
 		return SC_INVALID_DPI;
 	}
 
-	bool metrical = false;
 	Decoder::ProcessResult result;
 
 	PalletGrid::Orientation orientation = (
@@ -119,7 +118,7 @@ int slDecodeCommon(unsigned plateNum, Dib & dib, double scanGap,
 	unsigned gapXpixels = static_cast<unsigned>(dpi * gapX);unsigned
 	gapYpixels = static_cast<unsigned>(dpi * gapY);
 
-const	unsigned profileWords[3] = { profileA, profileB, profileC };
+	const	unsigned profileWords[3] = { profileA, profileB, profileC };
 
 	auto_ptr<PalletGrid> palletGrid(
 			new PalletGrid(orientation, dib.getWidth(), dib.getHeight(),
@@ -131,8 +130,6 @@ const	unsigned profileWords[3] = { profileA, profileB, profileC };
 
 	Decoder decoder(scanGap, squareDev, edgeThresh, corrections, cellDistance,
 			palletGrid.get());
-
-	UA_DOUT(1, 5, "DecodeCommon: metrical mode: " << metrical);
 
 	/*--- apply filters ---*/
 	auto_ptr<Dib> filteredDib(Dib::convertGrayscale(dib));

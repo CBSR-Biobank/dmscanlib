@@ -173,7 +173,8 @@
     <ClCompile Include="src\DmScanLib_wrap.c" />
     <ClCompile Include="src\DmScanLibCommon.cpp" />
     <ClCompile Include="src\DmScanLibWin32.cpp" />
-    <ClCompile Include="src\ImageGrabber.cpp" />
+    <ClCompile Include="src\edu_ualberta_med_scannerconfig_dmscanlib_ScanLibImpl.cpp" />
+    <ClCompile Include="src\ImageScanner.cpp" />
     <ClCompile Include="src\IplContainer.cpp" />
     <ClCompile Include="src\PalletGrid.cpp" />
     <ClCompile Include="src\ProcessImageManager.cpp" />
@@ -194,7 +195,8 @@
     <ClInclude Include="src\Dib.h" />
     <ClInclude Include="src\DmScanLib.h" />
     <ClInclude Include="src\DmScanLibInternal.h" />
-    <ClInclude Include="src\ImageGrabber.h" />
+    <ClInclude Include="src\edu_ualberta_med_scannerconfig_dmscanlib_ScanLibImpl.h" />
+    <ClInclude Include="src\ImageScanner.h" />
     <ClInclude Include="src\IplContainer.h" />
     <ClInclude Include="src\PalletGrid.h" />
     <ClInclude Include="src\ProcessImageManager.h" />

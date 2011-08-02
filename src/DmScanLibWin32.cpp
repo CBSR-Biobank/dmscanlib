@@ -36,7 +36,7 @@
 #include "PalletGrid.h"
 
 #ifdef WIN32
-#include "ImageGrabber.h"
+#include "ImageScanner.h"
 #endif
 
 #include <iostream>
@@ -55,7 +55,7 @@
 using namespace std;
 
 int slIsTwainAvailable() {
-    ImageGrabber ig;
+    ImageScanner ig;
     if (ig.twainAvailable()) {
         return SC_SUCCESS;
     }
@@ -63,7 +63,7 @@ int slIsTwainAvailable() {
 }
 
 int slSelectSourceAsDefault() {
-    ImageGrabber ig;
+    ImageScanner ig;
     if (ig.selectSourceAsDefault()) {
         return SC_SUCCESS;
     }
@@ -74,12 +74,12 @@ int slSelectSourceAsDefault() {
  * Please note that the 32nd bit should be ignored. 
  */
 int slGetScannerCapability() {
-    ImageGrabber ig;
+    ImageScanner ig;
     return ig.getScannerCapability();
 }
 
 int isValidDpi(int dpi) {
-    ImageGrabber ig;
+    ImageScanner ig;
     int dpiCap = ig.getScannerCapability();
     return ((dpiCap & CAP_DPI_300) && dpi == 300)
     || ((dpiCap & CAP_DPI_400) && dpi == 400)
@@ -102,7 +102,7 @@ int slScanImage(unsigned verbose, unsigned dpi, int brightness, int contrast,
             << " top/" << top << " right/" << right << " bottom/" <<
             bottom << " filename/" << filename);
 
-    ImageGrabber ig;
+    ImageScanner ig;
 
     HANDLE h = ig.acquireImage(dpi, brightness, contrast, left, top, right,
             bottom);
@@ -131,7 +131,7 @@ int slScanFlatbed(unsigned verbose, unsigned dpi, int brightness, int contrast,
             << " brightness/" << brightness << " contrast/" << contrast 
 			<< " filename/" << filename);
 
-    ImageGrabber ig;
+    ImageScanner ig;
 
     HANDLE h = ig.acquireFlatbed(dpi, brightness, contrast);
     if (h == NULL) {
@@ -171,7 +171,7 @@ int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
             << " gapY/" << gapY
             << " isVertical/" << isVertical);
 
-    ImageGrabber ig;
+    ImageScanner ig;
 
     if ((plateNum < MIN_PLATE_NUM) || (plateNum > MAX_PLATE_NUM)) {
         return SC_INVALID_PLATE_NUM;

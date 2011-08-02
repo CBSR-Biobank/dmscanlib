@@ -21,9 +21,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 /**
- * ImageGrabber singleton.
+ * ImageScanner singleton.
  *
- * See class ImageGrabber for more information.
+ * See class ImageScanner for more information.
  */
 
 
@@ -46,10 +46,10 @@ using namespace std;
  * This class interfaces with the TWAIN driver to acquire images from the
  * scanner.
  */
-class ImageGrabber {
+class ImageScanner {
 public:
-	ImageGrabber();
-	~ImageGrabber();
+	ImageScanner();
+	~ImageScanner();
 
 	bool twainAvailable();
 

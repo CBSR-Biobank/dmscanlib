@@ -43,7 +43,7 @@
 #   include "Decoder.h"
 #   include "Dib.h"
 #   include "BarcodeInfo.h"
-#   include "ImageGrabber.h"
+#   include "ImageScanner.h"
 #endif
 
 #include "DmScanLib.h"
