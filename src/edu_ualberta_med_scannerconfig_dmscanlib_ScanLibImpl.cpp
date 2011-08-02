@@ -1,15 +1,12 @@
 #include <edu_ualberta_med_scannerconfig_dmscanlib_ScanLibImpl.h>
 #include "DmScanLib.h"
 
+#include <iostream>
+
+using namespace std;
+
 jobject createScanResultObject(JNIEnv * env, int resultCode, int value) {
 	const char * message = NULL;
-
-	jclass scanLibResultClass = env->FindClass("ScanLibResult");
-
-	// run the following command to obtain method signatures from a class.
-	// javap -s -p edu.ualberta.med.scannerconfig.dmscanlib.ScanLibResult
-	jmethodID cons = env->GetMethodID(scanLibResultClass, "<init>",
-			"(IILjava/lang/String;)V");
 
 	switch (resultCode) {
 	case SC_SUCCESS:
@@ -41,7 +38,19 @@ jobject createScanResultObject(JNIEnv * env, int resultCode, int value) {
 		break;
 	}
 
-	jvalue data[4];
+	jclass scanLibResultClass = env->FindClass("edu/ualberta/med/scannerconfig/dmscanlib/ScanLibResult");
+
+	if (scanLibResultClass == NULL) {
+		cout << "class not found";
+		return NULL;
+	}
+
+	// run the following command to obtain method signatures from a class.
+	// javap -s -p edu.ualberta.med.scannerconfig.dmscanlib.ScanLibResult
+	jmethodID cons = env->GetMethodID(scanLibResultClass, "<init>",
+			"(IILjava/lang/String;)V");
+
+	jvalue data[3];
 	data[0].i = resultCode;
 	data[1].i = value;
 	data[2].l = env->NewStringUTF(message);
