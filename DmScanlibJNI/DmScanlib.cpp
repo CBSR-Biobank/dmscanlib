@@ -4,6 +4,9 @@
 
 using namespace std;
 
+
+//FIXME FIXME ERROR HANDLING AT EVERY JNI CALL!!!!!!!!!!!!!!!!!
+
 //////////////////////////////////Scan Settings/////////////////////////////////////
 class ScanSettings {
 
@@ -269,21 +272,37 @@ jobjectArray generateJStringArray(JNIEnv *env, jclass obj, char *message[],
 
 	return stringsArray;
 }
+////////////////////////////////// createReturnCodeEnumObject /////////////////////////////////////
+jobject createEnumObject(JNIEnv * env,char * enumName,char * enumValue){
+
+	jclass getEnumMethodClass = env->FindClass("DmScanlib");
+	jmethodID getEnumMethod = env->GetStaticMethodID(getEnumMethodClass, "getEnum",
+			"(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/Object;");
+
+	jvalue args[2];
+	args[0].l = env->NewStringUTF(enumName);
+	args[1].l = env->NewStringUTF(enumValue);
+
+	// run "javap -s -p ScanlibData" to obtain method signatures from a class.
+	jobject enumObject = env->CallObjectMethodA(getEnumMethodClass,getEnumMethod,args);
+	return enumObject;
+}
 
 ////////////////////////////////// createScanlibDataObject /////////////////////////////////////
 
 jobject createScanlibDataObject(JNIEnv * env, jobjectArray barcodes,
-		char * returnMessage, int returnCode) {
+		char * returnMessage, int returnCode, char * returnEnumValue) {
 
 	jclass scanlibDataClass = env->FindClass("ScanlibData");
 	jmethodID initScanlibMethod = env->GetMethodID(scanlibDataClass, "<init>",
-			"([Ljava/lang/String;Ljava/lang/String;I)V");
+			"([Ljava/lang/String;Ljava/lang/String;ILDmScanlibReturnCode;)V");
 	// run "javap -s -p ScanlibData" to obtain method signatures from a class.
 
-	jvalue data[3];
+	jvalue data[4];
 	data[0].l = barcodes;
 	data[1].l = env->NewStringUTF(returnMessage);
 	data[2].i = returnCode;
+	data[3].l =createEnumObject(env,(char *)"DmScanlibReturnCode",returnEnumValue);
 
 	jobject scanLibDataClass = env->NewObjectA(scanlibDataClass,
 			initScanlibMethod, data);
@@ -334,7 +353,7 @@ JNIEXPORT jobject JNICALL Java_DmScanlib_getScanlibDataTest(JNIEnv *env,
 			+ (int) ((scanCoordinateSumDbl + decodeSettingsDbl) * 10000) << 10;
 
 	jobject returnObject = createScanlibDataObject(env, barcodes,
-			(char *) filename, returnValue);
+			(char *) filename, returnValue,(char *)"SC_SUCCESS");
 
 	env->ReleaseStringUTFChars(_filename, filename); //DO NOT FORGET THIS
 
@@ -346,8 +365,8 @@ JNIEXPORT jobject JNICALL Java_DmScanlib_slIsTwainAvailable(JNIEnv *env,
 
 	int twainAvailable = 5;
 
-	jobject returnObject = createScanlibDataObject(env, 0,
-			(char *) "success", twainAvailable);
+	jobject returnObject = createScanlibDataObject(env, NULL,
+			(char *) "success", twainAvailable,(char *)"SC_SUCCESS");
 
 	return returnObject;
 }
@@ -357,8 +376,8 @@ JNIEXPORT jobject JNICALL Java_DmScanlib_slSelectSourceAsDefault(JNIEnv *env,
 
 	int selectSourceAsDefault = 6;
 
-	jobject returnObject = createScanlibDataObject(env, 0,
-			(char *) "scanner 1", selectSourceAsDefault);
+	jobject returnObject = createScanlibDataObject(env, NULL,
+			(char *) "scanner 1", selectSourceAsDefault,(char *)"SC_SUCCESS");
 
 	return returnObject;
 }
@@ -368,7 +387,7 @@ JNIEXPORT jobject JNICALL Java_DmScanlib_slGetScannerCapability(JNIEnv *env,
 
 	int scannerCapability = 7;
 
-	jobject returnObject = createScanlibDataObject(env, 0, (char *) "very capable", scannerCapability);
+	jobject returnObject = createScanlibDataObject(env, NULL, (char *) "very capable", scannerCapability,(char *)"SC_SUCCESS");
 
 	return returnObject;
 }
@@ -386,7 +405,7 @@ JNIEXPORT jobject JNICALL Java_DmScanlib_slScanFlatbed(JNIEnv *env, jclass obj,
 			0,
 			(char *) filename,
 			scanSettings.getDpi() + scanSettings.getBrightness()
-					+ scanSettings.getContrast() + verbose);
+					+ scanSettings.getContrast() + verbose,(char *)"SC_SUCCESS");
 
 	env->ReleaseStringUTFChars(_filename, filename);
 
@@ -410,7 +429,7 @@ JNIEXPORT jobject JNICALL Java_DmScanlib_slScanImage(JNIEnv *env, jclass obj,
 			scanSettings.getDpi() + scanSettings.getBrightness()
 					+ scanSettings.getContrast() + scanCoordinates.getBottom()
 					+ scanCoordinates.getLeft() + scanCoordinates.getRight()
-					+ scanCoordinates.getTop() + verbose);
+					+ scanCoordinates.getTop() + verbose,(char *)"SC_SUCCESS");
 
 	env->ReleaseStringUTFChars(_filename, filename);
 
@@ -450,7 +469,7 @@ JNIEXPORT jobject JNICALL Java_DmScanlib_slDecodePlate(JNIEnv *env, jclass obj,
 					+ scanCoordinates.getLeft() + scanCoordinates.getRight()
 					+ scanCoordinates.getTop() + decodeProfileSumInt
 					+ decodeSettingsDbl + decodeSettingsInt + vertical
-					+ verbose);
+					+ verbose,(char *)"SC_SUCCESS");
 
 	return returnObject;
 }
@@ -484,7 +503,7 @@ JNIEXPORT jobject JNICALL Java_DmScanlib_slDecodeImage(JNIEnv *env, jclass obj,
 			0,
 			(char *) filename,
 			decodeProfileSumInt + decodeSettingsDbl + decodeSettingsInt
-					+ vertical + verbose);
+					+ vertical + verbose,(char *)"SC_SUCCESS");
 
 	env->ReleaseStringUTFChars(_filename, filename);
 

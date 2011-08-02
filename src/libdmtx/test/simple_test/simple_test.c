@@ -14,7 +14,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
-#include <dmtx.h>
+#include <dmtx.c>
 
 int
 main(int argc, char *argv[])

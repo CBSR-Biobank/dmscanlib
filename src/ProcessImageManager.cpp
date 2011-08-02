@@ -33,7 +33,8 @@
 #include <map>
 
 const unsigned ProcessImageManager::THREAD_NUM = 8;
-const unsigned ProcessImageManager::JOIN_TIMEOUT_SEC = ProcessImageManager::THREAD_NUM*2;
+const unsigned ProcessImageManager::JOIN_TIMEOUT_SEC =
+		ProcessImageManager::THREAD_NUM * 2;
 
 ProcessImageManager::ProcessImageManager(Decoder * decoder, double scanGap,
 		unsigned squareDev, unsigned edgeThresh, unsigned corrections) {
@@ -45,44 +46,26 @@ ProcessImageManager::ProcessImageManager(Decoder * decoder, double scanGap,
 }
 
 ProcessImageManager::~ProcessImageManager() {
+	clearAllThreads();
+}
+
+void ProcessImageManager::clearAllThreads() {
 	for (unsigned i = 0, n = allThreads.size(); i < n; ++i) {
 
 		delete allThreads[i];
 	}
+	allThreads.clear();
 }
 
-//inclusive first exclusive last
+//first is inclusive , last is exclusive
 void ProcessImageManager::threadProcessRange(vector<BarcodeThread *> & threads,
 		unsigned int first, unsigned int last) {
-
-	time_t timeStart, timeEnd;
 
 	for (unsigned int i = first; i < last; i++)
 		threads[i]->start();
 
-	time(&timeStart);
-
-	while (true) {
-		bool done = true;
-		for (unsigned int j = first; j < last; j++)
-			if (!threads[j]->isFinished())
-				done = false;
-
-		if (done)
-			break;
-
-		time(&timeEnd);
-		if (difftime(timeEnd, timeStart) >= JOIN_TIMEOUT_SEC) {
-			UA_DOUT(3, 1, "Error:: Some threads have timed out.");
-			break;
-		}
-
-		//sleep 1ms
-		#ifdef WIN32
-				Sleep(1);
-		#else
-				usleep(1000);
-		#endif
+	for (unsigned int j = first; j < last; j++) {
+		threads[j]->join();
 	}
 
 }
@@ -93,8 +76,6 @@ void ProcessImageManager::threadHandler(vector<BarcodeThread *> & threads) {
 			(threads.size() < THREAD_NUM ) ? threads.size() : THREAD_NUM;
 
 	unsigned int remainder = ((threads.size()) % threadCount);
-
-	printf("remainder %d\n", remainder);
 
 	for (unsigned int i = 0; i < threads.size() - remainder; i += threadCount) {
 		UA_DOUT(
@@ -127,9 +108,9 @@ void ProcessImageManager::generateBarcodes(Dib * dib,
 				++col) {
 
 			BarcodeInfo * info = barcodeInfos[row][col];
-			if (info == NULL
-			)
+			if (info == NULL) {
 				continue;
+			}
 
 			CvRect & rect = info->getPreProcessBoundingBox();
 

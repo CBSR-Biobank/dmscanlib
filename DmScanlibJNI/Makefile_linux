@@ -11,9 +11,9 @@ LIB_FILE_NAME := DmScanlib
 JAVA_FILE_NAME := $(LIB_FILE_NAME)
 
 
-SCANLIB_OBJECTS =  DecodeProfile.class DecodeSettings.class ScanCoordinates.class ScanSettings.class ScanlibData.class
+SCANLIB_OBJECTS =  DecodeProfile.class DecodeSettings.class ScanCoordinates.class ScanSettings.class ScanlibData.class DmScanlibReturnCode.class
 JAVA_OBJECTS = $(SCANLIB_OBJECTS) $(LIB_FILE_NAME).class $(JAVA_FILE_MAIN).class 
-OBJECTS :=   $(JAVA_OBJECTS) $(LIB_FILE_NAME).h $(LIB_FILE_NAME).so
+OBJECTS :=   $(JAVA_OBJECTS) $(LIB_FILE_NAME).h lib$(LIB_FILE_NAME).so
 
 
 .PHONY : all
@@ -34,5 +34,5 @@ $(LIB_FILE_NAME).h :  $(JAVA_FILE_NAME).class
 	javah -jni $(JAVA_FILE_NAME)
 	-mv  $(JAVA_FILE_NAME).h $@
 
-$(LIB_FILE_NAME).so : $(LIB_FILE_NAME).cxx
+lib$(LIB_FILE_NAME).so : $(LIB_FILE_NAME).cpp
 	g++ -fPIC -I$(JNI_INCLUDE_PATH) -shared -o $@ $^
