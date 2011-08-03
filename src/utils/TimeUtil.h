@@ -1,5 +1,6 @@
-#ifndef UTIL_H_
-#define UTIL_H_
+#ifndef __INC_TIME_UTIL_H_
+#define __INC_TIME_UTIL_H_
+
 /*
 Dmscanlib is a software library and standalone application that scans 
 and decodes libdmtx compatible test-tubes. It is currently designed 
@@ -20,13 +21,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/*
- * Util.h
- *
- *  Created on: Jun 4, 2009
- *      Author: nelson
- */
-
 #include <string>
 #include <sstream>
 
@@ -35,6 +29,7 @@ using namespace std;
 #if defined (WIN32) && ! defined(__MINGW32__)
 typedef time_t slTime;
 #else
+#include <sys/time.h>
 typedef struct timeval slTime;
 #endif
 
@@ -58,4 +53,4 @@ string to_string(T const& value) {
 ostream & operator<<(ostream &os, slTime & tm);
 #endif
 
-#endif /* UTIL_H_ */
+#endif /* __INC_TIME_UTIL_H_ */

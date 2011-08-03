@@ -46,8 +46,7 @@
 #   include "ImageScanner.h"
 #endif
 
-#include "DmScanLib.h"
-#include "DmScanLibInternal.h"
+#include "DmScanLibSimulate.h"
 #include "SimpleOpt.h"
 #include "UaLogger.h"
 
@@ -170,7 +169,8 @@ private:
     int capability();
     int test();
 
-    static const char * INI_FILE_NAME;
+    auto_ptr<DmScanLibSimulate> dmScanLib;
+
     const char * progname;
 
     Options options;
@@ -268,19 +268,13 @@ Options::Options() {
 	profileC = (unsigned) -1;
 }
 
-const char * TestApp::INI_FILE_NAME = "dmscanlib.ini";
-
 TestApp::TestApp(int argc, char ** argv) {
 
 	progname = strrchr((char *) argv[0], DIR_SEP_CHR) + 1;
 
 	getCmdOptions(argc, argv);
 
-	ua::LoggerSinkStdout::Instance().showHeader(true);
-	if (!options.debugfile) {
-		ua::logstream.sink(ua::LoggerSinkStdout::Instance());
-	}
-	configLogging(options.debugLevel, options.debugfile);
+	dmScanLib(new DmScanLibSimulate(options.debugLevel, options.debugfile));
 
 	if (options.help) {
 		usage();
@@ -335,7 +329,7 @@ TestApp::~TestApp() {
 
 int TestApp::decode() {
 	if (options.infile != NULL) {
-		return slDecodeImage(options.debugLevel, options.plateNum,
+		return dmScanLib->decodeImage(options.debugLevel, options.plateNum,
 				options.infile, options.gap, options.squareDev,
 				options.threshold, options.corrections, options.cellDistance,
 				options.gapX, options.gapY, options.profileA, options.profileB,

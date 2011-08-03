@@ -36,7 +36,6 @@
 #include "UaAssert.h"
 #include "Decoder.h"
 #include "Dib.h"
-#include "TimeUtil.h"
 
 
 #include <stdio.h>
@@ -47,13 +46,17 @@
 
 //using namespace std;
 
-slTime starttime; // for debugging
-slTime endtime;
-slTime timediff;
+bool DmScanLib::loggingInitialized = false;
 
-static bool loggingInitialized = false;
+DmScanLib::DmScanLib(unsigned debugLevel, bool haveDebugFile) {
+	configLogging(debugLevel, haveDebugFile);
+}
 
-void configLogging(unsigned level, bool useFile) {
+DmScanLib::~DmScanLib() {
+
+}
+
+void DmScanLib::configLogging(unsigned level, bool useFile) {
 	if (!loggingInitialized) {
 		if (useFile) {
 			ua::LoggerSinkFile::Instance().setFile("dmscanlib.log");
@@ -73,14 +76,14 @@ void configLogging(unsigned level, bool useFile) {
 /*
  * Could not use C++ streams for Release version of DLL.
  */
-void saveResults(string & msg) {
+void DmScanLib::saveResults(string & msg) {
 	FILE *fh = fopen("dmscanlib.txt", "w");
 	UA_ASSERT_NOT_NULL(fh);
 	fprintf(fh, "%s", msg.c_str());
 	fclose(fh);
 }
 
-void formatCellMessages(unsigned plateNum, Decoder & decoder, string & msg) {
+void DmScanLib::formatCellMessages(unsigned plateNum, Decoder & decoder, string & msg) {
 	ostringstream out;
 	out << "#Plate,Row,Col,Barcode" << endl;
 
@@ -96,7 +99,7 @@ void formatCellMessages(unsigned plateNum, Decoder & decoder, string & msg) {
 	msg = out.str();
 }
 
-int slDecodeCommon(unsigned plateNum, Dib & dib, double scanGap,
+int DmScanLib::decodeCommon(unsigned plateNum, Dib & dib, double scanGap,
 		unsigned squareDev, unsigned edgeThresh, unsigned corrections,
 		double cellDistance, double gapX, double gapY, unsigned profileA,
 		unsigned profileB, unsigned profileC, unsigned isVertical,
@@ -165,7 +168,7 @@ int slDecodeCommon(unsigned plateNum, Dib & dib, double scanGap,
 	return SC_SUCCESS;
 }
 
-int slDecodeImage(unsigned verbose, unsigned plateNum, const char *filename,
+int DmScanLib::decodeImage(unsigned verbose, unsigned plateNum, const char *filename,
 		double scanGap, unsigned squareDev, unsigned edgeThresh,
 		unsigned corrections, double cellDistance, double gapX, double gapY,
 		unsigned profileA, unsigned profileB, unsigned profileC,
@@ -189,9 +192,8 @@ int slDecodeImage(unsigned verbose, unsigned plateNum, const char *filename,
 	Dib dib;
 	dib.readFromFile(filename);
 
-	int result = slDecodeCommon(plateNum, dib, scanGap, squareDev, edgeThresh,
+	int result = decodeCommon(plateNum, dib, scanGap, squareDev, edgeThresh,
 			corrections, cellDistance, gapX, gapY, profileA, profileB, profileC,
 			isVertical, "decode.bmp");
 	return result;
 }
-
