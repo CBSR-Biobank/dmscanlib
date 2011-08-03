@@ -11,6 +11,8 @@ except ImportError: import json
 scanlibDirectory = "../Linux-Debug"
 scanlibExecutable = "dmscanlib.exe"
 scanLibBarcodesFileName = "dmscanlib.txt"
+scanLibTimeout = 30
+
 
 class Barcode(object):
 	position = None
@@ -186,7 +188,7 @@ def runScanlib(scanLibPath,imagePath):
 
 
 	command = Command([scanLibPath,"--debug" ,"8", "-d" ,"--plate", "1" ,"-i" ,imagePath])
-	scanlibOutput = command.run(timeout=15)
+	scanlibOutput = command.run(timeout=scanLibTimeout)
 
 	if scanlibOutput == None: return None
 
