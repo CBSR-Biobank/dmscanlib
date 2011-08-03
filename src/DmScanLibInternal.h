@@ -23,15 +23,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "TimeUtil.h"
 
 #include <string>
+#include <memory>
 
 class Dib;
 class Decoder;
+class ImgScanner;
 
 using namespace std;
 
 class DmScanLib {
 public:
-	DmScanLib(unsigned debugLevel, bool haveDebugFile);
+	DmScanLib();
 	virtual ~DmScanLib();
 
 	virtual int isTwainAvailable();
@@ -62,11 +64,15 @@ protected:
 
 	void configLogging(unsigned level, bool useFile = true);
 
+	int isValidDpi(int dpi);
+
 	int decodeCommon(unsigned plateNum, Dib & dib, double scanGap,
 	        unsigned squareDev, unsigned edgeThresh, unsigned corrections,
 	        double cellDistance, double gapX, double gapY, unsigned profileA,
 	        unsigned profileB, unsigned profileC, unsigned isVertical,
 	        const char *markedDibFilename);
+
+	auto_ptr<ImgScanner> imgScanner;
 
 	slTime starttime; // for debugging
 	slTime endtime;

@@ -43,10 +43,11 @@
 #   include "Decoder.h"
 #   include "Dib.h"
 #   include "BarcodeInfo.h"
-#   include "ImageScanner.h"
+#   include "ImgScanner.h"
 #endif
 
-#include "DmScanLibSimulate.h"
+#include "DmScanLib.h"
+#include "DmScanLibInternal.h"
 #include "SimpleOpt.h"
 #include "UaLogger.h"
 
@@ -169,7 +170,7 @@ private:
     int capability();
     int test();
 
-    auto_ptr<DmScanLibSimulate> dmScanLib;
+    DmScanLib dmScanLib;
 
     const char * progname;
 
@@ -274,8 +275,6 @@ TestApp::TestApp(int argc, char ** argv) {
 
 	getCmdOptions(argc, argv);
 
-	dmScanLib(new DmScanLibSimulate(options.debugLevel, options.debugfile));
-
 	if (options.help) {
 		usage();
 		return;
@@ -329,7 +328,7 @@ TestApp::~TestApp() {
 
 int TestApp::decode() {
 	if (options.infile != NULL) {
-		return dmScanLib->decodeImage(options.debugLevel, options.plateNum,
+		return dmScanLib.decodeImage(options.debugLevel, options.plateNum,
 				options.infile, options.gap, options.squareDev,
 				options.threshold, options.corrections, options.cellDistance,
 				options.gapX, options.gapY, options.profileA, options.profileB,

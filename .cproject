@@ -120,7 +120,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="src/ImageScanner.cpp|DmScanlibJNI|src/libdmtx/dmtxencodestream.c|src/libdmtx/dmtxencodescheme.c|src/libdmtx/dmtxencodeoptimize.c|src/libdmtx/dmtxencodeedifact.c|src/libdmtx/dmtxencodec40textx12.c|src/libdmtx/dmtxencodebase256.c|src/libdmtx/dmtxencodeascii.c|src/libdmtx/dmtxdecodescheme.c|src/libdmtx/dmtxbytelist.c|src/libdmtx/test|scripts|src/DmScanLibWin32.cpp|src/utils/TimeUtilWin32.cpp|src/nvwa|src/libdmtx/dmtxvector2.c|src/libdmtx/dmtxtime.c|src/libdmtx/dmtxsymbol.c|src/libdmtx/dmtxstatic.h|src/libdmtx/dmtxscangrid.c|src/libdmtx/dmtxregion.c|src/libdmtx/dmtxreedsol.c|src/libdmtx/dmtxplacemod.c|src/libdmtx/dmtxmessage.c|src/libdmtx/dmtxmatrix3.c|src/libdmtx/dmtximage.c|src/libdmtx/dmtxfec.c|src/libdmtx/dmtxencode.c|src/libdmtx/dmtxdecode.c|src/DmScanLib_wrap.c|src/ImageGrabber.h|src/ImageGrabber.cpp|libdmtx/dmtxvector2.c|libdmtx/dmtxtime.c|libdmtx/dmtxsymbol.c|libdmtx/dmtxstatic.h|libdmtx/dmtxscangrid.c|libdmtx/dmtxregion.c|libdmtx/dmtxreedsol.c|libdmtx/dmtxplacemod.c|libdmtx/dmtxmessage.c|libdmtx/dmtxmatrix3.c|libdmtx/dmtximage.c|libdmtx/dmtxfec.c|libdmtx/dmtxencode.c|libdmtx/dmtxdecode.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="src/ImgScannerImpl.cpp|src/ImageScanner.cpp|DmScanlibJNI|src/libdmtx/dmtxencodestream.c|src/libdmtx/dmtxencodescheme.c|src/libdmtx/dmtxencodeoptimize.c|src/libdmtx/dmtxencodeedifact.c|src/libdmtx/dmtxencodec40textx12.c|src/libdmtx/dmtxencodebase256.c|src/libdmtx/dmtxencodeascii.c|src/libdmtx/dmtxdecodescheme.c|src/libdmtx/dmtxbytelist.c|src/libdmtx/test|scripts|src/DmScanLibWin32.cpp|src/utils/TimeUtilWin32.cpp|src/nvwa|src/libdmtx/dmtxvector2.c|src/libdmtx/dmtxtime.c|src/libdmtx/dmtxsymbol.c|src/libdmtx/dmtxstatic.h|src/libdmtx/dmtxscangrid.c|src/libdmtx/dmtxregion.c|src/libdmtx/dmtxreedsol.c|src/libdmtx/dmtxplacemod.c|src/libdmtx/dmtxmessage.c|src/libdmtx/dmtxmatrix3.c|src/libdmtx/dmtximage.c|src/libdmtx/dmtxfec.c|src/libdmtx/dmtxencode.c|src/libdmtx/dmtxdecode.c|src/DmScanLib_wrap.c|src/ImageGrabber.h|src/ImageGrabber.cpp|libdmtx/dmtxvector2.c|libdmtx/dmtxtime.c|libdmtx/dmtxsymbol.c|libdmtx/dmtxstatic.h|libdmtx/dmtxscangrid.c|libdmtx/dmtxregion.c|libdmtx/dmtxreedsol.c|libdmtx/dmtxplacemod.c|libdmtx/dmtxmessage.c|libdmtx/dmtxmatrix3.c|libdmtx/dmtximage.c|libdmtx/dmtxfec.c|libdmtx/dmtxencode.c|libdmtx/dmtxdecode.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -130,18 +130,6 @@
 				<doc-comment-owner id="org.eclipse.cdt.ui.doxygen">
 					<path value=""/>
 				</doc-comment-owner>
-			</storageModule>
-			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets">
-				<buildTargets>
-					<target name="all" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
-						<buildCommand>make</buildCommand>
-						<buildArguments/>
-						<buildTarget>all</buildTarget>
-						<stopOnError>true</stopOnError>
-						<useDefaultCommand>true</useDefaultCommand>
-						<runAllBuilders>true</runAllBuilders>
-					</target>
-				</buildTargets>
 			</storageModule>
 		</cconfiguration>
 		<cconfiguration id="cdt.managedbuild.config.gnu.mingw.so.debug.409171940.839493413">
@@ -242,18 +230,6 @@
 					<path value=""/>
 				</doc-comment-owner>
 			</storageModule>
-			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets">
-				<buildTargets>
-					<target name="all" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
-						<buildCommand>make</buildCommand>
-						<buildArguments/>
-						<buildTarget>all</buildTarget>
-						<stopOnError>true</stopOnError>
-						<useDefaultCommand>true</useDefaultCommand>
-						<runAllBuilders>true</runAllBuilders>
-					</target>
-				</buildTargets>
-			</storageModule>
 		</cconfiguration>
 		<cconfiguration id="cdt.managedbuild.config.gnu.mingw.so.debug.409171940.839493413.1028034454">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="cdt.managedbuild.config.gnu.mingw.so.debug.409171940.839493413.1028034454" moduleId="org.eclipse.cdt.core.settings" name="Win32-Release-Standalone">
@@ -331,18 +307,6 @@
 				<doc-comment-owner id="org.eclipse.cdt.ui.doxygen">
 					<path value=""/>
 				</doc-comment-owner>
-			</storageModule>
-			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets">
-				<buildTargets>
-					<target name="all" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
-						<buildCommand>make</buildCommand>
-						<buildArguments/>
-						<buildTarget>all</buildTarget>
-						<stopOnError>true</stopOnError>
-						<useDefaultCommand>true</useDefaultCommand>
-						<runAllBuilders>true</runAllBuilders>
-					</target>
-				</buildTargets>
 			</storageModule>
 		</cconfiguration>
 		<cconfiguration id="cdt.managedbuild.config.gnu.mingw.so.debug.409171940.946229780.1547197143">
@@ -432,7 +396,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="src/ImageScanner.cpp|DmScanlibJNI|src/libdmtx/dmtxencodestream.c|src/libdmtx/dmtxencodescheme.c|src/libdmtx/dmtxencodeoptimize.c|src/libdmtx/dmtxencodeedifact.c|src/libdmtx/dmtxencodec40textx12.c|src/libdmtx/dmtxencodebase256.c|src/libdmtx/dmtxencodeascii.c|src/libdmtx/dmtxdecodescheme.c|src/libdmtx/dmtxbytelist.c|src/libdmtx/test|scripts|src/DmScanLibWin32.cpp|src/utils/TimeUtilWin32.cpp|src/nvwa|src/libdmtx/dmtxvector2.c|src/libdmtx/dmtxtime.c|src/libdmtx/dmtxsymbol.c|src/libdmtx/dmtxstatic.h|src/libdmtx/dmtxscangrid.c|src/libdmtx/dmtxregion.c|src/libdmtx/dmtxreedsol.c|src/libdmtx/dmtxplacemod.c|src/libdmtx/dmtxmessage.c|src/libdmtx/dmtxmatrix3.c|src/libdmtx/dmtximage.c|src/libdmtx/dmtxfec.c|src/libdmtx/dmtxencode.c|src/libdmtx/dmtxdecode.c|src/DmScanLib_wrap.c|src/ImageGrabber.h|src/ImageGrabber.cpp|libdmtx/dmtxvector2.c|libdmtx/dmtxtime.c|libdmtx/dmtxsymbol.c|libdmtx/dmtxstatic.h|libdmtx/dmtxscangrid.c|libdmtx/dmtxregion.c|libdmtx/dmtxreedsol.c|libdmtx/dmtxplacemod.c|libdmtx/dmtxmessage.c|libdmtx/dmtxmatrix3.c|libdmtx/dmtximage.c|libdmtx/dmtxfec.c|libdmtx/dmtxencode.c|libdmtx/dmtxdecode.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="src/ImgScannerImpl.cpp|src/ImageScanner.cpp|DmScanlibJNI|src/libdmtx/dmtxencodestream.c|src/libdmtx/dmtxencodescheme.c|src/libdmtx/dmtxencodeoptimize.c|src/libdmtx/dmtxencodeedifact.c|src/libdmtx/dmtxencodec40textx12.c|src/libdmtx/dmtxencodebase256.c|src/libdmtx/dmtxencodeascii.c|src/libdmtx/dmtxdecodescheme.c|src/libdmtx/dmtxbytelist.c|src/libdmtx/test|scripts|src/DmScanLibWin32.cpp|src/utils/TimeUtilWin32.cpp|src/nvwa|src/libdmtx/dmtxvector2.c|src/libdmtx/dmtxtime.c|src/libdmtx/dmtxsymbol.c|src/libdmtx/dmtxstatic.h|src/libdmtx/dmtxscangrid.c|src/libdmtx/dmtxregion.c|src/libdmtx/dmtxreedsol.c|src/libdmtx/dmtxplacemod.c|src/libdmtx/dmtxmessage.c|src/libdmtx/dmtxmatrix3.c|src/libdmtx/dmtximage.c|src/libdmtx/dmtxfec.c|src/libdmtx/dmtxencode.c|src/libdmtx/dmtxdecode.c|src/DmScanLib_wrap.c|src/ImageGrabber.h|src/ImageGrabber.cpp|libdmtx/dmtxvector2.c|libdmtx/dmtxtime.c|libdmtx/dmtxsymbol.c|libdmtx/dmtxstatic.h|libdmtx/dmtxscangrid.c|libdmtx/dmtxregion.c|libdmtx/dmtxreedsol.c|libdmtx/dmtxplacemod.c|libdmtx/dmtxmessage.c|libdmtx/dmtxmatrix3.c|libdmtx/dmtximage.c|libdmtx/dmtxfec.c|libdmtx/dmtxencode.c|libdmtx/dmtxdecode.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -442,18 +406,6 @@
 				<doc-comment-owner id="org.eclipse.cdt.ui.doxygen">
 					<path value=""/>
 				</doc-comment-owner>
-			</storageModule>
-			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets">
-				<buildTargets>
-					<target name="all" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
-						<buildCommand>make</buildCommand>
-						<buildArguments/>
-						<buildTarget>all</buildTarget>
-						<stopOnError>true</stopOnError>
-						<useDefaultCommand>true</useDefaultCommand>
-						<runAllBuilders>true</runAllBuilders>
-					</target>
-				</buildTargets>
 			</storageModule>
 		</cconfiguration>
 	</storageModule>
@@ -1874,5 +1826,17 @@
 				</scannerInfoProvider>
 			</profile>
 		</scannerConfigBuildInfo>
+	</storageModule>
+	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets">
+		<buildTargets>
+			<target name="all" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>make</buildCommand>
+				<buildArguments/>
+				<buildTarget>all</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>true</useDefaultCommand>
+				<runAllBuilders>true</runAllBuilders>
+			</target>
+		</buildTargets>
 	</storageModule>
 </cproject>

@@ -32,11 +32,12 @@
 
 #include "DmScanLib.h"
 #include "DmScanLibInternal.h"
+#include "ImgScannerFactory.h"
+#include "ImgScanner.h"
 #include "UaLogger.h"
 #include "UaAssert.h"
 #include "Decoder.h"
 #include "Dib.h"
-
 
 #include <stdio.h>
 
@@ -48,12 +49,37 @@
 
 bool DmScanLib::loggingInitialized = false;
 
-DmScanLib::DmScanLib(unsigned debugLevel, bool haveDebugFile) {
-	configLogging(debugLevel, haveDebugFile);
+DmScanLib::DmScanLib() {
+	imgScanner = ImgScannerFactory::getImgScanner();
 }
 
 DmScanLib::~DmScanLib() {
 
+}
+
+int DmScanLib::isTwainAvailable() {
+	if (imgScanner->twainAvailable()) {
+		return SC_SUCCESS;
+	}
+	return SC_TWAIN_UNAVAIL;
+}
+
+int DmScanLib::selectSourceAsDefault() {
+	if (imgScanner->selectSourceAsDefault()) {
+		return SC_SUCCESS;
+	}
+	return SC_FAIL;
+}
+
+int DmScanLib::getScannerCapability() {
+	return imgScanner->getScannerCapability();
+}
+
+int DmScanLib::isValidDpi(int dpi) {
+	int dpiCap = imgScanner->getScannerCapability();
+	return ((dpiCap & CAP_DPI_300) && dpi == 300)
+			|| ((dpiCap & CAP_DPI_400) && dpi == 400)
+			|| ((dpiCap & CAP_DPI_600) && dpi == 600);
 }
 
 void DmScanLib::configLogging(unsigned level, bool useFile) {
@@ -83,7 +109,8 @@ void DmScanLib::saveResults(string & msg) {
 	fclose(fh);
 }
 
-void DmScanLib::formatCellMessages(unsigned plateNum, Decoder & decoder, string & msg) {
+void DmScanLib::formatCellMessages(unsigned plateNum, Decoder & decoder,
+		string & msg) {
 	ostringstream out;
 	out << "#Plate,Row,Col,Barcode" << endl;
 
@@ -91,12 +118,141 @@ void DmScanLib::formatCellMessages(unsigned plateNum, Decoder & decoder, string 
 		for (unsigned col = 0; col < PalletGrid::MAX_COLS; ++col) {
 			const char * msg = decoder.getBarcode(row, col);
 			if (msg == NULL
-				) continue;
+			)
+				continue;
 			out << plateNum << "," << static_cast<char>('A' + row) << ","
 					<< (col + 1) << "," << msg << endl;
 		}
 	}
 	msg = out.str();
+}
+
+int DmScanLib::scanImage(unsigned verbose, unsigned dpi, int brightness,
+		int contrast, double left, double top, double right, double bottom,
+		const char *filename) {
+	configLogging(verbose);
+	if (filename == NULL) {
+		UA_DOUT(1, 3, "slScanImage: no file name specified");
+		return SC_FAIL;
+	}
+
+	UA_DOUT(
+			1,
+			3,
+			"slScanImage: dpi/" << dpi << " brightness/" << brightness << " contrast/" << contrast << " left/" << left << " top/" << top << " right/" << right << " bottom/" << bottom << " filename/" << filename);
+
+	HANDLE h = imgScanner->acquireImage(dpi, brightness, contrast, left, top,
+			right, bottom);
+	if (h == NULL) {
+		return imgScanner->getErrorCode();
+	}
+	Dib dib;
+	dib.readFromHandle(h);
+	if (dib.getDpi() != dpi) {
+		return SC_INCORRECT_DPI_SCANNED;
+	}
+	dib.writeToFile(filename);
+	imgScanner->freeImage(h);
+	return SC_SUCCESS;
+}
+int DmScanLib::scanFlatbed(unsigned verbose, unsigned dpi, int brightness,
+		int contrast, const char *filename) {
+	configLogging(verbose);
+	if (filename == NULL) {
+		UA_DOUT(1, 3, "slScanFlatbed: no file name specified");
+		return SC_FAIL;
+	}
+
+	UA_DOUT(
+			1,
+			3,
+			"slScanFlatbed: dpi/" << dpi << " brightness/" << brightness << " contrast/" << contrast << " filename/" << filename);
+
+	HANDLE h = imgScanner->acquireFlatbed(dpi, brightness, contrast);
+	if (h == NULL) {
+		return imgScanner->getErrorCode();
+	}
+	Dib dib;
+	dib.readFromHandle(h);
+	if (dib.getDpi() != dpi) {
+		return SC_INCORRECT_DPI_SCANNED;
+	}
+	dib.writeToFile(filename);
+	imgScanner->freeImage(h);
+	return SC_SUCCESS;
+}
+
+int DmScanLib::decodePlate(unsigned verbose, unsigned dpi, int brightness,
+		int contrast, unsigned plateNum, double left, double top, double right,
+		double bottom, double scanGap, unsigned squareDev, unsigned edgeThresh,
+		unsigned corrections, double cellDistance, double gapX, double gapY,
+		unsigned profileA, unsigned profileB, unsigned profileC,
+		unsigned isVertical) {
+	configLogging(verbose);
+	UA_DOUT(
+			1,
+			3,
+			"slDecodePlate: dpi/" << dpi << " brightness/" << brightness << " contrast/" << contrast << " plateNum/" << plateNum << " left/" << left << " top/" << top << " right/" << right << " bottom/" << bottom << " scanGap/" << scanGap << " squareDev/" << squareDev << " edgeThresh/" << edgeThresh << " corrections/" << corrections << " cellDistance/" << cellDistance << " gapX/" << gapX << " gapY/" << gapY << " isVertical/" << isVertical);
+
+	if ((plateNum < MIN_PLATE_NUM) || (plateNum > MAX_PLATE_NUM)) {
+		return SC_INVALID_PLATE_NUM;
+	}
+
+	HANDLE h;
+	int result;
+	Dib dib;
+
+	Util::getTime(starttime);
+	h = imgScanner->acquireImage(dpi, brightness, contrast, left, top, right,
+			bottom);
+	if (h == NULL) {
+		UA_DOUT(1, 1, "could not acquire plate image: " << plateNum);
+		return imgScanner->getErrorCode();
+	}
+
+	dib.readFromHandle(h);
+	if (dib.getDpi() != dpi) {
+		return SC_INCORRECT_DPI_SCANNED;
+	}
+
+	dib.writeToFile("scanned.bmp");
+	result = decodeCommon(plateNum, dib, scanGap, squareDev, edgeThresh,
+			corrections, cellDistance, gapX, gapY, profileA, profileB, profileC,
+			isVertical, "decode.bmp");
+
+	imgScanner->freeImage(h);
+	UA_DOUT(1, 1, "slDecodeCommon returned: " << result);
+	return result;
+}
+
+int DmScanLib::decodeImage(unsigned verbose, unsigned plateNum,
+		const char *filename, double scanGap, unsigned squareDev,
+		unsigned edgeThresh, unsigned corrections, double cellDistance,
+		double gapX, double gapY, unsigned profileA, unsigned profileB,
+		unsigned profileC, unsigned isVertical) {
+	configLogging(verbose);
+	UA_DOUT(
+			1,
+			3,
+			"slDecodeImage: plateNum/" << plateNum << " filename/" << filename << " scanGap/" << scanGap << " squareDev/" << squareDev << " edgeThresh/" << edgeThresh << " corrections/" << corrections << " cellDistance/" << cellDistance << " gapX/" << gapX << " gapY/" << gapY << " isVertical/" << isVertical);
+
+	if ((plateNum < MIN_PLATE_NUM) || (plateNum > MAX_PLATE_NUM)) {
+		return SC_INVALID_PLATE_NUM;
+	}
+
+	if (filename == NULL) {
+		return SC_FAIL;
+	}
+
+	Util::getTime(starttime);
+
+	Dib dib;
+	dib.readFromFile(filename);
+
+	int result = decodeCommon(plateNum, dib, scanGap, squareDev, edgeThresh,
+			corrections, cellDistance, gapX, gapY, profileA, profileB, profileC,
+			isVertical, "decode.bmp");
+	return result;
 }
 
 int DmScanLib::decodeCommon(unsigned plateNum, Dib & dib, double scanGap,
@@ -121,7 +277,7 @@ int DmScanLib::decodeCommon(unsigned plateNum, Dib & dib, double scanGap,
 	unsigned gapXpixels = static_cast<unsigned>(dpi * gapX);unsigned
 	gapYpixels = static_cast<unsigned>(dpi * gapY);
 
-	const	unsigned profileWords[3] = { profileA, profileB, profileC };
+const	unsigned profileWords[3] = { profileA, profileB, profileC };
 
 	auto_ptr<PalletGrid> palletGrid(
 			new PalletGrid(orientation, dib.getWidth(), dib.getHeight(),
@@ -154,7 +310,8 @@ int DmScanLib::decodeCommon(unsigned plateNum, Dib & dib, double scanGap,
 		return SC_INVALID_IMAGE;
 
 	default:
-		; // do nothing
+		// do nothing
+		break;
 	}
 
 	// only get here if decoder returned Decoder::OK
@@ -168,32 +325,56 @@ int DmScanLib::decodeCommon(unsigned plateNum, Dib & dib, double scanGap,
 	return SC_SUCCESS;
 }
 
-int DmScanLib::decodeImage(unsigned verbose, unsigned plateNum, const char *filename,
+int slIsTwainAvailable() {
+	DmScanLib dmScanLib;
+	return dmScanLib.isTwainAvailable();
+}
+
+int slSelectSourceAsDefault() {
+	DmScanLib dmScanLib;
+	return dmScanLib.selectSourceAsDefault();
+}
+
+int slGetScannerCapability() {
+	DmScanLib dmScanLib;
+	return dmScanLib.getScannerCapability();
+}
+
+int slScanFlatbed(unsigned verbose, unsigned dpi, int brightness, int contrast,
+		const char * filename) {
+	DmScanLib dmScanLib;
+	return dmScanLib.scanFlatbed(verbose, dpi, brightness, contrast, filename);
+}
+
+int slScanImage(unsigned verbose, unsigned dpi, int brightness, int contrast,
+		double left, double top, double right, double bottom,
+		const char * filename) {
+	DmScanLib dmScanLib;
+	return dmScanLib.scanImage(verbose, dpi, brightness, contrast, left, top,
+			right, bottom, filename);
+}
+
+int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
+		unsigned plateNum, double left, double top, double right, double bottom,
 		double scanGap, unsigned squareDev, unsigned edgeThresh,
 		unsigned corrections, double cellDistance, double gapX, double gapY,
 		unsigned profileA, unsigned profileB, unsigned profileC,
 		unsigned isVertical) {
-	configLogging(verbose);
-	UA_DOUT(
-			1,
-			3,
-			"slDecodeImage: plateNum/" << plateNum << " filename/" << filename << " scanGap/" << scanGap << " squareDev/" << squareDev << " edgeThresh/" << edgeThresh << " corrections/" << corrections << " cellDistance/" << cellDistance << " gapX/" << gapX << " gapY/" << gapY << " isVertical/" << isVertical);
-
-	if ((plateNum < MIN_PLATE_NUM) || (plateNum > MAX_PLATE_NUM)) {
-		return SC_INVALID_PLATE_NUM;
-	}
-
-	if (filename == NULL) {
-		return SC_FAIL;
-	}
-
-	Util::getTime(starttime);
-
-	Dib dib;
-	dib.readFromFile(filename);
-
-	int result = decodeCommon(plateNum, dib, scanGap, squareDev, edgeThresh,
+	DmScanLib dmScanLib;
+	return dmScanLib.decodePlate(verbose, dpi, brightness, contrast, plateNum,
+			left, top, right, bottom, scanGap, squareDev, edgeThresh,
 			corrections, cellDistance, gapX, gapY, profileA, profileB, profileC,
-			isVertical, "decode.bmp");
-	return result;
+			isVertical);
 }
+
+int slDecodeImage(unsigned verbose, unsigned plateNum, const char * filename,
+		double scanGap, unsigned squareDev, unsigned edgeThresh,
+		unsigned corrections, double cellDistance, double gapX, double gapY,
+		unsigned profileA, unsigned profileB, unsigned profileC,
+		unsigned isVertical) {
+	DmScanLib dmScanLib;
+	return dmScanLib.decodeImage(verbose, plateNum, filename, scanGap,
+			squareDev, edgeThresh, corrections, cellDistance, gapX, gapY,
+			profileA, profileB, profileC, isVertical);
+}
+

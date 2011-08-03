@@ -1,5 +1,5 @@
-#ifndef __INCLUDE_IMAGE_GRABBER_H
-#define __INCLUDE_IMAGE_GRABBER_H
+#ifndef __INCLUDE_IMG_SCANNER_IMPL_H
+#define __INCLUDE_IMG_SCANNER_IMPL_H
 /*
 Dmscanlib is a software library and standalone application that scans 
 and decodes libdmtx compatible test-tubes. It is currently designed 
@@ -20,22 +20,12 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/**
- * ImageScanner singleton.
- *
- * See class ImageScanner for more information.
- */
-
-
-#ifndef WIN32
-#error ERROR: should not be compiled for non-windows build
-#endif
-
+#include "ImgScanner.h"
 #include "Dib.h"
 #include "dmtx.h"
-#include "twain.h"     // Standard TWAIN header.
 #include "Singleton.h"
 #include "DmScanLib.h"
+#include "twain.h"     // Standard TWAIN header.
 
 #include <windows.h>
 #include <map>
@@ -46,10 +36,10 @@ using namespace std;
  * This class interfaces with the TWAIN driver to acquire images from the
  * scanner.
  */
-class ImageScanner {
+class ImgScannerImpl : public ImgScanner {
 public:
-	ImageScanner();
-	~ImageScanner();
+	ImgScannerImpl();
+	~ImgScannerImpl();
 
 	bool twainAvailable();
 
@@ -125,10 +115,6 @@ private:
 	// g_AppID serves as a TWAIN identity structure that uniquely identifies the
 	// application process responsible for making calls to function DSM_Entry().
 	static TW_IDENTITY g_AppID;
-
-	int brightness;
-	int contrast;
-	int errorCode;
 };
 
-#endif /* __INCLUDE_IMAGE_GRABBER_H */
+#endif /* __INCLUDE_IMG_SCANNER_IMPL_H */

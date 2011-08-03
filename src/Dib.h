@@ -26,7 +26,9 @@
 #include "IplContainer.h"
 
 #ifdef WIN32
-#include <windows.h>
+#   include <windows.h>
+#else
+typedef void* HANDLE;
 #endif
 
 #include <memory>
@@ -88,9 +90,7 @@ public:
 	void rectangle(unsigned x, unsigned y, unsigned width, unsigned height,
 			RgbQuad & quad);
 
-#ifdef WIN32
 	void readFromHandle(HANDLE handle);
-#endif
 
 private:
 
