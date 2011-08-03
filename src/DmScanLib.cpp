@@ -38,6 +38,7 @@
 #include "UaAssert.h"
 #include "Decoder.h"
 #include "Dib.h"
+#include "BarcodeInfo.h"
 
 #include <stdio.h>
 
@@ -49,7 +50,8 @@
 
 bool DmScanLib::loggingInitialized = false;
 
-DmScanLib::DmScanLib() {
+DmScanLib::DmScanLib() :
+		textFileOutputEnable(false) {
 	imgScanner = ImgScannerFactory::getImgScanner();
 }
 
@@ -99,6 +101,10 @@ void DmScanLib::configLogging(unsigned level, bool useFile) {
 	ua::Logger::Instance().levelSet(ua::LoggerImpl::allSubSys_m, level);
 }
 
+vector<BarcodeInfo *> & DmScanLib::getBarcodes() {
+	return decoder->getBarcodes();
+}
+
 /*
  * Could not use C++ streams for Release version of DLL.
  */
@@ -109,20 +115,19 @@ void DmScanLib::saveResults(string & msg) {
 	fclose(fh);
 }
 
-void DmScanLib::formatCellMessages(unsigned plateNum, Decoder & decoder,
-		string & msg) {
+void DmScanLib::formatCellMessages(unsigned plateNum, string & msg) {
+	vector<BarcodeInfo *> & barcodes = decoder->getBarcodes();
 	ostringstream out;
 	out << "#Plate,Row,Col,Barcode" << endl;
 
-	for (unsigned row = 0; row < PalletGrid::MAX_ROWS; ++row) {
-		for (unsigned col = 0; col < PalletGrid::MAX_COLS; ++col) {
-			const char * msg = decoder.getBarcode(row, col);
-			if (msg == NULL
-			)
-				continue;
-			out << plateNum << "," << static_cast<char>('A' + row) << ","
-					<< (col + 1) << "," << msg << endl;
+	for (unsigned i = 0, n = barcodes.size(); i < n; ++i) {
+		BarcodeInfo & info = *barcodes[i];
+		const char * msg = info.getMsg().c_str();
+		if (msg == NULL) {
+			continue;
 		}
+		out << plateNum << "," << static_cast<char>('A' + info.getRow()) << ","
+				<< (info.getCol() + 1) << "," << msg << endl;
 	}
 	msg = out.str();
 }
@@ -144,6 +149,7 @@ int DmScanLib::scanImage(unsigned verbose, unsigned dpi, int brightness,
 	HANDLE h = imgScanner->acquireImage(dpi, brightness, contrast, left, top,
 			right, bottom);
 	if (h == NULL) {
+		UA_DOUT(1, 1, "could not acquire image");
 		return imgScanner->getErrorCode();
 	}
 	Dib dib;
@@ -155,6 +161,7 @@ int DmScanLib::scanImage(unsigned verbose, unsigned dpi, int brightness,
 	imgScanner->freeImage(h);
 	return SC_SUCCESS;
 }
+
 int DmScanLib::scanFlatbed(unsigned verbose, unsigned dpi, int brightness,
 		int contrast, const char *filename) {
 	configLogging(verbose);
@@ -170,6 +177,7 @@ int DmScanLib::scanFlatbed(unsigned verbose, unsigned dpi, int brightness,
 
 	HANDLE h = imgScanner->acquireFlatbed(dpi, brightness, contrast);
 	if (h == NULL) {
+		UA_DOUT(1, 1, "could not acquire image");
 		return imgScanner->getErrorCode();
 	}
 	Dib dib;
@@ -258,9 +266,10 @@ int DmScanLib::decodeImage(unsigned verbose, unsigned plateNum,
 int DmScanLib::decodeCommon(unsigned plateNum, Dib & dib, double scanGap,
 		unsigned squareDev, unsigned edgeThresh, unsigned corrections,
 		double cellDistance, double gapX, double gapY, unsigned profileA,
-		unsigned profileB, unsigned profileC, unsigned isVertical,
+		unsigned profileB, unsigned profileC, unsigned isHoriztonal,
 		const char *markedDibFilename) {
 
+	const unsigned profileWords[3] = { profileA, profileB, profileC };
 	unsigned dpi = dib.getDpi();
 	UA_DOUT(1, 3, "DecodeCommon: dpi/" << dpi);
 	if ((dpi != 300) && (dpi != 400) && (dpi != 600)) {
@@ -270,16 +279,14 @@ int DmScanLib::decodeCommon(unsigned plateNum, Dib & dib, double scanGap,
 	Decoder::ProcessResult result;
 
 	PalletGrid::Orientation orientation = (
-			isVertical ?
-					PalletGrid::ORIENTATION_VERTICAL :
-					PalletGrid::ORIENTATION_HORIZONTAL);
+			isHoriztonal ?
+					PalletGrid::ORIENTATION_HORIZONTAL :
+					PalletGrid::ORIENTATION_VERTICAL);
 
-	unsigned gapXpixels = static_cast<unsigned>(dpi * gapX);unsigned
-	gapYpixels = static_cast<unsigned>(dpi * gapY);
+	unsigned gapXpixels = static_cast<unsigned>(dpi * gapX);
+	unsigned gapYpixels = static_cast<unsigned>(dpi * gapY);
 
-const	unsigned profileWords[3] = { profileA, profileB, profileC };
-
-	auto_ptr<PalletGrid> palletGrid(
+	auto_ptr <PalletGrid> palletGrid(
 			new PalletGrid(orientation, dib.getWidth(), dib.getHeight(),
 					gapXpixels, gapYpixels, profileWords));
 
@@ -287,8 +294,9 @@ const	unsigned profileWords[3] = { profileA, profileB, profileC };
 		return SC_INVALID_IMAGE;
 	}
 
-	Decoder decoder(scanGap, squareDev, edgeThresh, corrections, cellDistance,
-			palletGrid.get());
+	decoder = auto_ptr<Decoder>(
+			new Decoder(scanGap, squareDev, edgeThresh, corrections,
+					cellDistance, palletGrid.get()));
 
 	/*--- apply filters ---*/
 	auto_ptr<Dib> filteredDib(Dib::convertGrayscale(dib));
@@ -297,27 +305,24 @@ const	unsigned profileWords[3] = { profileA, profileB, profileC };
 	UA_DEBUG( filteredDib->writeToFile("filtered.bmp"));
 
 	/*--- obtain barcodes ---*/
-	result = decoder.processImageRegions(filteredDib.get());
+	result = decoder->processImageRegions(filteredDib.get());
 
-	decoder.imageShowBarcodes(dib, 0);
+	decoder->imageShowBarcodes(dib, 0);
 	if (result == Decoder::OK)
 		dib.writeToFile(markedDibFilename);
 	else
 		dib.writeToFile("decode.partial.bmp");
 
-	switch (result) {
-	case Decoder::IMG_INVALID:
+	if (result == Decoder::IMG_INVALID) {
 		return SC_INVALID_IMAGE;
-
-	default:
-		// do nothing
-		break;
 	}
 
 	// only get here if decoder returned Decoder::OK
-	string msg;
-	formatCellMessages(plateNum, decoder, msg);
-	saveResults(msg);
+	if (textFileOutputEnable) {
+		string msg;
+		formatCellMessages(plateNum, msg);
+		saveResults(msg);
+	}
 
 	Util::getTime(endtime);
 	Util::difftiime(starttime, endtime, timediff);
@@ -361,6 +366,7 @@ int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
 		unsigned profileA, unsigned profileB, unsigned profileC,
 		unsigned isVertical) {
 	DmScanLib dmScanLib;
+	dmScanLib.setTextFileOutputEnable(true);
 	return dmScanLib.decodePlate(verbose, dpi, brightness, contrast, plateNum,
 			left, top, right, bottom, scanGap, squareDev, edgeThresh,
 			corrections, cellDistance, gapX, gapY, profileA, profileB, profileC,
@@ -373,6 +379,7 @@ int slDecodeImage(unsigned verbose, unsigned plateNum, const char * filename,
 		unsigned profileA, unsigned profileB, unsigned profileC,
 		unsigned isVertical) {
 	DmScanLib dmScanLib;
+	dmScanLib.setTextFileOutputEnable(true);
 	return dmScanLib.decodeImage(verbose, plateNum, filename, scanGap,
 			squareDev, edgeThresh, corrections, cellDistance, gapX, gapY,
 			profileA, profileB, profileC, isVertical);

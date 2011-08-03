@@ -1,5 +1,6 @@
 #ifndef __INC_SCANLIB_INTERNAL_H
 #define __INC_SCANLIB_INTERNAL_H
+
 /*
 Dmscanlib is a software library and standalone application that scans 
 and decodes libdmtx compatible test-tubes. It is currently designed 
@@ -24,10 +25,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <string>
 #include <memory>
+#include <vector>
 
 class Dib;
 class Decoder;
 class ImgScanner;
+class BarcodeInfo;
 
 using namespace std;
 
@@ -59,10 +62,16 @@ public:
 
 	void configLogging(unsigned level, bool useFile = true);
 
+	void setTextFileOutputEnable(bool enable) {
+		textFileOutputEnable = enable;
+	}
+
 protected:
 	void saveResults(string & msg);
 
-	void formatCellMessages(unsigned plateNum, Decoder & decoder, string & msg);
+	vector<BarcodeInfo *> & getBarcodes();
+
+	void formatCellMessages(unsigned plateNum, string & msg);
 
 	int isValidDpi(int dpi);
 
@@ -73,10 +82,13 @@ protected:
 	        const char *markedDibFilename);
 
 	auto_ptr<ImgScanner> imgScanner;
+	auto_ptr<Decoder> decoder;
 
 	slTime starttime; // for debugging
 	slTime endtime;
 	slTime timediff;
+
+	bool textFileOutputEnable;
 
 	static bool loggingInitialized;
 

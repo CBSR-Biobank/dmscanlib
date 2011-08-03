@@ -147,7 +147,7 @@ struct Options {
     unsigned profileA;
     unsigned profileB;
     unsigned profileC;
-    bool isVertical;
+    bool isHorizontal;
 	bool flatbed;
 
 	Options();
@@ -243,7 +243,7 @@ Options::Options() {
 	select = false;
 	capability = false;
 	test = false;
-	isVertical = false;
+	isHorizontal = true;
 
 	infile = NULL;
 	outfile = NULL;
@@ -280,6 +280,7 @@ TestApp::TestApp(int argc, char ** argv) {
 		ua::logstream.sink(ua::LoggerSinkStdout::Instance());
 	}
 	dmScanLib.configLogging(options.debugLevel, options.debugfile);
+	dmScanLib.setTextFileOutputEnable(true);
 
 	if (options.help) {
 		usage();
@@ -338,7 +339,7 @@ int TestApp::decode() {
 				options.infile, options.gap, options.squareDev,
 				options.threshold, options.corrections, options.cellDistance,
 				options.gapX, options.gapY, options.profileA, options.profileB,
-				options.profileC, options.isVertical);
+				options.profileC, options.isHorizontal);
 	}
 
 	if ((options.left == 0.0) && (options.right == 0.0) && (options.top == 0.0)
@@ -357,7 +358,7 @@ int TestApp::decode() {
 			options.right, options.bottom, options.gap, options.squareDev,
 			options.threshold, options.corrections, options.cellDistance,
 			options.gapX, options.gapY, options.profileA, options.profileB,
-			options.profileC, options.isVertical);
+			options.profileC, options.isHorizontal);
 }
 
 int TestApp::scan() {
@@ -441,7 +442,7 @@ bool TestApp::getCmdOptions(int argc, char ** argv) {
 
 			case 'v':
 			case OPT_ID_VERTICAL:
-				options.isVertical = true;
+				options.isHorizontal = false;
 				break;
 
 			case 'h':

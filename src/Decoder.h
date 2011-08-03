@@ -58,6 +58,8 @@ public:
 
 	static DmtxImage * createDmtxImageFromDib(const Dib & dib);
 
+	vector<BarcodeInfo *> & getBarcodes();
+
 	const char * getBarcode(unsigned row, unsigned col);
 
 private:
@@ -85,6 +87,8 @@ private:
 	PalletGrid * palletGrid;
 
 	vector<vector<BarcodeInfo *> > barcodeInfos;
+
+	vector<BarcodeInfo *> barcodeInfosList;
 
 	OpenThreads::Mutex addBarcodeMutex;
 };

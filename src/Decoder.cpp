@@ -217,6 +217,8 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib) {
 
 			BarcodeInfo * info = new BarcodeInfo();
 			info->setPreProcessBoundingBox(rect);
+			info->setRow(row);
+			info->setCol(col);
 			barcodeInfos[row][col] = info;
 			++blobRegionCount;
 		}
@@ -235,9 +237,9 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib) {
 		for (unsigned col = 0, cols = barcodeInfos[row].size(); col < cols;
 				++col) {
 			BarcodeInfo * info = barcodeInfos[row][col];
-			if (info == NULL
-			)
+			if (info == NULL) {
 				continue;
+			}
 
 			CvRect & rect = barcodeInfos[row][col]->getPreProcessBoundingBox();
 			blobDib.rectangle(rect.x, rect.y, rect.width, rect.height, white);
@@ -388,4 +390,17 @@ const char * Decoder::getBarcode(unsigned row, unsigned col) {
 		return NULL;
 
 	return info->getMsg().c_str();
+}
+
+vector<BarcodeInfo *> & Decoder::getBarcodes() {
+	for (unsigned row = 0, rows = barcodeInfos.size(); row < rows; ++row) {
+		for (unsigned col = 0, cols = barcodeInfos[row].size(); col < cols;
+				++col) {
+			BarcodeInfo * info = barcodeInfos[row][col];
+			if ((info != NULL) && info->isValid()) {
+				barcodeInfosList.push_back(info);
+			}
+		}
+	}
+	return barcodeInfosList;
 }

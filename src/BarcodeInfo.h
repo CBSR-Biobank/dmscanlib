@@ -51,12 +51,30 @@ public:
 	CvRect & getPostProcessBoundingBox();
 	void translate(int x, int y);
 
+	unsigned getRow() {
+		return row;
+	}
+
+	void setRow(unsigned r) {
+		row = r;
+	}
+
+	unsigned getCol() {
+		return col;
+	}
+
+	void setCol(unsigned c) {
+		col = c;
+	}
+
 
 private:
 	string str;
 	DmtxVector2 p00, p10, p11, p01;
 	CvRect preRect;
 	CvRect postRect;
+	unsigned row;
+	unsigned col;
 
 	friend ostream & operator<<(ostream & os, BarcodeInfo & m);
 };
