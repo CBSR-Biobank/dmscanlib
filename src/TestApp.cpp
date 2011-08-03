@@ -275,6 +275,12 @@ TestApp::TestApp(int argc, char ** argv) {
 
 	getCmdOptions(argc, argv);
 
+	ua::LoggerSinkStdout::Instance().showHeader(true);
+	if (!options.debugfile) {
+		ua::logstream.sink(ua::LoggerSinkStdout::Instance());
+	}
+	dmScanLib.configLogging(options.debugLevel, options.debugfile);
+
 	if (options.help) {
 		usage();
 		return;

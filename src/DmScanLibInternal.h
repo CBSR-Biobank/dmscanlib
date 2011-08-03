@@ -57,12 +57,12 @@ public:
 			double gapX, double gapY, unsigned profileA, unsigned profileB,
 			unsigned profileC, unsigned isHoriztonal);
 
+	void configLogging(unsigned level, bool useFile = true);
+
 protected:
 	void saveResults(string & msg);
 
 	void formatCellMessages(unsigned plateNum, Decoder & decoder, string & msg);
-
-	void configLogging(unsigned level, bool useFile = true);
 
 	int isValidDpi(int dpi);
 
