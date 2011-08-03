@@ -18,7 +18,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /**
- * Implements the ImageGrabber.
+ * Implements the ImgScanner.
  *
  * This class performs all interfacing with the TWAIN driver to acquire images
  * from the scanner.
@@ -26,9 +26,10 @@
  * Some portions of the implementation borrowed from EZTWAIN.
  */
 
-#include "ImageGrabber.h"
+#include "ImgScannerImpl.h"
 #include "UaLogger.h"
 #include "UaAssert.h"
+
 #include <math.h>
 
 #if defined(USE_NVWA)
@@ -39,20 +40,20 @@ using namespace std;
 
 // Initialize g_AppID. This structure is passed to DSM_Entry() in each
 // function call.
-TW_IDENTITY ImageGrabber::g_AppID = { 0, { 1, 0, TWLG_ENGLISH_USA, TWCY_USA,
+TW_IDENTITY ImgScanner::g_AppID = { 0, { 1, 0, TWLG_ENGLISH_USA, TWCY_USA,
                                            "dmscanlib 1.0" }, TWON_PROTOCOLMAJOR, TWON_PROTOCOLMINOR, DG_CONTROL
                                       | DG_IMAGE, "Canadian Biosample Repository",
                                       "Image acquisition library", "dmscanlib", };
 
-const char * ImageGrabber::TWAIN_DLL_FILENAME = "TWAIN_32.DLL";
+const char * ImgScanner::TWAIN_DLL_FILENAME = "TWAIN_32.DLL";
 
 /*	initGrabber() should be called prior to calling any other associated functionality,
  *	as libraries such as Twain_32.dll need to be loaded before acquire or
  *	selectDefaultAsSource work.
  */
-ImageGrabber::ImageGrabber() :
+ImgScanner::ImgScanner() :
       g_hLib(NULL), g_pDSM_Entry(NULL) {
-   ua::Logger::Instance().subSysHeaderSet(2, "ImageGrabber");
+   ua::Logger::Instance().subSysHeaderSet(2, "ImgScanner");
 
    g_hLib = LoadLibraryA(TWAIN_DLL_FILENAME);
 
@@ -60,19 +61,19 @@ ImageGrabber::ImageGrabber() :
       g_pDSM_Entry = (DSMENTRYPROC) GetProcAddress(g_hLib, "DSM_Entry");
 
       UA_ASSERTS(g_pDSM_Entry != 0,
-                 "ImageGrabber: Unable to fetch DSM_Entry address");
+                 "ImgScanner: Unable to fetch DSM_Entry address");
    }
 }
 
-ImageGrabber::~ImageGrabber() {
+ImgScanner::~ImgScanner() {
    unloadTwain();
 }
 
-bool ImageGrabber::twainAvailable() {
+bool ImgScanner::twainAvailable() {
    return (g_hLib != NULL);
 }
 
-unsigned ImageGrabber::invokeTwain(TW_IDENTITY * srcId, unsigned long dg,
+unsigned ImgScanner::invokeTwain(TW_IDENTITY * srcId, unsigned long dg,
                                    unsigned dat, unsigned msg, void * ptr) {
    UA_ASSERT_NOT_NULL(g_pDSM_Entry);
    unsigned r = g_pDSM_Entry(&g_AppID, srcId, dg, dat, msg, ptr);
@@ -82,7 +83,7 @@ unsigned ImageGrabber::invokeTwain(TW_IDENTITY * srcId, unsigned long dg,
            << " ptr/" << ptr << " returnCode/" << r);
 
    if ((srcId == NULL) && (r != TWRC_SUCCESS) && (r != TWRC_CHECKSTATUS)) {
-      UA_DOUT(2, 1, "ImageGrabber::invokeTwain: unsuccessful call to twain");
+      UA_DOUT(2, 1, "ImgScanner::invokeTwain: unsuccessful call to twain");
    }
    return r;
 }
@@ -94,7 +95,7 @@ unsigned ImageGrabber::invokeTwain(TW_IDENTITY * srcId, unsigned long dg,
  *	Select the source to use as default for Twain, so the source does not
  *	have to be specified every time.
  */
-bool ImageGrabber::selectSourceAsDefault() {
+bool ImgScanner::selectSourceAsDefault() {
    UA_ASSERT_NOT_NULL(g_hLib);
 
    // Create a static window whose handle is passed to DSM_Entry() when we
@@ -136,7 +137,7 @@ bool ImageGrabber::selectSourceAsDefault() {
 /*
  * Opens the default data source.
  */
-bool ImageGrabber::scannerSourceInit(HWND & hwnd, TW_IDENTITY & srcID) {
+bool ImgScanner::scannerSourceInit(HWND & hwnd, TW_IDENTITY & srcID) {
 
    TW_UINT16 rc;
 
@@ -172,7 +173,7 @@ bool ImageGrabber::scannerSourceInit(HWND & hwnd, TW_IDENTITY & srcID) {
    return true;
 }
 
-void ImageGrabber::scannerSourceDeinit(HWND & hwnd, TW_IDENTITY & srcID) {
+void ImgScanner::scannerSourceDeinit(HWND & hwnd, TW_IDENTITY & srcID) {
    // Close the data source.
    invokeTwain(&srcID, DG_CONTROL, DAT_IDENTITY, MSG_CLOSEDS, &srcID);
    UA_DOUT(2, 1, "DG_CONTROL / DAT_IDENTITY / MSG_CLOSEDS");
@@ -185,7 +186,7 @@ void ImageGrabber::scannerSourceDeinit(HWND & hwnd, TW_IDENTITY & srcID) {
    DestroyWindow(hwnd);
 }
 
-void ImageGrabber::setFloatToIntPair(const double f, short & whole,
+void ImgScanner::setFloatToIntPair(const double f, short & whole,
                                      unsigned short & frac) {
    double round = (f > 0) ? 0.5 : -0.5;
    const unsigned tmp = static_cast<unsigned> (f * 65536.0 + round);
@@ -199,7 +200,7 @@ void ImageGrabber::setFloatToIntPair(const double f, short & whole,
  *
  *	Grab an image from the twain source and convert it to the dmtxImage format
  */
-HANDLE ImageGrabber::acquireImage(unsigned dpi, int brightness, int contrast,
+HANDLE ImgScanner::acquireImage(unsigned dpi, int brightness, int contrast,
                                   double left, double top, double right, double bottom) {
    UA_ASSERT_NOT_NULL(g_hLib);
 
@@ -394,7 +395,7 @@ HANDLE ImageGrabber::acquireImage(unsigned dpi, int brightness, int contrast,
    return (HANDLE) handle;
 }
 
-HANDLE ImageGrabber::acquireFlatbed(unsigned dpi, int brightness, int contrast) {
+HANDLE ImgScanner::acquireFlatbed(unsigned dpi, int brightness, int contrast) {
 	TW_IDENTITY srcID;
 	HWND hwnd;
       
@@ -412,7 +413,7 @@ HANDLE ImageGrabber::acquireFlatbed(unsigned dpi, int brightness, int contrast) 
 	return acquireImage(dpi, brightness, contrast, 0, 0, physicalWidth, physicalHeight);
 }
 
-DmtxImage* ImageGrabber::acquireDmtxImage(unsigned dpi, int brightness,
+DmtxImage* ImgScanner::acquireDmtxImage(unsigned dpi, int brightness,
                                           int contrast) {
    UA_ASSERT_NOT_NULL(g_hLib);
 
@@ -446,7 +447,7 @@ DmtxImage* ImageGrabber::acquireDmtxImage(unsigned dpi, int brightness,
    return theImage;
 }
 
-BOOL ImageGrabber::setCapOneValue(TW_IDENTITY * srcId, unsigned Cap,
+BOOL ImgScanner::setCapOneValue(TW_IDENTITY * srcId, unsigned Cap,
                                   unsigned ItemType, unsigned long ItemVal) {
    BOOL ret_value = FALSE;
    TW_CAPABILITY cap;
@@ -468,7 +469,7 @@ BOOL ImageGrabber::setCapOneValue(TW_IDENTITY * srcId, unsigned Cap,
    return ret_value;
 }
 
-bool ImageGrabber::getCapability(TW_IDENTITY * srcId, TW_CAPABILITY & twCap) {
+bool ImgScanner::getCapability(TW_IDENTITY * srcId, TW_CAPABILITY & twCap) {
    TW_UINT16 rc;
 
    rc = invokeTwain(srcId, DG_CONTROL, DAT_CAPABILITY, MSG_GET, &twCap);
@@ -476,7 +477,7 @@ bool ImageGrabber::getCapability(TW_IDENTITY * srcId, TW_CAPABILITY & twCap) {
 }
 
 /* Assuming x-y resolution are the same*/
-int ImageGrabber::getScannerCapability() {
+int ImgScanner::getScannerCapability() {
    TW_IDENTITY srcID;
    HWND hwnd;
 
@@ -491,7 +492,7 @@ int ImageGrabber::getScannerCapability() {
    return capabilityCode;
 }
 
-int ImageGrabber::getScannerCapabilityInternal(TW_IDENTITY & srcID) {
+int ImgScanner::getScannerCapabilityInternal(TW_IDENTITY & srcID) {
    int capabilityCode = 0, xresolution = 0, yresolution = 0, 
 	   physicalwidth = 0, physicalheight = 0;
 
@@ -537,7 +538,7 @@ int ImageGrabber::getScannerCapabilityInternal(TW_IDENTITY & srcID) {
    return capabilityCode;
 }
 
-int ImageGrabber::getResolutionCapability(TW_IDENTITY & srcID, TW_UINT16 cap) {
+int ImgScanner::getResolutionCapability(TW_IDENTITY & srcID, TW_UINT16 cap) {
    pTW_RANGE pvalRange;
    bool result;
    int capabilityCode = 0;
@@ -660,7 +661,7 @@ int ImageGrabber::getResolutionCapability(TW_IDENTITY & srcID, TW_UINT16 cap) {
    return capabilityCode;
 }
 
-double ImageGrabber::getPhysicalDimensions(TW_IDENTITY & srcID, TW_UINT16 cap) {
+double ImgScanner::getPhysicalDimensions(TW_IDENTITY & srcID, TW_UINT16 cap) {
    bool result;
    TW_CAPABILITY twCap;
 
@@ -692,7 +693,7 @@ double ImageGrabber::getPhysicalDimensions(TW_IDENTITY & srcID, TW_UINT16 cap) {
    return dimension;
 }
 
-void ImageGrabber::getCustomDsData(TW_IDENTITY * srcId) {
+void ImgScanner::getCustomDsData(TW_IDENTITY * srcId) {
    TW_UINT16 rc;
    TW_CUSTOMDSDATA cdata;
 
@@ -704,12 +705,12 @@ void ImageGrabber::getCustomDsData(TW_IDENTITY * srcId) {
    }
 }
 
-inline double ImageGrabber::uint32ToFloat(TW_UINT32 uint32) {
+inline double ImgScanner::uint32ToFloat(TW_UINT32 uint32) {
    TW_FIX32 fix32 = *((pTW_FIX32) (void *) (&uint32));
    return twfix32ToFloat(fix32);
 }
 
-inline double ImageGrabber::twfix32ToFloat(TW_FIX32 fix32) {
+inline double ImgScanner::twfix32ToFloat(TW_FIX32 fix32) {
    return static_cast<double> (fix32.Whole) + static_cast<double> (fix32.Frac)
       / 65536.0;
 }
@@ -721,7 +722,7 @@ inline double ImageGrabber::twfix32ToFloat(TW_FIX32 fix32) {
  *
  *	Unlock the handle to the image from twain, and free the memory.
  */
-void ImageGrabber::freeImage(HANDLE handle) {
+void ImgScanner::freeImage(HANDLE handle) {
    UA_ASSERT_NOT_NULL(handle);
    UA_ASSERT_NOT_NULL(g_hLib);
    GlobalUnlock(handle);
@@ -735,7 +736,7 @@ void ImageGrabber::freeImage(HANDLE handle) {
  *
  *	If twain_32.dll was loaded, it will be removed from memory
  */
-void ImageGrabber::unloadTwain() {
+void ImgScanner::unloadTwain() {
    UA_ASSERT_NOT_NULL(g_hLib);
    FreeLibrary(g_hLib);
    g_hLib = NULL;

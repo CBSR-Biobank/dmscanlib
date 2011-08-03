@@ -1,6 +1,5 @@
-#ifndef __INC_TIME_UTIL_H_
-#define __INC_TIME_UTIL_H_
-
+#ifndef __INCLUDE_IMAGE_SCANNER_H
+#define __INCLUDE_IMAGE_SCANNER_H
 /*
 Dmscanlib is a software library and standalone application that scans 
 and decodes libdmtx compatible test-tubes. It is currently designed 
@@ -21,36 +20,44 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <string>
-#include <sstream>
+#include "dmtx.h"
 
-using namespace std;
-
-#if defined (WIN32) && ! defined(__MINGW32__)
-typedef time_t slTime;
-#else
-#include <sys/time.h>
-typedef struct timeval slTime;
+#ifndef WIN32
+typedef void* HANDLE;
 #endif
 
-class Util {
+/**
+ * This class interfaces with the TWAIN driver to acquire images from the
+ * scanner.
+ */
+class ImgScanner {
 public:
-	static void getTime(slTime & tm);
-	static void getTimestamp(std::string & str_r);
-	static void difftiime(slTime & start, slTime & end, slTime & diff);
+	ImgScanner();
 
-private:
+	virtual ~ImgScanner();
+
+	virtual bool twainAvailable() = 0;
+
+	virtual bool selectSourceAsDefault() = 0;
+
+	virtual int getScannerCapability() = 0;
+
+	virtual HANDLE acquireImage(unsigned dpi, int brightness, int contrast,
+		double top, double left, double bottom, double right) = 0;
+
+	virtual HANDLE acquireFlatbed(unsigned dpi, int brightness, int contrast) = 0;
+
+	virtual DmtxImage* acquireDmtxImage(unsigned dpi, int brightness, int contrast) = 0;
+
+	virtual void freeImage(HANDLE handle) = 0;
+
+	int getErrorCode() { return errorCode; }
+
+protected:
+	int brightness;
+	int contrast;
+	int errorCode;
 };
 
-template <typename T>
-string to_string(T const& value) {
-    stringstream sstr;
-    sstr << value;
-    return sstr.str();
-}
+#endif /* __INCLUDE_IMAGE_SCANNER_H */
 
-#ifndef _VISUALC_
-ostream & operator<<(ostream &os, slTime & tm);
-#endif
-
-#endif /* __INC_TIME_UTIL_H_ */

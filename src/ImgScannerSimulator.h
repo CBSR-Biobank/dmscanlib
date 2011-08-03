@@ -1,5 +1,5 @@
-#ifndef __INC_TIME_UTIL_H_
-#define __INC_TIME_UTIL_H_
+#ifndef __INCLUDE_IMG_SCANNER_SIMULATOR_H
+#define __INCLUDE_IMG_SCANNER_SIMULATOR_H
 
 /*
 Dmscanlib is a software library and standalone application that scans 
@@ -21,36 +21,35 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <string>
-#include <sstream>
+#include "ImgScanner.h"
 
 using namespace std;
 
-#if defined (WIN32) && ! defined(__MINGW32__)
-typedef time_t slTime;
-#else
-#include <sys/time.h>
-typedef struct timeval slTime;
-#endif
-
-class Util {
+/**
+ * This class interfaces with the TWAIN driver to acquire images from the
+ * scanner.
+ */
+class ImgScannerSimulator : public ImgScanner {
 public:
-	static void getTime(slTime & tm);
-	static void getTimestamp(std::string & str_r);
-	static void difftiime(slTime & start, slTime & end, slTime & diff);
+	ImgScannerSimulator();
+	virtual ~ImgScannerSimulator();
+
+	bool twainAvailable();
+
+	bool selectSourceAsDefault();
+
+	int getScannerCapability();
+
+	HANDLE acquireImage(unsigned dpi, int brightness, int contrast,
+		double top, double left, double bottom, double right);
+
+	HANDLE acquireFlatbed(unsigned dpi, int brightness, int contrast);
+
+	DmtxImage* acquireDmtxImage(unsigned dpi, int brightness, int contrast);
+
+	void freeImage(HANDLE handle);
 
 private:
 };
 
-template <typename T>
-string to_string(T const& value) {
-    stringstream sstr;
-    sstr << value;
-    return sstr.str();
-}
-
-#ifndef _VISUALC_
-ostream & operator<<(ostream &os, slTime & tm);
-#endif
-
-#endif /* __INC_TIME_UTIL_H_ */
+#endif /* __INCLUDE_IMG_SCANNER_SIMULATOR_H */

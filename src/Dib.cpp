@@ -218,8 +218,8 @@ unsigned Dib::getPaletteSize(unsigned colorBits) const {
 
 }
 
-#ifdef WIN32
 void Dib::readFromHandle(HANDLE handle) {
+#ifdef WIN32
 	BITMAPINFOHEADER *dibHeaderPtr = (BITMAPINFOHEADER *) GlobalLock(handle);
 
 	// if these conditions are not met the Dib cannot be processed
@@ -243,8 +243,8 @@ void Dib::readFromHandle(HANDLE handle) {
 			<< " imageSize/" << imageSize
 			<< " rowBytes/" << rowBytes
 			<< " paddingBytes/" << rowPaddingBytes << " dpi/" << getDpi());
-}
 #endif
+}
 
 /**
  * All values in little-endian except for BitmapFileHeader.type.

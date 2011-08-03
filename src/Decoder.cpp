@@ -105,7 +105,7 @@ bool Decoder::reduceBlobToMatrix(Dib & dib, CvRect & inputBlob) {
 	 cvThreshold(img->getIplImage(), img->getIplImage(), 50, 255,
 	 CV_THRESH_BINARY);
 
-	 //* ---- Find the test tube by applying circle-based pattern recognition -----
+	 // ---- Find the test tube by applying circle-based pattern recognition -----
 	 CvMemStorage* storage = cvCreateMemStorage(0);
 
 	 CvSeq* results = cvHoughCircles(img->getIplImage(), storage,
@@ -143,7 +143,7 @@ bool Decoder::reduceBlobToMatrix(Dib & dib, CvRect & inputBlob) {
 	 break;
 	 }
 
-	 //* ---- Grabs the largest blob in the blobs vector -----
+	 // ---- Grabs the largest blob in the blobs vector -----
 
 	 CvPoint minOffset = cvPoint(inputBlob.width, inputBlob.height);
 	 CvPoint maxOffset = cvPoint(0,0);

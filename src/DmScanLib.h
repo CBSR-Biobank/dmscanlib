@@ -1,25 +1,24 @@
 #ifndef __INC_SCANLIB_H
 #define __INC_SCANLIB_H
 /*
-Dmscanlib is a software library and standalone application that scans 
-and decodes libdmtx compatible test-tubes. It is currently designed 
-to decode 12x8 pallets that use 2D data-matrix laser etched test-tubes.
-Copyright (C) 2010 Canadian Biosample Repository
+ Dmscanlib is a software library and standalone application that scans
+ and decodes libdmtx compatible test-tubes. It is currently designed
+ to decode 12x8 pallets that use 2D data-matrix laser etched test-tubes.
+ Copyright (C) 2010 Canadian Biosample Repository
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
-
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #ifdef __cplusplus
 extern "C" {
@@ -47,15 +46,14 @@ const unsigned MAX_PLATE_NUM = 5;
  */
 const int SC_SUCCESS = 0;
 const int SC_FAIL = -1;
-const int SC_TWAIN_UAVAIL = -2;
+const int SC_TWAIN_UNAVAIL = -2;
 const int SC_INVALID_DPI = -3;
 const int SC_INVALID_PLATE_NUM = -4;
 const int SC_INVALID_VALUE = -5;
 const int SC_INVALID_IMAGE = -6;
 const int SC_INCORRECT_DPI_SCANNED = -9;
 
-
-const unsigned CAP_IS_WIA  = 0x01;
+const unsigned CAP_IS_WIA = 0x01;
 const unsigned CAP_DPI_300 = 0x02;
 const unsigned CAP_DPI_400 = 0x04;
 const unsigned CAP_DPI_600 = 0x08;
@@ -64,7 +62,7 @@ const unsigned CAP_IS_SCANNER = 0x10;
 /**
  * Queries the availability of the TWAIN driver.
  *
- * @return SC_SUCCESS if available, and SC_TWAIN_UAVAIL if unavailable.
+ * @return SC_SUCCESS if available, and SC_TWAIN_UNAVAIL if unavailable.
  */
 EXPORT int slIsTwainAvailable();
 
@@ -115,7 +113,6 @@ EXPORT int slScanImage(unsigned verbose, unsigned dpi, int brightness,
 typedef int (*SL_SCAN_IMAGE)(unsigned verbose, unsigned dpi, double left,
 		double top, double right, double bottom, const char * filename);
 
-
 /**
  * Scans the whole flatbed region. The image is in Windows BMP format.
  *
@@ -133,8 +130,8 @@ typedef int (*SL_SCAN_IMAGE)(unsigned verbose, unsigned dpi, double left,
 EXPORT int slScanFlatbed(unsigned verbose, unsigned dpi, int brightness,
 		int contrast, const char * filename);
 
-typedef int (*SL_SCAN_FLATBED)(unsigned verbose, unsigned dpi, 
-	const char * filename);
+typedef int (*SL_SCAN_FLATBED)(unsigned verbose, unsigned dpi,
+		const char * filename);
 
 /**
  * From the regions specified in the INI file for the corresponding plate,
@@ -185,19 +182,18 @@ typedef int (*SL_SCAN_FLATBED)(unsigned verbose, unsigned dpi,
  */
 EXPORT int
 slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
-		unsigned plateNum, double left, double top, double right,
-		double bottom, double scanGap, unsigned squareDev,
-		unsigned edgeThresh, unsigned corrections, double cellDistance, 
-		double gapX, double gapY,
-		unsigned profileA,unsigned profileB, unsigned profileC, unsigned isHoriztonal);
+		unsigned plateNum, double left, double top, double right, double bottom,
+		double scanGap, unsigned squareDev, unsigned edgeThresh,
+		unsigned corrections, double cellDistance, double gapX, double gapY,
+		unsigned profileA, unsigned profileB, unsigned profileC,
+		unsigned isHoriztonal);
 
 typedef int (*SL_DECODE_PLATE)(unsigned verbose, unsigned dpi, int brightness,
 		int contrast, unsigned plateNum, double left, double top, double right,
-		double bottom, double scanGap, unsigned squareDev,
-		unsigned edgeThresh, unsigned corrections, double cellDistance, 
-		double gapX, double gapY,
-		unsigned profileA,unsigned profileB, unsigned profileC, unsigned isVertical);
-
+		double bottom, double scanGap, unsigned squareDev, unsigned edgeThresh,
+		unsigned corrections, double cellDistance, double gapX, double gapY,
+		unsigned profileA, unsigned profileB, unsigned profileC,
+		unsigned isVertical);
 
 /**
  * From the regions specified in the INI file for the corresponding plate,
@@ -237,17 +233,17 @@ typedef int (*SL_DECODE_PLATE)(unsigned verbose, unsigned dpi, int brightness,
  * A or column 1 of the pallet. SC_POS_CALC_ERROR if sample positions could
  *  not be determined.
  */
-EXPORT int slDecodeImage(unsigned verbose, unsigned plateNum, const char * filename,
-		double scanGap, unsigned squareDev, unsigned edgeThresh,
-		unsigned corrections, double cellDistance, 
-		double gapX, double gapY,
-		unsigned profileA,unsigned profileB, unsigned profileC, unsigned isHoriztonal);
+EXPORT int slDecodeImage(unsigned verbose, unsigned plateNum,
+		const char * filename, double scanGap, unsigned squareDev,
+		unsigned edgeThresh, unsigned corrections, double cellDistance,
+		double gapX, double gapY, unsigned profileA, unsigned profileB,
+		unsigned profileC, unsigned isHoriztonal);
 
 typedef int (*SL_DECODE_IMAGE)(unsigned verbose, unsigned plateNum,
 		const char * filename, double scanGap, unsigned squareDev,
-		unsigned edgeThresh, unsigned corrections, double cellDistance, 
-		double gapX, double gapY,
-		unsigned profileA,unsigned profileB, unsigned profileC, unsigned isVertical);
+		unsigned edgeThresh, unsigned corrections, double cellDistance,
+		double gapX, double gapY, unsigned profileA, unsigned profileB,
+		unsigned profileC, unsigned isVertical);
 
 #ifdef __cplusplus
 }

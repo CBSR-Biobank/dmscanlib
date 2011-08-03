@@ -38,25 +38,23 @@
 #   endif
 #endif
 
-#ifndef WIN32
-#   include <limits>
-#   include <stdio.h>
-#endif
-
 #ifdef WIN32
 #   include "UaAssert.h"
 #   include "Decoder.h"
 #   include "Dib.h"
-//#   include "TimeUtil.h"
 #   include "BarcodeInfo.h"
-#   include "ImageGrabber.h"
+#   include "ImgScanner.h"
 #endif
 
 #include "DmScanLib.h"
+#include "DmScanLibInternal.h"
 #include "SimpleOpt.h"
 #include "UaLogger.h"
-#include "TestApp.h"
-#include "DmScanLibCommon.h"
+
+#ifndef WIN32
+#   include <limits>
+#   include <stdio.h>
+#endif
 
 #include <iostream>
 #include <vector>
@@ -118,6 +116,66 @@ const char * USAGE_FMT =
 				"  -r, --right NUM      The left coordinate, in inches, for the scanning window.\n"
 				"  -b, --bottom NUM     The bottom coordinate, in inches, for the scanning window.\n"
 				"  -f, --flatbed        Scan the whole flatbed region\n";
+
+struct Options {
+    unsigned dpi;
+    char * infile;
+    char * outfile;
+
+    int brightness;
+    double cellDistance;
+    int corrections;
+    int contrast;
+    bool decode;
+    unsigned debugLevel;
+    bool debugfile;
+    double gap;
+    bool help;
+    bool capability;
+    bool test;
+    unsigned plateNum;
+    bool scan;
+    bool select;
+    unsigned squareDev;
+    unsigned threshold;
+    double left;
+    double top;
+    double right;
+    double bottom;
+    double gapX;
+    double gapY;
+    unsigned profileA;
+    unsigned profileB;
+    unsigned profileC;
+    bool isVertical;
+	bool flatbed;
+
+	Options();
+
+};
+
+
+class TestApp {
+public:
+    TestApp(int argc, char ** argv);
+    ~TestApp();
+
+private:
+    void usage();
+    bool getCmdOptions(int argc, char ** argv);
+    void acquireAndProcesImage();
+    void calibrateToImage();
+    int decode();
+    int scan();
+    int capability();
+    int test();
+
+    DmScanLib dmScanLib;
+
+    const char * progname;
+
+    Options options;
+};
 
 enum longOptID {
 	OPT_ID_BRIGHTNESS = 200,
@@ -211,8 +269,6 @@ Options::Options() {
 	profileC = (unsigned) -1;
 }
 
-const char * TestApp::INI_FILE_NAME = "dmscanlib.ini";
-
 TestApp::TestApp(int argc, char ** argv) {
 
 	progname = strrchr((char *) argv[0], DIR_SEP_CHR) + 1;
@@ -223,7 +279,7 @@ TestApp::TestApp(int argc, char ** argv) {
 	if (!options.debugfile) {
 		ua::logstream.sink(ua::LoggerSinkStdout::Instance());
 	}
-	configLogging(options.debugLevel, options.debugfile);
+	dmScanLib.configLogging(options.debugLevel, options.debugfile);
 
 	if (options.help) {
 		usage();
@@ -251,8 +307,8 @@ TestApp::TestApp(int argc, char ** argv) {
 	case SC_FAIL:
 		cout << "return code is: SC_FAIL" << endl;
 		break;
-	case SC_TWAIN_UAVAIL:
-		cout << "return code is: SC_TWAIN_UAVAIL" << endl;
+	case SC_TWAIN_UNAVAIL:
+		cout << "return code is: SC_TWAIN_UNAVAIL" << endl;
 		break;
 	case SC_INVALID_DPI:
 		cout << "return code is: SC_INVALID_DPI" << endl;
@@ -278,7 +334,7 @@ TestApp::~TestApp() {
 
 int TestApp::decode() {
 	if (options.infile != NULL) {
-		return slDecodeImage(options.debugLevel, options.plateNum,
+		return dmScanLib.decodeImage(options.debugLevel, options.plateNum,
 				options.infile, options.gap, options.squareDev,
 				options.threshold, options.corrections, options.cellDistance,
 				options.gapX, options.gapY, options.profileA, options.profileB,

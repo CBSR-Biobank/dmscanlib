@@ -19,14 +19,67 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+
+#include "TimeUtil.h"
+
+#include <string>
+#include <memory>
+
 class Dib;
+class Decoder;
+class ImgScanner;
 
-void configLogging(unsigned level, bool useFile = true);
+using namespace std;
 
-int slDecodeCommon(unsigned plateNum, Dib & dib, double scanGap,
-        unsigned squareDev, unsigned edgeThresh, unsigned corrections,
-        double cellDistance, double gapX, double gapY, unsigned profileA,
-        unsigned profileB, unsigned profileC, unsigned isVertical,
-        const char *markedDibFilename);
+class DmScanLib {
+public:
+	DmScanLib();
+	virtual ~DmScanLib();
+
+	virtual int isTwainAvailable();
+
+	virtual int selectSourceAsDefault();
+	virtual int getScannerCapability();
+	virtual int scanImage(unsigned verbose, unsigned dpi, int brightness,
+			int contrast, double left, double top, double right, double bottom,
+			const char * filename);
+	virtual int scanFlatbed(unsigned verbose, unsigned dpi, int brightness,
+			int contrast, const char * filename);
+	virtual int decodePlate(unsigned verbose, unsigned dpi, int brightness,
+			int contrast, unsigned plateNum, double left, double top,
+			double right, double bottom, double scanGap, unsigned squareDev,
+			unsigned edgeThresh, unsigned corrections, double cellDistance,
+			double gapX, double gapY, unsigned profileA, unsigned profileB,
+			unsigned profileC, unsigned isHoriztonal);
+	virtual int decodeImage(unsigned verbose, unsigned plateNum,
+			const char * filename, double scanGap, unsigned squareDev,
+			unsigned edgeThresh, unsigned corrections, double cellDistance,
+			double gapX, double gapY, unsigned profileA, unsigned profileB,
+			unsigned profileC, unsigned isHoriztonal);
+
+	void configLogging(unsigned level, bool useFile = true);
+
+protected:
+	void saveResults(string & msg);
+
+	void formatCellMessages(unsigned plateNum, Decoder & decoder, string & msg);
+
+	int isValidDpi(int dpi);
+
+	int decodeCommon(unsigned plateNum, Dib & dib, double scanGap,
+	        unsigned squareDev, unsigned edgeThresh, unsigned corrections,
+	        double cellDistance, double gapX, double gapY, unsigned profileA,
+	        unsigned profileB, unsigned profileC, unsigned isVertical,
+	        const char *markedDibFilename);
+
+	auto_ptr<ImgScanner> imgScanner;
+
+	slTime starttime; // for debugging
+	slTime endtime;
+	slTime timediff;
+
+	static bool loggingInitialized;
+
+};
 
 #endif /* __INC_SCANLIB_INTERNAL_H */

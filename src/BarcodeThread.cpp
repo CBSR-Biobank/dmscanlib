@@ -56,14 +56,13 @@ BarcodeThread::BarcodeThread(ProcessImageManager * manager, double scanGap,
     UA_ASSERTS((dpi == 300) || (dpi == 400) || (dpi == 600),
             "invalid DPI: " << dpi);
 
-#ifdef _DEBUG
-    if (debug) {
+    // do not write diagnostic image is log level is less than 9
+    if (ua::Logger::Instance().levelGet(3) >= 9) {
         ostringstream fname;
         CvRect & rect = barcodeInfo.getPreProcessBoundingBox();
         fname << "preprocess-" << rect.x << "-" << rect.y << ".bmp";
         dib->writeToFile(fname.str().c_str());
     }
-#endif
 }
 
 BarcodeThread::~BarcodeThread() {
@@ -164,12 +163,18 @@ bool BarcodeThread::isFinished() {
 }
 
 void BarcodeThread::writeMissedDib() {
+	// do not write diagnostic image is log level is less than 9
+	if (ua::Logger::Instance().levelGet(3) < 9) return;
+
     ostringstream fname;
     fname << "missed-" << croppedOffset.x << "-" << croppedOffset.y << ".bmp";
     dib->writeToFile(fname.str().c_str());
 }
 
 void BarcodeThread::writeDiagnosticImage(DmtxDecode *dec) {
+	// do not write diagnostic image is log level is less than 9
+	if (ua::Logger::Instance().levelGet(3) < 9) return;
+
     int totalBytes, headerBytes;
     int bytesWritten;
     unsigned char *pnm;
