@@ -116,10 +116,10 @@ void DmScanLib::saveResults(string & msg) {
 }
 
 void DmScanLib::formatCellMessages(unsigned plateNum, string & msg) {
-	vector<BarcodeInfo *> & barcodes = decoder->getBarcodes();
 	ostringstream out;
 	out << "#Plate,Row,Col,Barcode" << endl;
 
+	vector<BarcodeInfo *> & barcodes = decoder->getBarcodes();
 	for (unsigned i = 0, n = barcodes.size(); i < n; ++i) {
 		BarcodeInfo & info = *barcodes[i];
 		const char * msg = info.getMsg().c_str();
@@ -195,12 +195,12 @@ int DmScanLib::decodePlate(unsigned verbose, unsigned dpi, int brightness,
 		double bottom, double scanGap, unsigned squareDev, unsigned edgeThresh,
 		unsigned corrections, double cellDistance, double gapX, double gapY,
 		unsigned profileA, unsigned profileB, unsigned profileC,
-		unsigned isVertical) {
+		unsigned orientation) {
 	configLogging(verbose);
 	UA_DOUT(
 			1,
 			3,
-			"slDecodePlate: dpi/" << dpi << " brightness/" << brightness << " contrast/" << contrast << " plateNum/" << plateNum << " left/" << left << " top/" << top << " right/" << right << " bottom/" << bottom << " scanGap/" << scanGap << " squareDev/" << squareDev << " edgeThresh/" << edgeThresh << " corrections/" << corrections << " cellDistance/" << cellDistance << " gapX/" << gapX << " gapY/" << gapY << " isVertical/" << isVertical);
+			"slDecodePlate: dpi/" << dpi << " brightness/" << brightness << " contrast/" << contrast << " plateNum/" << plateNum << " left/" << left << " top/" << top << " right/" << right << " bottom/" << bottom << " scanGap/" << scanGap << " squareDev/" << squareDev << " edgeThresh/" << edgeThresh << " corrections/" << corrections << " cellDistance/" << cellDistance << " gapX/" << gapX << " gapY/" << gapY << " orientation/" << orientation);
 
 	if ((plateNum < MIN_PLATE_NUM) || (plateNum > MAX_PLATE_NUM)) {
 		return SC_INVALID_PLATE_NUM;
@@ -226,7 +226,7 @@ int DmScanLib::decodePlate(unsigned verbose, unsigned dpi, int brightness,
 	dib.writeToFile("scanned.bmp");
 	result = decodeCommon(plateNum, dib, scanGap, squareDev, edgeThresh,
 			corrections, cellDistance, gapX, gapY, profileA, profileB, profileC,
-			isVertical, "decode.bmp");
+			orientation, "decode.bmp");
 
 	imgScanner->freeImage(h);
 	UA_DOUT(1, 1, "slDecodeCommon returned: " << result);
@@ -237,12 +237,12 @@ int DmScanLib::decodeImage(unsigned verbose, unsigned plateNum,
 		const char *filename, double scanGap, unsigned squareDev,
 		unsigned edgeThresh, unsigned corrections, double cellDistance,
 		double gapX, double gapY, unsigned profileA, unsigned profileB,
-		unsigned profileC, unsigned isVertical) {
+		unsigned profileC, unsigned orientation) {
 	configLogging(verbose);
 	UA_DOUT(
 			1,
 			3,
-			"slDecodeImage: plateNum/" << plateNum << " filename/" << filename << " scanGap/" << scanGap << " squareDev/" << squareDev << " edgeThresh/" << edgeThresh << " corrections/" << corrections << " cellDistance/" << cellDistance << " gapX/" << gapX << " gapY/" << gapY << " isVertical/" << isVertical);
+			"slDecodeImage: plateNum/" << plateNum << " filename/" << filename << " scanGap/" << scanGap << " squareDev/" << squareDev << " edgeThresh/" << edgeThresh << " corrections/" << corrections << " cellDistance/" << cellDistance << " gapX/" << gapX << " gapY/" << gapY << " orientation/" << orientation);
 
 	if ((plateNum < MIN_PLATE_NUM) || (plateNum > MAX_PLATE_NUM)) {
 		return SC_INVALID_PLATE_NUM;
@@ -259,14 +259,14 @@ int DmScanLib::decodeImage(unsigned verbose, unsigned plateNum,
 
 	int result = decodeCommon(plateNum, dib, scanGap, squareDev, edgeThresh,
 			corrections, cellDistance, gapX, gapY, profileA, profileB, profileC,
-			isVertical, "decode.bmp");
+			orientation, "decode.bmp");
 	return result;
 }
 
 int DmScanLib::decodeCommon(unsigned plateNum, Dib & dib, double scanGap,
 		unsigned squareDev, unsigned edgeThresh, unsigned corrections,
 		double cellDistance, double gapX, double gapY, unsigned profileA,
-		unsigned profileB, unsigned profileC, unsigned isHoriztonal,
+		unsigned profileB, unsigned profileC, unsigned orientation,
 		const char *markedDibFilename) {
 
 	const unsigned profileWords[3] = { profileA, profileB, profileC };
@@ -278,8 +278,8 @@ int DmScanLib::decodeCommon(unsigned plateNum, Dib & dib, double scanGap,
 
 	Decoder::ProcessResult result;
 
-	PalletGrid::Orientation orientation = (
-			isHoriztonal ?
+	PalletGrid::Orientation palletOrientation = (
+			(orientation == 0) ?
 					PalletGrid::ORIENTATION_HORIZONTAL :
 					PalletGrid::ORIENTATION_VERTICAL);
 
@@ -287,7 +287,7 @@ int DmScanLib::decodeCommon(unsigned plateNum, Dib & dib, double scanGap,
 	unsigned gapYpixels = static_cast<unsigned>(dpi * gapY);
 
 	auto_ptr <PalletGrid> palletGrid(
-			new PalletGrid(orientation, dib.getWidth(), dib.getHeight(),
+			new PalletGrid(palletOrientation, dib.getWidth(), dib.getHeight(),
 					gapXpixels, gapYpixels, profileWords));
 
 	if (!palletGrid->isImageValid()) {
@@ -364,24 +364,24 @@ int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
 		double scanGap, unsigned squareDev, unsigned edgeThresh,
 		unsigned corrections, double cellDistance, double gapX, double gapY,
 		unsigned profileA, unsigned profileB, unsigned profileC,
-		unsigned isVertical) {
+		unsigned orientation) {
 	DmScanLib dmScanLib;
 	dmScanLib.setTextFileOutputEnable(true);
 	return dmScanLib.decodePlate(verbose, dpi, brightness, contrast, plateNum,
 			left, top, right, bottom, scanGap, squareDev, edgeThresh,
 			corrections, cellDistance, gapX, gapY, profileA, profileB, profileC,
-			isVertical);
+			orientation);
 }
 
 int slDecodeImage(unsigned verbose, unsigned plateNum, const char * filename,
 		double scanGap, unsigned squareDev, unsigned edgeThresh,
 		unsigned corrections, double cellDistance, double gapX, double gapY,
 		unsigned profileA, unsigned profileB, unsigned profileC,
-		unsigned isVertical) {
+		unsigned orientation) {
 	DmScanLib dmScanLib;
 	dmScanLib.setTextFileOutputEnable(true);
 	return dmScanLib.decodeImage(verbose, plateNum, filename, scanGap,
 			squareDev, edgeThresh, corrections, cellDistance, gapX, gapY,
-			profileA, profileB, profileC, isVertical);
+			profileA, profileB, profileC, orientation);
 }
 

@@ -66,10 +66,10 @@ public:
 		textFileOutputEnable = enable;
 	}
 
+	vector<BarcodeInfo *> & getBarcodes();
+
 protected:
 	void saveResults(string & msg);
-
-	vector<BarcodeInfo *> & getBarcodes();
 
 	void formatCellMessages(unsigned plateNum, string & msg);
 
