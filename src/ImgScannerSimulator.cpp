@@ -45,30 +45,36 @@ ImgScannerSimulator::~ImgScannerSimulator() {
 }
 
 bool ImgScannerSimulator::twainAvailable() {
+	UA_DOUT(2, 5, "twainAvailable");
    return false;
 }
 
 bool ImgScannerSimulator::selectSourceAsDefault() {
+	UA_DOUT(2, 5, "selectSourceAsDefault");
    return false;
 }
 
 int ImgScannerSimulator::getScannerCapability() {
+	UA_DOUT(2, 5, "getScannerCapability");
 	return 0;
 }
 
 HANDLE ImgScannerSimulator::acquireImage(unsigned dpi, int brightness, int contrast,
 	double top, double left, double bottom, double right) {
+	UA_DOUT(2, 5, "acquireImage");
 	return NULL;
 }
 
 HANDLE ImgScannerSimulator::acquireFlatbed(unsigned dpi, int brightness, int contrast) {
+	UA_DOUT(2, 5, "acquireFlatbed");
 	return NULL;
 }
 
 DmtxImage* ImgScannerSimulator::acquireDmtxImage(unsigned dpi, int brightness, int contrast) {
+	UA_DOUT(2, 5, "acquireDmtxImage");
 	return NULL;
 }
 
 void ImgScannerSimulator::freeImage(HANDLE handle) {
-
+	UA_DOUT(2, 5, "freeImage");
 }
