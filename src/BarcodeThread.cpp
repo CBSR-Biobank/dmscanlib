@@ -123,7 +123,7 @@ void BarcodeThread::run() {
 
             CvRect & rect = barcodeInfo.getPostProcessBoundingBox();
 
-            UA_DOUT(3, 8, "BarcodeThread: message/"
+            UA_DOUT(3, 5, "BarcodeThread: message/"
                     << barcodeInfo.getMsg()
                     << " tlCorner/(" << rect.x << "," << rect.y
                     << ")  brCorner/(" << rect.x + rect.width
