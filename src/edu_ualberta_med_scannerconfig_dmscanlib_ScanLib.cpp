@@ -38,6 +38,7 @@ private:
 const char * getResultCodeMsg(int resultCode) {
 	const char * message = NULL;
 
+#ifdef WIN32
 	switch (resultCode) {
 	case SC_SUCCESS:
 		message = NULL;
@@ -67,6 +68,29 @@ const char * getResultCodeMsg(int resultCode) {
 		message = "undefined error";
 		break;
 	}
+#else
+	switch (resultCode) {
+	case SC_SUCCESS:
+		message = NULL;
+		break;
+	case SC_FAIL:
+	case SC_TWAIN_UNAVAIL:
+	case SC_INVALID_DPI:
+	case SC_INVALID_IMAGE:
+	case SC_INCORRECT_DPI_SCANNED:
+		message = "operation not supported on your operating system";
+		break;
+	case SC_INVALID_PLATE_NUM:
+		message = "invalid plate number specified";
+		break;
+	case SC_INVALID_VALUE:
+		message = "invalid value specified";
+		break;
+	default:
+		message = "undefined error";
+		break;
+	}
+#endif
 	return message;
 }
 
@@ -200,7 +224,7 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
 
 	DmScanLib dmScanLib;
 	int result = dmScanLib.scanFlatbed(verbose, dpi, brightness, contrast, filename);
-	jobject resultObj = createScanResultObject(env, SC_SUCCESS, result);
+	jobject resultObj = createScanResultObject(env, result, result);
 	env->ReleaseStringUTFChars(_filename, filename);
 	return resultObj;
 }
