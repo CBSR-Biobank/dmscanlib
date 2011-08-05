@@ -147,7 +147,7 @@ struct Options {
     unsigned profileA;
     unsigned profileB;
     unsigned profileC;
-    bool isHorizontal;
+    unsigned orientation;
 	bool flatbed;
 
 	Options();
@@ -243,7 +243,7 @@ Options::Options() {
 	select = false;
 	capability = false;
 	test = false;
-	isHorizontal = true;
+	orientation = 0;
 
 	infile = NULL;
 	outfile = NULL;
@@ -339,7 +339,7 @@ int TestApp::decode() {
 				options.infile, options.gap, options.squareDev,
 				options.threshold, options.corrections, options.cellDistance,
 				options.gapX, options.gapY, options.profileA, options.profileB,
-				options.profileC, options.isHorizontal);
+				options.profileC, options.orientation);
 	}
 
 	if ((options.left == 0.0) && (options.right == 0.0) && (options.top == 0.0)
@@ -358,7 +358,7 @@ int TestApp::decode() {
 			options.right, options.bottom, options.gap, options.squareDev,
 			options.threshold, options.corrections, options.cellDistance,
 			options.gapX, options.gapY, options.profileA, options.profileB,
-			options.profileC, options.isHorizontal);
+			options.profileC, options.orientation);
 }
 
 int TestApp::scan() {
@@ -442,7 +442,7 @@ bool TestApp::getCmdOptions(int argc, char ** argv) {
 
 			case 'v':
 			case OPT_ID_VERTICAL:
-				options.isHorizontal = false;
+				options.orientation = 1;
 				break;
 
 			case 'h':

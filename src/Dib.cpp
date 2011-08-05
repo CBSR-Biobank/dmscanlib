@@ -117,15 +117,13 @@ void RgbQuad::set(unsigned char r, unsigned char g, unsigned char b) {
 	rgbReserved = 0;
 }
 
-
-
 Dib::Dib() :
-		pixels(NULL) {
+	pixels(NULL), isAllocated(false) {
 	ua::Logger::Instance().subSysHeaderSet(4, "Dib");
 }
 
 Dib::Dib(Dib & src) :
-		pixels(NULL) {
+	pixels(NULL), isAllocated(false) {
 	ua::Logger::Instance().subSysHeaderSet(4, "Dib");
 	init(src.width, src.height, src.colorBits, src.pixelsPerMeter);
 	memcpy(pixels, src.pixels, src.width * src.height);
@@ -152,13 +150,12 @@ Dib::Dib(IplImageContainer & img) {
 	cvFlip(src, src, 0);
 }
 
-Dib::Dib(char *filename) :
-		pixels(NULL) {
+Dib::Dib(char *filename) : pixels(NULL), isAllocated(false) {
 	readFromFile(filename);
 }
 
 void Dib::init(unsigned width, unsigned height, unsigned colorBits,
-		unsigned pixelsPerMeter) {
+		unsigned pixelsPerMeter, bool allocatePixelBuf) {
 
 	this->size = 40;
 	this->width = width;
@@ -172,8 +169,9 @@ void Dib::init(unsigned width, unsigned height, unsigned colorBits,
 	rowPaddingBytes = rowBytes - (width * bytesPerPixel);
 	imageSize = height * rowBytes;
 
-	allocate(imageSize);
-
+	if (allocatePixelBuf) {
+		allocate(imageSize);
+	}
 	UA_DOUT(4, 5, "constructor: image size is " << imageSize);
 }
 
@@ -188,7 +186,7 @@ void Dib::allocate(unsigned int allocateSize) {
 }
 
 void Dib::deallocate() {
-	if (pixels != NULL) {
+	if (isAllocated && (pixels != NULL)) {
 		delete[] pixels;
 		pixels = NULL;
 	}
@@ -230,7 +228,7 @@ void Dib::readFromHandle(HANDLE handle) {
 	UA_ASSERT(dibHeaderPtr->biClrImportant == 0);
 
 	init(dibHeaderPtr->biWidth, dibHeaderPtr->biHeight,
-			dibHeaderPtr->biBitCount, dibHeaderPtr->biXPelsPerMeter);
+			dibHeaderPtr->biBitCount, dibHeaderPtr->biXPelsPerMeter, false);
 
 	pixels = reinterpret_cast <unsigned char *>(dibHeaderPtr)
 	+ sizeof(BITMAPINFOHEADER) + paletteSize * sizeof(RgbQuad);
@@ -268,7 +266,7 @@ void Dib::readFromFile(const char *filename) {
 	r = fread(infoHeaderRaw, sizeof(unsigned char), sizeof(infoHeaderRaw), fh);
 	UA_ASSERT(r = sizeof(infoHeaderRaw));
 
-	//unsigned size = *(unsigned *) &infoHeaderRaw[0];
+	unsigned size = *(unsigned *) &infoHeaderRaw[0];
 	unsigned width = *(unsigned *) &infoHeaderRaw[0x12 - 0xE];
 	unsigned height = *(unsigned *) &infoHeaderRaw[0x16 - 0xE];
 	unsigned colorBits = *(unsigned short *) &infoHeaderRaw[0x1C - 0xE];
@@ -472,7 +470,8 @@ bool Dib::bound(unsigned min, unsigned & x, unsigned max) {
 /*
  * DIBs are flipped in Y
  */
-Dib * Dib::crop(Dib & src, unsigned x0, unsigned y0, unsigned x1, unsigned y1) {
+auto_ptr<Dib> Dib::crop(Dib & src, unsigned x0, unsigned y0, unsigned x1,
+		unsigned y1) {
 	UA_ASSERT(x1 > x0);
 	UA_ASSERT(y1 > y0);
 
@@ -484,7 +483,8 @@ Dib * Dib::crop(Dib & src, unsigned x0, unsigned y0, unsigned x1, unsigned y1) {
 	unsigned width = x1 - x0;
 	unsigned height = y1 - y0;
 
-	Dib * dest = new Dib(width, height, src.colorBits, src.pixelsPerMeter);
+	auto_ptr<Dib>
+			dest(new Dib(width, height, src.colorBits, src.pixelsPerMeter));
 
 	unsigned char *srcRowPtr = src.pixels + (src.height - y1) * src.rowBytes
 			+ x0 * dest->bytesPerPixel;

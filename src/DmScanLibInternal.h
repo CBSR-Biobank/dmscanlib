@@ -53,12 +53,12 @@ public:
 			double right, double bottom, double scanGap, unsigned squareDev,
 			unsigned edgeThresh, unsigned corrections, double cellDistance,
 			double gapX, double gapY, unsigned profileA, unsigned profileB,
-			unsigned profileC, unsigned isHoriztonal);
+			unsigned profileC, unsigned orientation);
 	virtual int decodeImage(unsigned verbose, unsigned plateNum,
 			const char * filename, double scanGap, unsigned squareDev,
 			unsigned edgeThresh, unsigned corrections, double cellDistance,
 			double gapX, double gapY, unsigned profileA, unsigned profileB,
-			unsigned profileC, unsigned isHoriztonal);
+			unsigned profileC, unsigned orientation);
 
 	void configLogging(unsigned level, bool useFile = true);
 
@@ -78,7 +78,7 @@ protected:
 	int decodeCommon(unsigned plateNum, Dib & dib, double scanGap,
 	        unsigned squareDev, unsigned edgeThresh, unsigned corrections,
 	        double cellDistance, double gapX, double gapY, unsigned profileA,
-	        unsigned profileB, unsigned profileC, unsigned isVertical,
+	        unsigned profileB, unsigned profileC, unsigned orientation,
 	        const char *markedDibFilename);
 
 	auto_ptr<ImgScanner> imgScanner;

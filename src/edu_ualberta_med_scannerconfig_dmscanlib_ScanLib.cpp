@@ -7,6 +7,34 @@
 
 using namespace std;
 
+class ScanRegion {
+public:
+	ScanRegion(JNIEnv *env, jobject scanRegionObj) {
+		jclass scanSettingsJavaClass = env->GetObjectClass(scanRegionObj);
+
+		// run the following command to obtain method signatures from a class.
+		// javap -s -p edu.ualberta.med.scannerconfig.dmscanlib.ScanRegion
+		jmethodID getMethod = env->GetMethodID(scanSettingsJavaClass, "getLeft", "()D");		
+		left = env->CallDoubleMethod(scanRegionObj, getMethod, NULL);
+		
+		getMethod = env->GetMethodID(scanSettingsJavaClass, "getTop", "()D");		
+		top = env->CallDoubleMethod(scanRegionObj, getMethod, NULL);
+		
+		getMethod = env->GetMethodID(scanSettingsJavaClass, "getRight", "()D");		
+		right = env->CallDoubleMethod(scanRegionObj, getMethod, NULL);
+		
+		getMethod = env->GetMethodID(scanSettingsJavaClass, "getBottom", "()D");			
+		bottom = env->CallDoubleMethod(scanRegionObj, getMethod, NULL);
+    }
+
+	double left;
+	double top;
+	double right;
+	double bottom;
+
+private:
+};
+
 const char * getResultCodeMsg(int resultCode) {
 	const char * message = NULL;
 
@@ -163,12 +191,36 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
  * Signature: (JJIIJDDDDDJJJDDDJJJJ)Ledu/ualberta/med/scannerconfig/dmscanlib/DecodeResult;
  */
 JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_decodePlate(
-		JNIEnv * env, jobject obj, jlong verbose, jlong dpi, jint brightness,
-		jint contrast, jlong plateNum, jobject region, jdouble scanGap,
-		jlong squareDev, jlong edgeThresh, jlong corrections,
-		jdouble cellDistance, jdouble gapX, jdouble gapY, jlong profileA,
-		jlong profileB, jlong profileC, jlong orientation) {
-	return NULL;
+		JNIEnv * env, jobject obj, jlong _verbose, jlong _dpi, jint brightness,
+		jint contrast, jlong _plateNum, jobject _region, jdouble scanGap,
+		jlong _squareDev, jlong _edgeThresh, jlong _corrections,
+		jdouble cellDistance, jdouble gapX, jdouble gapY, jlong _profileA,
+		jlong _profileB, jlong _profileC, jlong _orientation) {
+
+	unsigned verbose = static_cast<unsigned>(_verbose);
+	unsigned dpi = static_cast<unsigned>(_dpi);
+	unsigned plateNum = static_cast<unsigned>(_plateNum);
+	unsigned squareDev = static_cast<unsigned>(_squareDev);
+	unsigned edgeThresh = static_cast<unsigned>(_edgeThresh);
+	unsigned corrections = static_cast<unsigned>(_corrections);
+	unsigned profileA = static_cast<unsigned>(_profileA);
+	unsigned profileB = static_cast<unsigned>(_profileB);
+	unsigned profileC = static_cast<unsigned>(_profileC);
+	unsigned orientation = static_cast<unsigned>(_orientation);
+
+	ScanRegion region(env, _region);
+
+	DmScanLib dmScanLib;
+	vector<BarcodeInfo *> * barcodes = NULL;
+	int result = dmScanLib.decodePlate(verbose, dpi, brightness, contrast, plateNum, 
+		region.left, region.top, region.right, region.bottom, scanGap,
+			squareDev, edgeThresh, corrections, cellDistance, gapX, gapY,
+			profileA, profileB, profileC, orientation);
+
+	if (result == SC_SUCCESS) {
+		barcodes = &dmScanLib.getBarcodes();
+	} 
+	return createDecodeResultObject(env, result, barcodes);
 }
 
 /*
@@ -177,26 +229,32 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
  * Signature: (JJLjava/lang/String;DJJJDDDJJJJ)Ledu/ualberta/med/scannerconfig/dmscanlib/DecodeResult;
  */
 JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_decodeImage(
-		JNIEnv * env, jobject obj, jlong verbose, jlong plateNum,
-		jstring _filename, jdouble scanGap, jlong squareDev, jlong edgetThres,
-		jlong corrections, jdouble cellDistance, jdouble gapX, jdouble gapY,
-		jlong profileA, jlong profileB, jlong profileC, jlong orientation) {
+		JNIEnv * env, jobject obj, jlong _verbose, jlong _plateNum,
+		jstring _filename, jdouble scanGap, jlong _squareDev, jlong _edgeThresh,
+		jlong _corrections, jdouble cellDistance, jdouble gapX, jdouble gapY,
+		jlong _profileA, jlong _profileB, jlong _profileC, jlong _orientation) {
 
 	const char *filename = env->GetStringUTFChars(_filename, 0);
-	DmScanLib dmScanLib;
+	unsigned verbose = static_cast<unsigned>(_verbose);
+	unsigned plateNum = static_cast<unsigned>(_plateNum);
+	unsigned squareDev = static_cast<unsigned>(_squareDev);
+	unsigned edgeThresh = static_cast<unsigned>(_edgeThresh);
+	unsigned corrections = static_cast<unsigned>(_corrections);
+	unsigned profileA = static_cast<unsigned>(_profileA);
+	unsigned profileB = static_cast<unsigned>(_profileB);
+	unsigned profileC = static_cast<unsigned>(_profileC);
+	unsigned orientation = static_cast<unsigned>(_orientation);
 
+	DmScanLib dmScanLib;
+	vector<BarcodeInfo *> * barcodes = NULL;
 	int result = dmScanLib.decodeImage(verbose, plateNum, filename, scanGap,
-			squareDev, edgetThres, corrections, cellDistance, gapX, gapY,
+			squareDev, edgeThresh, corrections, cellDistance, gapX, gapY,
 			profileA, profileB, profileC, orientation);
 
-	jobject resultObj;
-
 	if (result == SC_SUCCESS) {
-		vector<BarcodeInfo *> barcodes = dmScanLib.getBarcodes();
-		resultObj = createDecodeResultObject(env, result, &barcodes);
-	} else {
-		resultObj = createDecodeResultObject(env, result, NULL);
-	}
+		barcodes = &dmScanLib.getBarcodes();
+	} 
+	jobject resultObj = createDecodeResultObject(env, result, barcodes);
 	env->ReleaseStringUTFChars(_filename, filename);
 	return resultObj;
 }

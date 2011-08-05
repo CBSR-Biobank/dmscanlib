@@ -114,7 +114,7 @@ void ProcessImageManager::generateBarcodes(Dib * dib,
 
 			CvRect & rect = info->getPreProcessBoundingBox();
 
-			Dib * croppedDib = Dib::crop(*dib, rect.x, rect.y,
+			auto_ptr<Dib> croppedDib = Dib::crop(*dib, rect.x, rect.y,
 					rect.x + rect.width, rect.y + rect.height);
 
 			BarcodeThread * thread = new BarcodeThread(this, scanGap, squareDev,
@@ -126,5 +126,4 @@ void ProcessImageManager::generateBarcodes(Dib * dib,
 		}
 	}
 	threadHandler(threads);
-
 }

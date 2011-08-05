@@ -39,7 +39,7 @@ class BarcodeThread: public OpenThreads::Thread {
 public:
     BarcodeThread(ProcessImageManager * manager, double scanGap,
             unsigned squareDev, unsigned edgeThresh, unsigned corrections,
-            CvRect & croppedOffset, Dib * dib, BarcodeInfo & info);
+            CvRect & croppedOffset, auto_ptr<Dib> dib, BarcodeInfo & info);
 
     virtual ~ BarcodeThread();
 
@@ -49,7 +49,7 @@ public:
 
 private:
 
-    Dib * dib;
+    auto_ptr<Dib> dib;
     DmtxImage * image;
     CvRect croppedOffset;
     ProcessImageManager * manager;

@@ -170,15 +170,18 @@
     <ClCompile Include="src\BarcodeThread.cpp" />
     <ClCompile Include="src\Decoder.cpp" />
     <ClCompile Include="src\Dib.cpp" />
-    <ClCompile Include="src\DmScanLib_wrap.c" />
-    <ClCompile Include="src\DmScanLibCommon.cpp" />
-    <ClCompile Include="src\DmScanLibWin32.cpp" />
-    <ClCompile Include="src\edu_ualberta_med_scannerconfig_dmscanlib_ScanLibImpl.cpp" />
-    <ClCompile Include="src\ImageScanner.cpp" />
+    <ClCompile Include="src\DmScanLib.cpp" />
+    <ClCompile Include="src\edu_ualberta_med_scannerconfig_dmscanlib_ScanLib.cpp" />
+    <ClCompile Include="src\ImgScanner.cpp" />
+    <ClCompile Include="src\ImgScannerFactory.cpp" />
+    <ClCompile Include="src\ImgScannerImpl.cpp" />
     <ClCompile Include="src\IplContainer.cpp" />
     <ClCompile Include="src\PalletGrid.cpp" />
     <ClCompile Include="src\ProcessImageManager.cpp" />
-    <ClCompile Include="src\Testapp.cpp" />
+    <ClCompile Include="src\TestApp.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug-DLL|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="src\utils\TimeUtilWin32.cpp" />
     <ClCompile Include="src\utils\UaLogger.cpp" />
     <ClCompile Include="src\libdmtx\Dmtx.c" />
@@ -195,8 +198,10 @@
     <ClInclude Include="src\Dib.h" />
     <ClInclude Include="src\DmScanLib.h" />
     <ClInclude Include="src\DmScanLibInternal.h" />
-    <ClInclude Include="src\edu_ualberta_med_scannerconfig_dmscanlib_ScanLibImpl.h" />
-    <ClInclude Include="src\ImageScanner.h" />
+    <ClInclude Include="src\edu_ualberta_med_scannerconfig_dmscanlib_ScanLib.h" />
+    <ClInclude Include="src\ImgScanner.h" />
+    <ClInclude Include="src\ImgScannerFactory.h" />
+    <ClInclude Include="src\ImgScannerImpl.h" />
     <ClInclude Include="src\IplContainer.h" />
     <ClInclude Include="src\PalletGrid.h" />
     <ClInclude Include="src\ProcessImageManager.h" />

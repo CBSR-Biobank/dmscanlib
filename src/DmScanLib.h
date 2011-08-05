@@ -186,14 +186,14 @@ slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
 		double scanGap, unsigned squareDev, unsigned edgeThresh,
 		unsigned corrections, double cellDistance, double gapX, double gapY,
 		unsigned profileA, unsigned profileB, unsigned profileC,
-		unsigned isHoriztonal);
+		unsigned orientation);
 
 typedef int (*SL_DECODE_PLATE)(unsigned verbose, unsigned dpi, int brightness,
 		int contrast, unsigned plateNum, double left, double top, double right,
 		double bottom, double scanGap, unsigned squareDev, unsigned edgeThresh,
 		unsigned corrections, double cellDistance, double gapX, double gapY,
 		unsigned profileA, unsigned profileB, unsigned profileC,
-		unsigned isHoriztonal);
+		unsigned orientation);
 
 /**
  * From the regions specified in the INI file for the corresponding plate,
@@ -237,13 +237,13 @@ EXPORT int slDecodeImage(unsigned verbose, unsigned plateNum,
 		const char * filename, double scanGap, unsigned squareDev,
 		unsigned edgeThresh, unsigned corrections, double cellDistance,
 		double gapX, double gapY, unsigned profileA, unsigned profileB,
-		unsigned profileC, unsigned isHoriztonal);
+		unsigned profileC, unsigned orientation);
 
 typedef int (*SL_DECODE_IMAGE)(unsigned verbose, unsigned plateNum,
 		const char * filename, double scanGap, unsigned squareDev,
 		unsigned edgeThresh, unsigned corrections, double cellDistance,
 		double gapX, double gapY, unsigned profileA, unsigned profileB,
-		unsigned profileC, unsigned isHoriztonal);
+		unsigned profileC, unsigned orientation);
 
 #ifdef __cplusplus
 }

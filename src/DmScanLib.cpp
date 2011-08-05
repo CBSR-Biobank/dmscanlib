@@ -200,7 +200,7 @@ int DmScanLib::decodePlate(unsigned verbose, unsigned dpi, int brightness,
 	UA_DOUT(
 			1,
 			3,
-			"slDecodePlate: dpi/" << dpi << " brightness/" << brightness << " contrast/" << contrast << " plateNum/" << plateNum << " left/" << left << " top/" << top << " right/" << right << " bottom/" << bottom << " scanGap/" << scanGap << " squareDev/" << squareDev << " edgeThresh/" << edgeThresh << " corrections/" << corrections << " cellDistance/" << cellDistance << " gapX/" << gapX << " gapY/" << gapY << " orientation/" << orientation);
+			"decodePlate: dpi/" << dpi << " brightness/" << brightness << " contrast/" << contrast << " plateNum/" << plateNum << " left/" << left << " top/" << top << " right/" << right << " bottom/" << bottom << " scanGap/" << scanGap << " squareDev/" << squareDev << " edgeThresh/" << edgeThresh << " corrections/" << corrections << " cellDistance/" << cellDistance << " gapX/" << gapX << " gapY/" << gapY << " orientation/" << orientation);
 
 	if ((plateNum < MIN_PLATE_NUM) || (plateNum > MAX_PLATE_NUM)) {
 		return SC_INVALID_PLATE_NUM;
@@ -229,7 +229,7 @@ int DmScanLib::decodePlate(unsigned verbose, unsigned dpi, int brightness,
 			orientation, "decode.bmp");
 
 	imgScanner->freeImage(h);
-	UA_DOUT(1, 1, "slDecodeCommon returned: " << result);
+	UA_DOUT(1, 1, "decodeCommon returned: " << result);
 	return result;
 }
 
@@ -242,7 +242,7 @@ int DmScanLib::decodeImage(unsigned verbose, unsigned plateNum,
 	UA_DOUT(
 			1,
 			3,
-			"slDecodeImage: plateNum/" << plateNum << " filename/" << filename << " scanGap/" << scanGap << " squareDev/" << squareDev << " edgeThresh/" << edgeThresh << " corrections/" << corrections << " cellDistance/" << cellDistance << " gapX/" << gapX << " gapY/" << gapY << " orientation/" << orientation);
+			"decodeImage: plateNum/" << plateNum << " filename/" << filename << " scanGap/" << scanGap << " squareDev/" << squareDev << " edgeThresh/" << edgeThresh << " corrections/" << corrections << " cellDistance/" << cellDistance << " gapX/" << gapX << " gapY/" << gapY << " orientation/" << orientation);
 
 	if ((plateNum < MIN_PLATE_NUM) || (plateNum > MAX_PLATE_NUM)) {
 		return SC_INVALID_PLATE_NUM;
@@ -326,7 +326,7 @@ int DmScanLib::decodeCommon(unsigned plateNum, Dib & dib, double scanGap,
 
 	Util::getTime(endtime);
 	Util::difftiime(starttime, endtime, timediff);
-	UA_DOUT(1, 1, "slDecodeCommonCv: time taken: " << timediff);
+	UA_DOUT(1, 1, "decodeCommon: time taken: " << timediff);
 	return SC_SUCCESS;
 }
 

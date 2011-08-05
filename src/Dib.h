@@ -66,7 +66,7 @@ public:
 
 	static auto_ptr<Dib> convertGrayscale(Dib & src);
 
-	static Dib * crop(Dib &src, unsigned x0, unsigned y0, unsigned x1,
+	static auto_ptr<Dib> crop(Dib &src, unsigned x0, unsigned y0, unsigned x1,
 			unsigned y1);
 
 	auto_ptr<IplImageContainer> generateIplImage();
@@ -114,9 +114,10 @@ private:
 	unsigned rowBytes;
 	unsigned rowPaddingBytes;
 	unsigned char * pixels;
+	bool isAllocated;
 
 	void init(unsigned width, unsigned height, unsigned colorBits,
-			unsigned pixelsPerMeter);
+			unsigned pixelsPerMeter, bool allocatePixelBuf = true);
 	void initPalette(RgbQuad * palette) const;
 
 	void allocate(unsigned int allocateSize);

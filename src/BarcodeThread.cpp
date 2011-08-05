@@ -34,7 +34,7 @@
 
 BarcodeThread::BarcodeThread(ProcessImageManager * manager, double scanGap,
         unsigned squareDev, unsigned edgeThresh, unsigned corrections,
-        CvRect & croppedOffset, Dib * d, BarcodeInfo & info) :
+        CvRect & croppedOffset, auto_ptr<Dib> d, BarcodeInfo & info) :
         dib(d), image(Decoder::createDmtxImageFromDib(*dib)), barcodeInfo(info),
             debug(true) {
 
@@ -67,8 +67,6 @@ BarcodeThread::BarcodeThread(ProcessImageManager * manager, double scanGap,
 
 BarcodeThread::~BarcodeThread() {
     dmtxImageDestroy(&image);
-	if (dib != NULL)
-		delete dib;
 }
 
 void BarcodeThread::run() {

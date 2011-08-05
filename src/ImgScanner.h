@@ -22,7 +22,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "dmtx.h"
 
-#ifndef WIN32
+#if defined (WIN32) && ! defined(__MINGW32__)
+#include <Windows.h>
+#else
 typedef void* HANDLE;
 #endif
 
