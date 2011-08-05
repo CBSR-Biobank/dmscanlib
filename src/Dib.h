@@ -114,6 +114,12 @@ private:
 	unsigned rowBytes;
 	unsigned rowPaddingBytes;
 	unsigned char * pixels;
+
+	/*
+	 * Dib can be created with a borrowed pixel buffer. When an image is scanned, 
+	 * the TWAIN driver owns the memory to the pixel buffer. In this case 
+	 * isAllocated is set to false.
+	 */
 	bool isAllocated;
 
 	void init(unsigned width, unsigned height, unsigned colorBits,

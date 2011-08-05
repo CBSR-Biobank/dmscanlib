@@ -165,11 +165,22 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
  * Signature: (JJIIDDDDLjava/lang/String;)Ledu/ualberta/med/scannerconfig/dmscanlib/ScanLibResult;
  */
 JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_scanImage(
-		JNIEnv * env, jobject obj, jlong verbose, jlong dpi, jint brightness,
-		jint contrast, jobject region, jstring _filename) {
+		JNIEnv * env, jobject obj, jlong _verbose, jlong _dpi, jint _brightness,
+		jint _contrast, jobject _region, jstring _filename) {			
+
+	unsigned verbose = static_cast<unsigned>(_verbose);
+	unsigned dpi = static_cast<unsigned>(_dpi);
+	unsigned brightness = static_cast<unsigned>(_brightness);
+	unsigned contrast = static_cast<unsigned>(_contrast);
 	const char *filename = env->GetStringUTFChars(_filename, 0);
+	ScanRegion region(env, _region);
+
+	DmScanLib dmScanLib;
+	int result = dmScanLib.scanImage(verbose, dpi, brightness, contrast,
+		region.left, region.top, region.right, region.bottom, filename);
+	jobject resultObj = createScanResultObject(env, result, result);
 	env->ReleaseStringUTFChars(_filename, filename);
-	return NULL;
+	return resultObj;
 }
 
 /*
@@ -178,11 +189,20 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
  * Signature: (JJIILjava/lang/String;)Ledu/ualberta/med/scannerconfig/dmscanlib/ScanLibResult;
  */
 JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_scanFlatbed(
-		JNIEnv * env, jobject obj, jlong verbose, jlong dpi, jint brightness,
-		jint contrast, jstring _filename) {
+		JNIEnv * env, jobject obj, jlong _verbose, jlong _dpi, jint _brightness,
+		jint _contrast, jstring _filename) {
+
+	unsigned verbose = static_cast<unsigned>(_verbose);
+	unsigned dpi = static_cast<unsigned>(_dpi);
+	unsigned brightness = static_cast<unsigned>(_brightness);
+	unsigned contrast = static_cast<unsigned>(_contrast);
 	const char *filename = env->GetStringUTFChars(_filename, 0);
+
+	DmScanLib dmScanLib;
+	int result = dmScanLib.scanFlatbed(verbose, dpi, brightness, contrast, filename);
+	jobject resultObj = createScanResultObject(env, SC_SUCCESS, result);
 	env->ReleaseStringUTFChars(_filename, filename);
-	return NULL;
+	return resultObj;
 }
 
 /*
@@ -234,7 +254,6 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
 		jlong _corrections, jdouble cellDistance, jdouble gapX, jdouble gapY,
 		jlong _profileA, jlong _profileB, jlong _profileC, jlong _orientation) {
 
-	const char *filename = env->GetStringUTFChars(_filename, 0);
 	unsigned verbose = static_cast<unsigned>(_verbose);
 	unsigned plateNum = static_cast<unsigned>(_plateNum);
 	unsigned squareDev = static_cast<unsigned>(_squareDev);
@@ -244,6 +263,7 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
 	unsigned profileB = static_cast<unsigned>(_profileB);
 	unsigned profileC = static_cast<unsigned>(_profileC);
 	unsigned orientation = static_cast<unsigned>(_orientation);
+	const char *filename = env->GetStringUTFChars(_filename, 0);
 
 	DmScanLib dmScanLib;
 	vector<BarcodeInfo *> * barcodes = NULL;
