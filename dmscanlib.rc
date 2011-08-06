@@ -71,12 +71,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "Canadian Biosample Repository"
             VALUE "FileDescription", "Scan data matrix based pallets and decode them."
-            VALUE "FileVersion", "1.0.0.0"
+            VALUE "FileVersion", "1, 0, 0, 0"
             VALUE "InternalName", "dmscanlib"
-            VALUE "LegalCopyright", "Copyright (C) 2010, GPL v3"
-            VALUE "OriginalFilename", "dmscanlib.exe"
+            VALUE "LegalCopyright", "Copyright (C) 2011, GPL v3"
+            VALUE "OriginalFilename", "dmscanlib.dll"
             VALUE "ProductName", "Data Matrix Pallet Scanning Library"
-            VALUE "ProductVersion", "0.9.8.0"
+            VALUE "ProductVersion", "1, 0, 0, 0"
         END
     END
     BLOCK "VarFileInfo"
