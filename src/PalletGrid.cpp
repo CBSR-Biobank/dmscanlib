@@ -38,12 +38,12 @@ PalletGrid::PalletGrid(Orientation o, unsigned imgWidth, unsigned imgHeight,
 
 	if (orientation == ORIENTATION_HORIZONTAL) {
 		imgValid = imgWidth > imgHeight;
-		cellWidth = imgWidth / MAX_COLS;
-		cellHeight = imgHeight / MAX_ROWS;
+		cellWidth = imgWidth / static_cast<double>(MAX_COLS);
+		cellHeight = imgHeight / static_cast<double>(MAX_ROWS);
 	} else if (orientation == ORIENTATION_VERTICAL) {
 		imgValid = imgWidth < imgHeight;
-		cellWidth = imgWidth / MAX_ROWS;
-		cellHeight = imgHeight / MAX_COLS;
+		cellWidth = imgWidth / static_cast<double>(MAX_ROWS);
+		cellHeight = imgHeight / static_cast<double>(MAX_COLS);
 	} else {
 		UA_ASSERTS(false, "orientation invalid: " << orientation);
 	}
@@ -82,17 +82,17 @@ void PalletGrid::getImageCoordinates(unsigned row, unsigned col,
 	UA_ASSERT(col < MAX_COLS);
 
 	if (orientation == ORIENTATION_HORIZONTAL) {
-		rect.x = cellWidth * (MAX_COLS - col - 1) + gapX;
-		rect.y = cellHeight * row + gapY;
+		rect.x = static_cast<int>(cellWidth * (MAX_COLS - col - 1)) + gapX;
+		rect.y = static_cast<int>(cellHeight * row) + gapY;
 	} else if (orientation == ORIENTATION_VERTICAL) {
-		rect.x = cellWidth * row + gapX;
-		rect.y = cellHeight * col + gapY;
+		rect.x = static_cast<int>(cellWidth * row) + gapX;
+		rect.y = static_cast<int>(cellHeight * col) + gapY;
 	} else {
 		UA_ASSERTS(false, "orientation invalid: " << orientation);
 	}
 
-	rect.width = cellWidth - 2 * gapX;
-	rect.height = cellWidth - 2 * gapY;
+	rect.width = static_cast<int>(cellWidth) - 2 * gapX;
+	rect.height = static_cast<int>(cellHeight) - 2 * gapY;
 }
 
 void PalletGrid::getPositionStr(unsigned row, unsigned col, string & str) {

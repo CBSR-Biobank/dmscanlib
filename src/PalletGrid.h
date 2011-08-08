@@ -81,8 +81,8 @@ public:
 private:
 
 	Orientation orientation;
-	unsigned cellWidth;
-	unsigned cellHeight;
+	double cellWidth;
+	double cellHeight;
 	unsigned gapX;
 	unsigned gapY;
 	vector<bool> bits;

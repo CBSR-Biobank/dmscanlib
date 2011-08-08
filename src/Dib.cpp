@@ -172,7 +172,7 @@ void Dib::init(unsigned width, unsigned height, unsigned colorBits,
 	if (allocatePixelBuf) {
 		allocate(imageSize);
 	}
-	UA_DOUT(4, 5, "constructor: image size is " << imageSize);
+	UA_DOUT(4, 9, "constructor: image size is " << imageSize);
 }
 
 Dib::~Dib() {
