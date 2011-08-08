@@ -206,7 +206,7 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib) {
 			if (!palletGrid->getCellEnabled(row, col))
 				continue;
 
-			palletGrid->getImageCoordinates(row, col, rect);
+			palletGrid->getCellRect(row, col, rect);
 			UA_DOUT(
 					1,
 					9,

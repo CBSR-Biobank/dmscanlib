@@ -70,7 +70,7 @@ public:
 	 */
 	bool getCellEnabled(unsigned row, unsigned col);
 
-	void getImageCoordinates(unsigned row, unsigned col, CvRect & rect);
+	void getCellRect(unsigned row, unsigned col, CvRect & rect);
 
 	void getPositionStr(unsigned row, unsigned col, string & str);
 

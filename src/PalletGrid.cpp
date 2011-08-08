@@ -76,8 +76,7 @@ PalletGrid::PalletGrid(Orientation o, unsigned imgWidth, unsigned imgHeight,
 PalletGrid::~PalletGrid() {
 }
 
-void PalletGrid::getImageCoordinates(unsigned row, unsigned col,
-		CvRect & rect) {
+void PalletGrid::getCellRect(unsigned row, unsigned col, CvRect & rect) {
 	UA_ASSERT(row < MAX_ROWS);
 	UA_ASSERT(col < MAX_COLS);
 
