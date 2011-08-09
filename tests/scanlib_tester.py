@@ -9,7 +9,7 @@ try: import simplejson as json
 except ImportError: import json
 
 scanlibDirectory = "../Linux-Debug"
-scanlibExecutable = "dmscanlib.exe"
+scanlibExecutable = "dmscanlib"
 scanLibBarcodesFileName = "dmscanlib.txt"
 scanLibTimeout = 30
 
@@ -27,7 +27,7 @@ class Barcode(object):
 
 		if message == None:
 			return None
-	
+
 		matches = re.match(r".*message/(.*?) tlCorner/\((.*?)\).*brCorner/\((.*?)\)\n",message)
 
 		if matches == None or matches.group(1) == None or \
@@ -159,6 +159,7 @@ def seperator(title = ""):
 class Command(object):
 
 	def __init__(self, cmd):
+
 		self.cmd = cmd
 		self.process = None
 		self.output = None
@@ -187,12 +188,14 @@ def runScanlib(scanLibPath,imagePath):
 	timeStart = datetime.datetime.now()
 
 
-	command = Command([scanLibPath,"--debug" ,"8", "-d" ,"--plate", "1" ,"-i" ,imagePath])
+
+	
+	command = Command([scanLibPath,"--debug" ,"9", "-d" ,"--plate", "1" ,"-i" ,imagePath])
 	scanlibOutput = command.run(timeout=scanLibTimeout)
 
 	if scanlibOutput == None: return None
 
-	barcodesMatch = re.findall(r"Decoder 8 BarcodeThread: message.*\n",scanlibOutput)# scanlibPipe.read()
+	barcodesMatch = re.findall(r".*message.*\n",scanlibOutput)# scanlibPipe.read()
 	if(len(barcodesMatch)  <= 0): return None
 
 	barcodes = map(Barcode,barcodesMatch)
@@ -279,8 +282,9 @@ def compareTest(resultsFile1,resultsFile2):
 		total_bc_1 += bc1
 		total_bc_2 += bc2
 
-		pbc = (bc2 / (bc1*1.00) - 1)*100
-		
+		pbc = 0
+		try: pbc = (bc2 / (bc1*1.00) - 1)*100
+		except ZeroDivisionError: pass
 	
 		t1 = sr1.getTimeTaken()
 		t2 = sr2.getTimeTaken()
@@ -288,12 +292,24 @@ def compareTest(resultsFile1,resultsFile2):
 		total_t_1 += t1
 		total_t_2 += t2
 
-		pt = (t2 / (t1*1.00) -1 )*100
+		pt = 0
+		try: pt = (t2 / (t1*1.00) -1 )*100
+		except ZeroDivisionError: pass
+			
 	
 		table.append(["",sf,"%03.1f%%(%d/%d)"%(pbc,bc2,bc1),"%03.1f%%(%d/%d)"%(pt,t2,t1)])
 
-	ptotal_bc = (total_bc_2  / (total_bc_1*1.00) - 1)*100.0
-	ptotal_t = (total_t_2  / (total_t_1*1.00) - 1)*100.0
+
+		
+
+	ptotal_bc = 0
+	try: ptotal_bc = (total_bc_2  / (total_bc_1*1.00) - 1)*100.0
+	except ZeroDivisionError: pass
+	
+	ptotal_t = 0
+	try: ptotal_t = (total_t_2  / (total_t_1*1.00) - 1)*100.0
+	except ZeroDivisionError: pass
+
 	table.append(["","","",""])
 	table.append(["total:","","%03.2f%%(%d/%d)" %(ptotal_bc,total_bc_2,total_bc_1),
 				  "%03.2f%%(%d/%d)" %(ptotal_t,total_t_2,total_t_1)])
@@ -302,8 +318,7 @@ def compareTest(resultsFile1,resultsFile2):
 	print ""
 
 def main(argv):
-	
-                  
+	                  
 	try:                                
 		opts, args = getopt.getopt(argv, "scthi:o:", ["show","compare","test","help", "imageDir=","output=","results1=","results2="])
 	except getopt.GetoptError:          
