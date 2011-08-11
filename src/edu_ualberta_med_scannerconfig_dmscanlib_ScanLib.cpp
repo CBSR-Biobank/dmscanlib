@@ -259,7 +259,7 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
 	int result = dmScanLib.decodePlate(verbose, dpi, brightness, contrast, plateNum, 
 		region.left, region.top, region.right, region.bottom, scanGap,
 			squareDev, edgeThresh, corrections, cellDistance, gapX, gapY,
-			profileA, profileB, profileC, orientation);
+			profileA, profileB, profileC,false, orientation);
 
 	if (result == SC_SUCCESS) {
 		barcodes = &dmScanLib.getBarcodes();
@@ -293,7 +293,7 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
 	vector<BarcodeInfo *> * barcodes = NULL;
 	int result = dmScanLib.decodeImage(verbose, plateNum, filename, scanGap,
 			squareDev, edgeThresh, corrections, cellDistance, gapX, gapY,
-			profileA, profileB, profileC, orientation);
+			profileA, profileB, profileC,false, orientation);
 
 	if (result == SC_SUCCESS) {
 		barcodes = &dmScanLib.getBarcodes();

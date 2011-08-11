@@ -109,6 +109,7 @@ const char * USAGE_FMT =
 				"  --celldist NUM       Distance between tube cells in inches.\n"
 				"  --gap NUM            Use scan grid with gap of NUM inches (or less) between lines.\n"
 				"  -v, --vertical       Pallet is in vertical orientation (default is horizontal).\n"
+				"  --outputBarcodes     Outputs barcodes and their locations to stdout.\n"
 				"\n"
 				"Scanning Coordinates\n"
 				"  -l, --left NUM       The left coordinate, in inches, for the scanning window.\n"
@@ -118,63 +119,63 @@ const char * USAGE_FMT =
 				"  -f, --flatbed        Scan the whole flatbed region\n";
 
 struct Options {
-    unsigned dpi;
-    char * infile;
-    char * outfile;
+	unsigned dpi;
+	char * infile;
+	char * outfile;
 
-    int brightness;
-    double cellDistance;
-    int corrections;
-    int contrast;
-    bool decode;
-    unsigned debugLevel;
-    bool debugfile;
-    double gap;
-    bool help;
-    bool capability;
-    bool test;
-    unsigned plateNum;
-    bool scan;
-    bool select;
-    unsigned squareDev;
-    unsigned threshold;
-    double left;
-    double top;
-    double right;
-    double bottom;
-    double gapX;
-    double gapY;
-    unsigned profileA;
-    unsigned profileB;
-    unsigned profileC;
-    unsigned orientation;
+	int brightness;
+	double cellDistance;
+	int corrections;
+	int contrast;
+	bool decode;
+	unsigned debugLevel;
+	bool debugfile;
+	double gap;
+	bool help;
+	bool capability;
+	bool test;
+	unsigned plateNum;
+	bool scan;
+	bool select;
+	unsigned squareDev;
+	unsigned threshold;
+	double left;
+	double top;
+	double right;
+	double bottom;
+	double gapX;
+	double gapY;
+	unsigned profileA;
+	unsigned profileB;
+	unsigned profileC;
+	unsigned orientation;
 	bool flatbed;
+	bool outputBarcodes;
 
 	Options();
 
 };
 
-
 class TestApp {
 public:
-    TestApp(int argc, char ** argv);
-    ~TestApp();
+	TestApp(int argc, char ** argv);
+	~TestApp();
 
 private:
-    void usage();
-    bool getCmdOptions(int argc, char ** argv);
-    void acquireAndProcesImage();
-    void calibrateToImage();
-    int decode();
-    int scan();
-    int capability();
-    int test();
+	void usage();
+	bool getCmdOptions(int argc, char ** argv);
+	void acquireAndProcesImage();
+	void calibrateToImage();
+	int decode();
+	int scan();
+	int capability();
+	int test();
 
-    DmScanLib dmScanLib;
+	DmScanLib dmScanLib;
 
-    const char * progname;
+	const char * progname;
 
-    Options options;
+	Options options;
 };
 
 enum longOptID {
@@ -196,7 +197,8 @@ enum longOptID {
 	OPT_ID_TOP,
 	OPT_ID_RIGHT,
 	OPT_ID_BOTTOM,
-	OPT_ID_FLATBED
+	OPT_ID_FLATBED,
+	OPT_ID_OUTPUTBARCODES
 };
 
 /* Allowed command line arguments.  */
@@ -219,8 +221,9 @@ CSimpleOptA::SOption longOptions[] = { { OPT_ID_BRIGHTNESS, "--brightness",
 				SO_REQ_SEP }, { OPT_ID_RIGHT, "--right", SO_REQ_SEP }, {
 				OPT_ID_BOTTOM, "--bottom", SO_REQ_SEP }, { OPT_ID_FLATBED,
 				"--flatbed", SO_NONE }, { 'l', "-l", SO_REQ_SEP }, { 't', "-t",
-				SO_REQ_SEP }, { 'r', "-r", SO_REQ_SEP },
-		{ 'b', "-b", SO_REQ_SEP }, { 'f', "-f", SO_NONE }, SO_END_OF_OPTIONS };
+				SO_REQ_SEP }, { 'r', "-r", SO_REQ_SEP }, {
+				OPT_ID_OUTPUTBARCODES, "--outputBarcodes", SO_NONE }, { 'b',
+				"-b", SO_REQ_SEP }, { 'f', "-f", SO_NONE }, SO_END_OF_OPTIONS };
 
 Options::Options() {
 
@@ -262,6 +265,8 @@ Options::Options() {
 
 	flatbed = false;
 
+	outputBarcodes = false;
+
 	gapX = 0;
 	gapY = 0;
 	profileA = (unsigned) -1;
@@ -282,7 +287,7 @@ TestApp::TestApp(int argc, char ** argv) {
 	dmScanLib.configLogging(options.debugLevel, options.debugfile);
 	dmScanLib.setTextFileOutputEnable(true);
 
-	if (options.help) {
+	if (options.help || argc == 1) {
 		usage();
 		return;
 	}
@@ -339,7 +344,7 @@ int TestApp::decode() {
 				options.infile, options.gap, options.squareDev,
 				options.threshold, options.corrections, options.cellDistance,
 				options.gapX, options.gapY, options.profileA, options.profileB,
-				options.profileC, options.orientation);
+				options.profileC, options.outputBarcodes, options.orientation);
 	}
 
 	if ((options.left == 0.0) && (options.right == 0.0) && (options.top == 0.0)
@@ -587,6 +592,10 @@ bool TestApp::getCmdOptions(int argc, char ** argv) {
 				options.flatbed = true;
 				break;
 
+			case OPT_ID_OUTPUTBARCODES:
+				options.outputBarcodes = true;
+				break;
+
 			default:
 				return false;
 			}
@@ -599,12 +608,12 @@ bool TestApp::getCmdOptions(int argc, char ** argv) {
 }
 
 int main(int argc, char ** argv) {
-/*
-	#if defined(_VISUALC_) && defined(_DEBUG)
-		_CrtSetDbgFlag ( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
-	#endif
-*/
-    TestApp app(argc, argv);
+	/*
+	 #if defined(_VISUALC_) && defined(_DEBUG)
+	 _CrtSetDbgFlag ( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
+	 #endif
+	 */
+	TestApp app(argc, argv);
 
-    return 0;
+	return 0;
 }

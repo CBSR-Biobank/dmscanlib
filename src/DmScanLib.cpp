@@ -195,7 +195,7 @@ int DmScanLib::decodePlate(unsigned verbose, unsigned dpi, int brightness,
 		double bottom, double scanGap, unsigned squareDev, unsigned edgeThresh,
 		unsigned corrections, double cellDistance, double gapX, double gapY,
 		unsigned profileA, unsigned profileB, unsigned profileC,
-		unsigned orientation) {
+		bool outputBarcodes, unsigned orientation) {
 	configLogging(verbose);
 	UA_DOUT(
 			1,
@@ -226,7 +226,7 @@ int DmScanLib::decodePlate(unsigned verbose, unsigned dpi, int brightness,
 	dib.writeToFile("scanned.bmp");
 	result = decodeCommon(plateNum, dib, scanGap, squareDev, edgeThresh,
 			corrections, cellDistance, gapX, gapY, profileA, profileB, profileC,
-			orientation, "decode.bmp");
+			orientation, outputBarcodes, "decode.bmp");
 
 	imgScanner->freeImage(h);
 	UA_DOUT(1, 1, "decodeCommon returned: " << result);
@@ -237,7 +237,7 @@ int DmScanLib::decodeImage(unsigned verbose, unsigned plateNum,
 		const char *filename, double scanGap, unsigned squareDev,
 		unsigned edgeThresh, unsigned corrections, double cellDistance,
 		double gapX, double gapY, unsigned profileA, unsigned profileB,
-		unsigned profileC, unsigned orientation) {
+		unsigned profileC, bool outputBarcodes, unsigned orientation) {
 	configLogging(verbose);
 	UA_DOUT(
 			1,
@@ -259,7 +259,7 @@ int DmScanLib::decodeImage(unsigned verbose, unsigned plateNum,
 
 	int result = decodeCommon(plateNum, dib, scanGap, squareDev, edgeThresh,
 			corrections, cellDistance, gapX, gapY, profileA, profileB, profileC,
-			orientation, "decode.bmp");
+			orientation, outputBarcodes, "decode.bmp");
 	return result;
 }
 
@@ -267,7 +267,7 @@ int DmScanLib::decodeCommon(unsigned plateNum, Dib & dib, double scanGap,
 		unsigned squareDev, unsigned edgeThresh, unsigned corrections,
 		double cellDistance, double gapX, double gapY, unsigned profileA,
 		unsigned profileB, unsigned profileC, unsigned orientation,
-		const char *markedDibFilename) {
+		bool outputBarcodes, const char *markedDibFilename) {
 
 	const unsigned profileWords[3] = { profileA, profileB, profileC };
 	unsigned dpi = dib.getDpi();
@@ -278,15 +278,14 @@ int DmScanLib::decodeCommon(unsigned plateNum, Dib & dib, double scanGap,
 
 	Decoder::ProcessResult result;
 
-	PalletGrid::Orientation palletOrientation = (
-			(orientation == 0) ?
-					PalletGrid::ORIENTATION_HORIZONTAL :
-					PalletGrid::ORIENTATION_VERTICAL);
+	PalletGrid::Orientation palletOrientation = ((orientation == 0) ?
+	PalletGrid::ORIENTATION_HORIZONTAL :
+	PalletGrid::ORIENTATION_VERTICAL);
 
-	unsigned gapXpixels = static_cast<unsigned>(dpi * gapX);
-	unsigned gapYpixels = static_cast<unsigned>(dpi * gapY);
+	unsigned gapXpixels = static_cast<unsigned>(dpi * gapX);unsigned
+	gapYpixels = static_cast<unsigned>(dpi * gapY);
 
-	auto_ptr <PalletGrid> palletGrid(
+auto_ptr	<PalletGrid> palletGrid(
 			new PalletGrid(palletOrientation, dib.getWidth(), dib.getHeight(),
 					gapXpixels, gapYpixels, profileWords));
 
@@ -294,9 +293,9 @@ int DmScanLib::decodeCommon(unsigned plateNum, Dib & dib, double scanGap,
 		return SC_INVALID_IMAGE;
 	}
 
-	decoder = auto_ptr<Decoder>(
-			new Decoder(scanGap, squareDev, edgeThresh, corrections,
-					cellDistance, palletGrid.get()));
+	decoder = auto_ptr < Decoder
+			> (new Decoder(scanGap, squareDev, edgeThresh, corrections,
+					cellDistance, outputBarcodes, palletGrid.get()));
 
 	/*--- apply filters ---*/
 	auto_ptr<Dib> filteredDib(Dib::convertGrayscale(dib));
@@ -370,7 +369,7 @@ int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
 	return dmScanLib.decodePlate(verbose, dpi, brightness, contrast, plateNum,
 			left, top, right, bottom, scanGap, squareDev, edgeThresh,
 			corrections, cellDistance, gapX, gapY, profileA, profileB, profileC,
-			orientation);
+			false, orientation);
 }
 
 int slDecodeImage(unsigned verbose, unsigned plateNum, const char * filename,
@@ -382,6 +381,6 @@ int slDecodeImage(unsigned verbose, unsigned plateNum, const char * filename,
 	dmScanLib.setTextFileOutputEnable(true);
 	return dmScanLib.decodeImage(verbose, plateNum, filename, scanGap,
 			squareDev, edgeThresh, corrections, cellDistance, gapX, gapY,
-			profileA, profileB, profileC, orientation);
+			profileA, profileB, profileC,false, orientation);
 }
 

@@ -186,11 +186,8 @@ class Command(object):
 
 def runScanlib(scanLibPath,imagePath):
 	timeStart = datetime.datetime.now()
-
-
-
 	
-	command = Command([scanLibPath,"--debug" ,"9", "-d" ,"--plate", "1" ,"-i" ,imagePath])
+	command = Command([scanLibPath,"--debug" ,"7", "-d" ,"--plate", "1" ,"-i" ,imagePath])
 	scanlibOutput = command.run(timeout=scanLibTimeout)
 
 	if scanlibOutput == None: return None

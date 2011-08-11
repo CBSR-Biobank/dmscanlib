@@ -45,7 +45,7 @@ class BinRegion;
 class Decoder {
 public:
 	Decoder(double scanGap, unsigned squareDev, unsigned edgeThresh,
-			unsigned corrections, double cellDistance, PalletGrid * palletGrid);
+			unsigned corrections, double cellDistance, bool outputBarcodes, PalletGrid * palletGrid);
 	virtual ~Decoder();
 
 	enum ProcessResult {
@@ -76,6 +76,7 @@ private:
 	static void getTubeBlobs(Dib * dib, int threshold, int blobsize,
 			int blurRounds, int border, vector<CvRect> & blobVector);
 
+	bool outputBarcodes;
 	double scanGap;
 	unsigned squareDev;
 	unsigned edgeThresh;
