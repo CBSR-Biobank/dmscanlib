@@ -28,26 +28,25 @@ class Barcode(object):
 		if message == None:
 			return None
 
-		matches = re.match(r".*message/(.*?) tlCorner/\((.*?)\).*brCorner/\((.*?)\)\n",message)
+		matches = re.match(r"dmbarcode: row/([0-9]{2}) col/([0-9]{2}) message/(.*)",message.strip())
 
 		if matches == None or matches.group(1) == None or \
 		   matches.group(2) == None or matches.group(3) == None: 
 			return None
 
-		tlCorner = matches.group(2).split(",")
-		brCorner = matches.group(3).split(",")
-		barcodeStr =  matches.group(1)
+		row = matches.group(1)
+		col = matches.group(2)
+		barcodeStr =  matches.group(3)
 
-		if barcodeStr == None or len(tlCorner) != 2 or len(brCorner) != 2:
+		if barcodeStr == None or len(row) != 2 or len(col) != 2:
 			return None
 
-		self.position = [0,0,0,0]
-		self.position[0] = int(tlCorner[0])
-		self.position[1] = int(tlCorner[1])
-		self.position[2] = int( brCorner[0])
-		self.position[3] = int( brCorner[1])
+		self.position = [0,0]
+		self.position[0] = int(row)
+		self.position[1] = int(col)
 
 		self.value = barcodeStr
+
 	
 	def getValue(self):
 		return self.value
@@ -56,7 +55,7 @@ class Barcode(object):
 		return self.position
 
 	def __str__(self):
-		return "Barcode: %s Value: %s" % (self.position,self.value)
+		return "row/%02d col/%02d barcode/%s" % (int(self.position[0]),int(self.position[1]),self.value)
 
 	def getDict(self):
 		return {'position': self.position, 'value': self.value}
@@ -187,12 +186,12 @@ class Command(object):
 def runScanlib(scanLibPath,imagePath):
 	timeStart = datetime.datetime.now()
 	
-	command = Command([scanLibPath,"--debug" ,"7", "-d" ,"--plate", "1" ,"-i" ,imagePath])
+	command = Command([scanLibPath,"--outputBarcodes", "-d" ,"--plate", "1" ,"-i" ,imagePath])
 	scanlibOutput = command.run(timeout=scanLibTimeout)
-
+	
 	if scanlibOutput == None: return None
 
-	barcodesMatch = re.findall(r".*message.*\n",scanlibOutput)# scanlibPipe.read()
+	barcodesMatch = re.findall(r"dmbarcode.*",scanlibOutput)# scanlibPipe.read()
 	if(len(barcodesMatch)  <= 0): return None
 
 	barcodes = map(Barcode,barcodesMatch)
