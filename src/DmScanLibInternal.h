@@ -53,17 +53,21 @@ public:
 			double right, double bottom, double scanGap, unsigned squareDev,
 			unsigned edgeThresh, unsigned corrections, double cellDistance,
 			double gapX, double gapY, unsigned profileA, unsigned profileB,
-			unsigned profileC,bool outputBarcodes, unsigned orientation);
+			unsigned profileC, unsigned orientation);
 	virtual int decodeImage(unsigned verbose, unsigned plateNum,
 			const char * filename, double scanGap, unsigned squareDev,
 			unsigned edgeThresh, unsigned corrections, double cellDistance,
 			double gapX, double gapY, unsigned profileA, unsigned profileB,
-			unsigned profileC,bool outputBarcodes, unsigned orientation);
+			unsigned profileC, unsigned orientation);
 
 	void configLogging(unsigned level, bool useFile = true);
 
 	void setTextFileOutputEnable(bool enable) {
 		textFileOutputEnable = enable;
+	}
+
+	void setStdoutOutputEnable(bool enable) {
+		stdoutOutputEnable = enable;
 	}
 
 	vector<BarcodeInfo *> & getBarcodes();
@@ -79,7 +83,7 @@ protected:
 			unsigned squareDev, unsigned edgeThresh, unsigned corrections,
 			double cellDistance, double gapX, double gapY, unsigned profileA,
 			unsigned profileB, unsigned profileC, unsigned orientation,
-			bool outputBarocodes, const char *markedDibFilename);
+			const char *markedDibFilename);
 
 	auto_ptr<ImgScanner> imgScanner;
 	auto_ptr<Decoder> decoder;
@@ -87,6 +91,8 @@ protected:
 	slTime starttime; // for debugging
 	slTime endtime;
 	slTime timediff;
+
+	bool stdoutOutputEnable;
 
 	bool textFileOutputEnable;
 

@@ -285,6 +285,7 @@ TestApp::TestApp(int argc, char ** argv) {
 		ua::logstream.sink(ua::LoggerSinkStdout::Instance());
 	}
 	dmScanLib.configLogging(options.debugLevel, options.debugfile);
+	dmScanLib.setStdoutOutputEnable(options.outputBarcodes);
 	dmScanLib.setTextFileOutputEnable(true);
 
 	if (options.help || argc == 1) {
@@ -344,7 +345,7 @@ int TestApp::decode() {
 				options.infile, options.gap, options.squareDev,
 				options.threshold, options.corrections, options.cellDistance,
 				options.gapX, options.gapY, options.profileA, options.profileB,
-				options.profileC, options.outputBarcodes, options.orientation);
+				options.profileC, options.orientation);
 	}
 
 	if ((options.left == 0.0) && (options.right == 0.0) && (options.top == 0.0)

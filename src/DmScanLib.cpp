@@ -51,7 +51,7 @@
 bool DmScanLib::loggingInitialized = false;
 
 DmScanLib::DmScanLib() :
-		textFileOutputEnable(false) {
+		stdoutOutputEnable(false), textFileOutputEnable(false) {
 	imgScanner = ImgScannerFactory::getImgScanner();
 }
 
@@ -195,7 +195,7 @@ int DmScanLib::decodePlate(unsigned verbose, unsigned dpi, int brightness,
 		double bottom, double scanGap, unsigned squareDev, unsigned edgeThresh,
 		unsigned corrections, double cellDistance, double gapX, double gapY,
 		unsigned profileA, unsigned profileB, unsigned profileC,
-		bool outputBarcodes, unsigned orientation) {
+		unsigned orientation) {
 	configLogging(verbose);
 	UA_DOUT(
 			1,
@@ -226,7 +226,7 @@ int DmScanLib::decodePlate(unsigned verbose, unsigned dpi, int brightness,
 	dib.writeToFile("scanned.bmp");
 	result = decodeCommon(plateNum, dib, scanGap, squareDev, edgeThresh,
 			corrections, cellDistance, gapX, gapY, profileA, profileB, profileC,
-			orientation, outputBarcodes, "decode.bmp");
+			orientation, "decode.bmp");
 
 	imgScanner->freeImage(h);
 	UA_DOUT(1, 1, "decodeCommon returned: " << result);
@@ -237,7 +237,7 @@ int DmScanLib::decodeImage(unsigned verbose, unsigned plateNum,
 		const char *filename, double scanGap, unsigned squareDev,
 		unsigned edgeThresh, unsigned corrections, double cellDistance,
 		double gapX, double gapY, unsigned profileA, unsigned profileB,
-		unsigned profileC, bool outputBarcodes, unsigned orientation) {
+		unsigned profileC, unsigned orientation) {
 	configLogging(verbose);
 	UA_DOUT(
 			1,
@@ -259,7 +259,7 @@ int DmScanLib::decodeImage(unsigned verbose, unsigned plateNum,
 
 	int result = decodeCommon(plateNum, dib, scanGap, squareDev, edgeThresh,
 			corrections, cellDistance, gapX, gapY, profileA, profileB, profileC,
-			orientation, outputBarcodes, "decode.bmp");
+			orientation, "decode.bmp");
 	return result;
 }
 
@@ -267,7 +267,7 @@ int DmScanLib::decodeCommon(unsigned plateNum, Dib & dib, double scanGap,
 		unsigned squareDev, unsigned edgeThresh, unsigned corrections,
 		double cellDistance, double gapX, double gapY, unsigned profileA,
 		unsigned profileB, unsigned profileC, unsigned orientation,
-		bool outputBarcodes, const char *markedDibFilename) {
+		const char *markedDibFilename) {
 
 	const unsigned profileWords[3] = { profileA, profileB, profileC };
 	unsigned dpi = dib.getDpi();
@@ -317,7 +317,7 @@ auto_ptr	<PalletGrid> palletGrid(
 	}
 
 	// only get here if decoder returned Decoder::OK
-	if (outputBarcodes || textFileOutputEnable) {
+	if (stdoutOutputEnable || textFileOutputEnable) {
 		string msg;
 		formatCellMessages(plateNum, msg);
 
@@ -325,7 +325,7 @@ auto_ptr	<PalletGrid> palletGrid(
 		saveResults(msg);
 		}
 
-		if (outputBarcodes) {
+		if (stdoutOutputEnable) {
 			cout << msg;
 		}
 	}
@@ -376,7 +376,7 @@ int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
 	return dmScanLib.decodePlate(verbose, dpi, brightness, contrast, plateNum,
 			left, top, right, bottom, scanGap, squareDev, edgeThresh,
 			corrections, cellDistance, gapX, gapY, profileA, profileB, profileC,
-			false, orientation);
+			orientation);
 }
 
 int slDecodeImage(unsigned verbose, unsigned plateNum, const char * filename,
@@ -388,6 +388,6 @@ int slDecodeImage(unsigned verbose, unsigned plateNum, const char * filename,
 	dmScanLib.setTextFileOutputEnable(true);
 	return dmScanLib.decodeImage(verbose, plateNum, filename, scanGap,
 			squareDev, edgeThresh, corrections, cellDistance, gapX, gapY,
-			profileA, profileB, profileC,false, orientation);
+			profileA, profileB, profileC, orientation);
 }
 
