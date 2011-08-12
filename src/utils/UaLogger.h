@@ -179,7 +179,6 @@ extern std::ostream cdebug;
 /*
  UA_DOUT is not thread safe.
  */
-
 #define UA_DOUT(subsys, level, display)                                      \
 		do {                                                                 \
 			if (ua::Logger::Instance().isDebug(subsys, level)) {             \

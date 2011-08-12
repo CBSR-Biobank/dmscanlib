@@ -119,7 +119,7 @@ void ProcessImageManager::generateBarcodes(Dib * dib,
 
 			BarcodeThread * thread = new BarcodeThread(this, scanGap, squareDev,
 					edgeThresh, corrections, rect, croppedDib,
-					*barcodeInfos[row][col]);
+					*barcodeInfos[row][col],ua::Logger::Instance().levelGet(3) >= 9);
 
 			allThreads.push_back(thread);
 			threads.push_back(thread);

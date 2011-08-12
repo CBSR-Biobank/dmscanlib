@@ -34,9 +34,8 @@
 
 BarcodeThread::BarcodeThread(ProcessImageManager * manager, double scanGap,
         unsigned squareDev, unsigned edgeThresh, unsigned corrections,
-        CvRect & croppedOffset, auto_ptr<Dib> d, BarcodeInfo & info) :
-        dib(d), image(Decoder::createDmtxImageFromDib(*dib)), barcodeInfo(info),
-            debug(true) {
+        CvRect & croppedOffset, auto_ptr<Dib> d, BarcodeInfo & info, bool debug) :
+        dib(d), image(Decoder::createDmtxImageFromDib(*dib)), barcodeInfo(info) {
 
 
     this->manager = manager;
@@ -45,6 +44,7 @@ BarcodeThread::BarcodeThread(ProcessImageManager * manager, double scanGap,
     this->edgeThresh = edgeThresh;
     this->corrections = corrections;
     this->croppedOffset = croppedOffset;
+    this->debug = debug;
 
     quitMutex.lock();
     this->quitFlag = false;
@@ -57,7 +57,7 @@ BarcodeThread::BarcodeThread(ProcessImageManager * manager, double scanGap,
             "invalid DPI: " << dpi);
 
     // do not write diagnostic image is log level is less than 9
-    if (ua::Logger::Instance().levelGet(3) >= 9) {
+    if (debug) {
         ostringstream fname;
         CvRect & rect = barcodeInfo.getPreProcessBoundingBox();
         fname << "preprocess-" << rect.x << "-" << rect.y << ".bmp";
@@ -107,19 +107,13 @@ void BarcodeThread::run() {
                 barcodeInfo.translate(croppedOffset.x, croppedOffset.y);
             }
 
-            CvRect & rect = barcodeInfo.getPostProcessBoundingBox();
 
-            UA_DOUT(3, 5, "BarcodeThread: message/"
-                    << barcodeInfo.getMsg()
-                    << " tlCorner/(" << rect.x << "," << rect.y
-                    << ")  brCorner/(" << rect.x + rect.width
-                    << "," << rect.y + rect.height << ")");
             dmtxMessageDestroy(&msg);
         }
         dmtxRegionDestroy(&reg);
     }
 
-	if (ua::Logger::Instance().levelGet(3) >= 9) {
+	if (debug) {
     	if (msgFound) {
     		writeDib("found");
     	} else {
@@ -148,7 +142,7 @@ bool BarcodeThread::isFinished() {
 
 void BarcodeThread::writeDib(const char * basename) {
 	// do not write diagnostic image is log level is less than 9
-	if (ua::Logger::Instance().levelGet(3) < 9) return;
+	if (!debug) return;
 
     ostringstream fname;
     fname << basename << "-" << croppedOffset.x << "-" << croppedOffset.y << ".bmp";
@@ -157,7 +151,7 @@ void BarcodeThread::writeDib(const char * basename) {
 
 void BarcodeThread::writeDiagnosticImage(DmtxDecode *dec) {
 	// do not write diagnostic image is log level is less than 9
-	if (ua::Logger::Instance().levelGet(3) < 9) return;
+	if (!debug) return;
 
     int totalBytes, headerBytes;
     int bytesWritten;
