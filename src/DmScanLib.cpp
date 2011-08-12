@@ -295,7 +295,7 @@ auto_ptr	<PalletGrid> palletGrid(
 
 	decoder = auto_ptr < Decoder
 			> (new Decoder(scanGap, squareDev, edgeThresh, corrections,
-					cellDistance, outputBarcodes, palletGrid.get()));
+					cellDistance, palletGrid.get()));
 
 	/*--- apply filters ---*/
 	auto_ptr<Dib> filteredDib(Dib::convertGrayscale(dib));
@@ -317,10 +317,17 @@ auto_ptr	<PalletGrid> palletGrid(
 	}
 
 	// only get here if decoder returned Decoder::OK
-	if (textFileOutputEnable) {
+	if (outputBarcodes || textFileOutputEnable) {
 		string msg;
 		formatCellMessages(plateNum, msg);
+
+		if (textFileOutputEnable) {
 		saveResults(msg);
+		}
+
+		if (outputBarcodes) {
+			cout << msg;
+		}
 	}
 
 	Util::getTime(endtime);

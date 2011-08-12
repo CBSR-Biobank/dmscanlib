@@ -58,15 +58,11 @@ const double Decoder::BARCODE_SIDE_LENGTH_INCHES = 0.13;
 const unsigned Decoder::PALLET_ROWS = 8;
 const unsigned Decoder::PALLET_COLUMNS = 12;
 
-Decoder::Decoder(double g, unsigned s, unsigned t, unsigned c, double dist, bool ob,PalletGrid * pg) :
-		palletGrid(pg) {
+Decoder::Decoder(double g, unsigned s, unsigned t, unsigned c, double dist,
+		PalletGrid * pg) :
+		scanGap(g), squareDev(s), edgeThresh(t), corrections(c), cellDistance(
+				dist), palletGrid(pg) {
 	ua::Logger::Instance().subSysHeaderSet(3, "Decoder");
-	scanGap = g;
-	squareDev = s;
-	edgeThresh = t;
-	corrections = c;
-	cellDistance = dist;
-	outputBarcodes = ob;
 
 	barcodeInfos.resize(PalletGrid::MAX_ROWS);
 	for (unsigned row = 0; row < PalletGrid::MAX_ROWS; ++row) {
@@ -259,11 +255,6 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib) {
 			BarcodeInfo * info = barcodeInfos[row][col];
 			if ((info != NULL) && info->isValid()) {
 				++decodeCount;
-
-				if(outputBarcodes){
-					fprintf(stdout, "dmbarcode: row/%02d col/%02d message/%s\n",row,col,info->getMsg().c_str());
-				}
-
 			}
 		}
 	}

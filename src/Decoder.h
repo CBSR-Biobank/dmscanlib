@@ -45,7 +45,7 @@ class BinRegion;
 class Decoder {
 public:
 	Decoder(double scanGap, unsigned squareDev, unsigned edgeThresh,
-			unsigned corrections, double cellDistance, bool outputBarcodes, PalletGrid * palletGrid);
+			unsigned corrections, double cellDistance, PalletGrid * palletGrid);
 	virtual ~Decoder();
 
 	enum ProcessResult {

@@ -94,9 +94,6 @@ void ProcessImageManager::threadHandler(vector<BarcodeThread *> & threads) {
 
 		threadProcessRange(threads, threads.size() - remainder, threads.size());
 	}
-
-	printf("done all\n");
-
 }
 
 void ProcessImageManager::generateBarcodes(Dib * dib,
