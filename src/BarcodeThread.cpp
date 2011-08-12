@@ -133,14 +133,14 @@ void BarcodeThread::run() {
         dmtxRegionDestroy(&reg);
     }
 
-#ifdef _DEBUG
-    if (debug) {
-    	if (!msgFound) {
-    		writeMissedDib();
+	if (ua::Logger::Instance().levelGet(3) >= 9) {
+    	if (msgFound) {
+    		writeDib("found");
+    	} else {
+    		writeDib("missed");
     	}
         writeDiagnosticImage(dec);
     }
-#endif
 
     dmtxDecodeDestroy(&dec);
 
@@ -160,12 +160,12 @@ bool BarcodeThread::isFinished() {
     return quitFlagBuf;
 }
 
-void BarcodeThread::writeMissedDib() {
+void BarcodeThread::writeDib(const char * basename) {
 	// do not write diagnostic image is log level is less than 9
 	if (ua::Logger::Instance().levelGet(3) < 9) return;
 
     ostringstream fname;
-    fname << "missed-" << croppedOffset.x << "-" << croppedOffset.y << ".bmp";
+    fname << basename << "-" << croppedOffset.x << "-" << croppedOffset.y << ".bmp";
     dib->writeToFile(fname.str().c_str());
 }
 

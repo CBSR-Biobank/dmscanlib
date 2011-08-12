@@ -58,7 +58,7 @@ private:
     OpenThreads::Mutex quitMutex;
     volatile bool quitFlag;
 
-    void writeMissedDib();
+    void writeDib(const char * basename);
     void writeDiagnosticImage(DmtxDecode *dec);
 
     double scanGap;
