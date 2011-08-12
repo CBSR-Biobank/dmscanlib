@@ -89,20 +89,6 @@ void BarcodeThread::run() {
     dmtxDecodeSetProp(dec, DmtxPropSquareDevn, squareDev);
     dmtxDecodeSetProp(dec, DmtxPropEdgeThresh, edgeThresh);
 
-    UA_DOUT(3, 7, "BarcodeThread: image (" << croppedOffset.x
-    		<< "," << croppedOffset.y
-    		<< ") width/" << image->width
-            << " image height/" << image->height << " row padding/"
-            << dmtxImageGetProp(image, DmtxPropRowPadBytes)
-            << " image bits per pixel/"
-            << dmtxImageGetProp(image, DmtxPropBitsPerPixel)
-            << " image row size bytes/"
-            << dmtxImageGetProp(image, DmtxPropRowSizeBytes));
-
-    if ((croppedOffset.x == 442) && (croppedOffset.y == 47)) {
-        UA_DOUT(3, 7, "here");
-    }
-
     bool msgFound = false;
     while (1) {
         DmtxRegion *reg = NULL;
