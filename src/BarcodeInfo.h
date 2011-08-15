@@ -26,7 +26,12 @@
 #include "UaAssert.h"
 
 #include <string>
-#include <tr1/memory>
+
+#ifdef _VISUALC_
+#   include <memory>
+#else
+#   include <tr1/memory>
+#endif
 
 using namespace std;
 

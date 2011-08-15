@@ -25,10 +25,13 @@
 
 #include <vector>
 #include <memory>
-#include <tr1/memory>
 #include <OpenThreads/Mutex>
 #include <OpenThreads/ScopedLock>
 #include <OpenThreads/Thread>
+
+#if !defined _VISUALC_
+#   include <tr1/memory>
+#endif
 
 using namespace std;
 

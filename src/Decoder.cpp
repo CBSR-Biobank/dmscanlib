@@ -47,7 +47,12 @@
 #include <limits>
 #include <vector>
 #include <cmath>
-#include <tr1/memory>
+
+#ifdef _VISUALC_
+#   include <memory>
+#else
+#   include <tr1/memory>
+#endif
 
 #if defined(USE_NVWA)
 #   include "debug_new.h"

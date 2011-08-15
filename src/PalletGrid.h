@@ -25,7 +25,12 @@
 
 #include <string>
 #include <vector>
-#include <tr1/memory>
+
+#ifdef _VISUALC_
+#   include <memory>
+#else
+#   include <tr1/memory>
+#endif
 
 struct CvRect;
 
