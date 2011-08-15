@@ -30,8 +30,9 @@
 #include <sstream>
 
 PalletGrid::PalletGrid(Orientation o, std::tr1::shared_ptr<const Dib> img,
-		unsigned gapX, unsigned gapY, const unsigned(&profileWords)[3]) :
-		image(img) {
+		std::tr1::shared_ptr<Decoder> dcdr, unsigned gapX, unsigned gapY,
+		const unsigned(&profileWords)[3]) :
+		image(img), decoder(dcdr) {
 	orientation = o;
 
 	const int imgWidth = image->getWidth();
@@ -79,19 +80,35 @@ PalletGrid::PalletGrid(Orientation o, std::tr1::shared_ptr<const Dib> img,
 	for (unsigned row = 0, rows = MAX_ROWS; row < rows; ++row) {
 		cellsByRowCol[row].resize(MAX_COLS);
 		for (unsigned col = 0, cols = MAX_COLS; col < cols; ++col) {
-			if (!cellEnabled[MAX_COLS * row + col]) return;
+			if (!cellEnabled[MAX_COLS * row + col])
+				return;
 
 			getCellRect(row, col, rect);
-			std::tr1::shared_ptr<Dib> cellImage = image->crop(rect.x, rect.y,
-					rect.x + rect.width, rect.y + rect.height);
-			std::tr1::shared_ptr<PalletCell> cell(new PalletCell(cellImage, row, col));
+			std::tr1::shared_ptr<Dib> cellImage = image->crop(rect.x + gapX,
+					rect.y + gapY, rect.x + rect.width - gapX,
+					rect.y + rect.height - gapY);
+			std::tr1::shared_ptr<PalletCell> cell(
+					new PalletCell(cellImage, row, col));
 			cells.push_back(cell);
 			cellsByRowCol[row][col] = cell;
+
 		}
 	}
 }
 
 PalletGrid::~PalletGrid() {
+}
+
+void PalletGrid::createImageWithCells() {
+
+	imageWithCells = std::tr1::shared_ptr<Dib>(new Dib(*image));
+
+	CvRect rect;
+	for (unsigned row = 0, rows = MAX_ROWS; row < rows; ++row) {
+		for (unsigned col = 0, cols = MAX_COLS; col < cols; ++col) {
+
+		}
+	}
 }
 
 void PalletGrid::getCellRect(unsigned row, unsigned col, CvRect & rect) {
@@ -135,7 +152,18 @@ std::tr1::shared_ptr<const Dib> PalletGrid::getCellImage(unsigned row,
 	return cellsByRowCol[row][col]->getImage();
 }
 
-void PalletGrid::decode() {
+void PalletGrid::decodeCells() {
+	UA_ASSERT(imgValid);
+
+#ifdef _DEBUG
+	string str;
+	getProfileAsString(str);
+	UA_DOUT(1, 5, "Profile: \n" << str);
+#endif
+
+	for (unsigned i, n = cells.size(); i < n; ++i) {
+
+	}
 
 }
 

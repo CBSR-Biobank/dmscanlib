@@ -32,6 +32,7 @@
 #   include <tr1/memory>
 #endif
 
+class Decoder;
 class Dib;
 class PalletCell;
 struct CvRect;
@@ -62,7 +63,7 @@ public:
 	 * @param gapY The vertical gap between cells in pixels.
 	 */
 	PalletGrid(Orientation o, std::tr1::shared_ptr<const Dib> image,
-			unsigned gapX, unsigned gapY, const unsigned(&profileWords)[3]);
+			std::tr1::shared_ptr<Decoder> dcdr, unsigned gapX, unsigned gapY, const unsigned(&profileWords)[3]);
 
 	~PalletGrid();
 
@@ -84,16 +85,23 @@ public:
 		return imgValid;
 	}
 
+	void decodeCells();
+
 	void getProfileAsString(std::string & str);
 
 private:
 	void getCellRect(unsigned row, unsigned col, CvRect & rect);
+
+	// for debug
+	void createImageWithCells();
 
 	std::vector<std::tr1::shared_ptr<PalletCell> > cells;
 
 	std::vector<std::vector<std::tr1::shared_ptr<PalletCell> > > cellsByRowCol;
 
 	std::tr1::shared_ptr<const Dib> image;
+	std::tr1::shared_ptr<Dib> imageWithCells;
+	std::tr1::shared_ptr<Decoder> decoder;
 	Orientation orientation;
 	double cellWidth;
 	double cellHeight;

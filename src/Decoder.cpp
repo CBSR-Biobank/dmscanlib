@@ -185,13 +185,6 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib) {
 	double minBlobHeight = dpi * BARCODE_SIDE_LENGTH_INCHES;
 
 	UA_ASSERT_NOT_NULL(palletGrid);
-	UA_ASSERT(palletGrid->isImageValid());
-
-#ifdef _DEBUG
-	string str;
-	palletGrid->getProfileAsString(str);
-	UA_DOUT(1, 5, "Loaded Profile: \n" << str);
-#endif
 
 	UA_DOUT(1, 7, "Minimum blob width (pixels): " << minBlobWidth);
 	UA_DOUT(1, 7, "Minimum blob height (pixels): " << minBlobHeight);
