@@ -28,11 +28,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 
 
-BarcodeInfo::BarcodeInfo() {
-	postRect.x = -1;
-	postRect.y = -1;
-	postRect.width = 0;
-	postRect.height = 0;
+BarcodeInfo::BarcodeInfo() : postRect(new CvRect) {
+	postRect->x = -1;
+	postRect->y = -1;
+	postRect->width = 0;
+	postRect->height = 0;
 }
 
 BarcodeInfo::~BarcodeInfo() {
@@ -72,15 +72,15 @@ bool BarcodeInfo::equals(BarcodeInfo * other){
 	return strcmp(this->getMsg().c_str(),other->getMsg().c_str()) == 0;
 }
 
-void BarcodeInfo::setPreProcessBoundingBox(CvRect & rect) {
+void BarcodeInfo::setPreProcessBoundingBox(std::tr1::shared_ptr<const CvRect> rect) {
 	preRect = rect;
 }
 
-CvRect & BarcodeInfo::getPreProcessBoundingBox() {
+std::tr1::shared_ptr<const CvRect> BarcodeInfo::getPreProcessBoundingBox() {
 	return preRect;
 }
 
-CvRect & BarcodeInfo::getPostProcessBoundingBox() {
+std::tr1::shared_ptr<const CvRect> BarcodeInfo::getPostProcessBoundingBox() {
 	DmtxPixelLoc topLeft;
 	DmtxPixelLoc botRight;
 
@@ -129,12 +129,12 @@ CvRect & BarcodeInfo::getPostProcessBoundingBox() {
 		botRight.Y = (int) p01.Y;
 	}
 
-	postRect.x = topLeft.X;
-	postRect.y = topLeft.Y;
-	postRect.width = botRight.X - topLeft.X;
-	postRect.height = botRight.Y - topLeft.Y;
+	postRect->x = topLeft.X;
+	postRect->y = topLeft.Y;
+	postRect->width = botRight.X - topLeft.X;
+	postRect->height = botRight.Y - topLeft.Y;
 
-	return postRect;
+	return std::tr1::shared_ptr<const CvRect>(postRect);
 }
 
 void BarcodeInfo::translate(int x, int y){

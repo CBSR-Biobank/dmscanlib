@@ -25,10 +25,9 @@
 
 #include <string>
 #include <vector>
+#include <tr1/memory>
 
 struct CvRect;
-
-using namespace std;
 
 class PalletGrid {
 public:
@@ -36,9 +35,9 @@ public:
 		ORIENTATION_HORIZONTAL, ORIENTATION_VERTICAL
 	};
 
-	static const unsigned MAX_ROWS;
-	static const unsigned MAX_COLS;
-	static const unsigned NUM_CELLS;
+	static const unsigned MAX_ROWS = 8;
+	static const unsigned MAX_COLS = 12;
+	static const unsigned NUM_CELLS = MAX_ROWS * MAX_COLS;
 
 	/**
 	 * Constructs a pallet grid with cells cellWidth pixels and
@@ -70,9 +69,9 @@ public:
 	 */
 	bool getCellEnabled(unsigned row, unsigned col);
 
-	void getCellRect(unsigned row, unsigned col, CvRect & rect);
+	std::tr1::shared_ptr<const CvRect> getCellRect(unsigned row, unsigned col);
 
-	void getPositionStr(unsigned row, unsigned col, string & str);
+	void getPositionStr(unsigned row, unsigned col, std::string & str);
 
 	bool isImageValid() {
 		return imgValid;
@@ -85,7 +84,7 @@ private:
 	double cellHeight;
 	unsigned gapX;
 	unsigned gapY;
-	vector<bool> bits;
+	std::vector<bool> bits;
 	bool imgValid;
 
 };

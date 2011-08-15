@@ -47,6 +47,7 @@
 #include <limits>
 #include <vector>
 #include <cmath>
+#include <tr1/memory>
 
 #if defined(USE_NVWA)
 #   include "debug_new.h"
@@ -177,7 +178,6 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib) {
 	dpi = dib->getDpi();
 	double minBlobWidth = dpi * BARCODE_SIDE_LENGTH_INCHES;
 	double minBlobHeight = dpi * BARCODE_SIDE_LENGTH_INCHES;
-	CvRect rect;
 
 	UA_ASSERT_NOT_NULL(palletGrid);
 	UA_ASSERT(palletGrid->isImageValid());
@@ -202,13 +202,13 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib) {
 			if (!palletGrid->getCellEnabled(row, col))
 				continue;
 
-			palletGrid->getCellRect(row, col, rect);
+			std::tr1::shared_ptr<const CvRect> rect = palletGrid->getCellRect(row, col);
 			UA_DOUT(
 					1,
-					9,
-					"row/" << row << " col/" << col << " rect/(" << rect.x << ", " << rect.y << "),(" << rect.x + rect.width << ", " << rect.y + rect.height << ")");
+					7,
+					"row/" << row << " col/" << col << " rect/(" << rect->x << ", " << rect->y << "),(" << rect->x + rect->width << ", " << rect->y + rect->height << ")");
 
-			if ((rect.width < minBlobWidth) || (rect.height < minBlobHeight))
+			if ((rect->width < minBlobWidth) || (rect->height < minBlobHeight))
 				continue;
 
 			BarcodeInfo * info = new BarcodeInfo();
@@ -237,8 +237,8 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib) {
 				continue;
 			}
 
-			CvRect & rect = barcodeInfos[row][col]->getPreProcessBoundingBox();
-			blobDib.rectangle(rect.x, rect.y, rect.width, rect.height, white);
+			std::tr1::shared_ptr<const CvRect> rect = barcodeInfos[row][col]->getPreProcessBoundingBox();
+			blobDib.rectangle(rect->x, rect->y, rect->width, rect->height, white);
 		}
 	}
 	blobDib.writeToFile("blobRegions.bmp");
@@ -370,8 +370,8 @@ void Decoder::imageShowBarcodes(Dib & dib, bool regions) {
 			if ((info == NULL) || !info->isValid())
 				continue;
 
-			CvRect rect = barcodeInfos[row][col]->getPostProcessBoundingBox();
-			dib.rectangle(rect.x, rect.y, rect.width, rect.height,
+			std::tr1::shared_ptr<const CvRect> rect = barcodeInfos[row][col]->getPostProcessBoundingBox();
+			dib.rectangle(rect->x, rect->y, rect->width, rect->height,
 					highlightQuad);
 		}
 	}

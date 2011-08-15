@@ -25,6 +25,7 @@
 
 #include <vector>
 #include <memory>
+#include <tr1/memory>
 #include <OpenThreads/Mutex>
 #include <OpenThreads/ScopedLock>
 #include <OpenThreads/Thread>
@@ -39,7 +40,7 @@ class BarcodeThread: public OpenThreads::Thread {
 public:
     BarcodeThread(ProcessImageManager * manager, double scanGap,
             unsigned squareDev, unsigned edgeThresh, unsigned corrections,
-            CvRect & croppedOffset, auto_ptr<Dib> dib, BarcodeInfo & info,bool debug);
+            std::tr1::shared_ptr<const CvRect> croppedOffset, auto_ptr<Dib> dib, BarcodeInfo & info,bool debug);
 
     virtual ~ BarcodeThread();
 
@@ -51,7 +52,7 @@ private:
 
     auto_ptr<Dib> dib;
     DmtxImage * image;
-    CvRect croppedOffset;
+    std::tr1::shared_ptr<const CvRect> croppedOffset;
     ProcessImageManager * manager;
     BarcodeInfo & barcodeInfo;
 

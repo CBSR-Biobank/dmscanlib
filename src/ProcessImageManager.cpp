@@ -109,10 +109,10 @@ void ProcessImageManager::generateBarcodes(Dib * dib,
 				continue;
 			}
 
-			CvRect & rect = info->getPreProcessBoundingBox();
+			std::tr1::shared_ptr<const CvRect> rect = info->getPreProcessBoundingBox();
 
-			auto_ptr<Dib> croppedDib = Dib::crop(*dib, rect.x, rect.y,
-					rect.x + rect.width, rect.y + rect.height);
+			auto_ptr<Dib> croppedDib = Dib::crop(*dib, rect->x, rect->y,
+					rect->x + rect->width, rect->y + rect->height);
 
 			BarcodeThread * thread = new BarcodeThread(this, scanGap, squareDev,
 					edgeThresh, corrections, rect, croppedDib,

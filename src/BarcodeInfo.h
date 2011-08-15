@@ -26,6 +26,7 @@
 #include "UaAssert.h"
 
 #include <string>
+#include <tr1/memory>
 
 using namespace std;
 
@@ -46,9 +47,9 @@ public:
 
 	bool equals(BarcodeInfo * other);
 
-	void setPreProcessBoundingBox(CvRect & rect);
-	CvRect & getPreProcessBoundingBox();
-	CvRect & getPostProcessBoundingBox();
+	void setPreProcessBoundingBox(std::tr1::shared_ptr<const CvRect> rect);
+	std::tr1::shared_ptr<const CvRect> getPreProcessBoundingBox();
+	std::tr1::shared_ptr<const CvRect> getPostProcessBoundingBox();
 	void translate(int x, int y);
 
 	unsigned getRow() {
@@ -71,8 +72,8 @@ public:
 private:
 	string str;
 	DmtxVector2 p00, p10, p11, p01;
-	CvRect preRect;
-	CvRect postRect;
+	std::tr1::shared_ptr<const CvRect> preRect;
+	std::tr1::shared_ptr<CvRect> postRect;
 	unsigned row;
 	unsigned col;
 

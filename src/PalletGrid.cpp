@@ -27,11 +27,6 @@
 
 #include <sstream>
 
-const unsigned PalletGrid::MAX_ROWS = 8;
-const unsigned PalletGrid::MAX_COLS = 12;
-const unsigned PalletGrid::NUM_CELLS = PalletGrid::MAX_ROWS
-		* PalletGrid::MAX_COLS;
-
 PalletGrid::PalletGrid(Orientation o, unsigned imgWidth, unsigned imgHeight,
 		unsigned gapX, unsigned gapY, const unsigned(&profileWords)[3]) {
 	orientation = o;
@@ -76,29 +71,35 @@ PalletGrid::PalletGrid(Orientation o, unsigned imgWidth, unsigned imgHeight,
 PalletGrid::~PalletGrid() {
 }
 
-void PalletGrid::getCellRect(unsigned row, unsigned col, CvRect & rect) {
+std::tr1::shared_ptr<const CvRect> PalletGrid::getCellRect(unsigned row, unsigned col) {
 	UA_ASSERT(row < MAX_ROWS);
 	UA_ASSERT(col < MAX_COLS);
 
+	int x, y, width, height;
+
 	if (orientation == ORIENTATION_HORIZONTAL) {
-		rect.x = static_cast<int>(cellWidth * (MAX_COLS - col - 1)) + gapX;
-		rect.y = static_cast<int>(cellHeight * row) + gapY;
+		x = static_cast<int>(cellWidth * (MAX_COLS - col - 1)) + gapX;
+		y = static_cast<int>(cellHeight * row) + gapY;
 	} else if (orientation == ORIENTATION_VERTICAL) {
-		rect.x = static_cast<int>(cellWidth * row) + gapX;
-		rect.y = static_cast<int>(cellHeight * col) + gapY;
+		x = static_cast<int>(cellWidth * row) + gapX;
+		y = static_cast<int>(cellHeight * col) + gapY;
 	} else {
 		UA_ASSERTS(false, "orientation invalid: " << orientation);
 	}
 
-	rect.width = static_cast<int>(cellWidth) - 2 * gapX;
-	rect.height = static_cast<int>(cellHeight) - 2 * gapY;
+	width = static_cast<int>(cellWidth) - 2 * gapX;
+	height = static_cast<int>(cellHeight) - 2 * gapY;
+
+	CvRect r = { x, y, width, height };
+
+	return std::tr1::shared_ptr<const CvRect>(new CvRect(r));
 }
 
-void PalletGrid::getPositionStr(unsigned row, unsigned col, string & str) {
+void PalletGrid::getPositionStr(unsigned row, unsigned col, std::string & str) {
 	UA_ASSERT(row < MAX_ROWS);
 	UA_ASSERT(col < MAX_COLS);
 
-	ostringstream out;
+	std::ostringstream out;
 	out << (char) ('A' + row) << col;
 	str = out.str();
 }

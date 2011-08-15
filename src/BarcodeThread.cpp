@@ -33,145 +33,149 @@
 #include <sstream>
 
 BarcodeThread::BarcodeThread(ProcessImageManager * manager, double scanGap,
-        unsigned squareDev, unsigned edgeThresh, unsigned corrections,
-        CvRect & croppedOffset, auto_ptr<Dib> d, BarcodeInfo & info, bool debug) :
-        dib(d), image(Decoder::createDmtxImageFromDib(*dib)), barcodeInfo(info) {
+		unsigned squareDev, unsigned edgeThresh, unsigned corrections,
+		std::tr1::shared_ptr<const CvRect> croppedOffset, auto_ptr<Dib> d,
+		BarcodeInfo & info, bool debug) :
+		dib(d), image(Decoder::createDmtxImageFromDib(*dib)), barcodeInfo(info) {
 
+	this->manager = manager;
+	this->scanGap = scanGap;
+	this->squareDev = squareDev;
+	this->edgeThresh = edgeThresh;
+	this->corrections = corrections;
+	this->croppedOffset = croppedOffset;
+	this->debug = debug;
 
-    this->manager = manager;
-    this->scanGap = scanGap;
-    this->squareDev = squareDev;
-    this->edgeThresh = edgeThresh;
-    this->corrections = corrections;
-    this->croppedOffset = croppedOffset;
-    this->debug = debug;
+	quitMutex.lock();
+	this->quitFlag = false;
+	quitMutex.unlock();
 
-    quitMutex.lock();
-    this->quitFlag = false;
-    quitMutex.unlock();
+	dpi = dib->getDpi();
 
+	UA_ASSERTS((dpi == 300) || (dpi == 400) || (dpi == 600),
+			"invalid DPI: " << dpi);
 
-    dpi = dib->getDpi();
-
-    UA_ASSERTS((dpi == 300) || (dpi == 400) || (dpi == 600),
-            "invalid DPI: " << dpi);
-
-    // do not write diagnostic image is log level is less than 9
-    if (debug) {
-        ostringstream fname;
-        CvRect & rect = barcodeInfo.getPreProcessBoundingBox();
-        fname << "preprocess-" << rect.x << "-" << rect.y << ".bmp";
-        dib->writeToFile(fname.str().c_str());
-    }
+	// do not write diagnostic image is log level is less than 9
+	if (debug) {
+		ostringstream fname;
+		std::tr1::shared_ptr<const CvRect> rect =
+				barcodeInfo.getPreProcessBoundingBox();
+		fname << "preprocess-" << rect->x << "-" << rect->y << ".bmp";
+		dib->writeToFile(fname.str().c_str());
+	}
 }
 
 BarcodeThread::~BarcodeThread() {
-    dmtxImageDestroy(&image);
+	dmtxImageDestroy(&image);
 }
 
 void BarcodeThread::run() {
-    int minEdgeSize, maxEdgeSize;
+	int minEdgeSize, maxEdgeSize;
 
-    DmtxDecode *dec = dmtxDecodeCreate(image, 1);
-    UA_ASSERT_NOT_NULL(dec);
+	DmtxDecode *dec = dmtxDecodeCreate(image, 1);
+	UA_ASSERT_NOT_NULL(dec);
 
-    // slightly smaller than the new tube edge
-    minEdgeSize = (int)(0.08 * dpi);
+	// slightly smaller than the new tube edge
+	minEdgeSize = (int) (0.08 * dpi);
 
-    // slightly bigger than the Nunc edge
-    maxEdgeSize =(int)(0.18 * dpi);
+	// slightly bigger than the Nunc edge
+	maxEdgeSize = (int) (0.18 * dpi);
 
-    dmtxDecodeSetProp(dec, DmtxPropEdgeMin, minEdgeSize);
-    dmtxDecodeSetProp(dec, DmtxPropEdgeMax, maxEdgeSize);
-    dmtxDecodeSetProp(dec, DmtxPropSymbolSize, DmtxSymbolSquareAuto);
-    dmtxDecodeSetProp(dec, DmtxPropScanGap, static_cast<unsigned> (scanGap
-            * dpi));
-    dmtxDecodeSetProp(dec, DmtxPropSquareDevn, squareDev);
-    dmtxDecodeSetProp(dec, DmtxPropEdgeThresh, edgeThresh);
+	dmtxDecodeSetProp(dec, DmtxPropEdgeMin, minEdgeSize);
+	dmtxDecodeSetProp(dec, DmtxPropEdgeMax, maxEdgeSize);
+	dmtxDecodeSetProp(dec, DmtxPropSymbolSize, DmtxSymbolSquareAuto);
+	dmtxDecodeSetProp(dec, DmtxPropScanGap,
+			static_cast<unsigned>(scanGap * dpi));dmtxDecodeSetProp
+	(dec, DmtxPropSquareDevn, squareDev);
+	dmtxDecodeSetProp(dec, DmtxPropEdgeThresh, edgeThresh);
 
-    bool msgFound = false;
-    while (1) {
-        DmtxRegion *reg = NULL;
+	bool msgFound = false;
+	while (1) {
+		DmtxRegion *reg = NULL;
 
-        reg = dmtxRegionFindNext(dec, NULL);
-        if (reg == NULL) break;
+		reg = dmtxRegionFindNext(dec, NULL);
+		if (reg == NULL
+			) break;
 
-        DmtxMessage *msg = dmtxDecodeMatrixRegion(dec, reg, corrections);
-        if (msg != NULL) {
-        	msgFound = true;
-            barcodeInfo.postProcess(dec, reg, msg);
+		DmtxMessage *msg = dmtxDecodeMatrixRegion(dec, reg, corrections);
+		if (msg != NULL) {
+			msgFound = true;
+			barcodeInfo.postProcess(dec, reg, msg);
 
-            if ((croppedOffset.width != 0) && (croppedOffset.height != 0)) {
-            	// translate the barcode region information to the actual
-            	// image coordinates
-                barcodeInfo.translate(croppedOffset.x, croppedOffset.y);
-            }
+			if ((croppedOffset->width != 0) && (croppedOffset->height != 0)) {
+				// translate the barcode region information to the actual
+				// image coordinates
+				barcodeInfo.translate(croppedOffset->x, croppedOffset->y);
+			}
 
-
-            dmtxMessageDestroy(&msg);
-        }
-        dmtxRegionDestroy(&reg);
-    }
+			dmtxMessageDestroy(&msg);
+		}
+		dmtxRegionDestroy(&reg);
+	}
 
 	if (debug) {
-    	if (msgFound) {
-    		writeDib("found");
-    	} else {
-    		writeDib("missed");
-    	}
-        writeDiagnosticImage(dec);
-    }
+		if (msgFound) {
+			writeDib("found");
+		} else {
+			writeDib("missed");
+		}
+		writeDiagnosticImage(dec);
+	}
 
-    dmtxDecodeDestroy(&dec);
+	dmtxDecodeDestroy(&dec);
 
-    quitMutex.lock();
-    quitFlag = true;
-    quitMutex.unlock();
-    return;
+	quitMutex.lock();
+	quitFlag = true;
+	quitMutex.unlock();
+	return;
 }
 
 bool BarcodeThread::isFinished() {
-    bool quitFlagBuf;
+	bool quitFlagBuf;
 
-    quitMutex.lock();
-    quitFlagBuf = quitFlag;
-    quitMutex.unlock();
+	quitMutex.lock();
+	quitFlagBuf = quitFlag;
+	quitMutex.unlock();
 
-    return quitFlagBuf;
+	return quitFlagBuf;
 }
 
 void BarcodeThread::writeDib(const char * basename) {
 	// do not write diagnostic image is log level is less than 9
-	if (!debug) return;
+	if (!debug)
+		return;
 
-    ostringstream fname;
-    fname << basename << "-" << croppedOffset.x << "-" << croppedOffset.y << ".bmp";
-    dib->writeToFile(fname.str().c_str());
+	ostringstream fname;
+	fname << basename << "-" << croppedOffset->x << "-" << croppedOffset->y
+			<< ".bmp";
+	dib->writeToFile(fname.str().c_str());
 }
 
 void BarcodeThread::writeDiagnosticImage(DmtxDecode *dec) {
 	// do not write diagnostic image is log level is less than 9
-	if (!debug) return;
+	if (!debug)
+		return;
 
-    int totalBytes, headerBytes;
-    int bytesWritten;
-    unsigned char *pnm;
-    FILE *fp;
+	int totalBytes, headerBytes;
+	int bytesWritten;
+	unsigned char *pnm;
+	FILE *fp;
 
-    ostringstream fname;
-    CvRect & rect = barcodeInfo.getPreProcessBoundingBox();
-    fname << "diagnostic-" << rect.x << "-" << rect.y << ".pnm";
+	ostringstream fname;
+	std::tr1::shared_ptr<const CvRect> rect =
+			barcodeInfo.getPreProcessBoundingBox();
+	fname << "diagnostic-" << rect->x << "-" << rect->y << ".pnm";
 
-    fp = fopen(fname.str().c_str(), "wb");
-    UA_ASSERT_NOT_NULL(fp);
+	fp = fopen(fname.str().c_str(), "wb");
+	UA_ASSERT_NOT_NULL(fp);
 
-    pnm = dmtxDecodeCreateDiagnostic(dec, &totalBytes, &headerBytes, 0);
-    UA_ASSERT_NOT_NULL(pnm);
+	pnm = dmtxDecodeCreateDiagnostic(dec, &totalBytes, &headerBytes, 0);
+	UA_ASSERT_NOT_NULL(pnm);
 
-    bytesWritten = fwrite(pnm, sizeof(unsigned char), totalBytes, fp);
-    UA_ASSERT(bytesWritten == totalBytes);
+	bytesWritten = fwrite(pnm, sizeof(unsigned char), totalBytes, fp);
+	UA_ASSERT(bytesWritten == totalBytes);
 
-    free(pnm);
-    fclose(fp);
+	free(pnm);
+	fclose(fp);
 }
 

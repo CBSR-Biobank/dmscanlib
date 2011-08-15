@@ -101,7 +101,6 @@ const float Dib::DPI_400_KERNEL[9] =
 		{ 0.0587031f, 0.1222315f, 0.0587031f, 0.1222315f, 0.2762618f,
 				0.1222315f, 0.0587031f, 0.1222315f, 0.0587031f, };
 
-
 RgbQuad::RgbQuad() {
 	set(0, 0, 0);
 }
@@ -118,23 +117,28 @@ void RgbQuad::set(unsigned char r, unsigned char g, unsigned char b) {
 }
 
 Dib::Dib() :
-	pixels(NULL), isAllocated(false) {
+		pixels(NULL), isAllocated(false) {
 	ua::Logger::Instance().subSysHeaderSet(4, "Dib");
 }
 
 Dib::Dib(Dib & src) :
-	pixels(NULL), isAllocated(false) {
+		pixels(NULL), isAllocated(false) {
 	ua::Logger::Instance().subSysHeaderSet(4, "Dib");
 	init(src.width, src.height, src.colorBits, src.pixelsPerMeter);
 	memcpy(pixels, src.pixels, src.width * src.height);
 }
 
 Dib::Dib(unsigned width, unsigned height, unsigned colorBits,
-		unsigned pixelsPerMeter) {
+		unsigned pixelsPerMeter) :
+		pixels(NULL), isAllocated(false) {
+	ua::Logger::Instance().subSysHeaderSet(4, "Dib");
 	init(width, height, colorBits, pixelsPerMeter);
 }
 
-Dib::Dib(IplImageContainer & img) {
+Dib::Dib(IplImageContainer & img) :
+		pixels(NULL), isAllocated(false) {
+	ua::Logger::Instance().subSysHeaderSet(4, "Dib");
+
 	IplImage *src = img.getIplImage();
 
 	UA_ASSERTS(src->depth == IPL_DEPTH_8U,
@@ -150,7 +154,9 @@ Dib::Dib(IplImageContainer & img) {
 	cvFlip(src, src, 0);
 }
 
-Dib::Dib(char *filename) : pixels(NULL), isAllocated(false) {
+Dib::Dib(char *filename) :
+		pixels(NULL), isAllocated(false) {
+	ua::Logger::Instance().subSysHeaderSet(4, "Dib");
 	readFromFile(filename);
 }
 
@@ -180,6 +186,7 @@ Dib::~Dib() {
 }
 
 void Dib::allocate(unsigned int allocateSize) {
+	isAllocated = true;
 	pixels = new unsigned char[allocateSize];
 	memset(pixels, 255, allocateSize);
 	UA_ASSERT_NOT_NULL(pixels);
@@ -483,8 +490,8 @@ auto_ptr<Dib> Dib::crop(Dib & src, unsigned x0, unsigned y0, unsigned x1,
 	unsigned width = x1 - x0;
 	unsigned height = y1 - y0;
 
-	auto_ptr<Dib>
-			dest(new Dib(width, height, src.colorBits, src.pixelsPerMeter));
+	auto_ptr<Dib> dest(
+			new Dib(width, height, src.colorBits, src.pixelsPerMeter));
 
 	unsigned char *srcRowPtr = src.pixels + (src.height - y1) * src.rowBytes
 			+ x0 * dest->bytesPerPixel;
