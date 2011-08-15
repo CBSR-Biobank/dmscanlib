@@ -188,13 +188,9 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib) {
 	UA_ASSERT(palletGrid->isImageValid());
 
 #ifdef _DEBUG
-	ostringstream out;
-	for (unsigned row = 0; row < PalletGrid::MAX_ROWS; ++row) {
-		for (unsigned col = 0; col < PalletGrid::MAX_COLS; ++col) {
-			out << palletGrid->getCellEnabled(row, col);
-		}
-		out << endl;
-	}UA_DOUT(1, 5, "Loaded Profile: \n" << out.str());
+	string str;
+	palletGrid->getProfileAsString(str);
+	UA_DOUT(1, 5, "Loaded Profile: \n" << str);
 #endif
 
 	UA_DOUT(1, 7, "Minimum blob width (pixels): " << minBlobWidth);
@@ -207,7 +203,8 @@ Decoder::ProcessResult Decoder::processImageRegions(Dib * dib) {
 			if (!palletGrid->getCellEnabled(row, col))
 				continue;
 
-			std::tr1::shared_ptr<const CvRect> rect = palletGrid->getCellRect(row, col);
+			std::tr1::shared_ptr<const CvRect> rect;
+			//= palletGrid->getCellRect(row, col);
 			UA_DOUT(
 					1,
 					7,

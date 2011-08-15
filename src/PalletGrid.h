@@ -32,6 +32,8 @@
 #   include <tr1/memory>
 #endif
 
+class Dib;
+class PalletCell;
 struct CvRect;
 
 class PalletGrid {
@@ -59,13 +61,15 @@ public:
 	 *
 	 * @param gapY The vertical gap between cells in pixels.
 	 */
-	PalletGrid(Orientation o, unsigned imgWidth, unsigned imgHeight,
+	PalletGrid(Orientation o, std::tr1::shared_ptr<const Dib> image,
 			unsigned gapX, unsigned gapY, const unsigned(&profileWords)[3]);
 
 	~PalletGrid();
 
+	std::tr1::shared_ptr<const Dib> getCellImage(unsigned row, unsigned col);
+
 	/**
-	 * Returns wether or not the pallet location should be decoded.
+	 * Returns wether or not the pallet location is enabled via the profile.
 	 *
 	 * @param row a number between 0 and PalletGrid::MAX_ROWS - 1.
 	 * @param col a number between 0 and PalletGrid::MAX_COLS - 1.
@@ -74,22 +78,28 @@ public:
 	 */
 	bool getCellEnabled(unsigned row, unsigned col);
 
-	std::tr1::shared_ptr<const CvRect> getCellRect(unsigned row, unsigned col);
-
 	void getPositionStr(unsigned row, unsigned col, std::string & str);
 
 	bool isImageValid() {
 		return imgValid;
 	}
 
-private:
+	void getProfileAsString(std::string & str);
 
+private:
+	void getCellRect(unsigned row, unsigned col, CvRect & rect);
+
+	std::vector<std::tr1::shared_ptr<PalletCell> > cells;
+
+	std::vector<std::vector<std::tr1::shared_ptr<PalletCell> > > cellsByRowCol;
+
+	std::tr1::shared_ptr<const Dib> image;
 	Orientation orientation;
 	double cellWidth;
 	double cellHeight;
 	unsigned gapX;
 	unsigned gapY;
-	std::vector<bool> bits;
+	std::vector<bool> cellEnabled;
 	bool imgValid;
 
 };

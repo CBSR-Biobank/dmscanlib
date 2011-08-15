@@ -3,13 +3,17 @@
 
 #include <memory>
 
+#if !defined _VISUALC_
+#   include <tr1/memory>
+#endif
+
 using namespace std;
 
 class ImgScanner;
 
 class ImgScannerFactory {
 public:
-	static auto_ptr<ImgScanner> getImgScanner();
+	static std::tr1::shared_ptr<ImgScanner> getImgScanner();
 
 
 private:

@@ -51,8 +51,8 @@
 bool DmScanLib::loggingInitialized = false;
 
 DmScanLib::DmScanLib() :
-		stdoutOutputEnable(false), textFileOutputEnable(false) {
-	imgScanner = ImgScannerFactory::getImgScanner();
+		image(new Dib()), imgScanner(ImgScannerFactory::getImgScanner()), stdoutOutputEnable(
+				false), textFileOutputEnable(false) {
 }
 
 DmScanLib::~DmScanLib() {
@@ -208,9 +208,22 @@ int DmScanLib::decodePlate(unsigned verbose, unsigned dpi, int brightness,
 
 	HANDLE h;
 	int result;
-	Dib dib;
 
 	Util::getTime(starttime);
+
+	this->plateNum = plateNum;
+	this->scanGap = scanGap;
+	this->squareDev = squareDev;
+	this->edgeThresh = edgeThresh;
+	this->corrections = corrections;
+	this->cellDistance = cellDistance;
+	this->gapX = gapX;
+	this->gapY = gapY;
+	this->profileA = profileA;
+	this->profileB = profileB;
+	this->profileC = profileC;
+	this->orientation = orientation;
+
 	h = imgScanner->acquireImage(dpi, brightness, contrast, left, top, right,
 			bottom);
 	if (h == NULL) {
@@ -218,15 +231,13 @@ int DmScanLib::decodePlate(unsigned verbose, unsigned dpi, int brightness,
 		return imgScanner->getErrorCode();
 	}
 
-	dib.readFromHandle(h);
-	if (dib.getDpi() != dpi) {
+	image->readFromHandle(h);
+	if (image->getDpi() != dpi) {
 		return SC_INCORRECT_DPI_SCANNED;
 	}
 
-	dib.writeToFile("scanned.bmp");
-	result = decodeCommon(plateNum, dib, scanGap, squareDev, edgeThresh,
-			corrections, cellDistance, gapX, gapY, profileA, profileB, profileC,
-			orientation, "decode.bmp");
+	image->writeToFile("scanned.bmp");
+	result = decodeCommon("decode.bmp");
 
 	imgScanner->freeImage(h);
 	UA_DOUT(1, 1, "decodeCommon returned: " << result);
@@ -239,6 +250,7 @@ int DmScanLib::decodeImage(unsigned verbose, unsigned plateNum,
 		double gapX, double gapY, unsigned profileA, unsigned profileB,
 		unsigned profileC, unsigned orientation) {
 	configLogging(verbose);
+
 	UA_DOUT(
 			1,
 			3,
@@ -254,23 +266,30 @@ int DmScanLib::decodeImage(unsigned verbose, unsigned plateNum,
 
 	Util::getTime(starttime);
 
-	Dib dib;
-	dib.readFromFile(filename);
+	this->plateNum = plateNum;
+	this->scanGap = scanGap;
+	this->squareDev = squareDev;
+	this->edgeThresh = edgeThresh;
+	this->corrections = corrections;
+	this->cellDistance = cellDistance;
+	this->gapX = gapX;
+	this->gapY = gapY;
+	this->profileA = profileA;
+	this->profileB = profileB;
+	this->profileC = profileC;
+	this->orientation = orientation;
 
-	int result = decodeCommon(plateNum, dib, scanGap, squareDev, edgeThresh,
-			corrections, cellDistance, gapX, gapY, profileA, profileB, profileC,
-			orientation, "decode.bmp");
+	image->readFromFile(filename);
+
+	int result = decodeCommon("decode.bmp");
 	return result;
 }
 
-int DmScanLib::decodeCommon(unsigned plateNum, Dib & dib, double scanGap,
-		unsigned squareDev, unsigned edgeThresh, unsigned corrections,
-		double cellDistance, double gapX, double gapY, unsigned profileA,
-		unsigned profileB, unsigned profileC, unsigned orientation,
-		const char *markedDibFilename) {
+int DmScanLib::decodeCommon(const char *markedDibFilename) {
 
 	const unsigned profileWords[3] = { profileA, profileB, profileC };
-	unsigned dpi = dib.getDpi();
+	const unsigned dpi = image->getDpi();
+
 	UA_DOUT(1, 3, "DecodeCommon: dpi/" << dpi);
 	if ((dpi != 300) && (dpi != 400) && (dpi != 600)) {
 		return SC_INVALID_DPI;
@@ -282,35 +301,35 @@ int DmScanLib::decodeCommon(unsigned plateNum, Dib & dib, double scanGap,
 	PalletGrid::ORIENTATION_HORIZONTAL :
 	PalletGrid::ORIENTATION_VERTICAL);
 
-	unsigned gapXpixels = static_cast<unsigned>(dpi * gapX);unsigned
-	gapYpixels = static_cast<unsigned>(dpi * gapY);
+	unsigned gapXpixels = dpi * static_cast<unsigned>(gapX);
+	unsigned gapYpixels = dpi * static_cast<unsigned>(gapY);
 
-auto_ptr	<PalletGrid> palletGrid(
-			new PalletGrid(palletOrientation, dib.getWidth(), dib.getHeight(),
-					gapXpixels, gapYpixels, profileWords));
+	std::tr1::shared_ptr<PalletGrid> palletGrid(
+			new PalletGrid(palletOrientation, image, gapXpixels, gapYpixels,
+					profileWords));
 
 	if (!palletGrid->isImageValid()) {
 		return SC_INVALID_IMAGE;
 	}
 
-	decoder = auto_ptr < Decoder
-			> (new Decoder(scanGap, squareDev, edgeThresh, corrections,
+	decoder = std::tr1::shared_ptr<Decoder>(
+			new Decoder(scanGap, squareDev, edgeThresh, corrections,
 					cellDistance, palletGrid.get()));
 
 	/*--- apply filters ---*/
-	auto_ptr<Dib> filteredDib(Dib::convertGrayscale(dib));
-
-	filteredDib->tpPresetFilter();
-	UA_DEBUG( filteredDib->writeToFile("filtered.bmp"));
+	originalImage = std::tr1::shared_ptr<Dib>(new Dib(*image.get()));
+	image = image->convertGrayscale();
+	image->tpPresetFilter();
+	UA_DEBUG(image->writeToFile("filtered.bmp"));
 
 	/*--- obtain barcodes ---*/
-	result = decoder->processImageRegions(filteredDib.get());
+	result = decoder->processImageRegions(image.get());
 
-	decoder->imageShowBarcodes(dib, 0);
+	decoder->imageShowBarcodes(*image.get(), 0);
 	if (result == Decoder::OK)
-		dib.writeToFile(markedDibFilename);
+		image->writeToFile(markedDibFilename);
 	else
-		dib.writeToFile("decode.partial.bmp");
+		image->writeToFile("decode.partial.bmp");
 
 	if (result == Decoder::IMG_INVALID) {
 		return SC_INVALID_IMAGE;
@@ -322,7 +341,7 @@ auto_ptr	<PalletGrid> palletGrid(
 		formatCellMessages(plateNum, msg);
 
 		if (textFileOutputEnable) {
-		saveResults(msg);
+			saveResults(msg);
 		}
 
 		if (stdoutOutputEnable) {

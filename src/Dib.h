@@ -33,6 +33,10 @@ typedef void* HANDLE;
 
 #include <memory>
 
+#ifndef _VISUALC_
+#   include <tr1/memory>
+#endif
+
 using namespace std;
 
 /* Colour palette
@@ -64,10 +68,10 @@ public:
 	void readFromFile(const char * filename);
 	bool writeToFile(const char * filename) const;
 
-	static auto_ptr<Dib> convertGrayscale(Dib & src);
+	std::tr1::shared_ptr<Dib> convertGrayscale() const;
 
-	static auto_ptr<Dib> crop(Dib &src, unsigned x0, unsigned y0, unsigned x1,
-			unsigned y1);
+	std::tr1::shared_ptr<Dib> crop(unsigned x0, unsigned y0, unsigned x1,
+			unsigned y1) const;
 
 	auto_ptr<IplImageContainer> generateIplImage();
 	void tpPresetFilter();

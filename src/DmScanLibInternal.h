@@ -27,6 +27,10 @@
 #include <memory>
 #include <vector>
 
+#if ! defined _VISUALC_
+#   include <tr1/memory>
+#endif
+
 class Dib;
 class Decoder;
 class ImgScanner;
@@ -79,14 +83,25 @@ protected:
 
 	int isValidDpi(int dpi);
 
-	int decodeCommon(unsigned plateNum, Dib & dib, double scanGap,
-			unsigned squareDev, unsigned edgeThresh, unsigned corrections,
-			double cellDistance, double gapX, double gapY, unsigned profileA,
-			unsigned profileB, unsigned profileC, unsigned orientation,
-			const char *markedDibFilename);
+	int decodeCommon(const char *markedDibFilename);
 
-	auto_ptr<ImgScanner> imgScanner;
-	auto_ptr<Decoder> decoder;
+	std::tr1::shared_ptr<Dib> image;
+	std::tr1::shared_ptr<Dib> originalImage;
+	std::tr1::shared_ptr<ImgScanner> imgScanner;
+	std::tr1::shared_ptr<Decoder> decoder;
+
+	unsigned plateNum;
+	double scanGap;
+	unsigned squareDev;
+	unsigned edgeThresh;
+	unsigned corrections;
+	double cellDistance;
+	double gapX;
+	double gapY;
+	unsigned profileA;
+	unsigned profileB;
+	unsigned profileC;
+	unsigned orientation;
 
 	slTime starttime; // for debugging
 	slTime endtime;

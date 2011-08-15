@@ -474,67 +474,32 @@ bool Dib::bound(unsigned min, unsigned & x, unsigned max) {
 	return valueChanged;
 }
 
-/*
- * DIBs are flipped in Y
- */
-auto_ptr<Dib> Dib::crop(Dib & src, unsigned x0, unsigned y0, unsigned x1,
-		unsigned y1) {
-	UA_ASSERT(x1 > x0);
-	UA_ASSERT(y1 > y0);
+std::tr1::shared_ptr<Dib> Dib::convertGrayscale() const {
+	UA_ASSERT(getBitsPerPixel() == 24 || getBitsPerPixel() == 8);
+	UA_ASSERT(getPixelBuffer() != NULL);
 
-	bound(0, x0, src.width);
-	bound(0, x1, src.width);
-	bound(0, y0, src.height);
-	bound(0, y1, src.height);
-
-	unsigned width = x1 - x0;
-	unsigned height = y1 - y0;
-
-	auto_ptr<Dib> dest(
-			new Dib(width, height, src.colorBits, src.pixelsPerMeter));
-
-	unsigned char *srcRowPtr = src.pixels + (src.height - y1) * src.rowBytes
-			+ x0 * dest->bytesPerPixel;
-	unsigned char *destRowPtr = dest->pixels;
-	unsigned row = 0;
-
-	while (row < height) {
-		memcpy(destRowPtr, srcRowPtr, width);
-		memset(destRowPtr + width, 0, dest->rowPaddingBytes);
-
-		++row;
-		srcRowPtr += src.rowBytes;
-		destRowPtr += dest->rowBytes;
-	}
-	return dest;
-}
-
-auto_ptr<Dib> Dib::convertGrayscale(Dib & src) {
-	UA_ASSERT(src.getBitsPerPixel() == 24 || src.getBitsPerPixel() == 8);
-	UA_ASSERT(src.getPixelBuffer() != NULL);
-
-	if (src.getBitsPerPixel() == 8) {
+	if (getBitsPerPixel() == 8) {
 		UA_DOUT(4, 9, "convertGrayscale: Already grayscale image.");
-		return auto_ptr<Dib>(&src);
+		return std::tr1::shared_ptr<Dib>(this);
 	}
 
 	UA_DOUT(4, 9, "convertGrayscale: Converting from 24 bit to 8 bit.");
 
 	// 24bpp -> 8bpp
-	auto_ptr<Dib> dest(new Dib(src.width, src.height, 8, src.pixelsPerMeter));
+	Dib * dest = new Dib(width, height, 8, pixelsPerMeter);
 
 	UA_DOUT(4, 9, "convertGrayscale: Made dib");
 
-	unsigned char *srcRowPtr = src.pixels;
+	unsigned char *srcRowPtr = pixels;
 	unsigned char *destRowPtr = dest->pixels;
 	unsigned char *srcPtr, *destPtr;
 
-	for (unsigned row = 0; row < src.height; ++row) {
+	for (unsigned row = 0; row < height; ++row) {
 		srcPtr = srcRowPtr;
 		destPtr = destRowPtr;
-		for (unsigned col = 0; col < src.width; ++col, ++destPtr) {
+		for (unsigned col = 0; col < width; ++col, ++destPtr) {
 			*destPtr = static_cast<unsigned char>(0.3333 * srcPtr[0]
-					+ 0.3333 * srcPtr[1] + 0.3333 * srcPtr[2]);srcPtr += src.bytesPerPixel;
+					+ 0.3333 * srcPtr[1] + 0.3333 * srcPtr[2]);srcPtr += bytesPerPixel;
 		}
 
 			// now initialise the padding bytes
@@ -542,13 +507,47 @@ auto_ptr<Dib> Dib::convertGrayscale(Dib & src) {
 		for (unsigned i = 0; i < dest->rowPaddingBytes; ++i) {
 			destPtr[i] = 0;
 		}
-		srcRowPtr += src.rowBytes;
+		srcRowPtr += rowBytes;
 		destRowPtr += dest->rowBytes;
 	}
 
 	UA_DOUT(4, 9, "convertGrayscale: Generated 8 bit grayscale image.");
 
-	return dest;
+	return std::tr1::shared_ptr<Dib>(dest);
+}
+
+/*
+ * DIBs are flipped in Y
+ */
+std::tr1::shared_ptr<Dib> Dib::crop(unsigned x0, unsigned y0, unsigned x1,
+		unsigned y1) const {
+	UA_ASSERT(x1 > x0);
+	UA_ASSERT(y1 > y0);
+
+	bound(0, x0, width);
+	bound(0, x1, width);
+	bound(0, y0, height);
+	bound(0, y1, height);
+
+	unsigned width = x1 - x0;
+	unsigned height = y1 - y0;
+
+	Dib * croppedImg = new Dib(width, height, colorBits, pixelsPerMeter);
+
+	unsigned char *srcRowPtr = pixels + (height - y1) * rowBytes
+			+ x0 * croppedImg->bytesPerPixel;
+	unsigned char *destRowPtr = croppedImg->pixels;
+	unsigned row = 0;
+
+	while (row < height) {
+		memcpy(destRowPtr, srcRowPtr, width);
+		memset(destRowPtr + width, 0, croppedImg->rowPaddingBytes);
+
+		++row;
+		srcRowPtr += rowBytes;
+		destRowPtr += croppedImg->rowBytes;
+	}
+	return std::tr1::shared_ptr<Dib>(croppedImg);
 }
 
 /*

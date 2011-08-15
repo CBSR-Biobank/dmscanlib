@@ -15,10 +15,10 @@ ImgScannerFactory::~ImgScannerFactory() {
 
 }
 
-auto_ptr<ImgScanner> ImgScannerFactory::getImgScanner() {
+std::tr1::shared_ptr<ImgScanner> ImgScannerFactory::getImgScanner() {
 #ifdef WIN32
-	return auto_ptr<ImgScanner>(new ImgScannerImpl());
+	return std::tr1::shared_ptr<ImgScanner>(new ImgScannerImpl());
 #else
-	return auto_ptr<ImgScanner>(new ImgScannerSimulator());
+	return std::tr1::shared_ptr<ImgScanner>(new ImgScannerSimulator());
 #endif
 }

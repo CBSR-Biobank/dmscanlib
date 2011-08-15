@@ -21,15 +21,21 @@
  */
 
 #include "PalletGrid.h"
+#include "PalletCell.h"
+#include "Dib.h"
 #include "UaAssert.h"
 #include "UaLogger.h"
 #include "cxtypes.h"
 
 #include <sstream>
 
-PalletGrid::PalletGrid(Orientation o, unsigned imgWidth, unsigned imgHeight,
-		unsigned gapX, unsigned gapY, const unsigned(&profileWords)[3]) {
+PalletGrid::PalletGrid(Orientation o, std::tr1::shared_ptr<const Dib> img,
+		unsigned gapX, unsigned gapY, const unsigned(&profileWords)[3]) :
+		image(img) {
 	orientation = o;
+
+	const int imgWidth = image->getWidth();
+	const int imgHeight = image->getHeight();
 
 	if (orientation == ORIENTATION_HORIZONTAL) {
 		imgValid = imgWidth > imgHeight;
@@ -55,15 +61,32 @@ PalletGrid::PalletGrid(Orientation o, unsigned imgWidth, unsigned imgHeight,
 	this->gapY = gapY;
 
 	// load the profile
-	bits.resize(NUM_CELLS);
+	cellEnabled.resize(NUM_CELLS);
 	unsigned mask;
 	for (unsigned i = 0; i < NUM_CELLS / 32; ++i) {
 		mask = 1;
 		for (unsigned j = 0; j < 32; ++j) {
 			if (profileWords[i] & mask) {
-				bits[32 * i + j] = 1;
+				cellEnabled[32 * i + j] = 1;
 			}
 			mask <<= 1;
+		}
+	}
+
+	cellsByRowCol.resize(MAX_ROWS);
+
+	CvRect rect;
+	for (unsigned row = 0, rows = MAX_ROWS; row < rows; ++row) {
+		cellsByRowCol[row].resize(MAX_COLS);
+		for (unsigned col = 0, cols = MAX_COLS; col < cols; ++col) {
+			if (!cellEnabled[MAX_COLS * row + col]) return;
+
+			getCellRect(row, col, rect);
+			std::tr1::shared_ptr<Dib> cellImage = image->crop(rect.x, rect.y,
+					rect.x + rect.width, rect.y + rect.height);
+			std::tr1::shared_ptr<PalletCell> cell(new PalletCell(cellImage, row, col));
+			cells.push_back(cell);
+			cellsByRowCol[row][col] = cell;
 		}
 	}
 }
@@ -71,28 +94,22 @@ PalletGrid::PalletGrid(Orientation o, unsigned imgWidth, unsigned imgHeight,
 PalletGrid::~PalletGrid() {
 }
 
-std::tr1::shared_ptr<const CvRect> PalletGrid::getCellRect(unsigned row, unsigned col) {
+void PalletGrid::getCellRect(unsigned row, unsigned col, CvRect & rect) {
 	UA_ASSERT(row < MAX_ROWS);
 	UA_ASSERT(col < MAX_COLS);
 
-	int x, y, width, height;
-
 	if (orientation == ORIENTATION_HORIZONTAL) {
-		x = static_cast<int>(cellWidth * (MAX_COLS - col - 1)) + gapX;
-		y = static_cast<int>(cellHeight * row) + gapY;
+		rect.x = static_cast<int>(cellWidth * (MAX_COLS - col - 1)) + gapX;
+		rect.y = static_cast<int>(cellHeight * row) + gapY;
 	} else if (orientation == ORIENTATION_VERTICAL) {
-		x = static_cast<int>(cellWidth * row) + gapX;
-		y = static_cast<int>(cellHeight * col) + gapY;
+		rect.x = static_cast<int>(cellWidth * row) + gapX;
+		rect.y = static_cast<int>(cellHeight * col) + gapY;
 	} else {
 		UA_ASSERTS(false, "orientation invalid: " << orientation);
 	}
 
-	width = static_cast<int>(cellWidth) - 2 * gapX;
-	height = static_cast<int>(cellHeight) - 2 * gapY;
-
-	CvRect r = { x, y, width, height };
-
-	return std::tr1::shared_ptr<const CvRect>(new CvRect(r));
+	rect.width = static_cast<int>(cellWidth) - 2 * gapX;
+	rect.height = static_cast<int>(cellHeight) - 2 * gapY;
 }
 
 void PalletGrid::getPositionStr(unsigned row, unsigned col, std::string & str) {
@@ -107,5 +124,28 @@ void PalletGrid::getPositionStr(unsigned row, unsigned col, std::string & str) {
 bool PalletGrid::getCellEnabled(unsigned row, unsigned col) {
 	UA_ASSERTS(row < PalletGrid::MAX_ROWS, "invalid row requested " << row);
 	UA_ASSERTS(col < PalletGrid::MAX_COLS, "invalid column requested " << col);
-	return bits[PalletGrid::MAX_COLS * row + col];
+	return cellEnabled[MAX_COLS * row + col];
+}
+
+std::tr1::shared_ptr<const Dib> PalletGrid::getCellImage(unsigned row,
+		unsigned col) {
+	UA_ASSERT(row < MAX_ROWS);
+	UA_ASSERT(col < MAX_COLS);
+
+	return cellsByRowCol[row][col]->getImage();
+}
+
+void PalletGrid::decode() {
+
+}
+
+void PalletGrid::getProfileAsString(string & str) {
+	ostringstream out;
+	for (unsigned row = 0; row < PalletGrid::MAX_ROWS; ++row) {
+		for (unsigned col = 0; col < PalletGrid::MAX_COLS; ++col) {
+			out << cellEnabled[MAX_COLS * row + col];
+		}
+		out << endl;
+	}
+	str = out.str();
 }
