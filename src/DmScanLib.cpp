@@ -38,9 +38,10 @@
 #include "UaAssert.h"
 #include "Decoder.h"
 #include "Dib.h"
-#include "BarcodeInfo.h"
 
 #include <stdio.h>
+#include <iostream>
+#include <fstream>
 
 #if defined(USE_NVWA)
 #   include "debug_new.h"
@@ -50,9 +51,10 @@
 
 bool DmScanLib::loggingInitialized = false;
 
-DmScanLib::DmScanLib() :
-		image(new Dib()), imgScanner(ImgScannerFactory::getImgScanner()), stdoutOutputEnable(
-				false), textFileOutputEnable(false) {
+DmScanLib::DmScanLib()
+                : image(new Dib()), imgScanner(
+                                ImgScannerFactory::getImgScanner()), stdoutOutputEnable(
+                                false), textFileOutputEnable(false) {
 }
 
 DmScanLib::~DmScanLib() {
@@ -60,348 +62,330 @@ DmScanLib::~DmScanLib() {
 }
 
 int DmScanLib::isTwainAvailable() {
-	if (imgScanner->twainAvailable()) {
-		return SC_SUCCESS;
-	}
-	return SC_TWAIN_UNAVAIL;
+    if (imgScanner->twainAvailable()) {
+        return SC_SUCCESS;
+    }
+    return SC_TWAIN_UNAVAIL;
 }
 
 int DmScanLib::selectSourceAsDefault() {
-	if (imgScanner->selectSourceAsDefault()) {
-		return SC_SUCCESS;
-	}
-	return SC_FAIL;
+    if (imgScanner->selectSourceAsDefault()) {
+        return SC_SUCCESS;
+    }
+    return SC_FAIL;
 }
 
 int DmScanLib::getScannerCapability() {
-	return imgScanner->getScannerCapability();
+    return imgScanner->getScannerCapability();
 }
 
 int DmScanLib::isValidDpi(int dpi) {
-	int dpiCap = imgScanner->getScannerCapability();
-	return ((dpiCap & CAP_DPI_300) && dpi == 300)
-			|| ((dpiCap & CAP_DPI_400) && dpi == 400)
-			|| ((dpiCap & CAP_DPI_600) && dpi == 600);
+    int dpiCap = imgScanner->getScannerCapability();
+    return ((dpiCap & CAP_DPI_300) && dpi == 300)
+                    || ((dpiCap & CAP_DPI_400) && dpi == 400)
+                    || ((dpiCap & CAP_DPI_600) && dpi == 600);
 }
 
 void DmScanLib::configLogging(unsigned level, bool useFile) {
-	if (!loggingInitialized) {
-		if (useFile) {
-			ua::LoggerSinkFile::Instance().setFile("dmscanlib.log");
-			ua::LoggerSinkFile::Instance().showHeader(true);
-			ua::logstream.sink(ua::LoggerSinkFile::Instance());
-		} else {
-			ua::LoggerSinkStdout::Instance().showHeader(true);
-			ua::logstream.sink(ua::LoggerSinkStdout::Instance());
-		}
-		ua::Logger::Instance().subSysHeaderSet(1, "DmScanLib");
-		loggingInitialized = true;
-	}
+    if (!loggingInitialized) {
+        if (useFile) {
+            ua::LoggerSinkFile::Instance().setFile("dmscanlib.log");
+            ua::LoggerSinkFile::Instance().showHeader(true);
+            ua::logstream.sink(ua::LoggerSinkFile::Instance());
+        } else {
+            ua::LoggerSinkStdout::Instance().showHeader(true);
+            ua::logstream.sink(ua::LoggerSinkStdout::Instance());
+        }
+        ua::Logger::Instance().subSysHeaderSet(1, "DmScanLib");
+        loggingInitialized = true;
+    }
 
-	ua::Logger::Instance().levelSet(ua::LoggerImpl::allSubSys_m, level);
+    ua::Logger::Instance().levelSet(ua::LoggerImpl::allSubSys_m, level);
 }
 
-vector<BarcodeInfo *> & DmScanLib::getBarcodes() {
-	return decoder->getBarcodes();
-}
-
-/*
- * Could not use C++ streams for Release version of DLL.
- */
 void DmScanLib::saveResults(string & msg) {
-	FILE *fh = fopen("dmscanlib.txt", "w");
-	UA_ASSERT_NOT_NULL(fh);
-	fprintf(fh, "%s", msg.c_str());
-	fclose(fh);
-}
+#ifdef DEBUG1
+    /*
+     * Could not use C++ streams for Release version of DLL.
+     */
+    FILE *fh = fopen("dmscanlib.txt", "w");
+    UA_ASSERT_NOT_NULL(fh);
+    fprintf(fh, "%s", msg.c_str());
+    fclose(fh);
+#else
+    ofstream myfile;
+    myfile.open ("dmscanlib.txt");
+    myfile << msg;
+    myfile.close();
 
-void DmScanLib::formatCellMessages(unsigned plateNum, string & msg) {
-	ostringstream out;
-	out << "#Plate,Row,Col,Barcode" << endl;
-
-	vector<BarcodeInfo *> & barcodes = decoder->getBarcodes();
-	for (unsigned i = 0, n = barcodes.size(); i < n; ++i) {
-		BarcodeInfo & info = *barcodes[i];
-		const char * msg = info.getMsg().c_str();
-		if (msg == NULL) {
-			continue;
-		}
-		out << plateNum << "," << static_cast<char>('A' + info.getRow()) << ","
-				<< (info.getCol() + 1) << "," << msg << endl;
-	}
-	msg = out.str();
+#endif
 }
 
 int DmScanLib::scanImage(unsigned verbose, unsigned dpi, int brightness,
-		int contrast, double left, double top, double right, double bottom,
-		const char *filename) {
-	configLogging(verbose);
-	if (filename == NULL) {
-		UA_DOUT(1, 3, "slScanImage: no file name specified");
-		return SC_FAIL;
-	}
+                         int contrast, double left, double top, double right,
+                         double bottom, const char *filename) {
+    configLogging(verbose);
+    if (filename == NULL) {
+        UA_DOUT(1, 3, "slScanImage: no file name specified");
+        return SC_FAIL;
+    }
 
-	UA_DOUT(
-			1,
-			3,
-			"slScanImage: dpi/" << dpi << " brightness/" << brightness << " contrast/" << contrast << " left/" << left << " top/" << top << " right/" << right << " bottom/" << bottom << " filename/" << filename);
+    UA_DOUT( 1,
+            3,
+            "slScanImage: dpi/" << dpi << " brightness/" << brightness << " contrast/" << contrast << " left/" << left << " top/" << top << " right/" << right << " bottom/" << bottom << " filename/" << filename);
 
-	HANDLE h = imgScanner->acquireImage(dpi, brightness, contrast, left, top,
-			right, bottom);
-	if (h == NULL) {
-		UA_DOUT(1, 1, "could not acquire image");
-		return imgScanner->getErrorCode();
-	}
-	Dib dib;
-	dib.readFromHandle(h);
-	if (dib.getDpi() != dpi) {
-		return SC_INCORRECT_DPI_SCANNED;
-	}
-	dib.writeToFile(filename);
-	imgScanner->freeImage(h);
-	return SC_SUCCESS;
+    HANDLE h = imgScanner->acquireImage(dpi, brightness, contrast, left, top,
+                                        right, bottom);
+    if (h == NULL) {
+        UA_DOUT(1, 1, "could not acquire image");
+        return imgScanner->getErrorCode();
+    }
+    Dib dib;
+    dib.readFromHandle(h);
+    if (dib.getDpi() != dpi) {
+        return SC_INCORRECT_DPI_SCANNED;
+    }
+    dib.writeToFile(filename);
+    imgScanner->freeImage(h);
+    return SC_SUCCESS;
 }
 
 int DmScanLib::scanFlatbed(unsigned verbose, unsigned dpi, int brightness,
-		int contrast, const char *filename) {
-	configLogging(verbose);
-	if (filename == NULL) {
-		UA_DOUT(1, 3, "slScanFlatbed: no file name specified");
-		return SC_FAIL;
-	}
+                           int contrast, const char *filename) {
+    configLogging(verbose);
+    if (filename == NULL) {
+        UA_DOUT(1, 3, "slScanFlatbed: no file name specified");
+        return SC_FAIL;
+    }
 
-	UA_DOUT(
-			1,
-			3,
-			"slScanFlatbed: dpi/" << dpi << " brightness/" << brightness << " contrast/" << contrast << " filename/" << filename);
+    UA_DOUT( 1,
+            3,
+            "slScanFlatbed: dpi/" << dpi << " brightness/" << brightness << " contrast/" << contrast << " filename/" << filename);
 
-	HANDLE h = imgScanner->acquireFlatbed(dpi, brightness, contrast);
-	if (h == NULL) {
-		UA_DOUT(1, 1, "could not acquire image");
-		return imgScanner->getErrorCode();
-	}
-	Dib dib;
-	dib.readFromHandle(h);
-	if (dib.getDpi() != dpi) {
-		return SC_INCORRECT_DPI_SCANNED;
-	}
-	dib.writeToFile(filename);
-	imgScanner->freeImage(h);
-	return SC_SUCCESS;
+    HANDLE h = imgScanner->acquireFlatbed(dpi, brightness, contrast);
+    if (h == NULL) {
+        UA_DOUT(1, 1, "could not acquire image");
+        return imgScanner->getErrorCode();
+    }
+    Dib dib;
+    dib.readFromHandle(h);
+    if (dib.getDpi() != dpi) {
+        return SC_INCORRECT_DPI_SCANNED;
+    }
+    dib.writeToFile(filename);
+    imgScanner->freeImage(h);
+    return SC_SUCCESS;
 }
 
 int DmScanLib::decodePlate(unsigned verbose, unsigned dpi, int brightness,
-		int contrast, unsigned plateNum, double left, double top, double right,
-		double bottom, double scanGap, unsigned squareDev, unsigned edgeThresh,
-		unsigned corrections, double cellDistance, double gapX, double gapY,
-		unsigned profileA, unsigned profileB, unsigned profileC,
-		unsigned orientation) {
-	configLogging(verbose);
-	UA_DOUT(
-			1,
-			3,
-			"decodePlate: dpi/" << dpi << " brightness/" << brightness << " contrast/" << contrast << " plateNum/" << plateNum << " left/" << left << " top/" << top << " right/" << right << " bottom/" << bottom << " scanGap/" << scanGap << " squareDev/" << squareDev << " edgeThresh/" << edgeThresh << " corrections/" << corrections << " cellDistance/" << cellDistance << " gapX/" << gapX << " gapY/" << gapY << " orientation/" << orientation);
+                           int contrast, unsigned plateNum, double left,
+                           double top, double right, double bottom,
+                           double scanGap, unsigned squareDev,
+                           unsigned edgeThresh, unsigned corrections,
+                           double cellDistance, double gapX, double gapY,
+                           unsigned profileA, unsigned profileB,
+                           unsigned profileC, unsigned orientation) {
+    configLogging(verbose);
+    UA_DOUT( 1,
+            3,
+            "decodePlate: dpi/" << dpi << " brightness/" << brightness << " contrast/" << contrast << " plateNum/" << plateNum << " left/" << left << " top/" << top << " right/" << right << " bottom/" << bottom << " scanGap/" << scanGap << " squareDev/" << squareDev << " edgeThresh/" << edgeThresh << " corrections/" << corrections << " cellDistance/" << cellDistance << " gapX/" << gapX << " gapY/" << gapY << " orientation/" << orientation);
 
-	if ((plateNum < MIN_PLATE_NUM) || (plateNum > MAX_PLATE_NUM)) {
-		return SC_INVALID_PLATE_NUM;
-	}
+    if ((plateNum < MIN_PLATE_NUM) || (plateNum > MAX_PLATE_NUM)) {
+        return SC_INVALID_PLATE_NUM;
+    }
 
-	HANDLE h;
-	int result;
+    HANDLE h;
+    int result;
 
-	Util::getTime(starttime);
+    Util::getTime(starttime);
 
-	this->plateNum = plateNum;
-	this->scanGap = scanGap;
-	this->squareDev = squareDev;
-	this->edgeThresh = edgeThresh;
-	this->corrections = corrections;
-	this->cellDistance = cellDistance;
-	this->gapX = gapX;
-	this->gapY = gapY;
-	this->profileA = profileA;
-	this->profileB = profileB;
-	this->profileC = profileC;
-	this->orientation = orientation;
+    this->plateNum = plateNum;
+    this->scanGap = scanGap;
+    this->squareDev = squareDev;
+    this->edgeThresh = edgeThresh;
+    this->corrections = corrections;
+    this->cellDistance = cellDistance;
+    this->gapX = gapX;
+    this->gapY = gapY;
+    this->profileA = profileA;
+    this->profileB = profileB;
+    this->profileC = profileC;
+    this->orientation = orientation;
 
-	h = imgScanner->acquireImage(dpi, brightness, contrast, left, top, right,
-			bottom);
-	if (h == NULL) {
-		UA_DOUT(1, 1, "could not acquire plate image: " << plateNum);
-		return imgScanner->getErrorCode();
-	}
+    h = imgScanner->acquireImage(dpi, brightness, contrast, left, top, right,
+                                 bottom);
+    if (h == NULL) {
+        UA_DOUT(1, 1, "could not acquire plate image: " << plateNum);
+        return imgScanner->getErrorCode();
+    }
 
-	image->readFromHandle(h);
-	if (image->getDpi() != dpi) {
-		return SC_INCORRECT_DPI_SCANNED;
-	}
+    image->readFromHandle(h);
+    if (image->getDpi() != dpi) {
+        return SC_INCORRECT_DPI_SCANNED;
+    }
 
-	image->writeToFile("scanned.bmp");
-	result = decodeCommon("decode.bmp");
+    image->writeToFile("scanned.bmp");
+    result = decodeCommon("decode.bmp");
 
-	imgScanner->freeImage(h);
-	UA_DOUT(1, 1, "decodeCommon returned: " << result);
-	return result;
+    imgScanner->freeImage(h);
+    UA_DOUT(1, 1, "decodeCommon returned: " << result);
+    return result;
 }
 
 int DmScanLib::decodeImage(unsigned verbose, unsigned plateNum,
-		const char *filename, double scanGap, unsigned squareDev,
-		unsigned edgeThresh, unsigned corrections, double cellDistance,
-		double gapX, double gapY, unsigned profileA, unsigned profileB,
-		unsigned profileC, unsigned orientation) {
-	configLogging(verbose);
+                           const char *filename, double scanGap,
+                           unsigned squareDev, unsigned edgeThresh,
+                           unsigned corrections, double cellDistance,
+                           double gapX, double gapY, unsigned profileA,
+                           unsigned profileB, unsigned profileC,
+                           unsigned orientation) {
+    configLogging(verbose);
 
-	UA_DOUT(
-			1,
-			3,
-			"decodeImage: plateNum/" << plateNum << " filename/" << filename << " scanGap/" << scanGap << " squareDev/" << squareDev << " edgeThresh/" << edgeThresh << " corrections/" << corrections << " cellDistance/" << cellDistance << " gapX/" << gapX << " gapY/" << gapY << " orientation/" << orientation);
+    UA_DOUT( 1,
+            3,
+            "decodeImage: plateNum/" << plateNum << " filename/" << filename << " scanGap/" << scanGap << " squareDev/" << squareDev << " edgeThresh/" << edgeThresh << " corrections/" << corrections << " cellDistance/" << cellDistance << " gapX/" << gapX << " gapY/" << gapY << " orientation/" << orientation);
 
-	if ((plateNum < MIN_PLATE_NUM) || (plateNum > MAX_PLATE_NUM)) {
-		return SC_INVALID_PLATE_NUM;
-	}
+    if ((plateNum < MIN_PLATE_NUM) || (plateNum > MAX_PLATE_NUM)) {
+        return SC_INVALID_PLATE_NUM;
+    }
 
-	if (filename == NULL) {
-		return SC_FAIL;
-	}
+    if (filename == NULL) {
+        return SC_FAIL;
+    }
 
-	Util::getTime(starttime);
+    Util::getTime(starttime);
 
-	this->plateNum = plateNum;
-	this->scanGap = scanGap;
-	this->squareDev = squareDev;
-	this->edgeThresh = edgeThresh;
-	this->corrections = corrections;
-	this->cellDistance = cellDistance;
-	this->gapX = gapX;
-	this->gapY = gapY;
-	this->profileA = profileA;
-	this->profileB = profileB;
-	this->profileC = profileC;
-	this->orientation = orientation;
+    this->plateNum = plateNum;
+    this->scanGap = scanGap;
+    this->squareDev = squareDev;
+    this->edgeThresh = edgeThresh;
+    this->corrections = corrections;
+    this->cellDistance = cellDistance;
+    this->gapX = gapX;
+    this->gapY = gapY;
+    this->profileA = profileA;
+    this->profileB = profileB;
+    this->profileC = profileC;
+    this->orientation = orientation;
 
-	image->readFromFile(filename);
+    image->readFromFile(filename);
 
-	int result = decodeCommon("decode.bmp");
-	return result;
+    int result = decodeCommon("decode.bmp");
+    return result;
 }
 
 int DmScanLib::decodeCommon(const char *markedDibFilename) {
 
-	const unsigned profileWords[3] = { profileA, profileB, profileC };
-	const unsigned dpi = image->getDpi();
+    const unsigned profileWords[3] = { profileA, profileB, profileC };
+    const unsigned dpi = image->getDpi();
 
-	UA_DOUT(1, 3, "DecodeCommon: dpi/" << dpi);
-	if ((dpi != 300) && (dpi != 400) && (dpi != 600)) {
-		return SC_INVALID_DPI;
-	}
+    UA_DOUT(1, 3, "DecodeCommon: dpi/" << dpi);
+    if ((dpi != 300) && (dpi != 400) && (dpi != 600)) {
+        return SC_INVALID_DPI;
+    }
 
-	decoder = std::tr1::shared_ptr<Decoder>(
-			new Decoder(scanGap, squareDev, edgeThresh, corrections,
-					cellDistance));
+    decoder = std::tr1::shared_ptr<Decoder>(
+                    new Decoder(scanGap, squareDev, edgeThresh, corrections,
+                                cellDistance));
 
-	PalletGrid::Orientation palletOrientation = ((orientation == 0) ?
-	PalletGrid::ORIENTATION_HORIZONTAL :
-	PalletGrid::ORIENTATION_VERTICAL);
+    PalletGrid::Orientation palletOrientation = ((orientation == 0) ?
+    PalletGrid::ORIENTATION_HORIZONTAL :
+    PalletGrid::ORIENTATION_VERTICAL);
 
-	unsigned gapXpixels = dpi * static_cast<unsigned>(gapX);
-	unsigned gapYpixels = dpi * static_cast<unsigned>(gapY);
+    unsigned gapXpixels = dpi * static_cast<unsigned>(gapX);
+    unsigned gapYpixels = dpi * static_cast<unsigned>(gapY);
 
-	std::tr1::shared_ptr<PalletGrid> palletGrid(
-			new PalletGrid(palletOrientation, image, gapXpixels, gapYpixels,
-					profileWords));
+    std::tr1::shared_ptr<PalletGrid> palletGrid(
+                    new PalletGrid(plateNum, palletOrientation, image, gapXpixels,
+                                   gapYpixels, profileWords));
 
-	if (!palletGrid->isImageValid()) {
+    if (!palletGrid->isImageValid()) {
+        return SC_INVALID_IMAGE;
+    }
+
+    palletGrid->applyFilters();
+    unsigned decodeCount = palletGrid->decodeCells(decoder);
+    palletGrid->writeImageWithBoundedBarcodes(markedDibFilename);
+
+	if (decodeCount == 0) {
 		return SC_INVALID_IMAGE;
 	}
 
-	palletGrid->applyFilters();
-	palletGrid->decodeCells(decoder);
+    // only get here if some cells were decoded
+    if (stdoutOutputEnable || textFileOutputEnable) {
+        string msg;
+        palletGrid->formatCellMessages(msg);
 
+        if (textFileOutputEnable) {
+            saveResults(msg);
+        }
 
-	decoder->imageShowBarcodes(*image.get(), 0);
+        if (stdoutOutputEnable) {
+            cout << msg;
+        }
+    }
 
-	// TODO: write decoded cells to file
-//	if (result == Decoder::OK)
-//		image->writeToFile(markedDibFilename);
-//	else
-//		image->writeToFile("decode.partial.bmp");
-//
-//	if (result == Decoder::IMG_INVALID) {
-//		return SC_INVALID_IMAGE;
-//	}
-
-	// only get here if decoder returned Decoder::OK
-	if (stdoutOutputEnable || textFileOutputEnable) {
-		string msg;
-		formatCellMessages(plateNum, msg);
-
-		if (textFileOutputEnable) {
-			saveResults(msg);
-		}
-
-		if (stdoutOutputEnable) {
-			cout << msg;
-		}
-	}
-
-	Util::getTime(endtime);
-	Util::difftiime(starttime, endtime, timediff);
-	UA_DOUT(1, 1, "decodeCommon: time taken: " << timediff);
-	return SC_SUCCESS;
+    Util::getTime(endtime);
+    Util::difftiime(starttime, endtime, timediff);
+    UA_DOUT(1, 1, "decodeCommon: time taken: " << timediff);
+    return SC_SUCCESS;
 }
 
 int slIsTwainAvailable() {
-	DmScanLib dmScanLib;
-	return dmScanLib.isTwainAvailable();
+    DmScanLib dmScanLib;
+    return dmScanLib.isTwainAvailable();
 }
 
 int slSelectSourceAsDefault() {
-	DmScanLib dmScanLib;
-	return dmScanLib.selectSourceAsDefault();
+    DmScanLib dmScanLib;
+    return dmScanLib.selectSourceAsDefault();
 }
 
 int slGetScannerCapability() {
-	DmScanLib dmScanLib;
-	return dmScanLib.getScannerCapability();
+    DmScanLib dmScanLib;
+    return dmScanLib.getScannerCapability();
 }
 
 int slScanFlatbed(unsigned verbose, unsigned dpi, int brightness, int contrast,
-		const char * filename) {
-	DmScanLib dmScanLib;
-	return dmScanLib.scanFlatbed(verbose, dpi, brightness, contrast, filename);
+                  const char * filename) {
+    DmScanLib dmScanLib;
+    return dmScanLib.scanFlatbed(verbose, dpi, brightness, contrast, filename);
 }
 
 int slScanImage(unsigned verbose, unsigned dpi, int brightness, int contrast,
-		double left, double top, double right, double bottom,
-		const char * filename) {
-	DmScanLib dmScanLib;
-	return dmScanLib.scanImage(verbose, dpi, brightness, contrast, left, top,
-			right, bottom, filename);
+                double left, double top, double right, double bottom,
+                const char * filename) {
+    DmScanLib dmScanLib;
+    return dmScanLib.scanImage(verbose, dpi, brightness, contrast, left, top,
+                               right, bottom, filename);
 }
 
 int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
-		unsigned plateNum, double left, double top, double right, double bottom,
-		double scanGap, unsigned squareDev, unsigned edgeThresh,
-		unsigned corrections, double cellDistance, double gapX, double gapY,
-		unsigned profileA, unsigned profileB, unsigned profileC,
-		unsigned orientation) {
-	DmScanLib dmScanLib;
-	dmScanLib.setTextFileOutputEnable(true);
-	return dmScanLib.decodePlate(verbose, dpi, brightness, contrast, plateNum,
-			left, top, right, bottom, scanGap, squareDev, edgeThresh,
-			corrections, cellDistance, gapX, gapY, profileA, profileB, profileC,
-			orientation);
+                  unsigned plateNum, double left, double top, double right,
+                  double bottom, double scanGap, unsigned squareDev,
+                  unsigned edgeThresh, unsigned corrections,
+                  double cellDistance, double gapX, double gapY,
+                  unsigned profileA, unsigned profileB, unsigned profileC,
+                  unsigned orientation) {
+    DmScanLib dmScanLib;
+    dmScanLib.setTextFileOutputEnable(true);
+    return dmScanLib.decodePlate(verbose, dpi, brightness, contrast, plateNum,
+                                 left, top, right, bottom, scanGap, squareDev,
+                                 edgeThresh, corrections, cellDistance, gapX,
+                                 gapY, profileA, profileB, profileC,
+                                 orientation);
 }
 
 int slDecodeImage(unsigned verbose, unsigned plateNum, const char * filename,
-		double scanGap, unsigned squareDev, unsigned edgeThresh,
-		unsigned corrections, double cellDistance, double gapX, double gapY,
-		unsigned profileA, unsigned profileB, unsigned profileC,
-		unsigned orientation) {
-	DmScanLib dmScanLib;
-	dmScanLib.setTextFileOutputEnable(true);
-	return dmScanLib.decodeImage(verbose, plateNum, filename, scanGap,
-			squareDev, edgeThresh, corrections, cellDistance, gapX, gapY,
-			profileA, profileB, profileC, orientation);
+                  double scanGap, unsigned squareDev, unsigned edgeThresh,
+                  unsigned corrections, double cellDistance, double gapX,
+                  double gapY, unsigned profileA, unsigned profileB,
+                  unsigned profileC, unsigned orientation) {
+    DmScanLib dmScanLib;
+    dmScanLib.setTextFileOutputEnable(true);
+    return dmScanLib.decodeImage(verbose, plateNum, filename, scanGap,
+                                 squareDev, edgeThresh, corrections,
+                                 cellDistance, gapX, gapY, profileA, profileB,
+                                 profileC, orientation);
 }
 

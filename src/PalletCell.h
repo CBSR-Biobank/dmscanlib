@@ -2,6 +2,7 @@
 #define __INC_PALLET_CELL_H
 
 #include "cxtypes.h"
+#include "DecodeInfo.h"
 
 #ifdef _VISUALC_
 #   include <memory>
@@ -20,12 +21,37 @@ public:
 
 	std::tr1::shared_ptr<const CvRect> getParentPos();
 
+	void setDecodeInfo(std::tr1::shared_ptr<const DecodeInfo> di) {
+	    decodeInfo = di;
+	}
+
+	const bool getDecodeValid() {
+	    return (decodeInfo.get() != NULL);
+	}
+
+	const string & getBarcodeMsg() {
+	    UA_ASSERT_NOT_NULL(decodeInfo.get());
+	    return decodeInfo->getMsg();
+	}
+
+	const unsigned getRow() {
+	    return row;
+	}
+
+	const unsigned getCol() {
+	    return col;
+	}
+
+	void getCorners(std::vector<const CvPoint *> & corners) const {
+	    decodeInfo->getCorners(corners);
+	}
+
 private:
 	std::tr1::shared_ptr<const Dib> image;
-	unsigned row;
-	unsigned col;
+	const unsigned row;
+	const unsigned col;
 	CvPoint parentPos;
-	CvRect barcodePos;
+	std::tr1::shared_ptr<const DecodeInfo> decodeInfo;
 };
 
 

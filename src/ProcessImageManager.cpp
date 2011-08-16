@@ -21,88 +21,59 @@
 #include "BarcodeThread.h"
 #include "UaLogger.h"
 #include "UaAssert.h"
-#include "Dib.h"
 #include "Decoder.h"
-#include "BarcodeInfo.h"
-#include <stdio.h>
 
 #ifdef WIN32
 #include <windows.h>
 #endif
 
-#include <map>
+#include <algorithm>
+
+const unsigned ProcessImageManager::THREAD_NUM = 8;
 
 ProcessImageManager::ProcessImageManager(std::tr1::shared_ptr<Decoder> dec)
-: decoder(dec) {
+                : decoder(dec) {
 }
 
 ProcessImageManager::~ProcessImageManager() {
 }
 
-void ProcessImageManager::addCells(std::vector<std::tr1::shared_ptr<PalletCell> > & cells,
-		DecodedImageFunc func) {
-
-}
-
 //first is inclusive , last is exclusive
-void ProcessImageManager::threadProcessRange(unsigned int first, unsigned int last) {
-	for (unsigned int i = first; i < last; i++) {
-		allThreads[i]->start();
-	}
+void ProcessImageManager::threadProcessRange(unsigned first, unsigned last) {
+    for (unsigned int i = first; i < last; i++) {
+        allThreads[i]->start();
+    }
 
-	for (unsigned int j = first; j < last; j++) {
-		allThreads[j]->join();
-	}
-
+    for (unsigned int j = first; j < last; j++) {
+        allThreads[j]->join();
+    }
 }
 
-void ProcessImageManager::threadHandler(vector<BarcodeThread *> & threads) {
+void ProcessImageManager::threadHandler() {
+    unsigned first = 0;
+    unsigned last = std::min(numThreads, THREAD_NUM);
 
-	unsigned int threadCount =
-			(threads.size() < THREAD_NUM ) ? threads.size() : THREAD_NUM;
+    do {
+        threadProcessRange(first, last);
+        UA_DOUT(3, 5,
+                "Threads for cells finished: "<< first << "/" << last - 1);
 
-	unsigned int remainder = ((threads.size()) % threadCount);
-
-	for (unsigned int i = 0; i < threads.size() - remainder; i += threadCount) {
-		UA_DOUT(
-				3,
-				5,
-				"Threads for barcodes finished: "<<i << "/" << i + threadCount-1);
-		threadProcessRange(i, i + threadCount);
-
-	}
-
-	if (remainder > 0) {
-		UA_DOUT(
-				3,
-				5,
-				"Threads for barcodes finished(remainder): " << threads.size() - remainder << "/" << threads.size() - remainder-1 << " finished.");
-
-		threadProcessRange(threads.size() - remainder, threads.size());
-	}
+        first = last;
+        last = min(last + THREAD_NUM, numThreads);
+    }
+    while (first < numThreads);
 }
 
-void ProcessImageManager::generateBarcodes(Dib * dib,
-		vector<vector<BarcodeInfo *> > & barcodeInfos) {
-	vector<BarcodeThread *> threads;
+void ProcessImageManager::decodeCells(
+                std::vector<std::tr1::shared_ptr<PalletCell> > & cells) {
+    numThreads = cells.size();
+    allThreads.resize(numThreads);
 
-	for (unsigned row = 0, rows = barcodeInfos.size(); row < rows; ++row) {
-		for (unsigned col = 0, cols = barcodeInfos[row].size(); col < cols;
-				++col) {
+    for (unsigned i = 0; i < numThreads; ++i) {
+        std::tr1::shared_ptr<BarcodeThread> thread(
+                        new BarcodeThread(decoder, cells[i]));
+        allThreads[i] = thread;
+    }
 
-			BarcodeInfo * info = barcodeInfos[row][col];
-			if (info == NULL) {
-				continue;
-			}
-
-			std::tr1::shared_ptr<const CvRect> rect = info->getPreProcessBoundingBox();
-
-//			BarcodeThread * thread = new BarcodeThread(decoder,
-//					*barcodeInfos[row][col], ua::Logger::Instance().levelGet(3) >= 9);
-//
-//			allThreads.push_back(thread);
-//			threads.push_back(thread);
-		}
-	}
-	threadHandler(threads);
+    threadHandler();
 }

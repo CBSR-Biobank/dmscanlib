@@ -34,7 +34,6 @@
 class Dib;
 class Decoder;
 class ImgScanner;
-class BarcodeInfo;
 
 using namespace std;
 
@@ -73,8 +72,6 @@ public:
 	void setStdoutOutputEnable(bool enable) {
 		stdoutOutputEnable = enable;
 	}
-
-	vector<BarcodeInfo *> & getBarcodes();
 
 protected:
 	void saveResults(string & msg);

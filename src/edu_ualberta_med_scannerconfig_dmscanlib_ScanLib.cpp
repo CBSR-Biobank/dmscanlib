@@ -1,7 +1,7 @@
 #include <edu_ualberta_med_scannerconfig_dmscanlib_ScanLib.h>
 #include "DmScanLib.h"
 #include "DmScanLibInternal.h"
-#include "BarcodeInfo.h"
+#include "DecodeInfo.h"
 
 #include <iostream>
 
@@ -14,16 +14,16 @@ public:
 
 		// run the following command to obtain method signatures from a class.
 		// javap -s -p edu.ualberta.med.scannerconfig.dmscanlib.ScanRegion
-		jmethodID getMethod = env->GetMethodID(scanSettingsJavaClass, "getLeft", "()D");		
+		jmethodID getMethod = env->GetMethodID(scanSettingsJavaClass, "getLeft", "()D");
 		left = env->CallDoubleMethod(scanRegionObj, getMethod, NULL);
-		
-		getMethod = env->GetMethodID(scanSettingsJavaClass, "getTop", "()D");		
+
+		getMethod = env->GetMethodID(scanSettingsJavaClass, "getTop", "()D");
 		top = env->CallDoubleMethod(scanRegionObj, getMethod, NULL);
-		
-		getMethod = env->GetMethodID(scanSettingsJavaClass, "getRight", "()D");		
+
+		getMethod = env->GetMethodID(scanSettingsJavaClass, "getRight", "()D");
 		right = env->CallDoubleMethod(scanRegionObj, getMethod, NULL);
-		
-		getMethod = env->GetMethodID(scanSettingsJavaClass, "getBottom", "()D");			
+
+		getMethod = env->GetMethodID(scanSettingsJavaClass, "getBottom", "()D");
 		bottom = env->CallDoubleMethod(scanRegionObj, getMethod, NULL);
     }
 
@@ -112,7 +112,7 @@ jobject createScanResultObject(JNIEnv * env, int resultCode, int value) {
 }
 
 jobject createDecodeResultObject(JNIEnv * env, int resultCode,
-		vector<BarcodeInfo *> * barcodes) {
+		vector<DecodeInfo *> * barcodes) {
 	jclass resultClass = env->FindClass(
 			"edu/ualberta/med/scannerconfig/dmscanlib/DecodeResult");
 
@@ -133,11 +133,13 @@ jobject createDecodeResultObject(JNIEnv * env, int resultCode,
 
 	if (barcodes != NULL) {
 		for (unsigned i = 0, n = barcodes->size(); i < n; ++i) {
-			BarcodeInfo & info = *(*barcodes)[i];
+			DecodeInfo & info = *(*barcodes)[i];
 			jvalue data[3];
 
-			data[0].i = info.getRow();
-			data[1].i = info.getCol();
+			// TODO: convert to PalletCell
+			//data[0].i = info.getRow();
+			//data[1].i = info.getCol();
+
 			data[2].l = env->NewStringUTF(info.getMsg().c_str());
 
 			env->CallObjectMethodA(resultObj, setCellMethod, data);
@@ -190,7 +192,7 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
  */
 JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_scanImage(
 		JNIEnv * env, jobject obj, jlong _verbose, jlong _dpi, jint _brightness,
-		jint _contrast, jobject _region, jstring _filename) {			
+		jint _contrast, jobject _region, jstring _filename) {
 
 	unsigned verbose = static_cast<unsigned>(_verbose);
 	unsigned dpi = static_cast<unsigned>(_dpi);
@@ -255,15 +257,16 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
 	ScanRegion region(env, _region);
 
 	DmScanLib dmScanLib;
-	vector<BarcodeInfo *> * barcodes = NULL;
-	int result = dmScanLib.decodePlate(verbose, dpi, brightness, contrast, plateNum, 
+	vector<DecodeInfo *> * barcodes = NULL;
+	int result = dmScanLib.decodePlate(verbose, dpi, brightness, contrast, plateNum,
 		region.left, region.top, region.right, region.bottom, scanGap,
 			squareDev, edgeThresh, corrections, cellDistance, gapX, gapY,
 			profileA, profileB, profileC, orientation);
 
 	if (result == SC_SUCCESS) {
-		barcodes = &dmScanLib.getBarcodes();
-	} 
+	    // TODO: get pallet cells
+		//barcodes = &dmScanLib.getBarcodes();
+	}
 	return createDecodeResultObject(env, result, barcodes);
 }
 
@@ -290,14 +293,15 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
 	const char *filename = env->GetStringUTFChars(_filename, 0);
 
 	DmScanLib dmScanLib;
-	vector<BarcodeInfo *> * barcodes = NULL;
+	vector<DecodeInfo *> * barcodes = NULL;
 	int result = dmScanLib.decodeImage(verbose, plateNum, filename, scanGap,
 			squareDev, edgeThresh, corrections, cellDistance, gapX, gapY,
 			profileA, profileB, profileC, orientation);
 
 	if (result == SC_SUCCESS) {
-		barcodes = &dmScanLib.getBarcodes();
-	} 
+        // TODO: get pallet cells
+		//barcodes = &dmScanLib.getBarcodes();
+	}
 	jobject resultObj = createDecodeResultObject(env, result, barcodes);
 	env->ReleaseStringUTFChars(_filename, filename);
 	return resultObj;

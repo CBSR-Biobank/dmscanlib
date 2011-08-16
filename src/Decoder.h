@@ -31,6 +31,12 @@
 #include <map>
 #include <OpenThreads/Mutex>
 
+#ifdef _VISUALC_
+#   include <functional>
+#else
+#   include <tr1/functional>
+#endif
+
 #ifdef WIN32
 #include <windows.h>
 #endif
@@ -39,60 +45,41 @@ using namespace std;
 
 class Dib;
 struct RgbQuad;
-class BarcodeInfo;
 class BinRegion;
 
 class Decoder {
 public:
-	Decoder(double scanGap, unsigned squareDev, unsigned edgeThresh,
-			unsigned corrections, double cellDistance);
-	virtual ~Decoder();
+    typedef std::tr1::function<
+                    void(DmtxDecode *dec, DmtxRegion * reg, DmtxMessage * msg)> DecodeCallback;
 
-	enum ProcessResult {
-		IMG_INVALID, OK
-	};
+    Decoder(double scanGap, unsigned squareDev, unsigned edgeThresh,
+            unsigned corrections, double cellDistance);
+    virtual ~Decoder();
 
-	ProcessResult decodeImage(const Dib & dib);
+    void decodeImage(const Dib & dib, DecodeCallback callback);
 
-	void imageShowBarcodes(Dib & dib, bool regions);
-
-	static DmtxImage * createDmtxImageFromDib(const Dib & dib);
-
-	vector<BarcodeInfo *> & getBarcodes();
-
-	const char * getBarcode(unsigned row, unsigned col);
-
-	void writeDiagnosticImage(DmtxDecode *dec);
+    void writeDiagnosticImage(DmtxDecode *dec, string & id);
 
 private:
 
-	static const unsigned PALLET_ROWS;
-	static const unsigned PALLET_COLUMNS;
-	static const double BARCODE_SIDE_LENGTH_INCHES;
+    static const unsigned PALLET_ROWS;
+    static const unsigned PALLET_COLUMNS;
+    static const double BARCODE_SIDE_LENGTH_INCHES;
 
-	bool reduceBlobToMatrix(Dib & dib, CvRect & blob);
-	void showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
-	void initCells(unsigned maxRow, unsigned maxCol);
-	static void getTubeBlobsFromDpi(Dib * dib, vector<CvRect> &blobVector,
-			bool metrical, int dpi);
-	static void getTubeBlobs(Dib * dib, int threshold, int blobsize,
-			int blurRounds, int border, vector<CvRect> & blobVector);
+    static DmtxImage * createDmtxImageFromDib(const Dib & dib);
+    void showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
 
-	bool outputBarcodes;
-	double scanGap;
-	unsigned squareDev;
-	unsigned edgeThresh;
-	unsigned corrections;
-	double cellDistance;
-	unsigned width;
-	unsigned height;
-	unsigned dpi;
+    bool outputBarcodes;
+    double scanGap;
+    unsigned squareDev;
+    unsigned edgeThresh;
+    unsigned corrections;
+    double cellDistance;
+    unsigned width;
+    unsigned height;
+    unsigned dpi;
 
-	vector<vector<BarcodeInfo *> > barcodeInfos;
-
-	vector<BarcodeInfo *> barcodeInfosList;
-
-	OpenThreads::Mutex addBarcodeMutex;
+    OpenThreads::Mutex addBarcodeMutex;
 };
 
 #endif /* DECODER_H_ */

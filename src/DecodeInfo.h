@@ -26,6 +26,7 @@
 #include "UaAssert.h"
 
 #include <string>
+#include <vector>
 
 #ifdef _VISUALC_
 #   include <memory>
@@ -39,50 +40,25 @@ class Dib;
 class BinRegion;
 struct CvRect;
 
-class BarcodeInfo {
+class DecodeInfo {
 public:
-	BarcodeInfo();
-	~BarcodeInfo();
-
-	void postProcess(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
+	DecodeInfo(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
+	~DecodeInfo();
 
 	bool isValid();
 
-	string & getMsg();
+	const string & getMsg() const;
 
-	bool equals(BarcodeInfo * other);
+    void getCorners(std::vector<const CvPoint *> & corners) const;
 
-	void setPreProcessBoundingBox(std::tr1::shared_ptr<const CvRect> rect);
-	std::tr1::shared_ptr<const CvRect> getPreProcessBoundingBox();
-	std::tr1::shared_ptr<const CvRect> getPostProcessBoundingBox();
-	void translate(int x, int y);
-
-	unsigned getRow() {
-		return row;
-	}
-
-	void setRow(unsigned r) {
-		row = r;
-	}
-
-	unsigned getCol() {
-		return col;
-	}
-
-	void setCol(unsigned c) {
-		col = c;
-	}
+	bool equals(DecodeInfo * other);
 
 
 private:
 	string str;
-	DmtxVector2 p00, p10, p11, p01;
-	std::tr1::shared_ptr<const CvRect> preRect;
-	std::tr1::shared_ptr<CvRect> postRect;
-	unsigned row;
-	unsigned col;
+	CvPoint corners[4];
 
-	friend ostream & operator<<(ostream & os, BarcodeInfo & m);
+	friend ostream & operator<<(ostream & os, DecodeInfo & m);
 };
 
 #endif /* BARCODE_INFO_H_ */

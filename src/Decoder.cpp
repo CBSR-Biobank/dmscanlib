@@ -18,13 +18,6 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * Decoder.cpp
- *
- *  Created on: 22-May-2009
- *      Author: loyola
- */
-
 #ifdef _VISUALC_
 // disable fopen warnings
 #pragma warning(disable : 4996)
@@ -34,7 +27,6 @@
 #include "UaLogger.h"
 #include "UaAssert.h"
 #include "Dib.h"
-#include "BarcodeInfo.h"
 #include "ProcessImageManager.h"
 #include "PalletGrid.h"
 
@@ -68,118 +60,13 @@ Decoder::Decoder(double g, unsigned s, unsigned t, unsigned c, double dist) :
 		scanGap(g), squareDev(s), edgeThresh(t), corrections(c), cellDistance(
 				dist) {
 	ua::Logger::Instance().subSysHeaderSet(3, "Decoder");
-
-	barcodeInfos.resize(PalletGrid::MAX_ROWS);
-	for (unsigned row = 0; row < PalletGrid::MAX_ROWS; ++row) {
-		barcodeInfos[row].resize(PalletGrid::MAX_COLS);
-	}
 }
 
 Decoder::~Decoder() {
-	for (unsigned row = 0; row < PalletGrid::MAX_ROWS; row++) {
-		for (unsigned col = 0; col < PalletGrid::MAX_COLS; col++) {
-			if (barcodeInfos[row][col] != NULL) {
-				delete barcodeInfos[row][col];
-			}
-		}
-	}
 }
 
-// FIXME make this function work correclty.
-// reduces the blob to a smaller region (matrix outline)
-bool Decoder::reduceBlobToMatrix(Dib & dib, CvRect & inputBlob) {
-
-	return true;
-	/*
-	 Dib * croppedDib = Dib::crop(dib, inputBlob.x, inputBlob.y,
-	 inputBlob.x + inputBlob.width, inputBlob.y + inputBlob.height);
-	 UA_ASSERT_NOT_NULL(croppedDib->getPixelBuffer());
-
-	 auto_ptr<IplImageContainer> img = croppedDib->generateIplImage();
-	 UA_ASSERT_NOT_NULL(img->getIplImage());
-
-	 delete croppedDib;
-
-	 for (int i = 0; i < 5; i++) {
-	 cvSmooth(img->getIplImage(), img->getIplImage(), CV_GAUSSIAN, 11, 11);
-	 }
-	 cvThreshold(img->getIplImage(), img->getIplImage(), 50, 255,
-	 CV_THRESH_BINARY);
-
-	 // ---- Find the test tube by applying circle-based pattern recognition -----
-	 CvMemStorage* storage = cvCreateMemStorage(0);
-
-	 CvSeq* results = cvHoughCircles(img->getIplImage(), storage,
-	 CV_HOUGH_GRADIENT, 1, //reciprocal resolution scalar multiplier
-	 inputBlob.width / 6);
-
-	 for (int i = 0; i < results->total; i++) {
-
-	 printf("found circle\n");
-
-	 float* p = (float*) cvGetSeqElem(results, i);
-	 CvRect largestBlob = { cvRound(p[0]) - cvRound(p[2]), cvRound(p[1])
-	 - cvRound(p[2]), cvRound(p[0]) + cvRound(p[2]), cvRound(p[1])
-	 + cvRound(p[2]) };
-	 largestBlob.x += inputBlob.x;
-	 largestBlob.y += inputBlob.y;
-
-	 inputBlob = largestBlob;
-	 return true;
-
-	 }
-
-
-	 CBlobResult blobs(img->getIplImage(), NULL, 0);
-
-	 switch (img->getHorizontalResolution()) {
-	 case 300:
-	 blobs.Filter(blobs, B_EXCLUDE, CBlobGetArea(), B_LESS, 840);
-	 break;
-	 case 400:
-	 blobs.Filter(blobs, B_EXCLUDE, CBlobGetArea(), B_LESS, 1900);
-	 break;
-	 case 600:
-	 blobs.Filter(blobs, B_EXCLUDE, CBlobGetArea(), B_LESS, 2400);
-	 break;
-	 }
-
-	 // ---- Grabs the largest blob in the blobs vector -----
-
-	 CvPoint minOffset = cvPoint(inputBlob.width, inputBlob.height);
-	 CvPoint maxOffset = cvPoint(0,0);
-
-	 for (int i = 0, n = blobs.GetNumBlobs(); i < n; i++) {
-
-	 CBlob * blob = blobs.GetBlob(i);
-	 CvRect & currentBlob = blob->GetBoundingBox();
-
-	 if (currentBlob.x < minOffset.x)
-	 minOffset.x = currentBlob.x;
-
-	 if (currentBlob.y < minOffset.y)
-	 minOffset.y = currentBlob.y;
-
-	 if (currentBlob.width + currentBlob.x > maxOffset.x)
-	 maxOffset.x = currentBlob.width + currentBlob.x;
-
-	 if (currentBlob.height + currentBlob.height > maxOffset.y)
-	 maxOffset.y = currentBlob.height + currentBlob.y;
-
-	 }
-	 CvRect largestBlob = { minOffset.x, minOffset.y, maxOffset.x - minOffset.x,
-	 maxOffset.y - minOffset.y };
-
-	 largestBlob.x += inputBlob.x;
-	 largestBlob.y += inputBlob.y;
-
-	 inputBlob = largestBlob;
-	 return true;
-	 */
-}
-
-Decoder::ProcessResult Decoder::decodeImage(const Dib & dib) {
-	DmtxImage * image = Decoder::createDmtxImageFromDib(*dib);
+void Decoder::decodeImage(const Dib & dib, DecodeCallback callback) {
+	DmtxImage * image = Decoder::createDmtxImageFromDib(dib);
 	int minEdgeSize, maxEdgeSize;
 
 	DmtxDecode *dec = dmtxDecodeCreate(image, 1);
@@ -211,7 +98,7 @@ Decoder::ProcessResult Decoder::decodeImage(const Dib & dib) {
 		DmtxMessage *msg = dmtxDecodeMatrixRegion(dec, reg, corrections);
 		if (msg != NULL) {
 			msgFound = true;
-			barcodeInfo.postProcess(dec, reg, msg);
+			callback(dec, reg, msg);
 			dmtxMessageDestroy(&msg);
 		}
 		dmtxRegionDestroy(&reg);
@@ -228,7 +115,6 @@ Decoder::ProcessResult Decoder::decodeImage(const Dib & dib) {
 //	}
 
 	dmtxDecodeDestroy(&dec);
-	return OK;
 }
 
 DmtxImage * Decoder::createDmtxImageFromDib(const Dib & dib) {
@@ -314,72 +200,14 @@ void Decoder::showStats(DmtxDecode * dec, DmtxRegion * reg, DmtxMessage * msg) {
 	fprintf(stdout, "--------------------------------------------------\n");
 }
 
-void Decoder::imageShowBarcodes(Dib & dib, bool regions) {
-	UA_DOUT(3, 3, "marking tags ");
-	if (barcodeInfos.empty())
-		return;
-
-	RgbQuad quadWhite(255, 255, 255); // change to white (shows up better in grayscale)
-	RgbQuad quadPink(255, 0, 255);
-	RgbQuad quadRed(255, 0, 0);
-
-	RgbQuad & highlightQuad = (
-			dib.getBitsPerPixel() == 8 ? quadWhite : quadPink);
-
-	map<CvPoint, BarcodeInfo>::iterator it;
-	for (unsigned row = 0, rows = barcodeInfos.size(); row < rows; ++row) {
-		for (unsigned col = 0, cols = barcodeInfos[row].size(); col < cols;
-				++col) {
-			BarcodeInfo * info = barcodeInfos[row][col];
-			if ((info == NULL) || !info->isValid())
-				continue;
-
-			std::tr1::shared_ptr<const CvRect> rect =
-					barcodeInfos[row][col]->getPostProcessBoundingBox();
-			dib.rectangle(rect->x, rect->y, rect->width, rect->height,
-					highlightQuad);
-		}
-	}
-}
-
-const char * Decoder::getBarcode(unsigned row, unsigned col) {
-	UA_ASSERT(row < PalletGrid::MAX_ROWS);
-	UA_ASSERT(col < PalletGrid::MAX_COLS);
-
-	BarcodeInfo * info = barcodeInfos[row][col];
-	if ((info == NULL) || !info->isValid())
-		return NULL;
-
-	return info->getMsg().c_str();
-}
-
-vector<BarcodeInfo *> & Decoder::getBarcodes() {
-	for (unsigned row = 0, rows = barcodeInfos.size(); row < rows; ++row) {
-		for (unsigned col = 0, cols = barcodeInfos[row].size(); col < cols;
-				++col) {
-			BarcodeInfo * info = barcodeInfos[row][col];
-			if ((info != NULL) && info->isValid()) {
-				barcodeInfosList.push_back(info);
-			}
-		}
-	}
-	return barcodeInfosList;
-}
-
-void Decoder::writeDiagnosticImage(DmtxDecode *dec) {
-	// do not write diagnostic image is log level is less than 9
-	if (!debug)
-		return;
-
+void Decoder::writeDiagnosticImage(DmtxDecode *dec, string & id) {
 	int totalBytes, headerBytes;
 	int bytesWritten;
 	unsigned char *pnm;
 	FILE *fp;
 
 	ostringstream fname;
-	std::tr1::shared_ptr<const CvRect> rect =
-			barcodeInfo.getPreProcessBoundingBox();
-	fname << "diagnostic-" << rect->x << "-" << rect->y << ".pnm";
+	fname << "diagnostic-" << id << ".pnm";
 
 	fp = fopen(fname.str().c_str(), "wb");
 	UA_ASSERT_NOT_NULL(fp);

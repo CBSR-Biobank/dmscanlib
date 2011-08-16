@@ -1,5 +1,5 @@
-#ifndef BARCODE_THREAD_H_
-#define BARCODE_THREAD_H_
+#ifndef __INC_BARCODE_THREAD_H
+#define __INC_BARCODE_THREAD_H
 /*
  Dmscanlib is a software library and standalone application that scans
  and decodes libdmtx compatible test-tubes. It is currently designed
@@ -20,7 +20,6 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "cv.h"
 #include "dmtx.h"
 
 #include <vector>
@@ -37,15 +36,18 @@ using namespace std;
 
 class Decoder;
 class PalletCell;
-class BarcodeInfo;
+class DecodeInfo;
 
-class BarcodeThread: public OpenThreads::Thread {
+class BarcodeThread : public OpenThreads::Thread {
 public:
-    BarcodeThread(std::tr1::shared_ptr<Decoder> decoder, std::tr1::shared_ptr<PalletCell> cell);
+    BarcodeThread(std::tr1::shared_ptr<Decoder> decoder,
+                  std::tr1::shared_ptr<PalletCell> cell);
 
     virtual ~ BarcodeThread();
 
     virtual void run();
+
+    void decodeCallback(DmtxDecode *dec, DmtxRegion * reg, DmtxMessage * msg);
 
     bool isFinished();
 
@@ -59,5 +61,5 @@ private:
     bool debug;
 };
 
-#endif /* BARCODE_THREAD_H_ */
+#endif /* __INC_BARCODE_THREAD_H */
 

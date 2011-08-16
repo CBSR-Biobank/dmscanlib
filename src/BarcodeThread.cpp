@@ -19,18 +19,20 @@
  */
 
 #include "BarcodeThread.h"
-#include "BarcodeInfo.h"
+#include "DecodeInfo.h"
 #include "PalletCell.h"
 #include "Dib.h"
 #include "Decoder.h"
 #include "UaAssert.h"
 #include "UaLogger.h"
-#include "BarcodeInfo.h"
 #include "ProcessImageManager.h"
 #include "cxtypes.h"
 
-#include <stdio.h>
-#include <sstream>
+#ifdef _VISUALC_
+#   include <functional>
+#else
+#   include <tr1/functional>
+#endif
 
 BarcodeThread::BarcodeThread(std::tr1::shared_ptr<Decoder> dec,
 		std::tr1::shared_ptr<PalletCell> c) :
@@ -48,12 +50,21 @@ BarcodeThread::~BarcodeThread() {
 }
 
 void BarcodeThread::run() {
-	decoder->decodeImage(*cell->getImage().get());
+    Decoder::DecodeCallback callback = std::tr1::bind(
+            &BarcodeThread::decodeCallback, this, std::tr1::placeholders::_1,
+            std::tr1::placeholders::_2, std::tr1::placeholders::_3);
+
+	decoder->decodeImage(*cell->getImage().get(), callback);
 
 	quitMutex.lock();
 	quitFlag = true;
 	quitMutex.unlock();
 	return;
+}
+
+void BarcodeThread::decodeCallback(DmtxDecode *dec, DmtxRegion * reg,
+                                   DmtxMessage * msg) {
+
 }
 
 bool BarcodeThread::isFinished() {

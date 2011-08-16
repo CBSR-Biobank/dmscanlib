@@ -1,5 +1,6 @@
-#ifndef PROCESS_IMAGE_MANAGER_H_
-#define PROCESS_IMAGE_MANAGER_H_
+#ifndef __INC_PROCESS_IMAGE_MANAGER_H
+#define __INC_PROCESS_IMAGE_MANAGER_H
+
 /*
  Dmscanlib is a software library and standalone application that scans
  and decodes libdmtx compatible test-tubes. It is currently designed
@@ -41,33 +42,27 @@ using namespace std;
 
 class Dib;
 class PalletCell;
-class BarcodeInfo;
+class DecodeInfo;
 class BarcodeThread;
 class Decoder;
 
 class ProcessImageManager {
 public:
-	ProcessImageManager(std::tr1::shared_ptr<Decoder> decoder);
-	~ProcessImageManager();
+    ProcessImageManager(std::tr1::shared_ptr<Decoder> decoder);
+    ~ProcessImageManager();
 
-	typedef std::tr1::function<int (PalletCell &)> DecodedImageFunc;
-
-	void addCells(std::vector<std::tr1::shared_ptr<PalletCell> > & cells, DecodedImageFunc func);
-
-	void generateBarcodes(Dib * dib,
-			vector<vector<BarcodeInfo *> > & barcodeInfos);
+    void decodeCells(std::vector<std::tr1::shared_ptr<PalletCell> > & cells);
 
 private:
-	static const unsigned THREAD_NUM = 8;
-	static const unsigned JOIN_TIMEOUT_SEC = THREAD_NUM * 2;
+    static const unsigned THREAD_NUM;
 
-	void threadHandler(vector<BarcodeThread *> & threads);
-	void threadProcessRange(unsigned int first, unsigned int last);
+    void threadHandler();
+    void threadProcessRange(unsigned int first, unsigned int last);
 
-	std::tr1::shared_ptr<Decoder> decoder;
-	vector<std::tr1::shared_ptr<BarcodeThread> > allThreads;
-	DecodedImageFunc callback;
+    std::tr1::shared_ptr<Decoder> decoder;
+    vector<std::tr1::shared_ptr<BarcodeThread> > allThreads;
+    unsigned numThreads;
 };
 
-#endif /* PROCESS_IMAGE_MANAGER_H_ */
+#endif /* __INC_PROCESS_IMAGE_MANAGER_H */
 

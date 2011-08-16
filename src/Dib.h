@@ -91,6 +91,11 @@ public:
 
 	void line(unsigned x0, unsigned y0, unsigned x1, unsigned y1,
 			RgbQuad & quad);
+
+	void line(const CvPoint & start, const CvPoint & end, RgbQuad & quad) {
+	    line(start.x, start.y, end.x, end.y, quad);
+	}
+
 	void rectangle(unsigned x, unsigned y, unsigned width, unsigned height,
 			RgbQuad & quad);
 
@@ -120,8 +125,8 @@ private:
 	unsigned char * pixels;
 
 	/*
-	 * Dib can be created with a borrowed pixel buffer. When an image is scanned, 
-	 * the TWAIN driver owns the memory to the pixel buffer. In this case 
+	 * Dib can be created with a borrowed pixel buffer. When an image is scanned,
+	 * the TWAIN driver owns the memory to the pixel buffer. In this case
 	 * isAllocated is set to false.
 	 */
 	bool isAllocated;

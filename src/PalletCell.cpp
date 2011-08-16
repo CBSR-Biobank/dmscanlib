@@ -5,7 +5,6 @@ PalletCell::PalletCell(std::tr1::shared_ptr<Dib> img, unsigned r, unsigned c, in
 		image(img), row(r), col(c) {
 	parentPos.x = x;
 	parentPos.y = y;
-	barcodePos.x = barcodePos.y = barcodePos.width = barcodePos.height = -1;
 }
 
 PalletCell::~PalletCell() {

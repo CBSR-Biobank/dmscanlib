@@ -526,25 +526,25 @@ std::tr1::shared_ptr<Dib> Dib::crop(unsigned x0, unsigned y0, unsigned x1,
 	bound(0, y0, height);
 	bound(0, y1, height);
 
-	unsigned width = x1 - x0;
-	unsigned height = y1 - y0;
+	unsigned cWidth = x1 - x0;
+	unsigned cHeight = y1 - y0;
 
-	Dib * croppedImg = new Dib(width, height, colorBits, pixelsPerMeter);
+	std::tr1::shared_ptr<Dib> croppedImg(new Dib(cWidth, cHeight, colorBits, pixelsPerMeter));
 
 	unsigned char *srcRowPtr = pixels + (height - y1) * rowBytes
 			+ x0 * croppedImg->bytesPerPixel;
 	unsigned char *destRowPtr = croppedImg->pixels;
 	unsigned row = 0;
 
-	while (row < height) {
-		memcpy(destRowPtr, srcRowPtr, width);
-		memset(destRowPtr + width, 0, croppedImg->rowPaddingBytes);
+	while (row < cHeight) {
+		memcpy(destRowPtr, srcRowPtr, cWidth);
+		memset(destRowPtr + cWidth, 0, croppedImg->rowPaddingBytes);
 
 		++row;
 		srcRowPtr += rowBytes;
 		destRowPtr += croppedImg->rowBytes;
 	}
-	return std::tr1::shared_ptr<Dib>(croppedImg);
+	return croppedImg;
 }
 
 /*
