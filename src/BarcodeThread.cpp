@@ -20,8 +20,8 @@
 
 #include "BarcodeThread.h"
 #include "BarcodeInfo.h"
+#include "PalletCell.h"
 #include "Dib.h"
-#include "dmtx.h"
 #include "Decoder.h"
 #include "UaAssert.h"
 #include "UaLogger.h"
@@ -32,37 +32,15 @@
 #include <stdio.h>
 #include <sstream>
 
-BarcodeThread::BarcodeThread(ProcessImageManager * manager, double scanGap,
-		unsigned squareDev, unsigned edgeThresh, unsigned corrections,
-		std::tr1::shared_ptr<const CvRect> croppedOffset, auto_ptr<Dib> d,
-		BarcodeInfo & info, bool debug) :
-		dib(d), image(Decoder::createDmtxImageFromDib(*dib)), barcodeInfo(info) {
+BarcodeThread::BarcodeThread(std::tr1::shared_ptr<Decoder> dec,
+		std::tr1::shared_ptr<PalletCell> c) :
+		decoder(dec), cell(c) {
 
-	this->manager = manager;
-	this->scanGap = scanGap;
-	this->squareDev = squareDev;
-	this->edgeThresh = edgeThresh;
-	this->corrections = corrections;
-	this->croppedOffset = croppedOffset;
-	this->debug = debug;
+	dpi = cell->getImage()->getDpi();
 
 	quitMutex.lock();
 	this->quitFlag = false;
 	quitMutex.unlock();
-
-	dpi = dib->getDpi();
-
-	UA_ASSERTS((dpi == 300) || (dpi == 400) || (dpi == 600),
-			"invalid DPI: " << dpi);
-
-	// do not write diagnostic image is log level is less than 9
-	if (debug) {
-		ostringstream fname;
-		std::tr1::shared_ptr<const CvRect> rect =
-				barcodeInfo.getPreProcessBoundingBox();
-		fname << "preprocess-" << rect->x << "-" << rect->y << ".bmp";
-		dib->writeToFile(fname.str().c_str());
-	}
 }
 
 BarcodeThread::~BarcodeThread() {
@@ -70,59 +48,7 @@ BarcodeThread::~BarcodeThread() {
 }
 
 void BarcodeThread::run() {
-	int minEdgeSize, maxEdgeSize;
-
-	DmtxDecode *dec = dmtxDecodeCreate(image, 1);
-	UA_ASSERT_NOT_NULL(dec);
-
-	// slightly smaller than the new tube edge
-	minEdgeSize = (int) (0.08 * dpi);
-
-	// slightly bigger than the Nunc edge
-	maxEdgeSize = (int) (0.18 * dpi);
-
-	dmtxDecodeSetProp(dec, DmtxPropEdgeMin, minEdgeSize);
-	dmtxDecodeSetProp(dec, DmtxPropEdgeMax, maxEdgeSize);
-	dmtxDecodeSetProp(dec, DmtxPropSymbolSize, DmtxSymbolSquareAuto);
-	dmtxDecodeSetProp(dec, DmtxPropScanGap,
-			static_cast<unsigned>(scanGap * dpi));dmtxDecodeSetProp
-	(dec, DmtxPropSquareDevn, squareDev);
-	dmtxDecodeSetProp(dec, DmtxPropEdgeThresh, edgeThresh);
-
-	bool msgFound = false;
-	while (1) {
-		DmtxRegion *reg = NULL;
-
-		reg = dmtxRegionFindNext(dec, NULL);
-		if (reg == NULL
-			) break;
-
-		DmtxMessage *msg = dmtxDecodeMatrixRegion(dec, reg, corrections);
-		if (msg != NULL) {
-			msgFound = true;
-			barcodeInfo.postProcess(dec, reg, msg);
-
-			if ((croppedOffset->width != 0) && (croppedOffset->height != 0)) {
-				// translate the barcode region information to the actual
-				// image coordinates
-				barcodeInfo.translate(croppedOffset->x, croppedOffset->y);
-			}
-
-			dmtxMessageDestroy(&msg);
-		}
-		dmtxRegionDestroy(&reg);
-	}
-
-	if (debug) {
-		if (msgFound) {
-			writeDib("found");
-		} else {
-			writeDib("missed");
-		}
-		writeDiagnosticImage(dec);
-	}
-
-	dmtxDecodeDestroy(&dec);
+	decoder->decodeImage(*cell->getImage().get());
 
 	quitMutex.lock();
 	quitFlag = true;
@@ -138,44 +64,5 @@ bool BarcodeThread::isFinished() {
 	quitMutex.unlock();
 
 	return quitFlagBuf;
-}
-
-void BarcodeThread::writeDib(const char * basename) {
-	// do not write diagnostic image is log level is less than 9
-	if (!debug)
-		return;
-
-	ostringstream fname;
-	fname << basename << "-" << croppedOffset->x << "-" << croppedOffset->y
-			<< ".bmp";
-	dib->writeToFile(fname.str().c_str());
-}
-
-void BarcodeThread::writeDiagnosticImage(DmtxDecode *dec) {
-	// do not write diagnostic image is log level is less than 9
-	if (!debug)
-		return;
-
-	int totalBytes, headerBytes;
-	int bytesWritten;
-	unsigned char *pnm;
-	FILE *fp;
-
-	ostringstream fname;
-	std::tr1::shared_ptr<const CvRect> rect =
-			barcodeInfo.getPreProcessBoundingBox();
-	fname << "diagnostic-" << rect->x << "-" << rect->y << ".pnm";
-
-	fp = fopen(fname.str().c_str(), "wb");
-	UA_ASSERT_NOT_NULL(fp);
-
-	pnm = dmtxDecodeCreateDiagnostic(dec, &totalBytes, &headerBytes, 0);
-	UA_ASSERT_NOT_NULL(pnm);
-
-	bytesWritten = fwrite(pnm, sizeof(unsigned char), totalBytes, fp);
-	UA_ASSERT(bytesWritten == totalBytes);
-
-	free(pnm);
-	fclose(fp);
 }
 

@@ -64,10 +64,9 @@ const double Decoder::BARCODE_SIDE_LENGTH_INCHES = 0.13;
 const unsigned Decoder::PALLET_ROWS = 8;
 const unsigned Decoder::PALLET_COLUMNS = 12;
 
-Decoder::Decoder(double g, unsigned s, unsigned t, unsigned c, double dist,
-		PalletGrid * pg) :
+Decoder::Decoder(double g, unsigned s, unsigned t, unsigned c, double dist) :
 		scanGap(g), squareDev(s), edgeThresh(t), corrections(c), cellDistance(
-				dist), palletGrid(pg) {
+				dist) {
 	ua::Logger::Instance().subSysHeaderSet(3, "Decoder");
 
 	barcodeInfos.resize(PalletGrid::MAX_ROWS);
@@ -179,86 +178,56 @@ bool Decoder::reduceBlobToMatrix(Dib & dib, CvRect & inputBlob) {
 	 */
 }
 
-Decoder::ProcessResult Decoder::processImageRegions(Dib * dib) {
-	dpi = dib->getDpi();
-	double minBlobWidth = dpi * BARCODE_SIDE_LENGTH_INCHES;
-	double minBlobHeight = dpi * BARCODE_SIDE_LENGTH_INCHES;
+Decoder::ProcessResult Decoder::decodeImage(const Dib & dib) {
+	DmtxImage * image = Decoder::createDmtxImageFromDib(*dib);
+	int minEdgeSize, maxEdgeSize;
 
-	UA_ASSERT_NOT_NULL(palletGrid);
+	DmtxDecode *dec = dmtxDecodeCreate(image, 1);
+	UA_ASSERT_NOT_NULL(dec);
 
-	UA_DOUT(1, 7, "Minimum blob width (pixels): " << minBlobWidth);
-	UA_DOUT(1, 7, "Minimum blob height (pixels): " << minBlobHeight);
+	// slightly smaller than the new tube edge
+	minEdgeSize = (int) (0.08 * dpi);
 
-	// generate blobs
-	unsigned blobRegionCount = 0;
-	for (unsigned row = 0; row < PalletGrid::MAX_ROWS; row++) {
-		for (unsigned col = 0; col < PalletGrid::MAX_COLS; col++) {
-			if (!palletGrid->getCellEnabled(row, col))
-				continue;
+	// slightly bigger than the Nunc edge
+	maxEdgeSize = (int) (0.18 * dpi);
 
-			std::tr1::shared_ptr<const CvRect> rect;
-			//= palletGrid->getCellRect(row, col);
-			UA_DOUT(
-					1,
-					7,
-					"row/" << row << " col/" << col << " rect/(" << rect->x << ", " << rect->y << "),(" << rect->x + rect->width << ", " << rect->y + rect->height << ")");
+	dmtxDecodeSetProp(dec, DmtxPropEdgeMin, minEdgeSize);
+	dmtxDecodeSetProp(dec, DmtxPropEdgeMax, maxEdgeSize);
+	dmtxDecodeSetProp(dec, DmtxPropSymbolSize, DmtxSymbolSquareAuto);
+	dmtxDecodeSetProp(dec, DmtxPropScanGap,
+			static_cast<unsigned>(scanGap * dpi));dmtxDecodeSetProp
+	(dec, DmtxPropSquareDevn, squareDev);
+	dmtxDecodeSetProp(dec, DmtxPropEdgeThresh, edgeThresh);
 
-			if ((rect->width < minBlobWidth) || (rect->height < minBlobHeight))
-				continue;
+	bool msgFound = false;
+	while (1) {
+		DmtxRegion *reg = NULL;
 
-			BarcodeInfo * info = new BarcodeInfo();
-			info->setPreProcessBoundingBox(rect);
-			info->setRow(row);
-			info->setCol(col);
-			barcodeInfos[row][col] = info;
-			++blobRegionCount;
+		reg = dmtxRegionFindNext(dec, NULL);
+		if (reg == NULL) {
+			break;
 		}
-	}UA_DOUT(1, 7, "blob regions found: " << blobRegionCount);
 
-	if (blobRegionCount == 0) {
-		// no blobs found
-		return IMG_INVALID;
-	}
-
-#ifdef _DEBUG
-	// record blob regions
-	Dib blobDib(*dib);
-	RgbQuad white(255, 255, 255);
-	for (unsigned row = 0, rows = barcodeInfos.size(); row < rows; ++row) {
-		for (unsigned col = 0, cols = barcodeInfos[row].size(); col < cols;
-				++col) {
-			BarcodeInfo * info = barcodeInfos[row][col];
-			if (info == NULL) {
-				continue;
-			}
-
-			std::tr1::shared_ptr<const CvRect> rect = barcodeInfos[row][col]->getPreProcessBoundingBox();
-			blobDib.rectangle(rect->x, rect->y, rect->width, rect->height, white);
+		DmtxMessage *msg = dmtxDecodeMatrixRegion(dec, reg, corrections);
+		if (msg != NULL) {
+			msgFound = true;
+			barcodeInfo.postProcess(dec, reg, msg);
+			dmtxMessageDestroy(&msg);
 		}
-	}
-	blobDib.writeToFile("blobRegions.bmp");
-#endif
-
-	ProcessImageManager imageProcessor(this, scanGap, squareDev, edgeThresh,
-			corrections);
-	imageProcessor.generateBarcodes(dib, barcodeInfos);
-
-	unsigned decodeCount = 0;
-	for (unsigned row = 0, rows = barcodeInfos.size(); row < rows; ++row) {
-		for (unsigned col = 0, cols = barcodeInfos[row].size(); col < cols;
-				++col) {
-			BarcodeInfo * info = barcodeInfos[row][col];
-			if ((info != NULL) && info->isValid()) {
-				++decodeCount;
-			}
-		}
+		dmtxRegionDestroy(&reg);
 	}
 
-	if (decodeCount == 0) {
-		UA_DOUT(3, 5, "no barcodes were found.");
-		return IMG_INVALID;
-	}
+	// TODO: write image when in debug mode
+//	if (debug) {
+//		if (msgFound) {
+//			writeDib("found");
+//		} else {
+//			writeDib("missed");
+//		}
+//		writeDiagnosticImage(dec);
+//	}
 
+	dmtxDecodeDestroy(&dec);
 	return OK;
 }
 
@@ -365,7 +334,8 @@ void Decoder::imageShowBarcodes(Dib & dib, bool regions) {
 			if ((info == NULL) || !info->isValid())
 				continue;
 
-			std::tr1::shared_ptr<const CvRect> rect = barcodeInfos[row][col]->getPostProcessBoundingBox();
+			std::tr1::shared_ptr<const CvRect> rect =
+					barcodeInfos[row][col]->getPostProcessBoundingBox();
 			dib.rectangle(rect->x, rect->y, rect->width, rect->height,
 					highlightQuad);
 		}
@@ -394,4 +364,32 @@ vector<BarcodeInfo *> & Decoder::getBarcodes() {
 		}
 	}
 	return barcodeInfosList;
+}
+
+void Decoder::writeDiagnosticImage(DmtxDecode *dec) {
+	// do not write diagnostic image is log level is less than 9
+	if (!debug)
+		return;
+
+	int totalBytes, headerBytes;
+	int bytesWritten;
+	unsigned char *pnm;
+	FILE *fp;
+
+	ostringstream fname;
+	std::tr1::shared_ptr<const CvRect> rect =
+			barcodeInfo.getPreProcessBoundingBox();
+	fname << "diagnostic-" << rect->x << "-" << rect->y << ".pnm";
+
+	fp = fopen(fname.str().c_str(), "wb");
+	UA_ASSERT_NOT_NULL(fp);
+
+	pnm = dmtxDecodeCreateDiagnostic(dec, &totalBytes, &headerBytes, 0);
+	UA_ASSERT_NOT_NULL(pnm);
+
+	bytesWritten = fwrite(pnm, sizeof(unsigned char), totalBytes, fp);
+	UA_ASSERT(bytesWritten == totalBytes);
+
+	free(pnm);
+	fclose(fp);
 }

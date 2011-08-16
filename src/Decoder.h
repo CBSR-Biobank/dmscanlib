@@ -45,14 +45,14 @@ class BinRegion;
 class Decoder {
 public:
 	Decoder(double scanGap, unsigned squareDev, unsigned edgeThresh,
-			unsigned corrections, double cellDistance, PalletGrid * palletGrid);
+			unsigned corrections, double cellDistance);
 	virtual ~Decoder();
 
 	enum ProcessResult {
 		IMG_INVALID, OK
 	};
 
-	ProcessResult processImageRegions(Dib * dib);
+	ProcessResult decodeImage(const Dib & dib);
 
 	void imageShowBarcodes(Dib & dib, bool regions);
 
@@ -61,6 +61,8 @@ public:
 	vector<BarcodeInfo *> & getBarcodes();
 
 	const char * getBarcode(unsigned row, unsigned col);
+
+	void writeDiagnosticImage(DmtxDecode *dec);
 
 private:
 
@@ -85,7 +87,6 @@ private:
 	unsigned width;
 	unsigned height;
 	unsigned dpi;
-	PalletGrid * palletGrid;
 
 	vector<vector<BarcodeInfo *> > barcodeInfos;
 

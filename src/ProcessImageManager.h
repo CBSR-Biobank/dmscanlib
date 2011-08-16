@@ -29,41 +29,44 @@
 #include <vector>
 #include <map>
 
+#ifdef _VISUALC_
+#   include <memory>
+#   include <functional>
+#else
+#   include <tr1/memory>
+#   include <tr1/functional>
+#endif
+
 using namespace std;
 
 class Dib;
+class PalletCell;
 class BarcodeInfo;
 class BarcodeThread;
 class Decoder;
 
 class ProcessImageManager {
 public:
-	ProcessImageManager(Decoder * decoder, double scanGap, unsigned squareDev,
-			unsigned edgeThresh, unsigned corrections);
+	ProcessImageManager(std::tr1::shared_ptr<Decoder> decoder);
 	~ProcessImageManager();
+
+	typedef std::tr1::function<int (PalletCell &)> DecodedImageFunc;
+
+	void addCells(std::vector<std::tr1::shared_ptr<PalletCell> > & cells, DecodedImageFunc func);
 
 	void generateBarcodes(Dib * dib,
 			vector<vector<BarcodeInfo *> > & barcodeInfos);
 
-	Decoder * getDecoder() {
-		return decoder;
-	}
-
 private:
-	static const unsigned THREAD_NUM;
-	static const unsigned JOIN_TIMEOUT_SEC;
-
-	double scanGap;
-	unsigned squareDev;
-	unsigned edgeThresh;
-	unsigned corrections;
-	Decoder * decoder;
-	vector<BarcodeThread *> allThreads;
+	static const unsigned THREAD_NUM = 8;
+	static const unsigned JOIN_TIMEOUT_SEC = THREAD_NUM * 2;
 
 	void threadHandler(vector<BarcodeThread *> & threads);
-	void threadProcessRange(vector<BarcodeThread *> & threads, unsigned int first, unsigned int last);
+	void threadProcessRange(unsigned int first, unsigned int last);
 
-	void clearAllThreads();
+	std::tr1::shared_ptr<Decoder> decoder;
+	vector<std::tr1::shared_ptr<BarcodeThread> > allThreads;
+	DecodedImageFunc callback;
 };
 
 #endif /* PROCESS_IMAGE_MANAGER_H_ */

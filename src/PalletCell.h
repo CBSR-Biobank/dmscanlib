@@ -13,15 +13,18 @@ class Dib;
 
 class PalletCell {
 public:
-	PalletCell(std::tr1::shared_ptr<Dib> img, unsigned row, unsigned col);
+	PalletCell(std::tr1::shared_ptr<Dib> img, unsigned row, unsigned col, int parentPosX, int parentPosY);
 	~PalletCell();
 
 	std::tr1::shared_ptr<const Dib> getImage() { return image; };
+
+	std::tr1::shared_ptr<const CvRect> getParentPos();
 
 private:
 	std::tr1::shared_ptr<const Dib> image;
 	unsigned row;
 	unsigned col;
+	CvPoint parentPos;
 	CvRect barcodePos;
 };
 

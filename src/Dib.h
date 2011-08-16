@@ -57,7 +57,6 @@ class Dib {
 public:
 
 	Dib();
-	Dib(Dib & src);
 	Dib(const Dib & src);
 	Dib(IplImageContainer & src);
 	Dib(unsigned width, unsigned height, unsigned colorBits,

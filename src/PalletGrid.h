@@ -63,9 +63,11 @@ public:
 	 * @param gapY The vertical gap between cells in pixels.
 	 */
 	PalletGrid(Orientation o, std::tr1::shared_ptr<const Dib> image,
-			std::tr1::shared_ptr<Decoder> dcdr, unsigned gapX, unsigned gapY, const unsigned(&profileWords)[3]);
+			unsigned gapX, unsigned gapY, const unsigned(&profileWords)[3]);
 
 	~PalletGrid();
+
+	void applyFilters();
 
 	std::tr1::shared_ptr<const Dib> getCellImage(unsigned row, unsigned col);
 
@@ -81,26 +83,33 @@ public:
 
 	void getPositionStr(unsigned row, unsigned col, std::string & str);
 
+	void decodeCells(std::tr1::shared_ptr<Decoder> dcdr);
+
+	void getProfileAsString(std::string & str);
+
+	/**
+	 * Writes a bitmap to disc with the cell bounded with a white box.
+	 */
+	void createImageWithCells(std::string filename);
+
 	bool isImageValid() {
 		return imgValid;
 	}
 
-	void decodeCells();
-
-	void getProfileAsString(std::string & str);
+	int decodeCallback(PalletCell & cell);
 
 private:
+	void getCellImages();
 	void getCellRect(unsigned row, unsigned col, CvRect & rect);
-
-	// for debug
-	void createImageWithCells();
 
 	std::vector<std::tr1::shared_ptr<PalletCell> > cells;
 
 	std::vector<std::vector<std::tr1::shared_ptr<PalletCell> > > cellsByRowCol;
 
 	std::tr1::shared_ptr<const Dib> image;
-	std::tr1::shared_ptr<Dib> imageWithCells;
+	std::tr1::shared_ptr<Dib> filteredImage;
+	std::tr1::shared_ptr<Dib> markedBarcodeImage;
+	std::tr1::shared_ptr<Dib> markedCellImage;
 	std::tr1::shared_ptr<Decoder> decoder;
 	Orientation orientation;
 	double cellWidth;

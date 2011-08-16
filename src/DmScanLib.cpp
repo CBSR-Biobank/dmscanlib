@@ -295,7 +295,9 @@ int DmScanLib::decodeCommon(const char *markedDibFilename) {
 		return SC_INVALID_DPI;
 	}
 
-	Decoder::ProcessResult result;
+	decoder = std::tr1::shared_ptr<Decoder>(
+			new Decoder(scanGap, squareDev, edgeThresh, corrections,
+					cellDistance));
 
 	PalletGrid::Orientation palletOrientation = ((orientation == 0) ?
 	PalletGrid::ORIENTATION_HORIZONTAL :
@@ -312,28 +314,21 @@ int DmScanLib::decodeCommon(const char *markedDibFilename) {
 		return SC_INVALID_IMAGE;
 	}
 
-	decoder = std::tr1::shared_ptr<Decoder>(
-			new Decoder(scanGap, squareDev, edgeThresh, corrections,
-					cellDistance, palletGrid.get()));
+	palletGrid->applyFilters();
+	palletGrid->decodeCells(decoder);
 
-	/*--- apply filters ---*/
-	originalImage = std::tr1::shared_ptr<Dib>(new Dib(*image.get()));
-	image = image->convertGrayscale();
-	image->tpPresetFilter();
-	UA_DEBUG(image->writeToFile("filtered.bmp"));
-
-	/*--- obtain barcodes ---*/
-	result = decoder->processImageRegions(image.get());
 
 	decoder->imageShowBarcodes(*image.get(), 0);
-	if (result == Decoder::OK)
-		image->writeToFile(markedDibFilename);
-	else
-		image->writeToFile("decode.partial.bmp");
 
-	if (result == Decoder::IMG_INVALID) {
-		return SC_INVALID_IMAGE;
-	}
+	// TODO: write decoded cells to file
+//	if (result == Decoder::OK)
+//		image->writeToFile(markedDibFilename);
+//	else
+//		image->writeToFile("decode.partial.bmp");
+//
+//	if (result == Decoder::IMG_INVALID) {
+//		return SC_INVALID_IMAGE;
+//	}
 
 	// only get here if decoder returned Decoder::OK
 	if (stdoutOutputEnable || textFileOutputEnable) {

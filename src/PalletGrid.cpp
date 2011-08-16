@@ -22,6 +22,7 @@
 
 #include "PalletGrid.h"
 #include "PalletCell.h"
+#include "ProcessImageManager.h"
 #include "Dib.h"
 #include "UaAssert.h"
 #include "UaLogger.h"
@@ -29,10 +30,15 @@
 
 #include <sstream>
 
+#ifdef _VISUALC_
+#   include <functional>
+#else
+#   include <tr1/functional>
+#endif
+
 PalletGrid::PalletGrid(Orientation o, std::tr1::shared_ptr<const Dib> img,
-		std::tr1::shared_ptr<Decoder> dcdr, unsigned gapX, unsigned gapY,
-		const unsigned(&profileWords)[3]) :
-		image(img), decoder(dcdr) {
+		unsigned gapX, unsigned gapY, const unsigned(&profileWords)[3]) :
+		image(img) {
 	orientation = o;
 
 	const int imgWidth = image->getWidth();
@@ -73,41 +79,27 @@ PalletGrid::PalletGrid(Orientation o, std::tr1::shared_ptr<const Dib> img,
 			mask <<= 1;
 		}
 	}
-
-	cellsByRowCol.resize(MAX_ROWS);
-
-	CvRect rect;
-	for (unsigned row = 0, rows = MAX_ROWS; row < rows; ++row) {
-		cellsByRowCol[row].resize(MAX_COLS);
-		for (unsigned col = 0, cols = MAX_COLS; col < cols; ++col) {
-			if (!cellEnabled[MAX_COLS * row + col])
-				return;
-
-			getCellRect(row, col, rect);
-			std::tr1::shared_ptr<Dib> cellImage = image->crop(rect.x + gapX,
-					rect.y + gapY, rect.x + rect.width - gapX,
-					rect.y + rect.height - gapY);
-			std::tr1::shared_ptr<PalletCell> cell(
-					new PalletCell(cellImage, row, col));
-			cells.push_back(cell);
-			cellsByRowCol[row][col] = cell;
-
-		}
-	}
 }
 
 PalletGrid::~PalletGrid() {
 }
 
-void PalletGrid::createImageWithCells() {
+void PalletGrid::applyFilters() {
+	filteredImage = image->convertGrayscale();
+	filteredImage->tpPresetFilter();
+	UA_DEBUG(image->writeToFile("filtered.bmp"));
+}
 
-	imageWithCells = std::tr1::shared_ptr<Dib>(new Dib(*image));
+void PalletGrid::createImageWithCells(std::string filename) {
+	UA_ASSERTS(cells.size() > 0, "cells images not initialized yet");
 
-	CvRect rect;
-	for (unsigned row = 0, rows = MAX_ROWS; row < rows; ++row) {
-		for (unsigned col = 0, cols = MAX_COLS; col < cols; ++col) {
+	RgbQuad white(255, 255, 255);
+	markedCellImage = std::tr1::shared_ptr<Dib>(new Dib(*image));
 
-		}
+	for (unsigned i = 0, n = cells.size(); i < n; ++i) {
+		std::tr1::shared_ptr<const CvRect> rect = cells[i]->getParentPos();
+		markedCellImage->rectangle(rect->x, rect->y, rect->width, rect->height,
+				white);
 	}
 }
 
@@ -125,8 +117,8 @@ void PalletGrid::getCellRect(unsigned row, unsigned col, CvRect & rect) {
 		UA_ASSERTS(false, "orientation invalid: " << orientation);
 	}
 
-	rect.width = static_cast<int>(cellWidth) - 2 * gapX;
-	rect.height = static_cast<int>(cellHeight) - 2 * gapY;
+	rect.width = static_cast<int>(cellWidth) - gapX;
+	rect.height = static_cast<int>(cellHeight) - gapY;
 }
 
 void PalletGrid::getPositionStr(unsigned row, unsigned col, std::string & str) {
@@ -152,19 +144,45 @@ std::tr1::shared_ptr<const Dib> PalletGrid::getCellImage(unsigned row,
 	return cellsByRowCol[row][col]->getImage();
 }
 
-void PalletGrid::decodeCells() {
+void PalletGrid::getCellImages() {
+	cellsByRowCol.resize(MAX_ROWS);
+
+	CvRect rect;
+	for (unsigned row = 0, rows = MAX_ROWS; row < rows; ++row) {
+		cellsByRowCol[row].resize(MAX_COLS);
+		for (unsigned col = 0, cols = MAX_COLS; col < cols; ++col) {
+			if (!cellEnabled[MAX_COLS * row + col])
+				return;
+
+			getCellRect(row, col, rect);
+			std::tr1::shared_ptr<Dib> cellImage = image->crop(rect.x, rect.y,
+					rect.x + rect.width, rect.y + rect.height);
+			std::tr1::shared_ptr<PalletCell> cell(
+					new PalletCell(cellImage, row, col, rect.x, rect.y));
+			cells.push_back(cell);
+			cellsByRowCol[row][col] = cell;
+
+		}
+	}
+}
+
+void PalletGrid::decodeCells(std::tr1::shared_ptr<Decoder> decoder) {
 	UA_ASSERT(imgValid);
 
-#ifdef _DEBUG
-	string str;
-	getProfileAsString(str);
-	UA_DOUT(1, 5, "Profile: \n" << str);
-#endif
+	getCellImages();
+	UA_DEBUG(
+			string str; getProfileAsString(str); UA_DOUT(1, 5, "Profile: \n" << str); createImageWithCells("cellRegions.bmp"););
 
-	for (unsigned i, n = cells.size(); i < n; ++i) {
+	std::tr1::shared_ptr<ProcessImageManager> imageManager(
+			new ProcessImageManager(decoder));
+	ProcessImageManager::DecodedImageFunc callback = std::tr1::bind(
+			&PalletGrid::decodeCallback, this, std::tr1::placeholders::_1);
+	imageManager->addCells(cells, callback);
 
-	}
+}
 
+int PalletGrid::decodeCallback(PalletCell & cell) {
+	return 0;
 }
 
 void PalletGrid::getProfileAsString(string & str) {

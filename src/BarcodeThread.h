@@ -35,15 +35,13 @@
 
 using namespace std;
 
-class Dib;
+class Decoder;
+class PalletCell;
 class BarcodeInfo;
-class ProcessImageManager;
 
 class BarcodeThread: public OpenThreads::Thread {
 public:
-    BarcodeThread(ProcessImageManager * manager, double scanGap,
-            unsigned squareDev, unsigned edgeThresh, unsigned corrections,
-            std::tr1::shared_ptr<const CvRect> croppedOffset, auto_ptr<Dib> dib, BarcodeInfo & info,bool debug);
+    BarcodeThread(std::tr1::shared_ptr<Decoder> decoder, std::tr1::shared_ptr<PalletCell> cell);
 
     virtual ~ BarcodeThread();
 
@@ -52,25 +50,12 @@ public:
     bool isFinished();
 
 private:
-
-    auto_ptr<Dib> dib;
+    std::tr1::shared_ptr<Decoder> decoder;
+    std::tr1::shared_ptr<PalletCell> cell;
     DmtxImage * image;
-    std::tr1::shared_ptr<const CvRect> croppedOffset;
-    ProcessImageManager * manager;
-    BarcodeInfo & barcodeInfo;
-
     OpenThreads::Mutex quitMutex;
     volatile bool quitFlag;
-
-    void writeDib(const char * basename);
-    void writeDiagnosticImage(DmtxDecode *dec);
-
-    double scanGap;
-    unsigned squareDev;
-    unsigned edgeThresh;
-    unsigned corrections;
     unsigned dpi;
-
     bool debug;
 };
 

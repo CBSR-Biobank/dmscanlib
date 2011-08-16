@@ -121,7 +121,7 @@ Dib::Dib() :
 	ua::Logger::Instance().subSysHeaderSet(4, "Dib");
 }
 
-Dib::Dib(Dib & src) :
+Dib::Dib(const Dib & src) :
 		pixels(NULL), isAllocated(false) {
 	ua::Logger::Instance().subSysHeaderSet(4, "Dib");
 	init(src.width, src.height, src.colorBits, src.pixelsPerMeter);
@@ -478,10 +478,7 @@ std::tr1::shared_ptr<Dib> Dib::convertGrayscale() const {
 	UA_ASSERT(getBitsPerPixel() == 24 || getBitsPerPixel() == 8);
 	UA_ASSERT(getPixelBuffer() != NULL);
 
-	if (getBitsPerPixel() == 8) {
-		UA_DOUT(4, 9, "convertGrayscale: Already grayscale image.");
-		return std::tr1::shared_ptr<Dib>(this);
-	}
+	UA_ASSERTS(getBitsPerPixel() != 8, "already grayscale image.");
 
 	UA_DOUT(4, 9, "convertGrayscale: Converting from 24 bit to 8 bit.");
 
