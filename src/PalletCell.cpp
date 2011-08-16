@@ -19,3 +19,13 @@ std::tr1::shared_ptr<const CvRect> PalletCell::getParentPos() {
 	r.height = image->getHeight();
 	return std::tr1::shared_ptr<const CvRect>(new CvRect(r));
 }
+
+void PalletCell::getCornersInParent(std::vector<const CvPoint *> & result) const {
+    std::vector<const CvPoint *> barcodeCorners;
+    getCorners(barcodeCorners);
+
+    for (unsigned i = 0; i < 4; ++i) {
+        result[i]->x = barcodeCorners[i]->x + parentPos.x;
+        result[i]->y = barcodeCorners[i]->y + parentPos.y;
+    }
+}

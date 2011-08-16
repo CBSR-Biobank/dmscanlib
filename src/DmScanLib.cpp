@@ -275,7 +275,6 @@ int DmScanLib::decodeImage(unsigned verbose, unsigned plateNum,
 }
 
 int DmScanLib::decodeCommon(const char *markedDibFilename) {
-
     const unsigned profileWords[3] = { profileA, profileB, profileC };
     const unsigned dpi = image->getDpi();
 

@@ -46,6 +46,8 @@ public:
 	    decodeInfo->getCorners(corners);
 	}
 
+    void getCornersInParent(std::vector<const CvPoint *> & corners) const;
+
 private:
 	std::tr1::shared_ptr<const Dib> image;
 	const unsigned row;

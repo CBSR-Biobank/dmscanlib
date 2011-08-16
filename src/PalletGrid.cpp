@@ -114,7 +114,7 @@ void PalletGrid::writeImageWithBoundedBarcodes(std::string filename) {
     for (unsigned i = 0, n = cells.size(); i < n; ++i) {
         if (!cells[i]->getDecodeValid()) continue;
 
-        cells[i]->getCorners(corners);
+        cells[i]->getCornersInParent(corners);
 
         markedImage.line(*corners[0], *corners[1], red);
         markedImage.line(*corners[1], *corners[2], red);
