@@ -37,16 +37,12 @@
 BarcodeThread::BarcodeThread(std::tr1::shared_ptr<Decoder> dec,
 		std::tr1::shared_ptr<PalletCell> c) :
 		decoder(dec), cell(c) {
-
-	dpi = cell->getImage()->getDpi();
-
 	quitMutex.lock();
 	this->quitFlag = false;
 	quitMutex.unlock();
 }
 
 BarcodeThread::~BarcodeThread() {
-	dmtxImageDestroy(&image);
 }
 
 void BarcodeThread::run() {
@@ -54,7 +50,7 @@ void BarcodeThread::run() {
             &BarcodeThread::decodeCallback, this, std::tr1::placeholders::_1,
             std::tr1::placeholders::_2, std::tr1::placeholders::_3);
 
-	decoder->decodeImage(*cell->getImage().get(), callback);
+	decoder->decodeImage(cell->getImage(), callback);
 
 	quitMutex.lock();
 	quitFlag = true;
@@ -64,7 +60,8 @@ void BarcodeThread::run() {
 
 void BarcodeThread::decodeCallback(DmtxDecode *dec, DmtxRegion * reg,
                                    DmtxMessage * msg) {
-
+    std::tr1::shared_ptr<DecodeInfo> decodeInfo(new DecodeInfo(dec, reg, msg));
+    cell->setDecodeInfo(decodeInfo);
 }
 
 bool BarcodeThread::isFinished() {

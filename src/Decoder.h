@@ -52,11 +52,11 @@ public:
     typedef std::tr1::function<
                     void(DmtxDecode *dec, DmtxRegion * reg, DmtxMessage * msg)> DecodeCallback;
 
-    Decoder(double scanGap, unsigned squareDev, unsigned edgeThresh,
+    Decoder(unsigned dpi, double scanGap, unsigned squareDev, unsigned edgeThresh,
             unsigned corrections, double cellDistance);
     virtual ~Decoder();
 
-    void decodeImage(const Dib & dib, DecodeCallback callback);
+    void decodeImage(std::tr1::weak_ptr<const Dib> dib, DecodeCallback callback);
 
     void writeDiagnosticImage(DmtxDecode *dec, string & id);
 
@@ -69,7 +69,7 @@ private:
     static DmtxImage * createDmtxImageFromDib(const Dib & dib);
     void showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
 
-    bool outputBarcodes;
+    unsigned dpi;
     double scanGap;
     unsigned squareDev;
     unsigned edgeThresh;
@@ -77,7 +77,6 @@ private:
     double cellDistance;
     unsigned width;
     unsigned height;
-    unsigned dpi;
 
     OpenThreads::Mutex addBarcodeMutex;
 };

@@ -57,7 +57,6 @@ private:
     DmtxImage * image;
     OpenThreads::Mutex quitMutex;
     volatile bool quitFlag;
-    unsigned dpi;
     bool debug;
 };
 

@@ -17,11 +17,14 @@
  You should have received a copy of the GNU General Public License
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 #include "ProcessImageManager.h"
+#include "PalletCell.h"
 #include "BarcodeThread.h"
 #include "UaLogger.h"
 #include "UaAssert.h"
 #include "Decoder.h"
+#include "Dib.h"
 
 #ifdef WIN32
 #include <windows.h>
@@ -73,7 +76,21 @@ void ProcessImageManager::decodeCells(
         std::tr1::shared_ptr<BarcodeThread> thread(
                         new BarcodeThread(decoder, cells[i]));
         allThreads[i] = thread;
+
+        /*
+        Decoder::DecodeCallback callback = std::tr1::bind(
+                &ProcessImageManager::decodeCallback, this, cells[i], std::tr1::placeholders::_1,
+                std::tr1::placeholders::_2, std::tr1::placeholders::_3);
+
+        decoder->decodeImage(cells[i]->getImage(), callback);
+        */
     }
 
     threadHandler();
+}
+
+void ProcessImageManager::decodeCallback(std::tr1::shared_ptr<PalletCell> cell, DmtxDecode *dec, DmtxRegion * reg,
+                                   DmtxMessage * msg) {
+    std::tr1::shared_ptr<DecodeInfo> decodeInfo(new DecodeInfo(dec, reg, msg));
+    cell->setDecodeInfo(decodeInfo);
 }

@@ -285,7 +285,7 @@ int DmScanLib::decodeCommon(const char *markedDibFilename) {
     }
 
     decoder = std::tr1::shared_ptr<Decoder>(
-                    new Decoder(scanGap, squareDev, edgeThresh, corrections,
+                    new Decoder(dpi, scanGap, squareDev, edgeThresh, corrections,
                                 cellDistance));
 
     PalletGrid::Orientation palletOrientation = ((orientation == 0) ?

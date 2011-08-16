@@ -97,7 +97,7 @@ void PalletGrid::writeImageWithCells(std::string filename) {
     for (unsigned i = 0, n = cells.size(); i < n; ++i) {
         std::tr1::shared_ptr<const CvRect> rect = cells[i]->getParentPos();
         markedImage.rectangle(rect->x, rect->y, rect->width, rect->height,
-                                   white);
+                              white);
     }
 
     markedImage.writeToFile(filename.c_str());
@@ -177,7 +177,7 @@ void PalletGrid::getCellImages() {
             if (!cellEnabled[MAX_COLS * row + col]) return;
 
             getCellRect(row, col, rect);
-            std::tr1::shared_ptr<Dib> cellImage = image->crop(
+            std::tr1::shared_ptr<Dib> cellImage = filteredImage->crop(
                             rect.x, rect.y, rect.x + rect.width,
                             rect.y + rect.height);
             std::tr1::shared_ptr<PalletCell> cell(
@@ -194,7 +194,13 @@ unsigned PalletGrid::decodeCells(std::tr1::shared_ptr<Decoder> decoder) {
     UA_ASSERT(imgValid);
 
     getCellImages();
-    UA_DEBUG( string str; getProfileAsString(str); UA_DOUT(1, 5, "Profile: \n" << str); writeImageWithCells("cellRegions.bmp"););
+
+#ifdef _DEBUG
+    string str;
+    getProfileAsString(str);
+    UA_DOUT(1, 5, "Profile: \n" << str);
+    writeImageWithCells("cellRegions.bmp");
+#endif
 
     ProcessImageManager imageManager(decoder);
     imageManager.decodeCells(cells);
@@ -225,12 +231,12 @@ void PalletGrid::formatCellMessages(string & msg) {
 
     for (unsigned i = 0, n = cells.size(); i < n; ++i) {
         PalletCell * cell = cells[i].get();
-        const string & msg = cell->getBarcodeMsg();
-        if (msg.empty()) {
+        if (!cell->getDecodeValid()) {
             continue;
         }
+        const string & msg = cell->getBarcodeMsg();
         out << plateNum << "," << static_cast<char>('A' + cell->getRow()) << ","
-                        << (cell->getCol() + 1) << "," << msg << endl;
+            << (cell->getCol() + 1) << "," << msg << endl;
     }
     msg = out.str();
 }

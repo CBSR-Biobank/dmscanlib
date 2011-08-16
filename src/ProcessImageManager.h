@@ -27,6 +27,7 @@
  */
 
 #include "cv.h"
+#include "dmtx.h"
 #include <vector>
 #include <map>
 
@@ -52,6 +53,8 @@ public:
     ~ProcessImageManager();
 
     void decodeCells(std::vector<std::tr1::shared_ptr<PalletCell> > & cells);
+
+    void decodeCallback(std::tr1::shared_ptr<PalletCell> cell, DmtxDecode *dec, DmtxRegion * reg, DmtxMessage * msg);
 
 private:
     static const unsigned THREAD_NUM;
