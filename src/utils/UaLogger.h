@@ -1,8 +1,8 @@
 #ifndef __INC_bkDebug_h
 #define __INC_bkDebug_h
 /*
-Dmscanlib is a software library and standalone application that scans 
-and decodes libdmtx compatible test-tubes. It is currently designed 
+Dmscanlib is a software library and standalone application that scans
+and decodes libdmtx compatible test-tubes. It is currently designed
 to decode 12x8 pallets that use 2D data-matrix laser etched test-tubes.
 Copyright (C) 2010 Canadian Biosample Repository
 
@@ -168,6 +168,7 @@ private:
 	static const unsigned maxLevel_m = 9;
 	unsigned levels_am[maxSubSys_m];
 	std::vector<std::string> headers_m;
+    OpenThreads::Mutex mutex;
 };
 
 typedef Loki::SingletonHolder<LoggerImpl> Logger;

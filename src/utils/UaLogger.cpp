@@ -1,6 +1,6 @@
 /*
-Dmscanlib is a software library and standalone application that scans 
-and decodes libdmtx compatible test-tubes. It is currently designed 
+Dmscanlib is a software library and standalone application that scans
+and decodes libdmtx compatible test-tubes. It is currently designed
 to decode 12x8 pallets that use 2D data-matrix laser etched test-tubes.
 Copyright (C) 2010 Canadian Biosample Repository
 
@@ -109,8 +109,10 @@ unsigned LoggerImpl::levelGet(unsigned subsys) {
 }
 
 void LoggerImpl::subSysHeaderSet(unsigned subsys, std::string header) {
+    mutex.lock();
     assert(subsys < allSubSys_m);
     headers_m[subsys] = header;
+    mutex.unlock();
 }
 
 std::string & LoggerImpl::subSysHeaderGet(unsigned subsys) {
