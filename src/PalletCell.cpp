@@ -29,11 +29,12 @@ void PalletCell::run() {
     grid.getDecoder().decodeImage(getImage(), id.str(), decodeResult);
     if (!decodeResult.msg.empty()) {
         grid.registerBarcodeMsg(decodeResult.msg);
-    }
 
-    UA_DOUT(3,
-            5,
-            "PalletCell::setDecodeInfo: message/" << decodeResult.msg << " tlCorner/(" << parentRect.x << "," << parentRect.y << ")  brCorner/(" << parentRect.x + parentRect.width << "," << parentRect.y + parentRect.height << ")");
+        UA_DOUT(3,
+                5,
+                "PalletCell::setDecodeInfo: " << row << ", " << col << " "
+                << decodeResult.msg);
+    }
 }
 
 std::tr1::shared_ptr<const Dib> PalletCell::getImage() {

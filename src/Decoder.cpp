@@ -80,6 +80,10 @@ dmtxDecodeSetProp    (dec, DmtxPropEdgeMin, minEdgeSize);
         if (msg != NULL) {
             msgFound = true;
             getDecodeInfo(dec, reg, msg, decodeResult);
+
+            if (ua::Logger::Instance().levelGet(3) >= 9) {
+                showStats(dec, reg, msg);
+            }
             dmtxMessageDestroy(&msg);
         }
         dmtxRegionDestroy(&reg);
@@ -149,8 +153,9 @@ DmtxImage * Decoder::createDmtxImageFromDib(const Dib & dib) {
     return image;
 }
 
-// TODO: use this function
 void Decoder::showStats(DmtxDecode * dec, DmtxRegion * reg, DmtxMessage * msg) {
+    if (ua::Logger::Instance().levelGet(3) < 9) return;
+
     int height;
     int dataWordLength;
     int rotateInt;
@@ -177,33 +182,30 @@ void Decoder::showStats(DmtxDecode * dec, DmtxRegion * reg, DmtxMessage * msg) {
     rotateInt = (int) (rotate * 180 / M_PI + 0.5);
     if (rotateInt >= 360) rotateInt -= 360;
 
-    fprintf(stdout, "--------------------------------------------------\n");
-    fprintf(stdout, "       Matrix Size: %d x %d\n",
-            dmtxGetSymbolAttribute(DmtxSymAttribSymbolRows, reg->sizeIdx),
-            dmtxGetSymbolAttribute(DmtxSymAttribSymbolCols, reg->sizeIdx));
-    fprintf(stdout, "    Data Codewords: %d (capacity %d)\n",
-            dataWordLength - msg->padCount, dataWordLength);
-    fprintf(stdout,
-            "   Error Codewords: %d\n",
-            dmtxGetSymbolAttribute(DmtxSymAttribSymbolErrorWords,
-                                   reg->sizeIdx));
-    fprintf(stdout, "      Data Regions: %d x %d\n",
-            dmtxGetSymbolAttribute(DmtxSymAttribHorizDataRegions, reg->sizeIdx),
-            dmtxGetSymbolAttribute(DmtxSymAttribVertDataRegions, reg->sizeIdx));
-    fprintf(stdout,
-            "Interleaved Blocks: %d\n",
-            dmtxGetSymbolAttribute(DmtxSymAttribInterleavedBlocks,
-                                   reg->sizeIdx));
-    fprintf(stdout, "    Rotation Angle: %d\n", rotateInt);
-    fprintf(stdout, "          Corner 0: (%0.1f, %0.1f)\n", p00.X,
-            height - 1 - p00.Y);
-    fprintf(stdout, "          Corner 1: (%0.1f, %0.1f)\n", p10.X,
-            height - 1 - p10.Y);
-    fprintf(stdout, "          Corner 2: (%0.1f, %0.1f)\n", p11.X,
-            height - 1 - p11.Y);
-    fprintf(stdout, "          Corner 3: (%0.1f, %0.1f)\n", p01.X,
-            height - 1 - p01.Y);
-    fprintf(stdout, "--------------------------------------------------\n");
+    UA_DOUT(3, 9, "\n--------------------------------------------------"
+                << "\n       Matrix Size: "
+                << dmtxGetSymbolAttribute(DmtxSymAttribSymbolRows, reg->sizeIdx)
+                << " x "
+                << dmtxGetSymbolAttribute(DmtxSymAttribSymbolCols, reg->sizeIdx)
+                << "\n    Data Codewords: "
+                << dataWordLength - msg->padCount
+                << " (capacity "
+                << dataWordLength << ")"
+                << "\n   Error Codewords: "
+                << dmtxGetSymbolAttribute(DmtxSymAttribSymbolErrorWords, reg->sizeIdx)
+                << "\n      Data Regions: "
+                << dmtxGetSymbolAttribute(DmtxSymAttribHorizDataRegions, reg->sizeIdx)
+                << " x "
+                << dmtxGetSymbolAttribute(DmtxSymAttribVertDataRegions, reg->sizeIdx)
+                << "\nInterleaved Blocks: "
+                << dmtxGetSymbolAttribute(DmtxSymAttribInterleavedBlocks, reg->sizeIdx)
+                << "\n    Rotation Angle: " << rotateInt
+                << "\n          Corner 0: (" << p00.X << ", " << height - 1 - p00.Y << ")"
+                << "\n          Corner 1: (" << p10.X << ", " << height - 1 - p10.Y << ")"
+                << "\n          Corner 2: (" << p11.X << ", " << height - 1 - p11.Y << ")"
+                << "\n          Corner 3: (" << p01.X << ", " << height - 1 - p01.Y << ")"
+                << "\n--------------------------------------------------"
+    );
 }
 
 void Decoder::writeDiagnosticImage(DmtxDecode *dec, const std::string & id) {
