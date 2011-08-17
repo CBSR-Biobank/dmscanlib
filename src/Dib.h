@@ -85,19 +85,18 @@ public:
 	unsigned char getPixelAvgGrayscale(unsigned row, unsigned col) const;
 	inline unsigned char getPixelGrayscale(unsigned row, unsigned col) const;
 
-	void setPixel(unsigned row, unsigned col, RgbQuad & quad);
+	void setPixel(unsigned row, unsigned col, const RgbQuad & quad);
 	inline void setPixelGrayscale(unsigned row, unsigned col,
 			unsigned char value);
 
-	void line(unsigned x0, unsigned y0, unsigned x1, unsigned y1,
-			RgbQuad & quad);
+	void line(unsigned x0, unsigned y0, unsigned x1, unsigned y1, const RgbQuad & quad);
 
-	void line(const CvPoint & start, const CvPoint & end, RgbQuad & quad) {
+	void line(const CvPoint & start, const CvPoint & end, const RgbQuad & quad) {
 	    line(start.x, start.y, end.x, end.y, quad);
 	}
 
 	void rectangle(unsigned x, unsigned y, unsigned width, unsigned height,
-			RgbQuad & quad);
+			const RgbQuad & quad);
 
 	void readFromHandle(HANDLE handle);
 

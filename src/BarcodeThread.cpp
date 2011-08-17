@@ -19,7 +19,6 @@
  */
 
 #include "BarcodeThread.h"
-#include "DecodeInfo.h"
 #include "PalletCell.h"
 #include "Dib.h"
 #include "Decoder.h"
@@ -60,8 +59,7 @@ void BarcodeThread::run() {
 
 void BarcodeThread::decodeCallback(DmtxDecode *dec, DmtxRegion * reg,
                                    DmtxMessage * msg) {
-    std::tr1::shared_ptr<DecodeInfo> decodeInfo(new DecodeInfo(dec, reg, msg));
-    cell->setDecodeInfo(decodeInfo);
+    cell->setDecodeInfo(dec, reg, msg);
 }
 
 bool BarcodeThread::isFinished() {

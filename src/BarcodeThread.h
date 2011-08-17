@@ -36,7 +36,6 @@ using namespace std;
 
 class Decoder;
 class PalletCell;
-class DecodeInfo;
 
 class BarcodeThread : public OpenThreads::Thread {
 public:

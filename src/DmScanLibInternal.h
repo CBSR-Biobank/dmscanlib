@@ -34,6 +34,8 @@
 class Dib;
 class Decoder;
 class ImgScanner;
+class PalletGrid;
+class PalletCell;
 
 using namespace std;
 
@@ -73,6 +75,8 @@ public:
 		stdoutOutputEnable = enable;
 	}
 
+	std::vector<std::tr1::shared_ptr<PalletCell> > & getDecodedCells();
+
 protected:
 	void saveResults(string & msg);
 
@@ -83,8 +87,8 @@ protected:
 	int decodeCommon(const char *markedDibFilename);
 
 	std::tr1::shared_ptr<Dib> image;
-	std::tr1::shared_ptr<Dib> originalImage;
 	std::tr1::shared_ptr<ImgScanner> imgScanner;
+	std::tr1::shared_ptr<PalletGrid> palletGrid;
 	std::tr1::shared_ptr<Decoder> decoder;
 
 	unsigned plateNum;

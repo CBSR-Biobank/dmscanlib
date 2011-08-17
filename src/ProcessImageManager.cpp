@@ -91,6 +91,5 @@ void ProcessImageManager::decodeCells(
 
 void ProcessImageManager::decodeCallback(std::tr1::shared_ptr<PalletCell> cell, DmtxDecode *dec, DmtxRegion * reg,
                                    DmtxMessage * msg) {
-    std::tr1::shared_ptr<DecodeInfo> decodeInfo(new DecodeInfo(dec, reg, msg));
-    cell->setDecodeInfo(decodeInfo);
+    cell->setDecodeInfo(dec, reg, msg);
 }

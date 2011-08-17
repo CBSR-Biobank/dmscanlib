@@ -105,6 +105,8 @@ public:
         return imgValid;
     }
 
+    std::vector<std::tr1::shared_ptr<PalletCell> > & getDecodedCells();
+
     void formatCellMessages(std::string & msg);
 
 private:
@@ -114,7 +116,9 @@ private:
     unsigned plateNum;
     Orientation orientation;
 
-    std::vector<std::tr1::shared_ptr<PalletCell> > cells;
+    std::vector<std::tr1::shared_ptr<PalletCell> > allCells;
+
+    std::vector<std::tr1::shared_ptr<PalletCell> > decodedCells;
 
     std::vector<std::vector<std::tr1::shared_ptr<PalletCell> > > cellsByRowCol;
 

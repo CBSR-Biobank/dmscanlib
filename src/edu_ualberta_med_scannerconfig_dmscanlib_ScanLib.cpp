@@ -1,7 +1,7 @@
 #include <edu_ualberta_med_scannerconfig_dmscanlib_ScanLib.h>
 #include "DmScanLib.h"
 #include "DmScanLibInternal.h"
-#include "DecodeInfo.h"
+#include "PalletCell.h"
 
 #include <iostream>
 
@@ -112,7 +112,7 @@ jobject createScanResultObject(JNIEnv * env, int resultCode, int value) {
 }
 
 jobject createDecodeResultObject(JNIEnv * env, int resultCode,
-		vector<DecodeInfo *> * barcodes) {
+		std::vector<std::tr1::shared_ptr<PalletCell> > * cells) {
 	jclass resultClass = env->FindClass(
 			"edu/ualberta/med/scannerconfig/dmscanlib/DecodeResult");
 
@@ -131,16 +131,16 @@ jobject createDecodeResultObject(JNIEnv * env, int resultCode,
 	jmethodID setCellMethod = env->GetMethodID(resultClass, "setCell",
 			"(IILjava/lang/String;)V");
 
-	if (barcodes != NULL) {
-		for (unsigned i = 0, n = barcodes->size(); i < n; ++i) {
-			DecodeInfo & info = *(*barcodes)[i];
+	if (cells != NULL) {
+		for (unsigned i = 0, n = cells->size(); i < n; ++i) {
+			PalletCell & cell = *(*cells)[i];
 			jvalue data[3];
 
 			// TODO: convert to PalletCell
 			//data[0].i = info.getRow();
 			//data[1].i = info.getCol();
 
-			data[2].l = env->NewStringUTF(info.getMsg().c_str());
+			data[2].l = env->NewStringUTF(cell.getBarcodeMsg().c_str());
 
 			env->CallObjectMethodA(resultObj, setCellMethod, data);
 		}
@@ -257,17 +257,16 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
 	ScanRegion region(env, _region);
 
 	DmScanLib dmScanLib;
-	vector<DecodeInfo *> * barcodes = NULL;
+	std::vector<std::tr1::shared_ptr<PalletCell> > * cells;
 	int result = dmScanLib.decodePlate(verbose, dpi, brightness, contrast, plateNum,
 		region.left, region.top, region.right, region.bottom, scanGap,
 			squareDev, edgeThresh, corrections, cellDistance, gapX, gapY,
 			profileA, profileB, profileC, orientation);
 
 	if (result == SC_SUCCESS) {
-	    // TODO: get pallet cells
-		//barcodes = &dmScanLib.getBarcodes();
+		cells = &dmScanLib.getDecodedCells();
 	}
-	return createDecodeResultObject(env, result, barcodes);
+	return createDecodeResultObject(env, result, cells);
 }
 
 /*
@@ -293,16 +292,15 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
 	const char *filename = env->GetStringUTFChars(_filename, 0);
 
 	DmScanLib dmScanLib;
-	vector<DecodeInfo *> * barcodes = NULL;
+	std::vector<std::tr1::shared_ptr<PalletCell> > * cells;
 	int result = dmScanLib.decodeImage(verbose, plateNum, filename, scanGap,
 			squareDev, edgeThresh, corrections, cellDistance, gapX, gapY,
 			profileA, profileB, profileC, orientation);
 
 	if (result == SC_SUCCESS) {
-        // TODO: get pallet cells
-		//barcodes = &dmScanLib.getBarcodes();
+		cells = &dmScanLib.getDecodedCells();
 	}
-	jobject resultObj = createDecodeResultObject(env, result, barcodes);
+	jobject resultObj = createDecodeResultObject(env, result, cells);
 	env->ReleaseStringUTFChars(_filename, filename);
 	return resultObj;
 }

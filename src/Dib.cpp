@@ -417,7 +417,7 @@ inline unsigned char Dib::getPixelGrayscale(unsigned row, unsigned col) const {
     return 0;
 }
 
-void Dib::setPixel(unsigned x, unsigned y, RgbQuad & quad) {
+void Dib::setPixel(unsigned x, unsigned y, const RgbQuad & quad) {
     UA_ASSERT(x < width);
     UA_ASSERT(y < height);
 
@@ -590,7 +590,7 @@ auto_ptr<IplImageContainer> Dib::generateIplImage() {
  * Taken from: http://en.wikipedia.org/wiki/Bresenham's_line_algorithm
  */
 void Dib::line(unsigned x0, unsigned y0, unsigned x1, unsigned y1,
-               RgbQuad & quad) {
+               const RgbQuad & quad) {
     UA_ASSERT(y0 < height);
     UA_ASSERT(y1 < height);
     UA_ASSERT(x0 < width);
@@ -657,7 +657,7 @@ void Dib::line(unsigned x0, unsigned y0, unsigned x1, unsigned y1,
 }
 
 void Dib::rectangle(unsigned x, unsigned y, unsigned width, unsigned height,
-                    RgbQuad & quad) {
+                    const RgbQuad & quad) {
     line(x, y, x, y + height, quad);
     line(x, y, x + width, y, quad);
     line(x + width, y, x + width, y + height, quad);
