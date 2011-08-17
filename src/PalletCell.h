@@ -19,7 +19,7 @@
 #endif
 
 class Dib;
-class RgbQuad;
+struct RgbQuad;
 class PalletGrid;
 
 class PalletCell : public OpenThreads::Thread {

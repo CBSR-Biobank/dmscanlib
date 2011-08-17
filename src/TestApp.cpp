@@ -38,18 +38,14 @@
 #   endif
 #endif
 
-#ifdef WIN32
-#   include "UaAssert.h"
-#   include "Decoder.h"
-#   include "Dib.h"
-#   include "BarcodeInfo.h"
-#   include "ImgScanner.h"
-#endif
-
 #include "DmScanLib.h"
 #include "DmScanLibInternal.h"
 #include "SimpleOpt.h"
+#include "UaAssert.h"
+#include "Decoder.h"
+#include "Dib.h"
 #include "UaLogger.h"
+#include "ImgScanner.h"
 
 #ifndef WIN32
 #   include <limits>

@@ -31,6 +31,8 @@
 
 #include <algorithm>
 
+using namespace std;
+
 const unsigned PalletThreadMgr::THREAD_NUM = 8;
 
 PalletThreadMgr::PalletThreadMgr(std::tr1::shared_ptr<Decoder> dec) :
@@ -53,7 +55,7 @@ void PalletThreadMgr::threadProcessRange(unsigned first, unsigned last) {
 
 void PalletThreadMgr::threadHandler() {
 	unsigned first = 0;
-	unsigned last = std::min(numThreads, THREAD_NUM);
+	unsigned last = min(numThreads, THREAD_NUM);
 
 	do {
 		threadProcessRange(first, last);
