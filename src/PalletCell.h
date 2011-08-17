@@ -6,6 +6,9 @@
 
 #include <string>
 #include <ostream>
+#include <OpenThreads/Mutex>
+#include <OpenThreads/ScopedLock>
+#include <OpenThreads/Thread>
 
 #ifdef _VISUALC_
 #   include <memory>
@@ -17,11 +20,18 @@ class Dib;
 class RgbQuad;
 class PalletGrid;
 
-class PalletCell {
+class PalletCell : public OpenThreads::Thread {
 public:
 	PalletCell(PalletGrid & grid, unsigned row, unsigned col,
 			CvRect & parentPos);
-	~PalletCell();
+
+	virtual ~PalletCell();
+
+    virtual void run();
+
+    bool isFinished();
+
+    void decodeCallback(std::string & decodedMsg, CvPoint(&corners)[4]);
 
 	std::tr1::shared_ptr<const Dib> getImage();
 
@@ -43,13 +53,14 @@ public:
 
 	const std::string & getBarcodeMsg();
 
-	void setDecodeInfo(std::string & decodedMsg, CvPoint(&corners)[4]);
-
 	void drawCellBox(Dib & image, const RgbQuad & color) const;
 
 	void drawBarcodeBox(Dib & image, const RgbQuad & color) const;
 
+    void writeImage(std::string basename);
+
 private:
+
 	PalletGrid & grid;
 	const unsigned row;
 	const unsigned col;

@@ -27,7 +27,7 @@
 #include "UaLogger.h"
 #include "UaAssert.h"
 #include "Dib.h"
-#include "ProcessImageManager.h"
+#include "PalletThreadMgr.h"
 #include "PalletGrid.h"
 
 #include <stdio.h>
@@ -67,7 +67,7 @@ Decoder::~Decoder() {
 }
 
 void Decoder::decodeImage(std::tr1::weak_ptr<const Dib> dib,
-                          DecodeCallback callback) {
+                          const std::string & id, DecodeCallback callback) {
     DmtxImage * image = createDmtxImageFromDib(*dib.lock());
     int minEdgeSize, maxEdgeSize;
 
@@ -105,52 +105,46 @@ dmtxDecodeSetProp    (dec, DmtxPropEdgeMin, minEdgeSize);
         dmtxRegionDestroy(&reg);
     }
 
-    // TODO: write image when in debug mode
-//	if (debug) {
-//		if (msgFound) {
-//			writeDib("found");
-//		} else {
-//			writeDib("missed");
-//		}
-//		writeDiagnosticImage(dec);
-//	}
+    if (ua::Logger::Instance().levelGet(3) >= 9) {
+        writeDiagnosticImage(dec, id);
+    }
 
     dmtxDecodeDestroy(&dec);
     dmtxImageDestroy(&image);
 }
 
-void Decoder::getDecodeInfo(DmtxDecode *dec, DmtxRegion *reg,
-		DmtxMessage *msg, DecodeCallback callback) {
-	UA_ASSERT_NOT_NULL(dec);
-	UA_ASSERT_NOT_NULL(reg);
-	UA_ASSERT_NOT_NULL(msg);
+void Decoder::getDecodeInfo(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg,
+                            DecodeCallback callback) {
+    UA_ASSERT_NOT_NULL(dec);
+    UA_ASSERT_NOT_NULL(reg);
+    UA_ASSERT_NOT_NULL(msg);
 
-	DmtxVector2 p00, p10, p11, p01;
+    DmtxVector2 p00, p10, p11, p01;
 
-	string decodedMsg((char *) msg->output, msg->outputIdx);
+    string decodedMsg((char *) msg->output, msg->outputIdx);
 
-	int height = dmtxDecodeGetProp(dec, DmtxPropHeight);
-	p00.X = p00.Y = p10.Y = p01.X = 0.0;
-	p10.X = p01.Y = p11.X = p11.Y = 1.0;
-	dmtxMatrix3VMultiplyBy(&p00, reg->fit2raw);
-	dmtxMatrix3VMultiplyBy(&p10, reg->fit2raw);
-	dmtxMatrix3VMultiplyBy(&p11, reg->fit2raw);
-	dmtxMatrix3VMultiplyBy(&p01, reg->fit2raw);
+    int height = dmtxDecodeGetProp(dec, DmtxPropHeight);
+    p00.X = p00.Y = p10.Y = p01.X = 0.0;
+    p10.X = p01.Y = p11.X = p11.Y = 1.0;
+    dmtxMatrix3VMultiplyBy(&p00, reg->fit2raw);
+    dmtxMatrix3VMultiplyBy(&p10, reg->fit2raw);
+    dmtxMatrix3VMultiplyBy(&p11, reg->fit2raw);
+    dmtxMatrix3VMultiplyBy(&p01, reg->fit2raw);
 
-	p00.Y = height - 1 - p00.Y;
-	p10.Y = height - 1 - p10.Y;
-	p11.Y = height - 1 - p11.Y;
-	p01.Y = height - 1 - p01.Y;
+    p00.Y = height - 1 - p00.Y;
+    p10.Y = height - 1 - p10.Y;
+    p11.Y = height - 1 - p11.Y;
+    p01.Y = height - 1 - p01.Y;
 
-	DmtxVector2 * p[4] = { &p00, &p10, &p11, &p01 };
+    DmtxVector2 * p[4] = { &p00, &p10, &p11, &p01 };
 
-	CvPoint barcodeCorners[4];
-	for (unsigned i = 0; i < 4; ++i) {
-		barcodeCorners[i].x = static_cast<int>(p[i]->X);
-		barcodeCorners[i].y = static_cast<int>(p[i]->Y);
-	}
+    CvPoint barcodeCorners[4];
+    for (unsigned i = 0; i < 4; ++i) {
+        barcodeCorners[i].x = static_cast<int>(p[i]->X);
+        barcodeCorners[i].y = static_cast<int>(p[i]->Y);
+    }
 
-	callback(decodedMsg, barcodeCorners);
+    callback(decodedMsg, barcodeCorners);
 }
 
 DmtxImage * Decoder::createDmtxImageFromDib(const Dib & dib) {
@@ -234,7 +228,7 @@ void Decoder::showStats(DmtxDecode * dec, DmtxRegion * reg, DmtxMessage * msg) {
     fprintf(stdout, "--------------------------------------------------\n");
 }
 
-void Decoder::writeDiagnosticImage(DmtxDecode *dec, string & id) {
+void Decoder::writeDiagnosticImage(DmtxDecode *dec, const std::string & id) {
     int totalBytes, headerBytes;
     int bytesWritten;
     unsigned char *pnm;

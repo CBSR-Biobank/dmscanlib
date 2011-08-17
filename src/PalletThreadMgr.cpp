@@ -18,9 +18,8 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "ProcessImageManager.h"
+#include "PalletThreadMgr.h"
 #include "PalletCell.h"
-#include "BarcodeThread.h"
 #include "UaLogger.h"
 #include "UaAssert.h"
 #include "Decoder.h"
@@ -32,17 +31,17 @@
 
 #include <algorithm>
 
-const unsigned ProcessImageManager::THREAD_NUM = 8;
+const unsigned PalletThreadMgr::THREAD_NUM = 8;
 
-ProcessImageManager::ProcessImageManager(std::tr1::shared_ptr<Decoder> dec) :
+PalletThreadMgr::PalletThreadMgr(std::tr1::shared_ptr<Decoder> dec) :
 		decoder(dec) {
 }
 
-ProcessImageManager::~ProcessImageManager() {
+PalletThreadMgr::~PalletThreadMgr() {
 }
 
 //first is inclusive , last is exclusive
-void ProcessImageManager::threadProcessRange(unsigned first, unsigned last) {
+void PalletThreadMgr::threadProcessRange(unsigned first, unsigned last) {
 	for (unsigned int i = first; i < last; i++) {
 		allThreads[i]->start();
 	}
@@ -52,7 +51,7 @@ void ProcessImageManager::threadProcessRange(unsigned first, unsigned last) {
 	}
 }
 
-void ProcessImageManager::threadHandler() {
+void PalletThreadMgr::threadHandler() {
 	unsigned first = 0;
 	unsigned last = std::min(numThreads, THREAD_NUM);
 
@@ -66,29 +65,16 @@ void ProcessImageManager::threadHandler() {
 	} while (first < numThreads);
 }
 
-void ProcessImageManager::decodeCells(
+void PalletThreadMgr::decodeCells(
 		std::vector<std::tr1::shared_ptr<PalletCell> > & cells) {
 	numThreads = cells.size();
 	allThreads.resize(numThreads);
 
 	for (unsigned i = 0; i < numThreads; ++i) {
-		std::tr1::shared_ptr<BarcodeThread> thread(
-				new BarcodeThread(decoder, cells[i]));
-		allThreads[i] = thread;
-
-		/*
-		 Decoder::DecodeCallback callback = std::tr1::bind(
-		 &ProcessImageManager::decodeCallback, this, cells[i], std::tr1::placeholders::_1,
-		 std::tr1::placeholders::_2, std::tr1::placeholders::_3);
-
-		 decoder->decodeImage(cells[i]->getImage(), callback);
-		 */
+		//cells[i]->run();
+	    allThreads[i] = cells[i];
 	}
 
 	threadHandler();
 }
 
-void ProcessImageManager::decodeCallback(std::tr1::shared_ptr<PalletCell> cell,
-		std::string & msg, CvPoint(&corners)[4]) {
-	cell->setDecodeInfo(msg, corners);
-}

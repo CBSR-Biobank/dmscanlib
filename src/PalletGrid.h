@@ -71,6 +71,10 @@ public:
 
     void applyFilters();
 
+    Decoder & getDecoder() {
+        return *decoder.get();
+    }
+
     std::tr1::shared_ptr<const Dib> getCellImage(unsigned row, unsigned col);
 
     /**

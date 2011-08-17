@@ -136,10 +136,8 @@ jobject createDecodeResultObject(JNIEnv * env, int resultCode,
 			PalletCell & cell = *(*cells)[i];
 			jvalue data[3];
 
-			// TODO: convert to PalletCell
-			//data[0].i = info.getRow();
-			//data[1].i = info.getCol();
-
+			data[0].i = cell.getRow();
+			data[1].i = cell.getCol();
 			data[2].l = env->NewStringUTF(cell.getBarcodeMsg().c_str());
 
 			env->CallObjectMethodA(resultObj, setCellMethod, data);

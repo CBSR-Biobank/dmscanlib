@@ -21,7 +21,7 @@
  */
 
 #include "PalletGrid.h"
-#include "ProcessImageManager.h"
+#include "PalletThreadMgr.h"
 #include "PalletCell.h"
 #include "Dib.h"
 #include "UaAssert.h"
@@ -160,8 +160,10 @@ std::tr1::shared_ptr<const Dib> PalletGrid::getCellImage(
                                rect.y + rect.height);
 }
 
-unsigned PalletGrid::decodeCells(std::tr1::shared_ptr<Decoder> decoder) {
+unsigned PalletGrid::decodeCells(std::tr1::shared_ptr<Decoder> dcdr) {
     UA_ASSERT(imgValid);
+
+    decoder = dcdr;
 
 #ifdef _DEBUG
     string str;
@@ -170,13 +172,21 @@ unsigned PalletGrid::decodeCells(std::tr1::shared_ptr<Decoder> decoder) {
     writeImageWithCells("cellRegions.bmp");
 #endif
 
-    ProcessImageManager imageManager(decoder);
+    bool found;
+    PalletThreadMgr imageManager(decoder);
     imageManager.decodeCells(allCells);
 
     for (unsigned i = 0, n = allCells.size(); i < n; ++i) {
-        if (allCells[i]->getDecodeValid()
-                        && !allCells[i]->getBarcodeMsg().empty()) {
+        PalletCell & cell = *allCells[i];
+
+
+        found = (cell.getDecodeValid() && !cell.getBarcodeMsg().empty());
+        if (found) {
             decodedCells.push_back(allCells[i]);
+        }
+
+        if (ua::Logger::Instance().levelGet(3) >= 9) {
+            cell.writeImage(found ? "found" : "missed");
         }
     }
     return decodedCells.size();

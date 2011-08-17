@@ -47,15 +47,12 @@ class DecodeInfo;
 class BarcodeThread;
 class Decoder;
 
-class ProcessImageManager {
+class PalletThreadMgr {
 public:
-	ProcessImageManager(std::tr1::shared_ptr<Decoder> decoder);
-	~ProcessImageManager();
+	PalletThreadMgr(std::tr1::shared_ptr<Decoder> decoder);
+	~PalletThreadMgr();
 
 	void decodeCells(std::vector<std::tr1::shared_ptr<PalletCell> > & cells);
-
-	void decodeCallback(std::tr1::shared_ptr<PalletCell> cell,
-			std::string & msg, CvPoint(&corners)[4]);
 
 private:
 	static const unsigned THREAD_NUM;
@@ -64,7 +61,7 @@ private:
 	void threadProcessRange(unsigned int first, unsigned int last);
 
 	std::tr1::shared_ptr<Decoder> decoder;
-	vector<std::tr1::shared_ptr<BarcodeThread> > allThreads;
+	vector<std::tr1::shared_ptr<PalletCell> > allThreads;
 	unsigned numThreads;
 };
 

@@ -50,13 +50,12 @@ public:
     typedef std::tr1::function<
                     void(std::string & decodedMsg, CvPoint(&corners)[4])> DecodeCallback;
 
-    Decoder(unsigned dpi, double scanGap, unsigned squareDev, unsigned edgeThresh,
-            unsigned corrections, double cellDistance);
+    Decoder(unsigned dpi, double scanGap, unsigned squareDev,
+            unsigned edgeThresh, unsigned corrections, double cellDistance);
     virtual ~Decoder();
 
-    void decodeImage(std::tr1::weak_ptr<const Dib> dib, DecodeCallback callback);
-
-    void writeDiagnosticImage(DmtxDecode *dec, string & id);
+    void decodeImage(std::tr1::weak_ptr<const Dib> dib, const std::string & id,
+                     DecodeCallback callback);
 
 private:
 
@@ -65,8 +64,10 @@ private:
     static const double BARCODE_SIDE_LENGTH_INCHES;
 
     static DmtxImage * createDmtxImageFromDib(const Dib & dib);
-    void getDecodeInfo(DmtxDecode *dec, DmtxRegion *reg,
-    		DmtxMessage *msg, DecodeCallback callback);
+    void getDecodeInfo(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg,
+                       DecodeCallback callback);
+
+    void writeDiagnosticImage(DmtxDecode *dec, const string & id);
 
     void showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
 
