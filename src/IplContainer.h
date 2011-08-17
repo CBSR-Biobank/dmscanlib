@@ -1,8 +1,8 @@
 #ifndef __INCLUDE_IPLCONTAINER_H
 #define __INCLUDE_IPLCONTAINER_H
 /*
-Dmscanlib is a software library and standalone application that scans 
-and decodes libdmtx compatible test-tubes. It is currently designed 
+Dmscanlib is a software library and standalone application that scans
+and decodes libdmtx compatible test-tubes. It is currently designed
 to decode 12x8 pallets that use 2D data-matrix laser etched test-tubes.
 Copyright (C) 2010 Canadian Biosample Repository
 
@@ -23,12 +23,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "cv.h"
 
 class IplImageContainer {
-
-private:
-	IplImage * image;
-	unsigned horizontalResolution;
-	unsigned verticalResolution;
-
 public:
 	IplImageContainer(IplImage * image);
 	IplImageContainer();
@@ -42,6 +36,11 @@ public:
 
 	void setHorizontalResolution(unsigned pixelPerMeter);
 	void setVerticalResolution(unsigned pixelPerMeter);
+
+private:
+    IplImage * image;
+    unsigned horizontalResolution;
+    unsigned verticalResolution;
 
 };
 
