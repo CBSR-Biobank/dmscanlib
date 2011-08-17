@@ -26,10 +26,8 @@
 
 #include "dmtx.h"
 #include "cv.h"
-//#include "IplContainer.h"
 
 #include <string>
-#include <OpenThreads/Mutex>
 
 #ifdef _VISUALC_
 #   include <memory>
@@ -57,11 +55,6 @@ public:
                      DecodeResult & decodeResult);
 
 private:
-
-    static const unsigned PALLET_ROWS;
-    static const unsigned PALLET_COLUMNS;
-    static const double BARCODE_SIDE_LENGTH_INCHES;
-
     static DmtxImage * createDmtxImageFromDib(const Dib & dib);
     void getDecodeInfo(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg,
                        DecodeResult & decodeResult);
@@ -76,10 +69,6 @@ private:
     unsigned edgeThresh;
     unsigned corrections;
     double cellDistance;
-    unsigned width;
-    unsigned height;
-
-    OpenThreads::Mutex addBarcodeMutex;
 };
 
 #endif /* DECODER_H_ */

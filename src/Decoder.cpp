@@ -24,37 +24,17 @@
 #endif
 
 #include "Decoder.h"
+#include "Dib.h"
 #include "UaLogger.h"
 #include "UaAssert.h"
-#include "Dib.h"
-#include "PalletThreadMgr.h"
-#include "PalletGrid.h"
 
 #include <stdio.h>
-#include <sstream>
-#include <time.h>
-#include <iostream>
-#include <math.h>
-#include <string>
-#include <limits>
-#include <vector>
-#include <cmath>
-
-#ifdef _VISUALC_
-#   include <memory>
-#else
-#   include <tr1/memory>
-#endif
 
 #if defined(USE_NVWA)
 #   include "debug_new.h"
 #endif
 
 using namespace std;
-
-const double Decoder::BARCODE_SIDE_LENGTH_INCHES = 0.13;
-const unsigned Decoder::PALLET_ROWS = 8;
-const unsigned Decoder::PALLET_COLUMNS = 12;
 
 Decoder::Decoder(unsigned _dpi, double g, unsigned s, unsigned t, unsigned c,
                  double dist)
