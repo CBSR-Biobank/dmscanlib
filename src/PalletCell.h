@@ -15,25 +15,25 @@
 
 class Dib;
 class RgbQuad;
+class PalletGrid;
 
 class PalletCell {
 public:
-	PalletCell(std::tr1::shared_ptr<Dib> img, unsigned row, unsigned col,
+	PalletCell(PalletGrid & grid, unsigned row, unsigned col,
 			CvRect & parentPos);
 	~PalletCell();
 
-	std::tr1::shared_ptr<const Dib> getImage() {
-		return image;
+	std::tr1::shared_ptr<const Dib> getImage();
+
+	const CvRect & getParentPos() const {
+	    return parentRect;
 	}
-	;
 
-	std::tr1::shared_ptr<const CvRect> getParentPos();
-
-	const unsigned getRow() {
+	const unsigned getRow() const {
 		return row;
 	}
 
-	const unsigned getCol() {
+	const unsigned getCol() const {
 		return col;
 	}
 
@@ -50,10 +50,11 @@ public:
 	void drawBarcodeBox(Dib & image, const RgbQuad & color) const;
 
 private:
-	std::tr1::shared_ptr<const Dib> image;
+	PalletGrid & grid;
 	const unsigned row;
 	const unsigned col;
 	CvRect parentRect;
+	std::tr1::shared_ptr<const Dib> cellImage;
 	std::string decodedMsg;
 	CvPoint barcodeCorners[4];
 

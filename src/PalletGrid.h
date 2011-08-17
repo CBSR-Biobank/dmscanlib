@@ -25,6 +25,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 
 #ifdef _VISUALC_
 #   include <memory>
@@ -109,8 +110,11 @@ public:
 
     void formatCellMessages(std::string & msg);
 
+    void registerBarcodeMsg(std::string & msg);
+
+    std::tr1::shared_ptr<const Dib> getCellImage(const PalletCell & cell);
+
 private:
-    void getCellImages();
     void getCellRect(unsigned row, unsigned col, CvRect & rect);
 
     unsigned plateNum;
@@ -131,6 +135,8 @@ private:
     unsigned gapY;
     std::vector<bool> cellEnabled;
     bool imgValid;
+
+    std::map<std::string, int> decodedMsgCount;
 
 };
 

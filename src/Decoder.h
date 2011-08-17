@@ -26,9 +26,7 @@
 #include "IplContainer.h"
 #include "PalletGrid.h"
 
-#include <list>
 #include <string>
-#include <map>
 #include <OpenThreads/Mutex>
 
 #ifdef _VISUALC_

@@ -29,9 +29,7 @@
 #include "cv.h"
 #include "dmtx.h"
 
-//#include <vector>
 #include <string>
-//#include <map>
 
 #ifdef _VISUALC_
 #   include <memory>

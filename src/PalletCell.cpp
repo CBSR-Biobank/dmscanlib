@@ -1,25 +1,24 @@
 #include "PalletCell.h"
+#include "PalletGrid.h"
 #include "Dib.h"
 #include "UaAssert.h"
 
 // TODO: make sure no two barcode messages are the same
 
-PalletCell::PalletCell(std::tr1::shared_ptr<Dib> img, unsigned r, unsigned c,
-		CvRect & pos) :
-		image(img), row(r), col(c), parentRect(pos) {
+PalletCell::PalletCell(PalletGrid & pg, unsigned r, unsigned c,
+                       CvRect & pos) :
+		grid(pg), row(r), col(c), parentRect(pos) {
 }
 
 PalletCell::~PalletCell() {
 
 }
 
-std::tr1::shared_ptr<const CvRect> PalletCell::getParentPos() {
-	CvRect r;
-	r.x = parentRect.x;
-	r.y = parentRect.y;
-	r.width = image->getWidth();
-	r.height = image->getHeight();
-	return std::tr1::shared_ptr<const CvRect>(new CvRect(r));
+std::tr1::shared_ptr<const Dib> PalletCell::getImage() {
+    if (cellImage.get() == NULL) {
+        cellImage = grid.getCellImage(*this);
+    }
+    return cellImage;
 }
 
 const string & PalletCell::getBarcodeMsg() {
@@ -29,6 +28,7 @@ const string & PalletCell::getBarcodeMsg() {
 
 void PalletCell::setDecodeInfo(std::string & msg, CvPoint(&corners)[4]) {
 	decodedMsg = msg;
+	grid.registerBarcodeMsg(decodedMsg);
 
 	for (unsigned i = 0; i < 4; ++i) {
 		barcodeCorners[i] = corners[i];

@@ -35,14 +35,6 @@
 #include "UaAssert.h"
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <assert.h>
-#include <string.h>
-#include <math.h>
-#include <string>
-#include <vector>
-#include <map>
-#include <ctime>
 #include <algorithm>
 
 using namespace std;
