@@ -50,7 +50,7 @@ class BinRegion;
 class Decoder {
 public:
     typedef std::tr1::function<
-                    void(DmtxDecode *dec, DmtxRegion * reg, DmtxMessage * msg)> DecodeCallback;
+                    void(std::string & decodedMsg, CvPoint(&corners)[4])> DecodeCallback;
 
     Decoder(unsigned dpi, double scanGap, unsigned squareDev, unsigned edgeThresh,
             unsigned corrections, double cellDistance);
@@ -67,6 +67,9 @@ private:
     static const double BARCODE_SIDE_LENGTH_INCHES;
 
     static DmtxImage * createDmtxImageFromDib(const Dib & dib);
+    void getDecodeInfo(DmtxDecode *dec, DmtxRegion *reg,
+    		DmtxMessage *msg, DecodeCallback callback);
+
     void showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
 
     unsigned dpi;

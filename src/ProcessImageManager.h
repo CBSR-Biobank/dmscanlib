@@ -28,8 +28,10 @@
 
 #include "cv.h"
 #include "dmtx.h"
-#include <vector>
-#include <map>
+
+//#include <vector>
+#include <string>
+//#include <map>
 
 #ifdef _VISUALC_
 #   include <memory>
@@ -49,22 +51,23 @@ class Decoder;
 
 class ProcessImageManager {
 public:
-    ProcessImageManager(std::tr1::shared_ptr<Decoder> decoder);
-    ~ProcessImageManager();
+	ProcessImageManager(std::tr1::shared_ptr<Decoder> decoder);
+	~ProcessImageManager();
 
-    void decodeCells(std::vector<std::tr1::shared_ptr<PalletCell> > & cells);
+	void decodeCells(std::vector<std::tr1::shared_ptr<PalletCell> > & cells);
 
-    void decodeCallback(std::tr1::shared_ptr<PalletCell> cell, DmtxDecode *dec, DmtxRegion * reg, DmtxMessage * msg);
+	void decodeCallback(std::tr1::shared_ptr<PalletCell> cell,
+			std::string & msg, CvPoint(&corners)[4]);
 
 private:
-    static const unsigned THREAD_NUM;
+	static const unsigned THREAD_NUM;
 
-    void threadHandler();
-    void threadProcessRange(unsigned int first, unsigned int last);
+	void threadHandler();
+	void threadProcessRange(unsigned int first, unsigned int last);
 
-    std::tr1::shared_ptr<Decoder> decoder;
-    vector<std::tr1::shared_ptr<BarcodeThread> > allThreads;
-    unsigned numThreads;
+	std::tr1::shared_ptr<Decoder> decoder;
+	vector<std::tr1::shared_ptr<BarcodeThread> > allThreads;
+	unsigned numThreads;
 };
 
 #endif /* __INC_PROCESS_IMAGE_MANAGER_H */

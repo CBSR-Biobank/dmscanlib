@@ -1,7 +1,7 @@
 #ifndef __INC_PALLET_CELL_H
 #define __INC_PALLET_CELL_H
 
-#include "cxtypes.h"
+#include "cv.h"
 #include "dmtx.h"
 
 #include <string>
@@ -43,7 +43,7 @@ public:
 
 	const std::string & getBarcodeMsg();
 
-	void setDecodeInfo(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
+	void setDecodeInfo(std::string & decodedMsg, CvPoint(&corners)[4]);
 
 	void drawCellBox(Dib & image, const RgbQuad & color) const;
 

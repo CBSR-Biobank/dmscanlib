@@ -34,8 +34,8 @@
 
 const unsigned ProcessImageManager::THREAD_NUM = 8;
 
-ProcessImageManager::ProcessImageManager(std::tr1::shared_ptr<Decoder> dec)
-                : decoder(dec) {
+ProcessImageManager::ProcessImageManager(std::tr1::shared_ptr<Decoder> dec) :
+		decoder(dec) {
 }
 
 ProcessImageManager::~ProcessImageManager() {
@@ -43,53 +43,52 @@ ProcessImageManager::~ProcessImageManager() {
 
 //first is inclusive , last is exclusive
 void ProcessImageManager::threadProcessRange(unsigned first, unsigned last) {
-    for (unsigned int i = first; i < last; i++) {
-        allThreads[i]->start();
-    }
+	for (unsigned int i = first; i < last; i++) {
+		allThreads[i]->start();
+	}
 
-    for (unsigned int j = first; j < last; j++) {
-        allThreads[j]->join();
-    }
+	for (unsigned int j = first; j < last; j++) {
+		allThreads[j]->join();
+	}
 }
 
 void ProcessImageManager::threadHandler() {
-    unsigned first = 0;
-    unsigned last = std::min(numThreads, THREAD_NUM);
+	unsigned first = 0;
+	unsigned last = std::min(numThreads, THREAD_NUM);
 
-    do {
-        threadProcessRange(first, last);
-        UA_DOUT(3, 5,
-                "Threads for cells finished: "<< first << "/" << last - 1);
+	do {
+		threadProcessRange(first, last);
+		UA_DOUT(3, 5,
+				"Threads for cells finished: "<< first << "/" << last - 1);
 
-        first = last;
-        last = min(last + THREAD_NUM, numThreads);
-    }
-    while (first < numThreads);
+		first = last;
+		last = min(last + THREAD_NUM, numThreads);
+	} while (first < numThreads);
 }
 
 void ProcessImageManager::decodeCells(
-                std::vector<std::tr1::shared_ptr<PalletCell> > & cells) {
-    numThreads = cells.size();
-    allThreads.resize(numThreads);
+		std::vector<std::tr1::shared_ptr<PalletCell> > & cells) {
+	numThreads = cells.size();
+	allThreads.resize(numThreads);
 
-    for (unsigned i = 0; i < numThreads; ++i) {
-        std::tr1::shared_ptr<BarcodeThread> thread(
-                        new BarcodeThread(decoder, cells[i]));
-        allThreads[i] = thread;
+	for (unsigned i = 0; i < numThreads; ++i) {
+		std::tr1::shared_ptr<BarcodeThread> thread(
+				new BarcodeThread(decoder, cells[i]));
+		allThreads[i] = thread;
 
-        /*
-        Decoder::DecodeCallback callback = std::tr1::bind(
-                &ProcessImageManager::decodeCallback, this, cells[i], std::tr1::placeholders::_1,
-                std::tr1::placeholders::_2, std::tr1::placeholders::_3);
+		/*
+		 Decoder::DecodeCallback callback = std::tr1::bind(
+		 &ProcessImageManager::decodeCallback, this, cells[i], std::tr1::placeholders::_1,
+		 std::tr1::placeholders::_2, std::tr1::placeholders::_3);
 
-        decoder->decodeImage(cells[i]->getImage(), callback);
-        */
-    }
+		 decoder->decodeImage(cells[i]->getImage(), callback);
+		 */
+	}
 
-    threadHandler();
+	threadHandler();
 }
 
-void ProcessImageManager::decodeCallback(std::tr1::shared_ptr<PalletCell> cell, DmtxDecode *dec, DmtxRegion * reg,
-                                   DmtxMessage * msg) {
-    cell->setDecodeInfo(dec, reg, msg);
+void ProcessImageManager::decodeCallback(std::tr1::shared_ptr<PalletCell> cell,
+		std::string & msg, CvPoint(&corners)[4]) {
+	cell->setDecodeInfo(msg, corners);
 }

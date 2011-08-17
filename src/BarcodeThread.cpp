@@ -47,7 +47,7 @@ BarcodeThread::~BarcodeThread() {
 void BarcodeThread::run() {
     Decoder::DecodeCallback callback = std::tr1::bind(
             &BarcodeThread::decodeCallback, this, std::tr1::placeholders::_1,
-            std::tr1::placeholders::_2, std::tr1::placeholders::_3);
+            std::tr1::placeholders::_2);
 
 	decoder->decodeImage(cell->getImage(), callback);
 
@@ -57,9 +57,8 @@ void BarcodeThread::run() {
 	return;
 }
 
-void BarcodeThread::decodeCallback(DmtxDecode *dec, DmtxRegion * reg,
-                                   DmtxMessage * msg) {
-    cell->setDecodeInfo(dec, reg, msg);
+void BarcodeThread::decodeCallback(std::string & decodedMsg, CvPoint(&corners)[4]) {
+    cell->setDecodeInfo(decodedMsg, corners);
 }
 
 bool BarcodeThread::isFinished() {

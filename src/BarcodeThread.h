@@ -21,8 +21,10 @@
  */
 
 #include "dmtx.h"
+#include "cxtypes.h"
 
 #include <vector>
+#include <string>
 #include <memory>
 #include <OpenThreads/Mutex>
 #include <OpenThreads/ScopedLock>
@@ -46,7 +48,7 @@ public:
 
     virtual void run();
 
-    void decodeCallback(DmtxDecode *dec, DmtxRegion * reg, DmtxMessage * msg);
+    void decodeCallback(std::string & decodedMsg, CvPoint(&corners)[4]);
 
     bool isFinished();
 

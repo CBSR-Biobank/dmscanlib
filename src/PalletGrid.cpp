@@ -21,8 +21,8 @@
  */
 
 #include "PalletGrid.h"
-#include "PalletCell.h"
 #include "ProcessImageManager.h"
+#include "PalletCell.h"
 #include "Dib.h"
 #include "UaAssert.h"
 #include "UaLogger.h"
