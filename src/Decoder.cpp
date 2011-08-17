@@ -67,7 +67,7 @@ Decoder::~Decoder() {
 }
 
 void Decoder::decodeImage(std::tr1::weak_ptr<const Dib> dib,
-                          const std::string & id, DecodeCallback callback) {
+                          const std::string & id, DecodeResult & decodeResult) {
     DmtxImage * image = createDmtxImageFromDib(*dib.lock());
     int minEdgeSize, maxEdgeSize;
 
@@ -99,7 +99,7 @@ dmtxDecodeSetProp    (dec, DmtxPropEdgeMin, minEdgeSize);
         DmtxMessage *msg = dmtxDecodeMatrixRegion(dec, reg, corrections);
         if (msg != NULL) {
             msgFound = true;
-            getDecodeInfo(dec, reg, msg, callback);
+            getDecodeInfo(dec, reg, msg, decodeResult);
             dmtxMessageDestroy(&msg);
         }
         dmtxRegionDestroy(&reg);
@@ -114,14 +114,14 @@ dmtxDecodeSetProp    (dec, DmtxPropEdgeMin, minEdgeSize);
 }
 
 void Decoder::getDecodeInfo(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg,
-                            DecodeCallback callback) {
+                            DecodeResult & decodeResult) {
     UA_ASSERT_NOT_NULL(dec);
     UA_ASSERT_NOT_NULL(reg);
     UA_ASSERT_NOT_NULL(msg);
 
     DmtxVector2 p00, p10, p11, p01;
 
-    string decodedMsg((char *) msg->output, msg->outputIdx);
+    decodeResult.msg.assign((char *) msg->output, msg->outputIdx);
 
     int height = dmtxDecodeGetProp(dec, DmtxPropHeight);
     p00.X = p00.Y = p10.Y = p01.X = 0.0;
@@ -138,13 +138,10 @@ void Decoder::getDecodeInfo(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg,
 
     DmtxVector2 * p[4] = { &p00, &p10, &p11, &p01 };
 
-    CvPoint barcodeCorners[4];
     for (unsigned i = 0; i < 4; ++i) {
-        barcodeCorners[i].x = static_cast<int>(p[i]->X);
-        barcodeCorners[i].y = static_cast<int>(p[i]->Y);
+        decodeResult.corners[i].x = static_cast<int>(p[i]->X);
+        decodeResult.corners[i].y = static_cast<int>(p[i]->Y);
     }
-
-    callback(decodedMsg, barcodeCorners);
 }
 
 DmtxImage * Decoder::createDmtxImageFromDib(const Dib & dib) {
@@ -172,6 +169,7 @@ DmtxImage * Decoder::createDmtxImageFromDib(const Dib & dib) {
     return image;
 }
 
+// TODO: use this function
 void Decoder::showStats(DmtxDecode * dec, DmtxRegion * reg, DmtxMessage * msg) {
     int height;
     int dataWordLength;

@@ -2,6 +2,7 @@
 #include "PalletGrid.h"
 #include "Dib.h"
 #include "Decoder.h"
+#include "DecodeResult.h"
 #include "UaAssert.h"
 #include "UaLogger.h"
 
@@ -11,9 +12,8 @@
 #   include <tr1/functional>
 #endif
 
-PalletCell::PalletCell(PalletGrid & pg, unsigned r, unsigned c,
-                       CvRect & pos) :
-		grid(pg), row(r), col(c), parentRect(pos) {
+PalletCell::PalletCell(PalletGrid & pg, unsigned r, unsigned c, CvRect & pos)
+                : grid(pg), row(r), col(c), parentRect(pos) {
 }
 
 PalletCell::~PalletCell() {
@@ -23,27 +23,17 @@ PalletCell::~PalletCell() {
  * Invoked in its own thread.
  */
 void PalletCell::run() {
-    Decoder::DecodeCallback callback = std::tr1::bind(
-            &PalletCell::decodeCallback, this, std::tr1::placeholders::_1,
-            std::tr1::placeholders::_2);
     ostringstream id;
     id << row << "-" << col;
-    grid.getDecoder().decodeImage(getImage(), id.str(), callback);
-}
 
-void PalletCell::decodeCallback(std::string & msg, CvPoint(&corners)[4]) {
-    decodedMsg = msg;
-    grid.registerBarcodeMsg(decodedMsg);
-
-    for (unsigned i = 0; i < 4; ++i) {
-        barcodeCorners[i] = corners[i];
+    grid.getDecoder().decodeImage(getImage(), id.str(), decodeResult);
+    if (!decodeResult.msg.empty()) {
+        grid.registerBarcodeMsg(decodeResult.msg);
     }
 
-    UA_DOUT(3, 5, "PalletCell::setDecodeInfo: message/"
-            << decodedMsg
-            << " tlCorner/(" << parentRect.x << "," << parentRect.y
-            << ")  brCorner/(" << parentRect.x + parentRect.width
-            << "," << parentRect.y + parentRect.height << ")");
+    UA_DOUT(3,
+            5,
+            "PalletCell::setDecodeInfo: message/" << decodeResult.msg << " tlCorner/(" << parentRect.x << "," << parentRect.y << ")  brCorner/(" << parentRect.x + parentRect.width << "," << parentRect.y + parentRect.height << ")");
 }
 
 std::tr1::shared_ptr<const Dib> PalletCell::getImage() {
@@ -54,8 +44,8 @@ std::tr1::shared_ptr<const Dib> PalletCell::getImage() {
 }
 
 const string & PalletCell::getBarcodeMsg() {
-    UA_ASSERT(!decodedMsg.empty());
-    return decodedMsg;
+    UA_ASSERT(!decodeResult.msg.empty());
+    return decodeResult.msg;
 }
 
 void PalletCell::writeImage(std::string basename) {
@@ -68,30 +58,31 @@ void PalletCell::writeImage(std::string basename) {
 }
 
 void PalletCell::drawCellBox(Dib & image, const RgbQuad & color) const {
-	image.rectangle(parentRect.x, parentRect.y, parentRect.width, parentRect.height,
-			color);
+    image.rectangle(parentRect.x, parentRect.y, parentRect.width,
+                    parentRect.height, color);
 }
 
 void PalletCell::drawBarcodeBox(Dib & image, const RgbQuad & color) const {
-	CvPoint corners[4];
+    CvPoint corners[4];
 
-	for (unsigned i = 0; i < 4; ++i) {
-		corners[i].x = barcodeCorners[i].x + parentRect.x;
-		corners[i].y = barcodeCorners[i].y + parentRect.y;
-	}
+    for (unsigned i = 0; i < 4; ++i) {
+        corners[i].x = decodeResult.corners[i].x + parentRect.x;
+        corners[i].y = decodeResult.corners[i].y + parentRect.y;
+    }
 
-	image.line(corners[0], corners[1], color);
-	image.line(corners[1], corners[2], color);
-	image.line(corners[2], corners[3], color);
-	image.line(corners[3], corners[0], color);
+    image.line(corners[0], corners[1], color);
+    image.line(corners[1], corners[2], color);
+    image.line(corners[2], corners[3], color);
+    image.line(corners[3], corners[0], color);
 }
 
 ostream & operator<<(ostream &os, PalletCell & m) {
-	os << "\"" << m.decodedMsg << "\" (" << m.barcodeCorners[0].x << ", "
-			<< m.barcodeCorners[0].y << "), " << "(" << m.barcodeCorners[2].x
-			<< ", " << m.barcodeCorners[2].y << "), " << "("
-			<< m.barcodeCorners[3].x << ", " << m.barcodeCorners[3].y << "), "
-			<< "(" << m.barcodeCorners[1].x << ", " << m.barcodeCorners[1].y
-			<< ")";
-	return os;
+    os << "\"" << m.decodeResult.msg << "\" (" << m.decodeResult.corners[0].x
+       << ", " << m.decodeResult.corners[0].y << "), " << "("
+       << m.decodeResult.corners[2].x << ", " << m.decodeResult.corners[2].y
+       << "), " << "(" << m.decodeResult.corners[3].x << ", "
+       << m.decodeResult.corners[3].y << "), " << "("
+       << m.decodeResult.corners[1].x << ", " << m.decodeResult.corners[1].y
+       << ")";
+    return os;
 }

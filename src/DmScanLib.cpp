@@ -34,6 +34,7 @@
 #include "DmScanLibInternal.h"
 #include "ImgScannerFactory.h"
 #include "ImgScanner.h"
+#include "PalletGrid.h"
 #include "UaLogger.h"
 #include "UaAssert.h"
 #include "Decoder.h"

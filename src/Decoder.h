@@ -21,18 +21,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+
+#include "DecodeResult.h"
+
 #include "dmtx.h"
 #include "cv.h"
-#include "IplContainer.h"
-#include "PalletGrid.h"
+//#include "IplContainer.h"
 
 #include <string>
 #include <OpenThreads/Mutex>
 
 #ifdef _VISUALC_
-#   include <functional>
+#   include <memory>
 #else
-#   include <tr1/functional>
+#   include <tr1/memory>
 #endif
 
 #ifdef WIN32
@@ -47,15 +49,12 @@ class BinRegion;
 
 class Decoder {
 public:
-    typedef std::tr1::function<
-                    void(std::string & decodedMsg, CvPoint(&corners)[4])> DecodeCallback;
-
     Decoder(unsigned dpi, double scanGap, unsigned squareDev,
             unsigned edgeThresh, unsigned corrections, double cellDistance);
     virtual ~Decoder();
 
     void decodeImage(std::tr1::weak_ptr<const Dib> dib, const std::string & id,
-                     DecodeCallback callback);
+                     DecodeResult & decodeResult);
 
 private:
 
@@ -65,7 +64,7 @@ private:
 
     static DmtxImage * createDmtxImageFromDib(const Dib & dib);
     void getDecodeInfo(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg,
-                       DecodeCallback callback);
+                       DecodeResult & decodeResult);
 
     void writeDiagnosticImage(DmtxDecode *dec, const string & id);
 

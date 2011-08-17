@@ -1,6 +1,8 @@
 #ifndef __INC_PALLET_CELL_H
 #define __INC_PALLET_CELL_H
 
+#include "DecodeResult.h"
+
 #include "cv.h"
 #include "dmtx.h"
 
@@ -48,7 +50,7 @@ public:
 	}
 
 	const bool getDecodeValid() {
-		return !decodedMsg.empty();
+		return !decodeResult.msg.empty();
 	}
 
 	const std::string & getBarcodeMsg();
@@ -66,8 +68,7 @@ private:
 	const unsigned col;
 	CvRect parentRect;
 	std::tr1::shared_ptr<const Dib> cellImage;
-	std::string decodedMsg;
-	CvPoint barcodeCorners[4];
+	DecodeResult decodeResult;
 
 	friend std::ostream & operator<<(std::ostream & os, PalletCell & m);
 };
