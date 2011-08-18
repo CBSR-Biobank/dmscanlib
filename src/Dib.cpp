@@ -164,7 +164,7 @@ void Dib::init(unsigned width, unsigned height, unsigned colorBits,
     if (allocatePixelBuf) {
         allocate(imageSize);
     }
-    __extension__ VLOG(2) << "constructor: image size is " << imageSize;
+    __extension__ VLOG(5) << "constructor: image size is " << imageSize;
 }
 
 Dib::~Dib() {
@@ -322,7 +322,7 @@ bool Dib::writeToFile(const char *filename) const {
     *(unsigned *) &infoHeaderRaw[0x32 - 0xE] = 0;
 
     FILE *fh = fopen(filename, "wb"); // C4996
-    if (fh != NULL) {
+    if (fh == NULL) {
         DLOG(ERROR) << "could not open file for writing";
         return false;
     }

@@ -87,7 +87,7 @@ dmtxDecodeSetProp    (dec, DmtxPropEdgeMin, minEdgeSize);
         dmtxRegionDestroy(&reg);
     }
 
-    if (__extension__ VLOG_IS_ON(2)) {
+    if (__extension__ VLOG_IS_ON(5)) {
         writeDiagnosticImage(dec, id);
     }
 
@@ -152,7 +152,7 @@ DmtxImage * Decoder::createDmtxImageFromDib(const Dib & dib) {
 }
 
 void Decoder::showStats(DmtxDecode * dec, DmtxRegion * reg, DmtxMessage * msg) {
-    if (__extension__ !VLOG_IS_ON(2)) return;
+    if (__extension__ !VLOG_IS_ON(5)) return;
 
     int height;
     int dataWordLength;
@@ -180,7 +180,7 @@ void Decoder::showStats(DmtxDecode * dec, DmtxRegion * reg, DmtxMessage * msg) {
     rotateInt = (int) (rotate * 180 / M_PI + 0.5);
     if (rotateInt >= 360) rotateInt -= 360;
 
-    __extension__ VLOG(2)
+    __extension__ VLOG(5)
                     << "\n--------------------------------------------------"
                     << "\n       Matrix Size: "
                     << dmtxGetSymbolAttribute(DmtxSymAttribSymbolRows,
@@ -216,6 +216,8 @@ void Decoder::showStats(DmtxDecode * dec, DmtxRegion * reg, DmtxMessage * msg) {
 }
 
 void Decoder::writeDiagnosticImage(DmtxDecode *dec, const std::string & id) {
+    if (__extension__ !VLOG_IS_ON(5)) return;
+
     int totalBytes, headerBytes;
     int bytesWritten;
     unsigned char *pnm;

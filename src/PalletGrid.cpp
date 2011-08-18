@@ -173,10 +173,10 @@ unsigned PalletGrid::decodeCells(std::tr1::shared_ptr<Decoder> dcdr) {
 
     decoder = dcdr;
 
-    if (__extension__ VLOG_IS_ON(2)) {
+    if (__extension__ VLOG_IS_ON(3)) {
         string str;
         getProfileAsString(str);
-        __extension__ VLOG(2) << "Profile: \n" << str;
+        __extension__ VLOG(3) << "Profile: \n" << str;
         writeImageWithCells("cellRegions.bmp");
     }
 

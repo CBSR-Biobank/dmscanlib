@@ -89,6 +89,8 @@ protected:
 
     int decodeCommon(const char *markedDibFilename);
 
+    static const string LIBRARY_NAME;
+
     std::tr1::shared_ptr<Dib> image;
     std::tr1::shared_ptr<ImgScanner> imgScanner;
     std::tr1::shared_ptr<PalletGrid> palletGrid;

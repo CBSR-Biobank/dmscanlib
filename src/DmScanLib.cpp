@@ -48,7 +48,7 @@
 #   include "debug_new.h"
 #endif
 
-//using namespace std;
+const string DmScanLib::LIBRARY_NAME("dmscanlib");
 
 bool DmScanLib::loggingInitialized = false;
 
@@ -97,14 +97,12 @@ int DmScanLib::isValidDpi(int dpi) {
 
 void DmScanLib::configLogging(unsigned level, bool useFile) {
     if (!loggingInitialized) {
-        ostringstream parms;
-        parms << "dmscanlib --v=" << level;
+        google::InitGoogleLogging(LIBRARY_NAME.c_str());
+        FLAGS_v = level;
+        FLAGS_stderrthreshold = (level > 0) ? google::INFO : google::ERROR;
+        FLAGS_logtostderr = !useFile;
+        FLAGS_alsologtostderr = !useFile;
 
-        google::InitGoogleLogging(parms.str().c_str());
-
-        if (!useFile) {
-            google::LogToStderr();
-        }
         loggingInitialized = true;
     }
 }
