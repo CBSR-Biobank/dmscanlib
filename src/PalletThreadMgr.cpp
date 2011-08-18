@@ -20,10 +20,10 @@
 
 #include "PalletThreadMgr.h"
 #include "PalletCell.h"
-#include "UaLogger.h"
-#include "UaAssert.h"
 #include "Decoder.h"
 #include "Dib.h"
+
+#include <glog/logging.h>
 
 #ifdef WIN32
 #include <windows.h>
@@ -35,8 +35,8 @@ using namespace std;
 
 const unsigned PalletThreadMgr::THREAD_NUM = 8;
 
-PalletThreadMgr::PalletThreadMgr(std::tr1::shared_ptr<Decoder> dec) :
-		decoder(dec) {
+PalletThreadMgr::PalletThreadMgr(std::tr1::shared_ptr<Decoder> dec)
+                : decoder(dec) {
 }
 
 PalletThreadMgr::~PalletThreadMgr() {
@@ -44,39 +44,41 @@ PalletThreadMgr::~PalletThreadMgr() {
 
 //first is inclusive , last is exclusive
 void PalletThreadMgr::threadProcessRange(unsigned first, unsigned last) {
-	for (unsigned int i = first; i < last; i++) {
-		allThreads[i]->start();
-	}
+    for (unsigned int i = first; i < last; i++) {
+        allThreads[i]->start();
+    }
 
-	for (unsigned int j = first; j < last; j++) {
-		allThreads[j]->join();
-	}
+    for (unsigned int j = first; j < last; j++) {
+        allThreads[j]->join();
+    }
 }
 
 void PalletThreadMgr::threadHandler() {
-	unsigned first = 0;
-	unsigned last = min(numThreads, THREAD_NUM);
+    unsigned first = 0;
+    unsigned last = min(numThreads, THREAD_NUM);
 
-	do {
-		threadProcessRange(first, last);
-		UA_DOUT(3, 5,
-				"Threads for cells finished: "<< first << "/" << last - 1);
+    do {
+        threadProcessRange(first, last);
+        __extension__ VLOG(2)
+                        << "Threads for cells finished: " << first << "/"
+                        << last - 1;
 
-		first = last;
-		last = min(last + THREAD_NUM, numThreads);
-	} while (first < numThreads);
+        first = last;
+        last = min(last + THREAD_NUM, numThreads);
+    }
+    while (first < numThreads);
 }
 
 void PalletThreadMgr::decodeCells(
-		std::vector<std::tr1::shared_ptr<PalletCell> > & cells) {
-	numThreads = cells.size();
-	allThreads.resize(numThreads);
+                std::vector<std::tr1::shared_ptr<PalletCell> > & cells) {
+    numThreads = cells.size();
+    allThreads.resize(numThreads);
 
-	for (unsigned i = 0; i < numThreads; ++i) {
-		//cells[i]->run();
-	    allThreads[i] = cells[i];
-	}
+    for (unsigned i = 0; i < numThreads; ++i) {
+        //cells[i]->run();
+        allThreads[i] = cells[i];
+    }
 
-	threadHandler();
+    threadHandler();
 }
 

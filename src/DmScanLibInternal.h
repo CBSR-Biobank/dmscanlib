@@ -41,78 +41,81 @@ using namespace std;
 
 class DmScanLib {
 public:
-	DmScanLib();
-	virtual ~DmScanLib();
+    DmScanLib(unsigned loggingLevel, bool logToFile = true);
+    virtual ~DmScanLib();
 
-	virtual int isTwainAvailable();
+    virtual int isTwainAvailable();
 
-	virtual int selectSourceAsDefault();
-	virtual int getScannerCapability();
-	virtual int scanImage(unsigned verbose, unsigned dpi, int brightness,
-			int contrast, double left, double top, double right, double bottom,
-			const char * filename);
-	virtual int scanFlatbed(unsigned verbose, unsigned dpi, int brightness,
-			int contrast, const char * filename);
-	virtual int decodePlate(unsigned verbose, unsigned dpi, int brightness,
-			int contrast, unsigned plateNum, double left, double top,
-			double right, double bottom, double scanGap, unsigned squareDev,
-			unsigned edgeThresh, unsigned corrections, double cellDistance,
-			double gapX, double gapY, unsigned profileA, unsigned profileB,
-			unsigned profileC, unsigned orientation);
-	virtual int decodeImage(unsigned verbose, unsigned plateNum,
-			const char * filename, double scanGap, unsigned squareDev,
-			unsigned edgeThresh, unsigned corrections, double cellDistance,
-			double gapX, double gapY, unsigned profileA, unsigned profileB,
-			unsigned profileC, unsigned orientation);
+    virtual int selectSourceAsDefault();
+    virtual int getScannerCapability();
+    virtual int scanImage(unsigned dpi, int brightness, int contrast,
+                          double left, double top, double right, double bottom,
+                          const char * filename);
+    virtual int scanFlatbed(unsigned dpi, int brightness, int contrast,
+                            const char * filename);
+    virtual int decodePlate(unsigned dpi, int brightness, int contrast,
+                            unsigned plateNum, double left, double top,
+                            double right, double bottom, double scanGap,
+                            unsigned squareDev, unsigned edgeThresh,
+                            unsigned corrections, double cellDistance,
+                            double gapX, double gapY, unsigned profileA,
+                            unsigned profileB, unsigned profileC,
+                            unsigned orientation);
+    virtual int decodeImage(unsigned plateNum, const char * filename,
+                            double scanGap, unsigned squareDev,
+                            unsigned edgeThresh, unsigned corrections,
+                            double cellDistance, double gapX, double gapY,
+                            unsigned profileA, unsigned profileB,
+                            unsigned profileC, unsigned orientation);
 
-	void configLogging(unsigned level, bool useFile = true);
+    void configLogging(unsigned level, bool useFile = true);
 
-	void setTextFileOutputEnable(bool enable) {
-		textFileOutputEnable = enable;
-	}
+    void setTextFileOutputEnable(bool enable) {
+        textFileOutputEnable = enable;
+    }
 
-	void setStdoutOutputEnable(bool enable) {
-		stdoutOutputEnable = enable;
-	}
+    void setStdoutOutputEnable(bool enable) {
+        stdoutOutputEnable = enable;
+    }
 
-	std::vector<std::tr1::shared_ptr<PalletCell> > & getDecodedCells();
+    std::vector<std::tr1::shared_ptr<PalletCell> > & getDecodedCells();
 
 protected:
-	void saveResults(string & msg);
+    void saveResults(string & msg);
 
-	void formatCellMessages(unsigned plateNum, string & msg);
+    void formatCellMessages(unsigned plateNum, string & msg);
 
-	int isValidDpi(int dpi);
+    int isValidDpi(int dpi);
 
-	int decodeCommon(const char *markedDibFilename);
+    int decodeCommon(const char *markedDibFilename);
 
-	std::tr1::shared_ptr<Dib> image;
-	std::tr1::shared_ptr<ImgScanner> imgScanner;
-	std::tr1::shared_ptr<PalletGrid> palletGrid;
-	std::tr1::shared_ptr<Decoder> decoder;
+    std::tr1::shared_ptr<Dib> image;
+    std::tr1::shared_ptr<ImgScanner> imgScanner;
+    std::tr1::shared_ptr<PalletGrid> palletGrid;
+    std::tr1::shared_ptr<Decoder> decoder;
 
-	unsigned plateNum;
-	double scanGap;
-	unsigned squareDev;
-	unsigned edgeThresh;
-	unsigned corrections;
-	double cellDistance;
-	double gapX;
-	double gapY;
-	unsigned profileA;
-	unsigned profileB;
-	unsigned profileC;
-	unsigned orientation;
+    unsigned plateNum;
+    double scanGap;
+    unsigned squareDev;
+    unsigned edgeThresh;
+    unsigned corrections;
+    double cellDistance;
+    double gapX;
+    double gapY;
+    unsigned profileA;
+    unsigned profileB;
+    unsigned profileC;
+    unsigned orientation;
 
-	slTime starttime; // for debugging
-	slTime endtime;
-	slTime timediff;
+    slTime starttime; // for debugging
+    slTime endtime;
+    slTime timediff;
 
-	bool stdoutOutputEnable;
+    bool stdoutOutputEnable;
 
-	bool textFileOutputEnable;
+    bool textFileOutputEnable;
 
-	static bool loggingInitialized;
+    static bool loggingInitialized;
 
 };
 

@@ -25,9 +25,8 @@
 
 #include "Decoder.h"
 #include "Dib.h"
-#include "UaLogger.h"
-#include "UaAssert.h"
 
+#include <glog/logging.h>
 #include <stdio.h>
 
 #if defined(USE_NVWA)
@@ -40,7 +39,6 @@ Decoder::Decoder(unsigned _dpi, double g, unsigned s, unsigned t, unsigned c,
                  double dist)
                 : dpi(_dpi), scanGap(g), squareDev(s), edgeThresh(t), corrections(
                                 c), cellDistance(dist) {
-    ua::Logger::Instance().subSysHeaderSet(3, "Decoder");
 }
 
 Decoder::~Decoder() {
@@ -52,7 +50,7 @@ void Decoder::decodeImage(std::tr1::weak_ptr<const Dib> dib,
     int minEdgeSize, maxEdgeSize;
 
     DmtxDecode *dec = dmtxDecodeCreate(image, 1);
-    UA_ASSERT_NOT_NULL(dec);
+    CHECK_NOTNULL(dec);
 
     // slightly smaller than the new tube edge
     minEdgeSize = static_cast<int>(0.08 * dpi);
@@ -81,7 +79,7 @@ dmtxDecodeSetProp    (dec, DmtxPropEdgeMin, minEdgeSize);
             msgFound = true;
             getDecodeInfo(dec, reg, msg, decodeResult);
 
-            if (ua::Logger::Instance().levelGet(3) >= 9) {
+            if (__extension__ VLOG_IS_ON(2)) {
                 showStats(dec, reg, msg);
             }
             dmtxMessageDestroy(&msg);
@@ -89,7 +87,7 @@ dmtxDecodeSetProp    (dec, DmtxPropEdgeMin, minEdgeSize);
         dmtxRegionDestroy(&reg);
     }
 
-    if (ua::Logger::Instance().levelGet(3) >= 9) {
+    if (__extension__ VLOG_IS_ON(2)) {
         writeDiagnosticImage(dec, id);
     }
 
@@ -99,9 +97,9 @@ dmtxDecodeSetProp    (dec, DmtxPropEdgeMin, minEdgeSize);
 
 void Decoder::getDecodeInfo(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg,
                             DecodeResult & decodeResult) {
-    UA_ASSERT_NOT_NULL(dec);
-    UA_ASSERT_NOT_NULL(reg);
-    UA_ASSERT_NOT_NULL(msg);
+    CHECK_NOTNULL(dec);
+    CHECK_NOTNULL(reg);
+    CHECK_NOTNULL(msg);
 
     DmtxVector2 p00, p10, p11, p01;
 
@@ -154,7 +152,7 @@ DmtxImage * Decoder::createDmtxImageFromDib(const Dib & dib) {
 }
 
 void Decoder::showStats(DmtxDecode * dec, DmtxRegion * reg, DmtxMessage * msg) {
-    if (ua::Logger::Instance().levelGet(3) < 9) return;
+    if (__extension__ !VLOG_IS_ON(2)) return;
 
     int height;
     int dataWordLength;
@@ -182,30 +180,39 @@ void Decoder::showStats(DmtxDecode * dec, DmtxRegion * reg, DmtxMessage * msg) {
     rotateInt = (int) (rotate * 180 / M_PI + 0.5);
     if (rotateInt >= 360) rotateInt -= 360;
 
-    UA_DOUT(3, 9, "\n--------------------------------------------------"
-                << "\n       Matrix Size: "
-                << dmtxGetSymbolAttribute(DmtxSymAttribSymbolRows, reg->sizeIdx)
-                << " x "
-                << dmtxGetSymbolAttribute(DmtxSymAttribSymbolCols, reg->sizeIdx)
-                << "\n    Data Codewords: "
-                << dataWordLength - msg->padCount
-                << " (capacity "
-                << dataWordLength << ")"
-                << "\n   Error Codewords: "
-                << dmtxGetSymbolAttribute(DmtxSymAttribSymbolErrorWords, reg->sizeIdx)
-                << "\n      Data Regions: "
-                << dmtxGetSymbolAttribute(DmtxSymAttribHorizDataRegions, reg->sizeIdx)
-                << " x "
-                << dmtxGetSymbolAttribute(DmtxSymAttribVertDataRegions, reg->sizeIdx)
-                << "\nInterleaved Blocks: "
-                << dmtxGetSymbolAttribute(DmtxSymAttribInterleavedBlocks, reg->sizeIdx)
-                << "\n    Rotation Angle: " << rotateInt
-                << "\n          Corner 0: (" << p00.X << ", " << height - 1 - p00.Y << ")"
-                << "\n          Corner 1: (" << p10.X << ", " << height - 1 - p10.Y << ")"
-                << "\n          Corner 2: (" << p11.X << ", " << height - 1 - p11.Y << ")"
-                << "\n          Corner 3: (" << p01.X << ", " << height - 1 - p01.Y << ")"
-                << "\n--------------------------------------------------"
-    );
+    __extension__ VLOG(2)
+                    << "\n--------------------------------------------------"
+                    << "\n       Matrix Size: "
+                    << dmtxGetSymbolAttribute(DmtxSymAttribSymbolRows,
+                                              reg->sizeIdx)
+                    << " x "
+                    << dmtxGetSymbolAttribute(DmtxSymAttribSymbolCols,
+                                              reg->sizeIdx)
+                    << "\n    Data Codewords: "
+                    << dataWordLength - msg->padCount
+                    << " (capacity "
+                    << dataWordLength
+                    << ")"
+                    << "\n   Error Codewords: "
+                    << dmtxGetSymbolAttribute(DmtxSymAttribSymbolErrorWords,
+                                              reg->sizeIdx)
+                    << "\n      Data Regions: "
+                    << dmtxGetSymbolAttribute(DmtxSymAttribHorizDataRegions,
+                                              reg->sizeIdx)
+                    << " x "
+                    << dmtxGetSymbolAttribute(DmtxSymAttribVertDataRegions,
+                                              reg->sizeIdx)
+                    << "\nInterleaved Blocks: "
+                    << dmtxGetSymbolAttribute(DmtxSymAttribInterleavedBlocks,
+                                              reg->sizeIdx)
+                    << "\n    Rotation Angle: " << rotateInt
+                    << "\n          Corner 0: (" << p00.X << ", "
+                    << height - 1 - p00.Y << ")" << "\n          Corner 1: ("
+                    << p10.X << ", " << height - 1 - p10.Y << ")"
+                    << "\n          Corner 2: (" << p11.X << ", "
+                    << height - 1 - p11.Y << ")" << "\n          Corner 3: ("
+                    << p01.X << ", " << height - 1 - p01.Y << ")"
+                    << "\n--------------------------------------------------";
 }
 
 void Decoder::writeDiagnosticImage(DmtxDecode *dec, const std::string & id) {
@@ -218,13 +225,13 @@ void Decoder::writeDiagnosticImage(DmtxDecode *dec, const std::string & id) {
     fname << "diagnostic-" << id << ".pnm";
 
     fp = fopen(fname.str().c_str(), "wb");
-    UA_ASSERT_NOT_NULL(fp);
+    CHECK_NOTNULL(fp);
 
     pnm = dmtxDecodeCreateDiagnostic(dec, &totalBytes, &headerBytes, 0);
-    UA_ASSERT_NOT_NULL(pnm);
+    CHECK_NOTNULL(pnm);
 
     bytesWritten = fwrite(pnm, sizeof(unsigned char), totalBytes, fp);
-    UA_ASSERT(bytesWritten == totalBytes);
+    CHECK(bytesWritten == totalBytes);
 
     free(pnm);
     fclose(fp);

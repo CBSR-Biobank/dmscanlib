@@ -31,9 +31,8 @@
 #endif
 
 #include "Dib.h"
-#include "UaLogger.h"
-#include "UaAssert.h"
 
+#include <glog/logging.h>
 #include <stdio.h>
 #include <algorithm>
 
@@ -110,12 +109,10 @@ void RgbQuad::set(unsigned char r, unsigned char g, unsigned char b) {
 
 Dib::Dib()
                 : pixels(NULL), isAllocated(false) {
-    ua::Logger::Instance().subSysHeaderSet(4, "Dib");
 }
 
 Dib::Dib(const Dib & src)
                 : pixels(NULL), isAllocated(false) {
-    ua::Logger::Instance().subSysHeaderSet(4, "Dib");
     init(src.width, src.height, src.colorBits, src.pixelsPerMeter);
     memcpy(pixels, src.pixels, src.imageSize);
 }
@@ -123,18 +120,16 @@ Dib::Dib(const Dib & src)
 Dib::Dib(unsigned width, unsigned height, unsigned colorBits,
          unsigned pixelsPerMeter)
                 : pixels(NULL), isAllocated(false) {
-    ua::Logger::Instance().subSysHeaderSet(4, "Dib");
     init(width, height, colorBits, pixelsPerMeter);
 }
 
 Dib::Dib(IplImageContainer & img)
                 : pixels(NULL), isAllocated(false) {
-    ua::Logger::Instance().subSysHeaderSet(4, "Dib");
 
     IplImage *src = img.getIplImage();
 
-    UA_ASSERTS(src->depth == IPL_DEPTH_8U,
-               "Dib::Dib(IplImage & src) requires an unsigned 8bit image");
+    CHECK(src->depth == IPL_DEPTH_8U) <<
+    "Dib::Dib(IplImage & src) requires an unsigned 8bit image";
 
     CvMat hdr, *matrix = NULL;
     /* IplImage saves a flipped image */
@@ -148,7 +143,6 @@ Dib::Dib(IplImageContainer & img)
 
 Dib::Dib(char *filename)
                 : pixels(NULL), isAllocated(false) {
-    ua::Logger::Instance().subSysHeaderSet(4, "Dib");
     readFromFile(filename);
 }
 
@@ -170,7 +164,7 @@ void Dib::init(unsigned width, unsigned height, unsigned colorBits,
     if (allocatePixelBuf) {
         allocate(imageSize);
     }
-    UA_DOUT(4, 9, "constructor: image size is " << imageSize);
+    __extension__ VLOG(2) << "constructor: image size is " << imageSize;
 }
 
 Dib::~Dib() {
@@ -181,7 +175,7 @@ void Dib::allocate(unsigned int allocateSize) {
     isAllocated = true;
     pixels = new unsigned char[allocateSize];
     memset(pixels, 255, allocateSize);
-    UA_ASSERT_NOT_NULL(pixels);
+    CHECK_NOTNULL(pixels);
 }
 
 void Dib::deallocate() {
@@ -193,9 +187,9 @@ void Dib::deallocate() {
 
 void Dib::initPalette(RgbQuad * colorPalette) const {
     unsigned paletteSize = getPaletteSize(colorBits);
-    UA_ASSERT(paletteSize != 0);
+    CHECK(paletteSize != 0);
 
-    UA_ASSERT_NOT_NULL(colorPalette);
+    CHECK_NOTNULL(colorPalette);
     for (unsigned i = 0; i < paletteSize; ++i) {
         colorPalette[i].set(i, i, i);
     }
@@ -220,11 +214,11 @@ void Dib::readFromHandle(HANDLE handle) {
     BITMAPINFOHEADER *dibHeaderPtr = (BITMAPINFOHEADER *) GlobalLock(handle);
 
     // if these conditions are not met the Dib cannot be processed
-    UA_ASSERT(dibHeaderPtr->biSize == 40);
-    UA_ASSERT(dibHeaderPtr->biPlanes == 1);
-    UA_ASSERT(dibHeaderPtr->biCompression == 0);
-    UA_ASSERT(dibHeaderPtr->biXPelsPerMeter == dibHeaderPtr->biYPelsPerMeter);
-    UA_ASSERT(dibHeaderPtr->biClrImportant == 0);
+    CHECK(dibHeaderPtr->biSize == 40);
+    CHECK(dibHeaderPtr->biPlanes == 1);
+    CHECK(dibHeaderPtr->biCompression == 0);
+    CHECK(dibHeaderPtr->biXPelsPerMeter == dibHeaderPtr->biYPelsPerMeter);
+    CHECK(dibHeaderPtr->biClrImportant == 0);
 
     init(dibHeaderPtr->biWidth, dibHeaderPtr->biHeight,
                     dibHeaderPtr->biBitCount, dibHeaderPtr->biXPelsPerMeter, false);
@@ -247,23 +241,21 @@ void Dib::readFromHandle(HANDLE handle) {
  * All values in little-endian except for BitmapFileHeader.type.
  */
 void Dib::readFromFile(const char *filename) {
-    UA_ASSERT_NOT_NULL(filename);
+    CHECK_NOTNULL(filename);
 
     deallocate();
 
     FILE *fh = fopen(filename, "rb"); // C4996
-    if (fh == NULL) {
-        UA_ERROR("could not open file " << filename);
-    }
+    CHECK_NE(fh, (FILE *)NULL) << "could not open file " << filename;
 
     unsigned char fileHeaderRaw[0xE];
     unsigned char infoHeaderRaw[0x28];
     unsigned r;
 
     r = fread(fileHeaderRaw, sizeof(unsigned char), sizeof(fileHeaderRaw), fh);
-    UA_ASSERT(r = sizeof(fileHeaderRaw));
+    CHECK(r = sizeof(fileHeaderRaw));
     r = fread(infoHeaderRaw, sizeof(unsigned char), sizeof(infoHeaderRaw), fh);
-    UA_ASSERT(r = sizeof(infoHeaderRaw));
+    CHECK(r = sizeof(infoHeaderRaw));
 
     //unsigned size = *(unsigned *) &infoHeaderRaw[0];
     unsigned width = *(unsigned *) &infoHeaderRaw[0x12 - 0xE];
@@ -278,22 +270,22 @@ void Dib::readFromFile(const char *filename) {
 
     //FIXME this is required for gimp-based cropped images.
     // if these conditions are not met the Dib cannot be processed
-    //UA_ASSERT(size == 40);
+    //CHECK(size == 40);
 
-    UA_ASSERT(planes == 1);
-    UA_ASSERT(compression == 0);
-    UA_ASSERT(hPixelsPerMeter == vPixelsPerMeter);
-    UA_ASSERT(numColorsImp == 0);
+    CHECK(planes == 1);
+    CHECK(compression == 0);
+    CHECK(hPixelsPerMeter == vPixelsPerMeter);
+    CHECK(numColorsImp == 0);
 
     init(width, height, colorBits, hPixelsPerMeter);
 
     r = fread(pixels, sizeof(unsigned char), imageSize, fh);
-    UA_ASSERT(r = imageSize);
+    CHECK(r = imageSize);
     fclose(fh);
 
-    UA_DOUT( 4,
-            5,
-            "readFromFile: rowBytes/" << rowBytes << " paddingBytes/" << rowPaddingBytes);
+    __extension__ VLOG(2)
+                    << "readFromFile: rowBytes/" << rowBytes << " paddingBytes/"
+                    << rowPaddingBytes;
 }
 
 unsigned Dib::getRowBytes(unsigned width, unsigned colorBits) {
@@ -301,8 +293,8 @@ unsigned Dib::getRowBytes(unsigned width, unsigned colorBits) {
 }
 
 bool Dib::writeToFile(const char *filename) const {
-    UA_ASSERT_NOT_NULL(filename);
-    UA_ASSERT_NOT_NULL(pixels);
+    CHECK_NOTNULL(filename);
+    CHECK_NOTNULL(pixels);
 
     unsigned char fileHeaderRaw[0xE];
     unsigned char infoHeaderRaw[0x28];
@@ -330,25 +322,25 @@ bool Dib::writeToFile(const char *filename) const {
     *(unsigned *) &infoHeaderRaw[0x32 - 0xE] = 0;
 
     FILE *fh = fopen(filename, "wb"); // C4996
-    if (fh == NULL) {
-        // could not open file for writing
+    if (fh != NULL) {
+        DLOG(ERROR) << "could not open file for writing";
         return false;
     }
 
     unsigned r = fwrite(fileHeaderRaw, sizeof(unsigned char),
                         sizeof(fileHeaderRaw), fh);
-    UA_ASSERT(r == sizeof(fileHeaderRaw));
+    CHECK(r == sizeof(fileHeaderRaw));
     r = fwrite(infoHeaderRaw, sizeof(unsigned char), sizeof(infoHeaderRaw), fh);
-    UA_ASSERT(r == sizeof(infoHeaderRaw));
+    CHECK(r == sizeof(infoHeaderRaw));
     if (paletteSize > 0) {
         RgbQuad * colorPalette = new RgbQuad[paletteSize];
         initPalette(colorPalette);
         r = fwrite(colorPalette, sizeof(unsigned char), paletteBytes, fh);
-        UA_ASSERT(r == paletteBytes);
+        CHECK_EQ(r, paletteBytes);
         delete[] colorPalette;
     }
     r = fwrite(pixels, sizeof(unsigned char), imageSize, fh);
-    UA_ASSERT(r == imageSize);
+    CHECK_EQ(r, imageSize);
     fclose(fh);
     return true;
 }
@@ -375,13 +367,13 @@ unsigned Dib::getBitsPerPixel() const {
 }
 
 unsigned char *Dib::getPixelBuffer() const {
-    UA_ASSERT_NOT_NULL(pixels);
+    CHECK_NOTNULL(pixels);
     return pixels;
 }
 
 unsigned char Dib::getPixelAvgGrayscale(unsigned row, unsigned col) const {
-    UA_ASSERT(row < height);
-    UA_ASSERT(col < width);
+    CHECK(row < height);
+    CHECK(col < width);
 
     unsigned char *ptr = pixels + row * rowBytes + col * bytesPerPixel;
 
@@ -390,13 +382,14 @@ unsigned char Dib::getPixelAvgGrayscale(unsigned row, unsigned col) const {
                         + 0.33333 * ptr[2]);
     } else if (colorBits == 8) {
         return *ptr;
-    }UA_ASSERTS(false, "colorBits " << colorBits << " not implemented yet");
+    }
+    CHECK(false) << "colorBits " << colorBits << " not implemented yet";
     return 0;
 }
 
 inline unsigned char Dib::getPixelGrayscale(unsigned row, unsigned col) const {
-    UA_ASSERT(row < height);
-    UA_ASSERT(col < width);
+    CHECK(row < height);
+    CHECK(col < width);
 
     unsigned char *ptr = pixels + row * rowBytes + col * bytesPerPixel;
 
@@ -405,13 +398,14 @@ inline unsigned char Dib::getPixelGrayscale(unsigned row, unsigned col) const {
                         + 0.3333 * ptr[2]);
     } else if (colorBits == 8) {
         return *ptr;
-    }UA_ASSERTS(false, "colorBits " << colorBits << " not implemented yet");
+    }
+    CHECK(false) << "colorBits " << colorBits << " not implemented yet";
     return 0;
 }
 
 void Dib::setPixel(unsigned x, unsigned y, const RgbQuad & quad) {
-    UA_ASSERT(x < width);
-    UA_ASSERT(y < height);
+    CHECK(x < width);
+    CHECK(y < height);
 
     unsigned char *ptr = (pixels + y * rowBytes + x * bytesPerPixel);
 
@@ -420,9 +414,8 @@ void Dib::setPixel(unsigned x, unsigned y, const RgbQuad & quad) {
                         + 0.3333 * quad.rgbGreen + 0.3333 * quad.rgbBlue);return;
     }
 
-    if ((colorBits != 24) && (colorBits != 32)) {
-        UA_ERROR("can't assign RgbQuad to dib");
-    }
+    CHECK((colorBits == 24) || (colorBits == 32)) <<
+        "can't assign RgbQuad to dib";
 
     ptr[2] = quad.rgbRed;
     ptr[1] = quad.rgbGreen;
@@ -431,8 +424,8 @@ void Dib::setPixel(unsigned x, unsigned y, const RgbQuad & quad) {
 
 inline void Dib::setPixelGrayscale(unsigned row, unsigned col,
                                    unsigned char value) {
-    UA_ASSERT(row < height);
-    UA_ASSERT(col < width);
+    CHECK(row < height);
+    CHECK(col < width);
 
     unsigned char *ptr = pixels + row * rowBytes + col * bytesPerPixel;
 
@@ -466,17 +459,21 @@ bool Dib::bound(unsigned min, unsigned & x, unsigned max) {
 }
 
 std::tr1::shared_ptr<Dib> Dib::convertGrayscale() const {
-    UA_ASSERT(getBitsPerPixel() == 24 || getBitsPerPixel() == 8);
-    UA_ASSERT(getPixelBuffer() != NULL);
+    CHECK(getBitsPerPixel() == 24 || getBitsPerPixel() == 8);
+    CHECK(getPixelBuffer() != NULL);
 
-    UA_ASSERTS(getBitsPerPixel() != 8, "already grayscale image.");
+    if (getBitsPerPixel() == 8) {
+        CHECK(false) << "already grayscale image.";
+    }
 
-    UA_DOUT(4, 9, "convertGrayscale: Converting from 24 bit to 8 bit.");
+    __extension__ VLOG(2)
+                    << "convertGrayscale: Converting from 24 bit to 8 bit.";
 
     // 24bpp -> 8bpp
     Dib * dest = new Dib(width, height, 8, pixelsPerMeter);
 
-    UA_DOUT(4, 9, "convertGrayscale: Made dib");
+    __extension__ VLOG(2)
+                    << "convertGrayscale: Made dib";
 
     unsigned char *srcRowPtr = pixels;
     unsigned char *destRowPtr = dest->pixels;
@@ -487,8 +484,7 @@ std::tr1::shared_ptr<Dib> Dib::convertGrayscale() const {
         destPtr = destRowPtr;
         for (unsigned col = 0; col < width; ++col, ++destPtr) {
             *destPtr = static_cast<unsigned char>(0.3333 * srcPtr[0]
-                            + 0.3333 * srcPtr[1] + 0.3333 * srcPtr[2]);
-            srcPtr += bytesPerPixel;
+                            + 0.3333 * srcPtr[1] + 0.3333 * srcPtr[2]);srcPtr +=bytesPerPixel;
 		}
 
             // now initialise the padding bytes
@@ -500,7 +496,8 @@ std::tr1::shared_ptr<Dib> Dib::convertGrayscale() const {
         destRowPtr += dest->rowBytes;
     }
 
-    UA_DOUT(4, 9, "convertGrayscale: Generated 8 bit grayscale image.");
+    __extension__ VLOG(2)
+                    << "convertGrayscale: Generated 8 bit grayscale image.";
 
     return std::tr1::shared_ptr<Dib>(dest);
 }
@@ -510,8 +507,8 @@ std::tr1::shared_ptr<Dib> Dib::convertGrayscale() const {
  */
 std::tr1::shared_ptr<Dib> Dib::crop(unsigned x0, unsigned y0, unsigned x1,
                                     unsigned y1) const {
-    UA_ASSERT(x1 > x0);
-    UA_ASSERT(y1 > y0);
+    CHECK(x1 > x0);
+    CHECK(y1 > y0);
 
     bound(0, x0, width);
     bound(0, x1, width);
@@ -547,9 +544,9 @@ std::tr1::shared_ptr<Dib> Dib::crop(unsigned x0, unsigned y0, unsigned x1,
  * cvmat: Matrices are stored row by row. All of the rows are padded (4 bytes).
  */
 auto_ptr<IplImageContainer> Dib::generateIplImage() {
-    UA_ASSERTS(colorBits == 8,
-               "generateIplImage requires an unsigned 8bit image");
-    UA_ASSERTS(pixels != NULL, "NULL pixel data specified to generateIplImage");
+    CHECK_EQ(colorBits, 8)
+               << "generateIplImage requires an unsigned 8bit image";
+    CHECK_NOTNULL(pixels);
 
     IplImage *image = NULL;
     CvMat hdr, *matrix = NULL;
@@ -583,10 +580,10 @@ auto_ptr<IplImageContainer> Dib::generateIplImage() {
  */
 void Dib::line(unsigned x0, unsigned y0, unsigned x1, unsigned y1,
                const RgbQuad & quad) {
-    UA_ASSERT(y0 < height);
-    UA_ASSERT(y1 < height);
-    UA_ASSERT(x0 < width);
-    UA_ASSERT(x1 < width);
+    CHECK(y0 < height);
+    CHECK(y1 < height);
+    CHECK(x0 < width);
+    CHECK(x1 < width);
 
     unsigned x, deltax, y, deltay, st;
     int cx, cy, error, xstep, ystep;
@@ -661,33 +658,37 @@ void Dib::tpPresetFilter() {
     switch (getDpi()) {
 
     case 400:
-        UA_DOUT(4, 5, "tpPresetFilter: Applying DPI_400_KERNEL");
+        __extension__ VLOG(2)
+                    << "tpPresetFilter: Applying DPI_400_KERNEL";
         convolveFast3x3(Dib::DPI_400_KERNEL);
         break;
 
     case 600:
-        UA_DOUT(4, 5, "tpPresetFilter: Applying BLANK_KERNEL");
+        __extension__ VLOG(2)
+                    << "tpPresetFilter: Applying BLANK_KERNEL";
         convolveFast3x3(Dib::BLANK_KERNEL);
 
-        UA_DOUT(4, 5, "tpPresetFilter: Applying BLUR_KERNEL");
+        __extension__ VLOG(2)
+                    << "tpPresetFilter: Applying BLUR_KERNEL";
         convolveFast3x3(Dib::BLUR_KERNEL);
         break;
 
     case 300:
-        UA_DOUT(4, 5, "tpPresetFilter: No filter applied (300 dpi)");
+        __extension__ VLOG(2)
+                    << "tpPresetFilter: No filter applied (300 dpi)";
         break;
 
     default:
-        UA_DOUT(4, 5,
-                "tpPresetFilter: No filter applied (default) dpi/" << getDpi());
+        __extension__ VLOG(2)
+                    << "tpPresetFilter: No filter applied (default) dpi/" << getDpi();
         break;
     }
 }
 
 // Can only be used for grayscale Dibs
 void Dib::convolveFast3x3(const float(&k)[9]) {
-    UA_ASSERTS(colorBits == 8,
-               "convolveFast3x3 requires an unsigned 8bit image");
+    CHECK_EQ(colorBits, 8)
+               << "convolveFast3x3 requires an unsigned 8bit image";
 
     unsigned size = height * width;
 

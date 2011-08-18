@@ -3,8 +3,9 @@
 #include "Dib.h"
 #include "Decoder.h"
 #include "DecodeResult.h"
-#include "UaAssert.h"
-#include "UaLogger.h"
+
+#include <glog/logging.h>
+#include <glog/raw_logging.h>
 
 #ifdef _VISUALC_
 #   include <functional>
@@ -30,10 +31,8 @@ void PalletCell::run() {
     if (!decodeResult.msg.empty()) {
         grid.registerBarcodeMsg(decodeResult.msg);
 
-        UA_DOUT(3,
-                5,
-                "PalletCell::setDecodeInfo: " << row << ", " << col << " "
-                << decodeResult.msg);
+        RAW_LOG(INFO,
+                "PalletCell::setDecodeInfo: (%d,%d) - %s", row, col, decodeResult.msg.c_str());
     }
 }
 
@@ -45,13 +44,13 @@ std::tr1::shared_ptr<const Dib> PalletCell::getImage() {
 }
 
 const string & PalletCell::getBarcodeMsg() {
-    UA_ASSERT(!decodeResult.msg.empty());
+    CHECK(!decodeResult.msg.empty());
     return decodeResult.msg;
 }
 
 void PalletCell::writeImage(std::string basename) {
     // do not write diagnostic image is log level is less than 9
-    if (ua::Logger::Instance().levelGet(3) < 9) return;
+    if (__extension__ !VLOG_IS_ON(2)) return;
 
     ostringstream fname;
     fname << basename << "-" << row << "-" << col << ".bmp";
