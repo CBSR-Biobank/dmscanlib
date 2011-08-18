@@ -1,6 +1,5 @@
 #include "ImgScannerFactory.h"
 #include "ImgScannerSimulator.h"
-#include "UaAssert.h"
 
 #ifdef WIN32
 #   include "ImgScannerImpl.h"

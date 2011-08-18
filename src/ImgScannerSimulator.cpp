@@ -27,9 +27,8 @@
  */
 
 #include "ImgScannerSimulator.h"
-#include "UaLogger.h"
-#include "UaAssert.h"
 
+#include <glog/logging.h>
 #include <math.h>
 
 #if defined(USE_NVWA)
@@ -37,7 +36,6 @@
 #endif
 
 ImgScannerSimulator::ImgScannerSimulator() {
-   ua::Logger::Instance().subSysHeaderSet(2, "ImgScannerSimulator");
    errorCode = -1;
 }
 
@@ -45,36 +43,36 @@ ImgScannerSimulator::~ImgScannerSimulator() {
 }
 
 bool ImgScannerSimulator::twainAvailable() {
-	UA_DOUT(2, 5, "twainAvailable");
+	__extension__ VLOG(2) << "twainAvailable";
    return false;
 }
 
 bool ImgScannerSimulator::selectSourceAsDefault() {
-	UA_DOUT(2, 5, "selectSourceAsDefault");
+	__extension__ VLOG(2) << "selectSourceAsDefault";
    return false;
 }
 
 int ImgScannerSimulator::getScannerCapability() {
-	UA_DOUT(2, 5, "getScannerCapability");
+	__extension__ VLOG(2) << "getScannerCapability";
 	return 0;
 }
 
 HANDLE ImgScannerSimulator::acquireImage(unsigned dpi, int brightness, int contrast,
 	double top, double left, double bottom, double right) {
-	UA_DOUT(2, 5, "acquireImage");
+	__extension__ VLOG(2) << "acquireImage";
 	return NULL;
 }
 
 HANDLE ImgScannerSimulator::acquireFlatbed(unsigned dpi, int brightness, int contrast) {
-	UA_DOUT(2, 5, "acquireFlatbed");
+	__extension__ VLOG(2) << "acquireFlatbed";
 	return NULL;
 }
 
 DmtxImage* ImgScannerSimulator::acquireDmtxImage(unsigned dpi, int brightness, int contrast) {
-	UA_DOUT(2, 5, "acquireDmtxImage");
+	__extension__ VLOG(2) << "acquireDmtxImage";
 	return NULL;
 }
 
 void ImgScannerSimulator::freeImage(HANDLE handle) {
-	UA_DOUT(2, 5, "freeImage");
+	__extension__ VLOG(2) << "freeImage";
 }

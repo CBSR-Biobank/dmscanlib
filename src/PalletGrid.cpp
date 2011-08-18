@@ -24,10 +24,9 @@
 #include "PalletThreadMgr.h"
 #include "PalletCell.h"
 #include "Dib.h"
-#include "UaAssert.h"
-#include "UaLogger.h"
 #include "cxtypes.h"
 
+#include <glog/logging.h>
 #include <sstream>
 
 #ifdef _VISUALC_
@@ -53,12 +52,13 @@ PalletGrid::PalletGrid(unsigned pn, Orientation o,
         cellWidth = imgWidth / static_cast<double>(MAX_ROWS);
         cellHeight = imgHeight / static_cast<double>(MAX_COLS);
     } else {
-        UA_ASSERTS(false, "orientation invalid: " << orientation);
+        CHECK(false) << "orientation invalid: " << orientation;
     }
 
-    UA_DOUT( 1,
-            3,
-            "PalletGrid: orientation/" << orientation << " width/" << imgWidth << " height/" << imgHeight << " imgValid/" << imgValid);
+    __extension__ VLOG(2)
+                    << "PalletGrid: orientation/" << orientation << " width/"
+                    << imgWidth << " height/" << imgHeight << " imgValid/"
+                    << imgValid;
 
     if (!imgValid) return;
 
@@ -99,14 +99,20 @@ PalletGrid::~PalletGrid() {
 }
 
 void PalletGrid::applyFilters() {
-    filteredImage = image->convertGrayscale();
+    if (image->getBitsPerPixel() != 8) {
+        filteredImage = image->convertGrayscale();
+    } else {
+        filteredImage = std::tr1::shared_ptr<Dib>(new Dib(*image.get()));
+    }
     filteredImage->tpPresetFilter();
-    UA_DEBUG(image->writeToFile("filtered.bmp"));
+    if (__extension__ VLOG_IS_ON(2)) {
+        image->writeToFile("filtered.bmp");
+    }
 }
 
 void PalletGrid::getCellRect(unsigned row, unsigned col, CvRect & rect) {
-    UA_ASSERT(row < MAX_ROWS);
-    UA_ASSERT(col < MAX_COLS);
+    CHECK(row < MAX_ROWS);
+    CHECK(col < MAX_COLS);
 
     if (orientation == ORIENTATION_HORIZONTAL) {
         rect.x = static_cast<int>(cellWidth * (MAX_COLS - col - 1)) + gapX;
@@ -115,7 +121,7 @@ void PalletGrid::getCellRect(unsigned row, unsigned col, CvRect & rect) {
         rect.x = static_cast<int>(cellWidth * row) + gapX;
         rect.y = static_cast<int>(cellHeight * col) + gapY;
     } else {
-        UA_ASSERTS(false, "orientation invalid: " << orientation);
+        CHECK(false) << "orientation invalid: " << orientation;
     }
 
     rect.width = static_cast<int>(cellWidth) - gapX;
@@ -123,8 +129,8 @@ void PalletGrid::getCellRect(unsigned row, unsigned col, CvRect & rect) {
 }
 
 void PalletGrid::getPositionStr(unsigned row, unsigned col, std::string & str) {
-    UA_ASSERT(row < MAX_ROWS);
-    UA_ASSERT(col < MAX_COLS);
+    CHECK(row < MAX_ROWS);
+    CHECK(col < MAX_COLS);
 
     std::ostringstream out;
     out << (char) ('A' + row) << col;
@@ -132,15 +138,17 @@ void PalletGrid::getPositionStr(unsigned row, unsigned col, std::string & str) {
 }
 
 bool PalletGrid::getCellEnabled(unsigned row, unsigned col) {
-    UA_ASSERTS(row < PalletGrid::MAX_ROWS, "invalid row requested " << row);
-    UA_ASSERTS(col < PalletGrid::MAX_COLS, "invalid column requested " << col);
+    CHECK_LT(row, PalletGrid::MAX_ROWS) << "invalid row requested "
+                                               << row;
+    CHECK_LT(col, PalletGrid::MAX_COLS) << "invalid column requested "
+                                               << col;
     return cellEnabled[MAX_COLS * row + col];
 }
 
 std::tr1::shared_ptr<const Dib> PalletGrid::getCellImage(unsigned row,
                                                          unsigned col) {
-    UA_ASSERT(row < MAX_ROWS);
-    UA_ASSERT(col < MAX_COLS);
+    CHECK(row < MAX_ROWS);
+    CHECK(col < MAX_COLS);
 
     return cellsByRowCol[row][col]->getImage();
 }
@@ -152,7 +160,7 @@ std::tr1::shared_ptr<const Dib> PalletGrid::getCellImage(
     const unsigned row = cell.getRow();
     const unsigned col = cell.getCol();
 
-    UA_ASSERT(cellEnabled[MAX_COLS * row + col]);
+    CHECK(cellEnabled[MAX_COLS * row + col]);
 
     const CvRect & rect = cell.getParentPos();
 
@@ -161,16 +169,16 @@ std::tr1::shared_ptr<const Dib> PalletGrid::getCellImage(
 }
 
 unsigned PalletGrid::decodeCells(std::tr1::shared_ptr<Decoder> dcdr) {
-    UA_ASSERT(imgValid);
+    CHECK(imgValid);
 
     decoder = dcdr;
 
-#ifdef _DEBUG
-    string str;
-    getProfileAsString(str);
-    UA_DOUT(1, 5, "Profile: \n" << str);
-    writeImageWithCells("cellRegions.bmp");
-#endif
+    if (__extension__ VLOG_IS_ON(3)) {
+        string str;
+        getProfileAsString(str);
+        __extension__ VLOG(3) << "Profile: \n" << str;
+        writeImageWithCells("cellRegions.bmp");
+    }
 
     bool found;
     PalletThreadMgr imageManager(decoder);
@@ -179,13 +187,12 @@ unsigned PalletGrid::decodeCells(std::tr1::shared_ptr<Decoder> dcdr) {
     for (unsigned i = 0, n = allCells.size(); i < n; ++i) {
         PalletCell & cell = *allCells[i];
 
-
         found = (cell.getDecodeValid() && !cell.getBarcodeMsg().empty());
         if (found) {
             decodedCells.push_back(allCells[i]);
         }
 
-        if (ua::Logger::Instance().levelGet(3) >= 9) {
+        if (__extension__ VLOG_IS_ON(2)) {
             cell.writeImage(found ? "found" : "missed");
         }
     }
@@ -193,8 +200,8 @@ unsigned PalletGrid::decodeCells(std::tr1::shared_ptr<Decoder> dcdr) {
 }
 
 void PalletGrid::registerBarcodeMsg(std::string & msg) {
-    UA_ASSERTS(decodedMsgCount[msg] == 0,
-               "decoded message found more thank once" << msg);
+    CHECK_EQ(decodedMsgCount[msg], 0)
+    << "decoded message found more thank once" << msg;
     ++decodedMsgCount[msg];
 }
 
@@ -227,7 +234,7 @@ void PalletGrid::formatCellMessages(string & msg) {
 }
 
 void PalletGrid::writeImageWithCells(std::string filename) {
-    UA_ASSERTS(allCells.size() > 0, "cells images not initialized yet");
+    CHECK_GT(allCells.size(), 0) << "cells images not initialized yet";
 
     RgbQuad white(255, 255, 255);
     Dib markedImage(*image);
@@ -240,7 +247,7 @@ void PalletGrid::writeImageWithCells(std::string filename) {
 }
 
 void PalletGrid::writeImageWithBoundedBarcodes(std::string filename) {
-    UA_ASSERTS(allCells.size() > 0, "cells images not initialized yet");
+    CHECK_GT(allCells.size(), 0) << "cells images not initialized yet";
 
     RgbQuad red(255, 0, 0);
     Dib markedImage(*image);
