@@ -20,6 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "DmScanLibInternal.h"
 #include "PalletGrid.h"
 #include "PalletThreadMgr.h"
 #include "PalletCell.h"
@@ -55,7 +56,7 @@ PalletGrid::PalletGrid(unsigned pn, Orientation o,
         CHECK(false) << "orientation invalid: " << orientation;
     }
 
-    __extension__ VLOG(2)
+    GCC_EXT VLOG(2)
                     << "PalletGrid: orientation/" << orientation << " width/"
                     << imgWidth << " height/" << imgHeight << " imgValid/"
                     << imgValid;
@@ -105,7 +106,7 @@ void PalletGrid::applyFilters() {
         filteredImage = std::tr1::shared_ptr<Dib>(new Dib(*image.get()));
     }
     filteredImage->tpPresetFilter();
-    if (__extension__ VLOG_IS_ON(2)) {
+    if (GCC_EXT VLOG_IS_ON(2)) {
         image->writeToFile("filtered.bmp");
     }
 }
@@ -138,9 +139,9 @@ void PalletGrid::getPositionStr(unsigned row, unsigned col, std::string & str) {
 }
 
 bool PalletGrid::getCellEnabled(unsigned row, unsigned col) {
-    CHECK_LT(row, PalletGrid::MAX_ROWS) << "invalid row requested "
+    CHECK(row < PalletGrid::MAX_ROWS) << "invalid row requested "
                                                << row;
-    CHECK_LT(col, PalletGrid::MAX_COLS) << "invalid column requested "
+    CHECK(col < PalletGrid::MAX_COLS) << "invalid column requested "
                                                << col;
     return cellEnabled[MAX_COLS * row + col];
 }
@@ -173,10 +174,10 @@ unsigned PalletGrid::decodeCells(std::tr1::shared_ptr<Decoder> dcdr) {
 
     decoder = dcdr;
 
-    if (__extension__ VLOG_IS_ON(3)) {
+    if (GCC_EXT VLOG_IS_ON(3)) {
         string str;
         getProfileAsString(str);
-        __extension__ VLOG(3) << "Profile: \n" << str;
+        GCC_EXT VLOG(3) << "Profile: \n" << str;
         writeImageWithCells("cellRegions.bmp");
     }
 
@@ -192,7 +193,7 @@ unsigned PalletGrid::decodeCells(std::tr1::shared_ptr<Decoder> dcdr) {
             decodedCells.push_back(allCells[i]);
         }
 
-        if (__extension__ VLOG_IS_ON(2)) {
+        if (GCC_EXT VLOG_IS_ON(2)) {
             cell.writeImage(found ? "found" : "missed");
         }
     }
@@ -200,7 +201,7 @@ unsigned PalletGrid::decodeCells(std::tr1::shared_ptr<Decoder> dcdr) {
 }
 
 void PalletGrid::registerBarcodeMsg(std::string & msg) {
-    CHECK_EQ(decodedMsgCount[msg], 0)
+    CHECK(decodedMsgCount[msg] == 0)
     << "decoded message found more thank once" << msg;
     ++decodedMsgCount[msg];
 }
@@ -234,7 +235,7 @@ void PalletGrid::formatCellMessages(string & msg) {
 }
 
 void PalletGrid::writeImageWithCells(std::string filename) {
-    CHECK_GT(allCells.size(), 0) << "cells images not initialized yet";
+    CHECK(allCells.size() > 0) << "cells images not initialized yet";
 
     RgbQuad white(255, 255, 255);
     Dib markedImage(*image);
@@ -247,7 +248,7 @@ void PalletGrid::writeImageWithCells(std::string filename) {
 }
 
 void PalletGrid::writeImageWithBoundedBarcodes(std::string filename) {
-    CHECK_GT(allCells.size(), 0) << "cells images not initialized yet";
+    CHECK(allCells.size() > 0) << "cells images not initialized yet";
 
     RgbQuad red(255, 0, 0);
     Dib markedImage(*image);

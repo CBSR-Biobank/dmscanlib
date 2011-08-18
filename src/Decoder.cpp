@@ -23,6 +23,7 @@
 #pragma warning(disable : 4996)
 #endif
 
+#include "DmScanLibInternal.h"
 #include "Decoder.h"
 #include "Dib.h"
 
@@ -79,7 +80,7 @@ dmtxDecodeSetProp    (dec, DmtxPropEdgeMin, minEdgeSize);
             msgFound = true;
             getDecodeInfo(dec, reg, msg, decodeResult);
 
-            if (__extension__ VLOG_IS_ON(2)) {
+            if (GCC_EXT VLOG_IS_ON(2)) {
                 showStats(dec, reg, msg);
             }
             dmtxMessageDestroy(&msg);
@@ -87,7 +88,7 @@ dmtxDecodeSetProp    (dec, DmtxPropEdgeMin, minEdgeSize);
         dmtxRegionDestroy(&reg);
     }
 
-    if (__extension__ VLOG_IS_ON(5)) {
+    if (GCC_EXT VLOG_IS_ON(5)) {
         writeDiagnosticImage(dec, id);
     }
 
@@ -152,7 +153,7 @@ DmtxImage * Decoder::createDmtxImageFromDib(const Dib & dib) {
 }
 
 void Decoder::showStats(DmtxDecode * dec, DmtxRegion * reg, DmtxMessage * msg) {
-    if (__extension__ !VLOG_IS_ON(5)) return;
+    if (GCC_EXT !VLOG_IS_ON(5)) return;
 
     int height;
     int dataWordLength;
@@ -180,7 +181,7 @@ void Decoder::showStats(DmtxDecode * dec, DmtxRegion * reg, DmtxMessage * msg) {
     rotateInt = (int) (rotate * 180 / M_PI + 0.5);
     if (rotateInt >= 360) rotateInt -= 360;
 
-    __extension__ VLOG(5)
+    GCC_EXT VLOG(5)
                     << "\n--------------------------------------------------"
                     << "\n       Matrix Size: "
                     << dmtxGetSymbolAttribute(DmtxSymAttribSymbolRows,
@@ -216,7 +217,7 @@ void Decoder::showStats(DmtxDecode * dec, DmtxRegion * reg, DmtxMessage * msg) {
 }
 
 void Decoder::writeDiagnosticImage(DmtxDecode *dec, const std::string & id) {
-    if (__extension__ !VLOG_IS_ON(5)) return;
+    if (GCC_EXT !VLOG_IS_ON(5)) return;
 
     int totalBytes, headerBytes;
     int bytesWritten;

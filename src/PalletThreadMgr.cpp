@@ -18,18 +18,20 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "DmScanLibInternal.h"
 #include "PalletThreadMgr.h"
 #include "PalletCell.h"
 #include "Decoder.h"
 #include "Dib.h"
 
-#include <glog/logging.h>
+#include <algorithm>
 
 #ifdef WIN32
-#include <windows.h>
+#   include <windows.h>
+#   undef ERROR
 #endif
 
-#include <algorithm>
+#include <glog/logging.h>
 
 using namespace std;
 
@@ -59,7 +61,7 @@ void PalletThreadMgr::threadHandler() {
 
     do {
         threadProcessRange(first, last);
-        __extension__ VLOG(2)
+        GCC_EXT VLOG(2)
                         << "Threads for cells finished: " << first << "/"
                         << last - 1;
 

@@ -35,6 +35,7 @@ extern "C" {
 #endif
 
 #ifdef WIN32
+#   define NOGDI
 #   include <windows.h>
 #endif
 

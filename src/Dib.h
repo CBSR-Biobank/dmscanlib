@@ -27,6 +27,7 @@
 
 #ifdef WIN32
 #   include <windows.h>
+#   undef ERROR
 #else
 typedef void* HANDLE;
 #endif

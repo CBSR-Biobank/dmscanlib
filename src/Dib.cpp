@@ -26,10 +26,13 @@
 
 #ifdef _VISUALC_
 #pragma warning(disable : 4996)  // disable fopen warnings
-#else
-//#include <strings.h>
 #endif
 
+#ifdef WIN32
+#undef ERROR
+#endif
+
+#include "DmScanLibInternal.h"
 #include "Dib.h"
 
 #include <glog/logging.h>
@@ -148,7 +151,6 @@ Dib::Dib(char *filename)
 
 void Dib::init(unsigned width, unsigned height, unsigned colorBits,
                unsigned pixelsPerMeter, bool allocatePixelBuf) {
-
     this->size = 40;
     this->width = width;
     this->height = height;
@@ -164,7 +166,7 @@ void Dib::init(unsigned width, unsigned height, unsigned colorBits,
     if (allocatePixelBuf) {
         allocate(imageSize);
     }
-    __extension__ VLOG(5) << "constructor: image size is " << imageSize;
+    GCC_EXT VLOG(5) << "constructor: image size is " << imageSize;
 }
 
 Dib::~Dib() {
@@ -226,14 +228,14 @@ void Dib::readFromHandle(HANDLE handle) {
     pixels = reinterpret_cast <unsigned char *>(dibHeaderPtr)
     + sizeof(BITMAPINFOHEADER) + paletteSize * sizeof(RgbQuad);
 
-    UA_DOUT(4, 5, "readFromHandle: "
+    GCC_EXT VLOG(2) << "readFromHandle: "
                     << " size/" << size
                     << " width/" << width
                     << " height/" << height
                     << " colorBits/" << colorBits
                     << " imageSize/" << imageSize
                     << " rowBytes/" << rowBytes
-                    << " paddingBytes/" << rowPaddingBytes << " dpi/" << getDpi());
+                    << " paddingBytes/" << rowPaddingBytes << " dpi/" << getDpi();
 #endif
 }
 
@@ -283,7 +285,7 @@ void Dib::readFromFile(const char *filename) {
     CHECK(r = imageSize);
     fclose(fh);
 
-    __extension__ VLOG(2)
+    GCC_EXT VLOG(2)
                     << "readFromFile: rowBytes/" << rowBytes << " paddingBytes/"
                     << rowPaddingBytes;
 }
@@ -466,13 +468,13 @@ std::tr1::shared_ptr<Dib> Dib::convertGrayscale() const {
         CHECK(false) << "already grayscale image.";
     }
 
-    __extension__ VLOG(2)
+    GCC_EXT VLOG(2)
                     << "convertGrayscale: Converting from 24 bit to 8 bit.";
 
     // 24bpp -> 8bpp
     Dib * dest = new Dib(width, height, 8, pixelsPerMeter);
 
-    __extension__ VLOG(2)
+    GCC_EXT VLOG(2)
                     << "convertGrayscale: Made dib";
 
     unsigned char *srcRowPtr = pixels;
@@ -496,7 +498,7 @@ std::tr1::shared_ptr<Dib> Dib::convertGrayscale() const {
         destRowPtr += dest->rowBytes;
     }
 
-    __extension__ VLOG(2)
+    GCC_EXT VLOG(2)
                     << "convertGrayscale: Generated 8 bit grayscale image.";
 
     return std::tr1::shared_ptr<Dib>(dest);
@@ -658,28 +660,28 @@ void Dib::tpPresetFilter() {
     switch (getDpi()) {
 
     case 400:
-        __extension__ VLOG(2)
+        GCC_EXT VLOG(2)
                     << "tpPresetFilter: Applying DPI_400_KERNEL";
         convolveFast3x3(Dib::DPI_400_KERNEL);
         break;
 
     case 600:
-        __extension__ VLOG(2)
+        GCC_EXT VLOG(2)
                     << "tpPresetFilter: Applying BLANK_KERNEL";
         convolveFast3x3(Dib::BLANK_KERNEL);
 
-        __extension__ VLOG(2)
+        GCC_EXT VLOG(2)
                     << "tpPresetFilter: Applying BLUR_KERNEL";
         convolveFast3x3(Dib::BLUR_KERNEL);
         break;
 
     case 300:
-        __extension__ VLOG(2)
+        GCC_EXT VLOG(2)
                     << "tpPresetFilter: No filter applied (300 dpi)";
         break;
 
     default:
-        __extension__ VLOG(2)
+        GCC_EXT VLOG(2)
                     << "tpPresetFilter: No filter applied (default) dpi/" << getDpi();
         break;
     }

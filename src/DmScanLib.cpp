@@ -57,16 +57,16 @@ DmScanLib::DmScanLib(unsigned loggingLevel, bool logToFile)
                                 ImgScannerFactory::getImgScanner()), stdoutOutputEnable(
                                 false), textFileOutputEnable(false) {
     configLogging(loggingLevel, logToFile);
-    if (__extension__ VLOG_IS_ON(2)) {
+    if (GCC_EXT VLOG_IS_ON(2)) {
         Util::getTime(starttime);
     }
 }
 
 DmScanLib::~DmScanLib() {
-    if (__extension__ VLOG_IS_ON(2)) {
+    if (GCC_EXT VLOG_IS_ON(2)) {
         Util::getTime(endtime);
         Util::difftiime(starttime, endtime, timediff);
-        __extension__ VLOG(2) << "decodeCommon: time taken: " << timediff;
+        GCC_EXT VLOG(2) << "decodeCommon: time taken: " << timediff;
     }
 }
 
@@ -130,11 +130,11 @@ int DmScanLib::scanImage(unsigned dpi, int brightness, int contrast,
                          double left, double top, double right, double bottom,
                          const char *filename) {
     if (filename == NULL) {
-        __extension__ VLOG(2) << "slScanImage: no file name specified";
+        GCC_EXT VLOG(2) << "slScanImage: no file name specified";
         return SC_FAIL;
     }
 
-    __extension__ VLOG(2)
+    GCC_EXT VLOG(2)
                     << "slScanImage: dpi/" << dpi << " brightness/"
                     << brightness << " contrast/" << contrast << " left/"
                     << left << " top/" << top << " right/" << right
@@ -143,7 +143,7 @@ int DmScanLib::scanImage(unsigned dpi, int brightness, int contrast,
     HANDLE h = imgScanner->acquireImage(dpi, brightness, contrast, left, top,
                                         right, bottom);
     if (h == NULL) {
-        __extension__ VLOG(2) << "could not acquire image";
+        GCC_EXT VLOG(2) << "could not acquire image";
         return imgScanner->getErrorCode();
     }
     Dib dib;
@@ -159,18 +159,18 @@ int DmScanLib::scanImage(unsigned dpi, int brightness, int contrast,
 int DmScanLib::scanFlatbed(unsigned dpi, int brightness, int contrast,
                            const char *filename) {
     if (filename == NULL) {
-        __extension__ VLOG(2) << "slScanFlatbed: no file name specified";
+        GCC_EXT VLOG(2) << "slScanFlatbed: no file name specified";
         return SC_FAIL;
     }
 
-    __extension__ VLOG(2)
+    GCC_EXT VLOG(2)
                     << "slScanFlatbed: dpi/" << dpi << " brightness/"
                     << brightness << " contrast/" << contrast << " filename/"
                     << filename;
 
     HANDLE h = imgScanner->acquireFlatbed(dpi, brightness, contrast);
     if (h == NULL) {
-        __extension__ VLOG(2) << "could not acquire image";
+        GCC_EXT VLOG(2) << "could not acquire image";
         return imgScanner->getErrorCode();
     }
     Dib dib;
@@ -191,7 +191,7 @@ int DmScanLib::decodePlate(unsigned dpi, int brightness, int contrast,
                            double gapX, double gapY, unsigned profileA,
                            unsigned profileB, unsigned profileC,
                            unsigned orientation) {
-    __extension__ VLOG(2)
+    GCC_EXT VLOG(2)
                     << "decodePlate: dpi/" << dpi << " brightness/"
                     << brightness << " contrast/" << contrast << " plateNum/"
                     << plateNum << " left/" << left << " top/" << top
@@ -224,7 +224,7 @@ int DmScanLib::decodePlate(unsigned dpi, int brightness, int contrast,
     h = imgScanner->acquireImage(dpi, brightness, contrast, left, top, right,
                                  bottom);
     if (h == NULL) {
-        __extension__ VLOG(2) << "could not acquire plate image: " << plateNum;
+        GCC_EXT VLOG(2) << "could not acquire plate image: " << plateNum;
         return imgScanner->getErrorCode();
     }
 
@@ -237,7 +237,7 @@ int DmScanLib::decodePlate(unsigned dpi, int brightness, int contrast,
     result = decodeCommon("decode.bmp");
 
     imgScanner->freeImage(h);
-    __extension__ VLOG(2) << "decodeCommon returned: " << result;
+    GCC_EXT VLOG(2) << "decodeCommon returned: " << result;
     return result;
 }
 
@@ -248,7 +248,7 @@ int DmScanLib::decodeImage(unsigned plateNum, const char *filename,
                            unsigned profileA, unsigned profileB,
                            unsigned profileC, unsigned orientation) {
 
-    __extension__ VLOG(2)
+    GCC_EXT VLOG(2)
                     << "decodeImage: plateNum/" << plateNum << " filename/"
                     << filename << " scanGap/" << scanGap << " squareDev/"
                     << squareDev << " edgeThresh/" << edgeThresh
@@ -287,7 +287,7 @@ int DmScanLib::decodeCommon(const char *markedDibFilename) {
     const unsigned profileWords[3] = { profileA, profileB, profileC };
     const unsigned dpi = image->getDpi();
 
-    __extension__ VLOG(2) << "DecodeCommon: dpi/" << dpi;
+    GCC_EXT VLOG(2) << "DecodeCommon: dpi/" << dpi;
 
     if ((dpi != 300) && (dpi != 400) && (dpi != 600)) {
         return SC_INVALID_DPI;

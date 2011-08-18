@@ -77,7 +77,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>.\src\openthreads;.\src\cvblob;.\src\boost;.\src\opencv\include;src;src/libdmtx;src/loki;src/utils;$(JAVA_HOME)\include;$(JAVA_HOME)\include\win32;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_VISUALC_;WIN32;_DEBUG;_CONSOLE;UA_LOGGER;STANDALONE;THREADED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;_VISUALC_;WIN32;_DEBUG;_CONSOLE;UA_LOGGER;STANDALONE;THREADED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -87,7 +87,7 @@
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>cv210.lib;cxcore210.lib;user32.lib;libcmtd.lib;OpenThreadsWin32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libglog.lib;cv210.lib;cxcore210.lib;user32.lib;libcmtd.lib;OpenThreadsWin32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ShowProgress>NotSet</ShowProgress>
       <AdditionalLibraryDirectories>lib\win32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries> libcmt.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
@@ -182,7 +182,6 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="src\utils\TimeUtilWin32.cpp" />
-    <ClCompile Include="src\utils\UaLogger.cpp" />
     <ClCompile Include="src\libdmtx\Dmtx.c" />
     <ClCompile Include="src\cvblob\Blob.cpp" />
     <ClCompile Include="src\cvblob\BlobContour.cpp" />
@@ -197,6 +196,11 @@
     <ClInclude Include="src\DmScanLib.h" />
     <ClInclude Include="src\DmScanLibInternal.h" />
     <ClInclude Include="src\edu_ualberta_med_scannerconfig_dmscanlib_ScanLib.h" />
+    <ClInclude Include="src\glog\logging.h" />
+    <ClInclude Include="src\glog\log_severity.h" />
+    <ClInclude Include="src\glog\raw_logging.h" />
+    <ClInclude Include="src\glog\stl_logging.h" />
+    <ClInclude Include="src\glog\vlog_is_on.h" />
     <ClInclude Include="src\ImgScanner.h" />
     <ClInclude Include="src\ImgScannerFactory.h" />
     <ClInclude Include="src\ImgScannerImpl.h" />
@@ -206,8 +210,6 @@
     <ClInclude Include="resource.h" />
     <ClInclude Include="src\PalletThreadMgr.h" />
     <ClInclude Include="src\utils\TimeUtil.h" />
-    <ClInclude Include="src\utils\UaAssert.h" />
-    <ClInclude Include="src\utils\UaLogger.h" />
     <ClInclude Include="src\libdmtx\Dmtx.h" />
     <ClInclude Include="src\utils\SimpleGlob.h" />
     <ClInclude Include="src\utils\SimpleOpt.h" />

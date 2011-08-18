@@ -31,6 +31,12 @@
 #   include <tr1/memory>
 #endif
 
+#ifdef WIN32
+#   define GCC_EXT
+#else
+#   define GCC_EXT __extension__
+#endif
+
 class Dib;
 class Decoder;
 class ImgScanner;
