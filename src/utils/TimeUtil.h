@@ -49,7 +49,7 @@ string to_string(T const& value) {
     return sstr.str();
 }
 
-#ifndef _VISUALC_
+#ifndef WIN32
 ostream & operator<<(ostream &os, slTime & tm);
 #endif
 
