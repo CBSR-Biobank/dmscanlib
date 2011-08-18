@@ -21,15 +21,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+
+#include "DecodeResult.h"
+
 #include "dmtx.h"
 #include "cv.h"
-#include "IplContainer.h"
-#include "PalletGrid.h"
 
-#include <list>
 #include <string>
-#include <map>
-#include <OpenThreads/Mutex>
+
+#ifdef _VISUALC_
+#   include <memory>
+#else
+#   include <tr1/memory>
+#endif
 
 #ifdef WIN32
 #include <windows.h>
@@ -39,59 +43,32 @@ using namespace std;
 
 class Dib;
 struct RgbQuad;
-class BarcodeInfo;
 class BinRegion;
 
 class Decoder {
 public:
-	Decoder(double scanGap, unsigned squareDev, unsigned edgeThresh,
-			unsigned corrections, double cellDistance, PalletGrid * palletGrid);
-	virtual ~Decoder();
+    Decoder(unsigned dpi, double scanGap, unsigned squareDev,
+            unsigned edgeThresh, unsigned corrections, double cellDistance);
+    virtual ~Decoder();
 
-	enum ProcessResult {
-		IMG_INVALID, OK
-	};
-
-	ProcessResult processImageRegions(Dib * dib);
-
-	void imageShowBarcodes(Dib & dib, bool regions);
-
-	static DmtxImage * createDmtxImageFromDib(const Dib & dib);
-
-	vector<BarcodeInfo *> & getBarcodes();
-
-	const char * getBarcode(unsigned row, unsigned col);
+    void decodeImage(std::tr1::weak_ptr<const Dib> dib, const std::string & id,
+                     DecodeResult & decodeResult);
 
 private:
+    static DmtxImage * createDmtxImageFromDib(const Dib & dib);
+    void getDecodeInfo(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg,
+                       DecodeResult & decodeResult);
 
-	static const unsigned PALLET_ROWS;
-	static const unsigned PALLET_COLUMNS;
-	static const double BARCODE_SIDE_LENGTH_INCHES;
+    void writeDiagnosticImage(DmtxDecode *dec, const string & id);
 
-	bool reduceBlobToMatrix(Dib & dib, CvRect & blob);
-	void showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
-	void initCells(unsigned maxRow, unsigned maxCol);
-	static void getTubeBlobsFromDpi(Dib * dib, vector<CvRect> &blobVector,
-			bool metrical, int dpi);
-	static void getTubeBlobs(Dib * dib, int threshold, int blobsize,
-			int blurRounds, int border, vector<CvRect> & blobVector);
+    void showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
 
-	bool outputBarcodes;
-	double scanGap;
-	unsigned squareDev;
-	unsigned edgeThresh;
-	unsigned corrections;
-	double cellDistance;
-	unsigned width;
-	unsigned height;
-	unsigned dpi;
-	PalletGrid * palletGrid;
-
-	vector<vector<BarcodeInfo *> > barcodeInfos;
-
-	vector<BarcodeInfo *> barcodeInfosList;
-
-	OpenThreads::Mutex addBarcodeMutex;
+    unsigned dpi;
+    double scanGap;
+    unsigned squareDev;
+    unsigned edgeThresh;
+    unsigned corrections;
+    double cellDistance;
 };
 
 #endif /* DECODER_H_ */

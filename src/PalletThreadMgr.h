@@ -1,5 +1,6 @@
-#ifndef BARCODE_INFO_H_
-#define BARCODE_INFO_H_
+#ifndef __INC_PROCESS_IMAGE_MANAGER_H
+#define __INC_PROCESS_IMAGE_MANAGER_H
+
 /*
  Dmscanlib is a software library and standalone application that scans
  and decodes libdmtx compatible test-tubes. It is currently designed
@@ -19,71 +20,50 @@
  You should have received a copy of the GNU General Public License
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+/*
+ * processImageManager.h
+ *		Created on: 6-Jul-2010
+ *		Author: Thomas Polasek
+ */
 
-#include "Decoder.h"
+#include "cv.h"
 #include "dmtx.h"
-#include "UaLogger.h"
-#include "UaAssert.h"
 
 #include <string>
 
 #ifdef _VISUALC_
 #   include <memory>
+#   include <functional>
 #else
 #   include <tr1/memory>
+#   include <tr1/functional>
 #endif
 
 using namespace std;
 
 class Dib;
-class BinRegion;
-struct CvRect;
+class PalletCell;
+class DecodeInfo;
+class BarcodeThread;
+class Decoder;
 
-class BarcodeInfo {
+class PalletThreadMgr {
 public:
-	BarcodeInfo();
-	~BarcodeInfo();
+	PalletThreadMgr(std::tr1::shared_ptr<Decoder> decoder);
+	~PalletThreadMgr();
 
-	void postProcess(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
-
-	bool isValid();
-
-	string & getMsg();
-
-	bool equals(BarcodeInfo * other);
-
-	void setPreProcessBoundingBox(std::tr1::shared_ptr<const CvRect> rect);
-	std::tr1::shared_ptr<const CvRect> getPreProcessBoundingBox();
-	std::tr1::shared_ptr<const CvRect> getPostProcessBoundingBox();
-	void translate(int x, int y);
-
-	unsigned getRow() {
-		return row;
-	}
-
-	void setRow(unsigned r) {
-		row = r;
-	}
-
-	unsigned getCol() {
-		return col;
-	}
-
-	void setCol(unsigned c) {
-		col = c;
-	}
-
+	void decodeCells(std::vector<std::tr1::shared_ptr<PalletCell> > & cells);
 
 private:
-	string str;
-	DmtxVector2 p00, p10, p11, p01;
-	std::tr1::shared_ptr<const CvRect> preRect;
-	std::tr1::shared_ptr<CvRect> postRect;
-	unsigned row;
-	unsigned col;
+	static const unsigned THREAD_NUM;
 
-	friend ostream & operator<<(ostream & os, BarcodeInfo & m);
+	void threadHandler();
+	void threadProcessRange(unsigned int first, unsigned int last);
+
+	std::tr1::shared_ptr<Decoder> decoder;
+	vector<std::tr1::shared_ptr<PalletCell> > allThreads;
+	unsigned numThreads;
 };
 
-#endif /* BARCODE_INFO_H_ */
+#endif /* __INC_PROCESS_IMAGE_MANAGER_H */
 

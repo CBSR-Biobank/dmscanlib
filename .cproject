@@ -73,6 +73,7 @@
 								<option id="gnu.cpp.link.option.shared.758833990" name="Shared (-shared)" superClass="gnu.cpp.link.option.shared" value="false" valueType="boolean"/>
 								<option id="gnu.cpp.link.option.libs.219946775" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
 									<listOptionValue builtIn="false" value="cv"/>
+									<listOptionValue builtIn="false" value="glog"/>
 									<listOptionValue builtIn="false" value="OpenThreads"/>
 								</option>
 								<option id="gnu.cpp.link.option.paths.1596644708" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths"/>
@@ -366,6 +367,7 @@
 								<option id="gnu.cpp.link.option.shared.1138076553" name="Shared (-shared)" superClass="gnu.cpp.link.option.shared" value="true" valueType="boolean"/>
 								<option id="gnu.cpp.link.option.libs.215852185" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
 									<listOptionValue builtIn="false" value="cv"/>
+									<listOptionValue builtIn="false" value="glog"/>
 									<listOptionValue builtIn="false" value="OpenThreads"/>
 								</option>
 								<option id="gnu.cpp.link.option.paths.314000524" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths"/>

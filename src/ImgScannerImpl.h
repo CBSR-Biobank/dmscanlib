@@ -1,8 +1,8 @@
 #ifndef __INCLUDE_IMG_SCANNER_IMPL_H
 #define __INCLUDE_IMG_SCANNER_IMPL_H
 /*
-Dmscanlib is a software library and standalone application that scans 
-and decodes libdmtx compatible test-tubes. It is currently designed 
+Dmscanlib is a software library and standalone application that scans
+and decodes libdmtx compatible test-tubes. It is currently designed
 to decode 12x8 pallets that use 2D data-matrix laser etched test-tubes.
 Copyright (C) 2010 Canadian Biosample Repository
 
@@ -28,7 +28,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "twain.h"     // Standard TWAIN header.
 
 #include <windows.h>
-#include <map>
 
 using namespace std;
 

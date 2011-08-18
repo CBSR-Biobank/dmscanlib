@@ -25,6 +25,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 
 #ifdef _VISUALC_
 #   include <memory>
@@ -32,65 +33,114 @@
 #   include <tr1/memory>
 #endif
 
+class Decoder;
+class Dib;
+class PalletCell;
 struct CvRect;
 
 class PalletGrid {
 public:
-	enum Orientation {
-		ORIENTATION_HORIZONTAL, ORIENTATION_VERTICAL
-	};
+    enum Orientation {
+        ORIENTATION_HORIZONTAL, ORIENTATION_VERTICAL
+    };
 
-	static const unsigned MAX_ROWS = 8;
-	static const unsigned MAX_COLS = 12;
-	static const unsigned NUM_CELLS = MAX_ROWS * MAX_COLS;
+    static const unsigned MAX_ROWS = 8;
+    static const unsigned MAX_COLS = 12;
+    static const unsigned NUM_CELLS = MAX_ROWS * MAX_COLS;
 
-	/**
-	 * Constructs a pallet grid with cells cellWidth pixels and
-	 * cellHeight pixels.
-	 *
-	 * @param o The orientation of the grid. Either ORIENTATION_HORIZONTAL
-	 * or ORIENTATION_VERTICAL.
-	 *
-	 * @param imgWidth The width of the image in pixels.
-	 *
-	 * @param imgHeight The height of the image in pixels.
-	 *
-	 * @param gapX The horizontal gap between cells in pixels.
-	 *
-	 * @param gapY The vertical gap between cells in pixels.
-	 */
-	PalletGrid(Orientation o, unsigned imgWidth, unsigned imgHeight,
-			unsigned gapX, unsigned gapY, const unsigned(&profileWords)[3]);
+    /**
+     * Constructs a pallet grid with cells cellWidth pixels and
+     * cellHeight pixels.
+     *
+     * @param o The orientation of the grid. Either ORIENTATION_HORIZONTAL
+     * or ORIENTATION_VERTICAL.
+     *
+     * @param imgWidth The width of the image in pixels.
+     *
+     * @param imgHeight The height of the image in pixels.
+     *
+     * @param gapX The horizontal gap between cells in pixels.
+     *
+     * @param gapY The vertical gap between cells in pixels.
+     */
+    PalletGrid(unsigned plateNum, Orientation o,
+               std::tr1::shared_ptr<const Dib> image, unsigned gapX,
+               unsigned gapY, const unsigned(&profileWords)[3]);
 
-	~PalletGrid();
+    ~PalletGrid();
 
-	/**
-	 * Returns wether or not the pallet location should be decoded.
-	 *
-	 * @param row a number between 0 and PalletGrid::MAX_ROWS - 1.
-	 * @param col a number between 0 and PalletGrid::MAX_COLS - 1.
-	 *
-	 * @return true if the cell should be decoded.
-	 */
-	bool getCellEnabled(unsigned row, unsigned col);
+    void applyFilters();
 
-	std::tr1::shared_ptr<const CvRect> getCellRect(unsigned row, unsigned col);
+    Decoder & getDecoder() {
+        return *decoder.get();
+    }
 
-	void getPositionStr(unsigned row, unsigned col, std::string & str);
+    std::tr1::shared_ptr<const Dib> getCellImage(unsigned row, unsigned col);
 
-	bool isImageValid() {
-		return imgValid;
-	}
+    /**
+     * Returns wether or not the pallet location is enabled via the profile.
+     *
+     * @param row a number between 0 and PalletGrid::MAX_ROWS - 1.
+     * @param col a number between 0 and PalletGrid::MAX_COLS - 1.
+     *
+     * @return true if the cell should be decoded.
+     */
+    bool getCellEnabled(unsigned row, unsigned col);
+
+    void getPositionStr(unsigned row, unsigned col, std::string & str);
+
+    /**
+     * Returns the number of cells that were decoded.
+     */
+    unsigned decodeCells(std::tr1::shared_ptr<Decoder> dcdr);
+
+    void getProfileAsString(std::string & str);
+
+    /**
+     * Writes a bitmap to disc with the cell bounded with a white box.
+     */
+    void writeImageWithCells(std::string filename);
+
+    /**
+     * Writes a bitmap to disc with the decoded barcodes surrounded with a red box.
+     */
+    void writeImageWithBoundedBarcodes(std::string filename);
+
+    bool isImageValid() {
+        return imgValid;
+    }
+
+    std::vector<std::tr1::shared_ptr<PalletCell> > & getDecodedCells();
+
+    void formatCellMessages(std::string & msg);
+
+    void registerBarcodeMsg(std::string & msg);
+
+    std::tr1::shared_ptr<const Dib> getCellImage(const PalletCell & cell);
 
 private:
+    void getCellRect(unsigned row, unsigned col, CvRect & rect);
 
-	Orientation orientation;
-	double cellWidth;
-	double cellHeight;
-	unsigned gapX;
-	unsigned gapY;
-	std::vector<bool> bits;
-	bool imgValid;
+    unsigned plateNum;
+    Orientation orientation;
+
+    std::vector<std::tr1::shared_ptr<PalletCell> > allCells;
+
+    std::vector<std::tr1::shared_ptr<PalletCell> > decodedCells;
+
+    std::vector<std::vector<std::tr1::shared_ptr<PalletCell> > > cellsByRowCol;
+
+    std::tr1::shared_ptr<const Dib> image;
+    std::tr1::shared_ptr<Dib> filteredImage;
+    std::tr1::shared_ptr<Decoder> decoder;
+    double cellWidth;
+    double cellHeight;
+    unsigned gapX;
+    unsigned gapY;
+    std::vector<bool> cellEnabled;
+    bool imgValid;
+
+    std::map<std::string, int> decodedMsgCount;
 
 };
 

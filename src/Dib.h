@@ -33,6 +33,10 @@ typedef void* HANDLE;
 
 #include <memory>
 
+#ifndef _VISUALC_
+#   include <tr1/memory>
+#endif
+
 using namespace std;
 
 /* Colour palette
@@ -53,7 +57,7 @@ class Dib {
 public:
 
 	Dib();
-	Dib(Dib & src);
+	Dib(const Dib & src);
 	Dib(IplImageContainer & src);
 	Dib(unsigned width, unsigned height, unsigned colorBits,
 			unsigned pixelsPerMeter);
@@ -64,10 +68,10 @@ public:
 	void readFromFile(const char * filename);
 	bool writeToFile(const char * filename) const;
 
-	static auto_ptr<Dib> convertGrayscale(Dib & src);
+	std::tr1::shared_ptr<Dib> convertGrayscale() const;
 
-	static auto_ptr<Dib> crop(Dib &src, unsigned x0, unsigned y0, unsigned x1,
-			unsigned y1);
+	std::tr1::shared_ptr<Dib> crop(unsigned x0, unsigned y0, unsigned x1,
+			unsigned y1) const;
 
 	auto_ptr<IplImageContainer> generateIplImage();
 	void tpPresetFilter();
@@ -81,14 +85,18 @@ public:
 	unsigned char getPixelAvgGrayscale(unsigned row, unsigned col) const;
 	inline unsigned char getPixelGrayscale(unsigned row, unsigned col) const;
 
-	void setPixel(unsigned row, unsigned col, RgbQuad & quad);
+	void setPixel(unsigned row, unsigned col, const RgbQuad & quad);
 	inline void setPixelGrayscale(unsigned row, unsigned col,
 			unsigned char value);
 
-	void line(unsigned x0, unsigned y0, unsigned x1, unsigned y1,
-			RgbQuad & quad);
+	void line(unsigned x0, unsigned y0, unsigned x1, unsigned y1, const RgbQuad & quad);
+
+	void line(const CvPoint & start, const CvPoint & end, const RgbQuad & quad) {
+	    line(start.x, start.y, end.x, end.y, quad);
+	}
+
 	void rectangle(unsigned x, unsigned y, unsigned width, unsigned height,
-			RgbQuad & quad);
+			const RgbQuad & quad);
 
 	void readFromHandle(HANDLE handle);
 
@@ -116,8 +124,8 @@ private:
 	unsigned char * pixels;
 
 	/*
-	 * Dib can be created with a borrowed pixel buffer. When an image is scanned, 
-	 * the TWAIN driver owns the memory to the pixel buffer. In this case 
+	 * Dib can be created with a borrowed pixel buffer. When an image is scanned,
+	 * the TWAIN driver owns the memory to the pixel buffer. In this case
 	 * isAllocated is set to false.
 	 */
 	bool isAllocated;

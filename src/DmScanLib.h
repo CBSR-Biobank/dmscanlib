@@ -107,11 +107,12 @@ typedef int (*SL_GET_SCANNER_CAPABILITY)();
  * @return SC_SUCCESS if valid. SC_FAIL unable to scan an image.
  */
 EXPORT int slScanImage(unsigned verbose, unsigned dpi, int brightness,
-		int contrast, double left, double top, double right, double bottom,
-		const char * filename);
+                       int contrast, double left, double top, double right,
+                       double bottom, const char * filename);
 
 typedef int (*SL_SCAN_IMAGE)(unsigned verbose, unsigned dpi, double left,
-		double top, double right, double bottom, const char * filename);
+                             double top, double right, double bottom,
+                             const char * filename);
 
 /**
  * Scans the whole flatbed region. The image is in Windows BMP format.
@@ -128,10 +129,10 @@ typedef int (*SL_SCAN_IMAGE)(unsigned verbose, unsigned dpi, double left,
  * @return SC_SUCCESS if valid. SC_FAIL unable to scan an image.
  */
 EXPORT int slScanFlatbed(unsigned verbose, unsigned dpi, int brightness,
-		int contrast, const char * filename);
+                         int contrast, const char * filename);
 
 typedef int (*SL_SCAN_FLATBED)(unsigned verbose, unsigned dpi,
-		const char * filename);
+                               const char * filename);
 
 /**
  * From the regions specified in the INI file for the corresponding plate,
@@ -182,18 +183,20 @@ typedef int (*SL_SCAN_FLATBED)(unsigned verbose, unsigned dpi,
  */
 EXPORT int
 slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
-		unsigned plateNum, double left, double top, double right, double bottom,
-		double scanGap, unsigned squareDev, unsigned edgeThresh,
-		unsigned corrections, double cellDistance, double gapX, double gapY,
-		unsigned profileA, unsigned profileB, unsigned profileC,
-		unsigned orientation);
+              unsigned plateNum, double left, double top, double right,
+              double bottom, double scanGap, unsigned squareDev,
+              unsigned edgeThresh, unsigned corrections, double cellDistance,
+              double gapX, double gapY, unsigned profileA, unsigned profileB,
+              unsigned profileC, unsigned orientation);
 
 typedef int (*SL_DECODE_PLATE)(unsigned verbose, unsigned dpi, int brightness,
-		int contrast, unsigned plateNum, double left, double top, double right,
-		double bottom, double scanGap, unsigned squareDev, unsigned edgeThresh,
-		unsigned corrections, double cellDistance, double gapX, double gapY,
-		unsigned profileA, unsigned profileB, unsigned profileC,
-		unsigned orientation);
+                               int contrast, unsigned plateNum, double left,
+                               double top, double right, double bottom,
+                               double scanGap, unsigned squareDev,
+                               unsigned edgeThresh, unsigned corrections,
+                               double cellDistance, double gapX, double gapY,
+                               unsigned profileA, unsigned profileB,
+                               unsigned profileC, unsigned orientation);
 
 /**
  * From the regions specified in the INI file for the corresponding plate,
@@ -234,16 +237,19 @@ typedef int (*SL_DECODE_PLATE)(unsigned verbose, unsigned dpi, int brightness,
  *  not be determined.
  */
 EXPORT int slDecodeImage(unsigned verbose, unsigned plateNum,
-		const char * filename, double scanGap, unsigned squareDev,
-		unsigned edgeThresh, unsigned corrections, double cellDistance,
-		double gapX, double gapY, unsigned profileA, unsigned profileB,
-		unsigned profileC, unsigned orientation);
+                         const char * filename, double scanGap,
+                         unsigned squareDev, unsigned edgeThresh,
+                         unsigned corrections, double cellDistance, double gapX,
+                         double gapY, unsigned profileA, unsigned profileB,
+                         unsigned profileC, unsigned orientation);
 
 typedef int (*SL_DECODE_IMAGE)(unsigned verbose, unsigned plateNum,
-		const char * filename, double scanGap, unsigned squareDev,
-		unsigned edgeThresh, unsigned corrections, double cellDistance,
-		double gapX, double gapY, unsigned profileA, unsigned profileB,
-		unsigned profileC, unsigned orientation);
+                               const char * filename, double scanGap,
+                               unsigned squareDev, unsigned edgeThresh,
+                               unsigned corrections, double cellDistance,
+                               double gapX, double gapY, unsigned profileA,
+                               unsigned profileB, unsigned profileC,
+                               unsigned orientation);
 
 #ifdef __cplusplus
 }

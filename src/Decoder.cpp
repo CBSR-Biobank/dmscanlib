@@ -18,41 +18,16 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * Decoder.cpp
- *
- *  Created on: 22-May-2009
- *      Author: loyola
- */
-
 #ifdef _VISUALC_
 // disable fopen warnings
 #pragma warning(disable : 4996)
 #endif
 
 #include "Decoder.h"
-#include "UaLogger.h"
-#include "UaAssert.h"
 #include "Dib.h"
-#include "BarcodeInfo.h"
-#include "ProcessImageManager.h"
-#include "PalletGrid.h"
 
+#include <glog/logging.h>
 #include <stdio.h>
-#include <sstream>
-#include <time.h>
-#include <iostream>
-#include <math.h>
-#include <string>
-#include <limits>
-#include <vector>
-#include <cmath>
-
-#ifdef _VISUALC_
-#   include <memory>
-#else
-#   include <tr1/memory>
-#endif
 
 #if defined(USE_NVWA)
 #   include "debug_new.h"
@@ -60,348 +35,206 @@
 
 using namespace std;
 
-const double Decoder::BARCODE_SIDE_LENGTH_INCHES = 0.13;
-const unsigned Decoder::PALLET_ROWS = 8;
-const unsigned Decoder::PALLET_COLUMNS = 12;
-
-Decoder::Decoder(double g, unsigned s, unsigned t, unsigned c, double dist,
-		PalletGrid * pg) :
-		scanGap(g), squareDev(s), edgeThresh(t), corrections(c), cellDistance(
-				dist), palletGrid(pg) {
-	ua::Logger::Instance().subSysHeaderSet(3, "Decoder");
-
-	barcodeInfos.resize(PalletGrid::MAX_ROWS);
-	for (unsigned row = 0; row < PalletGrid::MAX_ROWS; ++row) {
-		barcodeInfos[row].resize(PalletGrid::MAX_COLS);
-	}
+Decoder::Decoder(unsigned _dpi, double g, unsigned s, unsigned t, unsigned c,
+                 double dist)
+                : dpi(_dpi), scanGap(g), squareDev(s), edgeThresh(t), corrections(
+                                c), cellDistance(dist) {
 }
 
 Decoder::~Decoder() {
-	for (unsigned row = 0; row < PalletGrid::MAX_ROWS; row++) {
-		for (unsigned col = 0; col < PalletGrid::MAX_COLS; col++) {
-			if (barcodeInfos[row][col] != NULL) {
-				delete barcodeInfos[row][col];
-			}
-		}
-	}
 }
 
-// FIXME make this function work correclty.
-// reduces the blob to a smaller region (matrix outline)
-bool Decoder::reduceBlobToMatrix(Dib & dib, CvRect & inputBlob) {
+void Decoder::decodeImage(std::tr1::weak_ptr<const Dib> dib,
+                          const std::string & id, DecodeResult & decodeResult) {
+    DmtxImage * image = createDmtxImageFromDib(*dib.lock());
+    int minEdgeSize, maxEdgeSize;
 
-	return true;
-	/*
-	 Dib * croppedDib = Dib::crop(dib, inputBlob.x, inputBlob.y,
-	 inputBlob.x + inputBlob.width, inputBlob.y + inputBlob.height);
-	 UA_ASSERT_NOT_NULL(croppedDib->getPixelBuffer());
+    DmtxDecode *dec = dmtxDecodeCreate(image, 1);
+    CHECK_NOTNULL(dec);
 
-	 auto_ptr<IplImageContainer> img = croppedDib->generateIplImage();
-	 UA_ASSERT_NOT_NULL(img->getIplImage());
+    // slightly smaller than the new tube edge
+    minEdgeSize = static_cast<int>(0.08 * dpi);
 
-	 delete croppedDib;
+    // slightly bigger than the Nunc edge
+maxEdgeSize    = static_cast<int>(0.18 * dpi);
 
-	 for (int i = 0; i < 5; i++) {
-	 cvSmooth(img->getIplImage(), img->getIplImage(), CV_GAUSSIAN, 11, 11);
-	 }
-	 cvThreshold(img->getIplImage(), img->getIplImage(), 50, 255,
-	 CV_THRESH_BINARY);
+dmtxDecodeSetProp    (dec, DmtxPropEdgeMin, minEdgeSize);
+    dmtxDecodeSetProp(dec, DmtxPropEdgeMax, maxEdgeSize);
+    dmtxDecodeSetProp(dec, DmtxPropSymbolSize, DmtxSymbolSquareAuto);
+    dmtxDecodeSetProp(dec, DmtxPropScanGap,
+                      static_cast<unsigned>(scanGap * dpi));dmtxDecodeSetProp
+    (dec, DmtxPropSquareDevn, squareDev);
+    dmtxDecodeSetProp(dec, DmtxPropEdgeThresh, edgeThresh);
 
-	 // ---- Find the test tube by applying circle-based pattern recognition -----
-	 CvMemStorage* storage = cvCreateMemStorage(0);
+    bool msgFound = false;
+    DmtxRegion * reg;
+    while (1) {
+        reg = dmtxRegionFindNext(dec, NULL);
+        if (reg == NULL) {
+            break;
+        }
 
-	 CvSeq* results = cvHoughCircles(img->getIplImage(), storage,
-	 CV_HOUGH_GRADIENT, 1, //reciprocal resolution scalar multiplier
-	 inputBlob.width / 6);
+        DmtxMessage *msg = dmtxDecodeMatrixRegion(dec, reg, corrections);
+        if (msg != NULL) {
+            msgFound = true;
+            getDecodeInfo(dec, reg, msg, decodeResult);
 
-	 for (int i = 0; i < results->total; i++) {
+            if (__extension__ VLOG_IS_ON(2)) {
+                showStats(dec, reg, msg);
+            }
+            dmtxMessageDestroy(&msg);
+        }
+        dmtxRegionDestroy(&reg);
+    }
 
-	 printf("found circle\n");
+    if (__extension__ VLOG_IS_ON(5)) {
+        writeDiagnosticImage(dec, id);
+    }
 
-	 float* p = (float*) cvGetSeqElem(results, i);
-	 CvRect largestBlob = { cvRound(p[0]) - cvRound(p[2]), cvRound(p[1])
-	 - cvRound(p[2]), cvRound(p[0]) + cvRound(p[2]), cvRound(p[1])
-	 + cvRound(p[2]) };
-	 largestBlob.x += inputBlob.x;
-	 largestBlob.y += inputBlob.y;
-
-	 inputBlob = largestBlob;
-	 return true;
-
-	 }
-
-
-	 CBlobResult blobs(img->getIplImage(), NULL, 0);
-
-	 switch (img->getHorizontalResolution()) {
-	 case 300:
-	 blobs.Filter(blobs, B_EXCLUDE, CBlobGetArea(), B_LESS, 840);
-	 break;
-	 case 400:
-	 blobs.Filter(blobs, B_EXCLUDE, CBlobGetArea(), B_LESS, 1900);
-	 break;
-	 case 600:
-	 blobs.Filter(blobs, B_EXCLUDE, CBlobGetArea(), B_LESS, 2400);
-	 break;
-	 }
-
-	 // ---- Grabs the largest blob in the blobs vector -----
-
-	 CvPoint minOffset = cvPoint(inputBlob.width, inputBlob.height);
-	 CvPoint maxOffset = cvPoint(0,0);
-
-	 for (int i = 0, n = blobs.GetNumBlobs(); i < n; i++) {
-
-	 CBlob * blob = blobs.GetBlob(i);
-	 CvRect & currentBlob = blob->GetBoundingBox();
-
-	 if (currentBlob.x < minOffset.x)
-	 minOffset.x = currentBlob.x;
-
-	 if (currentBlob.y < minOffset.y)
-	 minOffset.y = currentBlob.y;
-
-	 if (currentBlob.width + currentBlob.x > maxOffset.x)
-	 maxOffset.x = currentBlob.width + currentBlob.x;
-
-	 if (currentBlob.height + currentBlob.height > maxOffset.y)
-	 maxOffset.y = currentBlob.height + currentBlob.y;
-
-	 }
-	 CvRect largestBlob = { minOffset.x, minOffset.y, maxOffset.x - minOffset.x,
-	 maxOffset.y - minOffset.y };
-
-	 largestBlob.x += inputBlob.x;
-	 largestBlob.y += inputBlob.y;
-
-	 inputBlob = largestBlob;
-	 return true;
-	 */
+    dmtxDecodeDestroy(&dec);
+    dmtxImageDestroy(&image);
 }
 
-Decoder::ProcessResult Decoder::processImageRegions(Dib * dib) {
-	dpi = dib->getDpi();
-	double minBlobWidth = dpi * BARCODE_SIDE_LENGTH_INCHES;
-	double minBlobHeight = dpi * BARCODE_SIDE_LENGTH_INCHES;
+void Decoder::getDecodeInfo(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg,
+                            DecodeResult & decodeResult) {
+    CHECK_NOTNULL(dec);
+    CHECK_NOTNULL(reg);
+    CHECK_NOTNULL(msg);
 
-	UA_ASSERT_NOT_NULL(palletGrid);
-	UA_ASSERT(palletGrid->isImageValid());
+    DmtxVector2 p00, p10, p11, p01;
 
-#ifdef _DEBUG
-	ostringstream out;
-	for (unsigned row = 0; row < PalletGrid::MAX_ROWS; ++row) {
-		for (unsigned col = 0; col < PalletGrid::MAX_COLS; ++col) {
-			out << palletGrid->getCellEnabled(row, col);
-		}
-		out << endl;
-	}UA_DOUT(1, 5, "Loaded Profile: \n" << out.str());
-#endif
+    decodeResult.msg.assign((char *) msg->output, msg->outputIdx);
 
-	UA_DOUT(1, 7, "Minimum blob width (pixels): " << minBlobWidth);
-	UA_DOUT(1, 7, "Minimum blob height (pixels): " << minBlobHeight);
+    int height = dmtxDecodeGetProp(dec, DmtxPropHeight);
+    p00.X = p00.Y = p10.Y = p01.X = 0.0;
+    p10.X = p01.Y = p11.X = p11.Y = 1.0;
+    dmtxMatrix3VMultiplyBy(&p00, reg->fit2raw);
+    dmtxMatrix3VMultiplyBy(&p10, reg->fit2raw);
+    dmtxMatrix3VMultiplyBy(&p11, reg->fit2raw);
+    dmtxMatrix3VMultiplyBy(&p01, reg->fit2raw);
 
-	// generate blobs
-	unsigned blobRegionCount = 0;
-	for (unsigned row = 0; row < PalletGrid::MAX_ROWS; row++) {
-		for (unsigned col = 0; col < PalletGrid::MAX_COLS; col++) {
-			if (!palletGrid->getCellEnabled(row, col))
-				continue;
+    p00.Y = height - 1 - p00.Y;
+    p10.Y = height - 1 - p10.Y;
+    p11.Y = height - 1 - p11.Y;
+    p01.Y = height - 1 - p01.Y;
 
-			std::tr1::shared_ptr<const CvRect> rect = palletGrid->getCellRect(row, col);
-			UA_DOUT(
-					1,
-					7,
-					"row/" << row << " col/" << col << " rect/(" << rect->x << ", " << rect->y << "),(" << rect->x + rect->width << ", " << rect->y + rect->height << ")");
+    DmtxVector2 * p[4] = { &p00, &p10, &p11, &p01 };
 
-			if ((rect->width < minBlobWidth) || (rect->height < minBlobHeight))
-				continue;
-
-			BarcodeInfo * info = new BarcodeInfo();
-			info->setPreProcessBoundingBox(rect);
-			info->setRow(row);
-			info->setCol(col);
-			barcodeInfos[row][col] = info;
-			++blobRegionCount;
-		}
-	}UA_DOUT(1, 7, "blob regions found: " << blobRegionCount);
-
-	if (blobRegionCount == 0) {
-		// no blobs found
-		return IMG_INVALID;
-	}
-
-#ifdef _DEBUG
-	// record blob regions
-	Dib blobDib(*dib);
-	RgbQuad white(255, 255, 255);
-	for (unsigned row = 0, rows = barcodeInfos.size(); row < rows; ++row) {
-		for (unsigned col = 0, cols = barcodeInfos[row].size(); col < cols;
-				++col) {
-			BarcodeInfo * info = barcodeInfos[row][col];
-			if (info == NULL) {
-				continue;
-			}
-
-			std::tr1::shared_ptr<const CvRect> rect = barcodeInfos[row][col]->getPreProcessBoundingBox();
-			blobDib.rectangle(rect->x, rect->y, rect->width, rect->height, white);
-		}
-	}
-	blobDib.writeToFile("blobRegions.bmp");
-#endif
-
-	ProcessImageManager imageProcessor(this, scanGap, squareDev, edgeThresh,
-			corrections);
-	imageProcessor.generateBarcodes(dib, barcodeInfos);
-
-	unsigned decodeCount = 0;
-	for (unsigned row = 0, rows = barcodeInfos.size(); row < rows; ++row) {
-		for (unsigned col = 0, cols = barcodeInfos[row].size(); col < cols;
-				++col) {
-			BarcodeInfo * info = barcodeInfos[row][col];
-			if ((info != NULL) && info->isValid()) {
-				++decodeCount;
-			}
-		}
-	}
-
-	if (decodeCount == 0) {
-		UA_DOUT(3, 5, "no barcodes were found.");
-		return IMG_INVALID;
-	}
-
-	return OK;
+    for (unsigned i = 0; i < 4; ++i) {
+        decodeResult.corners[i].x = static_cast<int>(p[i]->X);
+        decodeResult.corners[i].y = static_cast<int>(p[i]->Y);
+    }
 }
 
 DmtxImage * Decoder::createDmtxImageFromDib(const Dib & dib) {
-	int pack = DmtxPackCustom;
-	unsigned padding = dib.getRowPadBytes();
+    int pack = DmtxPackCustom;
+    unsigned padding = dib.getRowPadBytes();
 
-	switch (dib.getBitsPerPixel()) {
-	case 8:
-		pack = DmtxPack8bppK;
-		break;
-	case 24:
-		pack = DmtxPack24bppRGB;
-		break;
-	case 32:
-		pack = DmtxPack32bppXRGB;
-		break;
-	}
+    switch (dib.getBitsPerPixel()) {
+    case 8:
+        pack = DmtxPack8bppK;
+        break;
+    case 24:
+        pack = DmtxPack24bppRGB;
+        break;
+    case 32:
+        pack = DmtxPack32bppXRGB;
+        break;
+    }
 
-	DmtxImage * image = dmtxImageCreate(dib.getPixelBuffer(), dib.getWidth(),
-			dib.getHeight(), pack);
+    DmtxImage * image = dmtxImageCreate(dib.getPixelBuffer(), dib.getWidth(),
+                                        dib.getHeight(), pack);
 
-	//set the properties (pad bytes, flip)
-	dmtxImageSetProp(image, DmtxPropRowPadBytes, padding);
-	dmtxImageSetProp(image, DmtxPropImageFlip, DmtxFlipY); // DIBs are flipped in Y
-	return image;
+    //set the properties (pad bytes, flip)
+    dmtxImageSetProp(image, DmtxPropRowPadBytes, padding);
+    dmtxImageSetProp(image, DmtxPropImageFlip, DmtxFlipY); // DIBs are flipped in Y
+    return image;
 }
 
 void Decoder::showStats(DmtxDecode * dec, DmtxRegion * reg, DmtxMessage * msg) {
-	int height;
-	int dataWordLength;
-	int rotateInt;
-	double rotate;
-	DmtxVector2 p00, p10, p11, p01;
+    if (__extension__ !VLOG_IS_ON(5)) return;
 
-	height = dmtxDecodeGetProp(dec, DmtxPropHeight);
+    int height;
+    int dataWordLength;
+    int rotateInt;
+    double rotate;
+    DmtxVector2 p00, p10, p11, p01;
 
-	p00.X = p00.Y = p10.Y = p01.X = 0.0;
-	p10.X = p01.Y = p11.X = p11.Y = 1.0;
-	dmtxMatrix3VMultiplyBy(&p00, reg->fit2raw);
-	dmtxMatrix3VMultiplyBy(&p10, reg->fit2raw);
-	dmtxMatrix3VMultiplyBy(&p11, reg->fit2raw);
-	dmtxMatrix3VMultiplyBy(&p01, reg->fit2raw);
+    height = dmtxDecodeGetProp(dec, DmtxPropHeight);
 
-	dataWordLength = dmtxGetSymbolAttribute(DmtxSymAttribSymbolDataWords,
-			reg->sizeIdx);
+    p00.X = p00.Y = p10.Y = p01.X = 0.0;
+    p10.X = p01.Y = p11.X = p11.Y = 1.0;
+    dmtxMatrix3VMultiplyBy(&p00, reg->fit2raw);
+    dmtxMatrix3VMultiplyBy(&p10, reg->fit2raw);
+    dmtxMatrix3VMultiplyBy(&p11, reg->fit2raw);
+    dmtxMatrix3VMultiplyBy(&p01, reg->fit2raw);
 
-	rotate = (2 * M_PI)
-			+ (atan2(reg->fit2raw[0][1], reg->fit2raw[1][1])
-					- atan2(reg->fit2raw[1][0], reg->fit2raw[0][0])) / 2.0;
+    dataWordLength = dmtxGetSymbolAttribute(DmtxSymAttribSymbolDataWords,
+                                            reg->sizeIdx);
 
-	rotateInt = (int) (rotate * 180 / M_PI + 0.5);
-	if (rotateInt >= 360)
-		rotateInt -= 360;
+    rotate = (2 * M_PI)
+                    + (atan2(reg->fit2raw[0][1], reg->fit2raw[1][1])
+                                    - atan2(reg->fit2raw[1][0],
+                                            reg->fit2raw[0][0])) / 2.0;
 
-	fprintf(stdout, "--------------------------------------------------\n");
-	fprintf(stdout, "       Matrix Size: %d x %d\n",
-			dmtxGetSymbolAttribute(DmtxSymAttribSymbolRows, reg->sizeIdx),
-			dmtxGetSymbolAttribute(DmtxSymAttribSymbolCols, reg->sizeIdx));
-	fprintf(stdout, "    Data Codewords: %d (capacity %d)\n",
-			dataWordLength - msg->padCount, dataWordLength);
-	fprintf(
-			stdout,
-			"   Error Codewords: %d\n",
-			dmtxGetSymbolAttribute(DmtxSymAttribSymbolErrorWords,
-					reg->sizeIdx));
-	fprintf(stdout, "      Data Regions: %d x %d\n",
-			dmtxGetSymbolAttribute(DmtxSymAttribHorizDataRegions, reg->sizeIdx),
-			dmtxGetSymbolAttribute(DmtxSymAttribVertDataRegions, reg->sizeIdx));
-	fprintf(
-			stdout,
-			"Interleaved Blocks: %d\n",
-			dmtxGetSymbolAttribute(DmtxSymAttribInterleavedBlocks,
-					reg->sizeIdx));
-	fprintf(stdout, "    Rotation Angle: %d\n", rotateInt);
-	fprintf(stdout, "          Corner 0: (%0.1f, %0.1f)\n", p00.X,
-			height - 1 - p00.Y);
-	fprintf(stdout, "          Corner 1: (%0.1f, %0.1f)\n", p10.X,
-			height - 1 - p10.Y);
-	fprintf(stdout, "          Corner 2: (%0.1f, %0.1f)\n", p11.X,
-			height - 1 - p11.Y);
-	fprintf(stdout, "          Corner 3: (%0.1f, %0.1f)\n", p01.X,
-			height - 1 - p01.Y);
-	fprintf(stdout, "--------------------------------------------------\n");
+    rotateInt = (int) (rotate * 180 / M_PI + 0.5);
+    if (rotateInt >= 360) rotateInt -= 360;
+
+    __extension__ VLOG(5)
+                    << "\n--------------------------------------------------"
+                    << "\n       Matrix Size: "
+                    << dmtxGetSymbolAttribute(DmtxSymAttribSymbolRows,
+                                              reg->sizeIdx)
+                    << " x "
+                    << dmtxGetSymbolAttribute(DmtxSymAttribSymbolCols,
+                                              reg->sizeIdx)
+                    << "\n    Data Codewords: "
+                    << dataWordLength - msg->padCount
+                    << " (capacity "
+                    << dataWordLength
+                    << ")"
+                    << "\n   Error Codewords: "
+                    << dmtxGetSymbolAttribute(DmtxSymAttribSymbolErrorWords,
+                                              reg->sizeIdx)
+                    << "\n      Data Regions: "
+                    << dmtxGetSymbolAttribute(DmtxSymAttribHorizDataRegions,
+                                              reg->sizeIdx)
+                    << " x "
+                    << dmtxGetSymbolAttribute(DmtxSymAttribVertDataRegions,
+                                              reg->sizeIdx)
+                    << "\nInterleaved Blocks: "
+                    << dmtxGetSymbolAttribute(DmtxSymAttribInterleavedBlocks,
+                                              reg->sizeIdx)
+                    << "\n    Rotation Angle: " << rotateInt
+                    << "\n          Corner 0: (" << p00.X << ", "
+                    << height - 1 - p00.Y << ")" << "\n          Corner 1: ("
+                    << p10.X << ", " << height - 1 - p10.Y << ")"
+                    << "\n          Corner 2: (" << p11.X << ", "
+                    << height - 1 - p11.Y << ")" << "\n          Corner 3: ("
+                    << p01.X << ", " << height - 1 - p01.Y << ")"
+                    << "\n--------------------------------------------------";
 }
 
-void Decoder::imageShowBarcodes(Dib & dib, bool regions) {
-	UA_DOUT(3, 3, "marking tags ");
-	if (barcodeInfos.empty())
-		return;
+void Decoder::writeDiagnosticImage(DmtxDecode *dec, const std::string & id) {
+    if (__extension__ !VLOG_IS_ON(5)) return;
 
-	RgbQuad quadWhite(255, 255, 255); // change to white (shows up better in grayscale)
-	RgbQuad quadPink(255, 0, 255);
-	RgbQuad quadRed(255, 0, 0);
+    int totalBytes, headerBytes;
+    int bytesWritten;
+    unsigned char *pnm;
+    FILE *fp;
 
-	RgbQuad & highlightQuad = (
-			dib.getBitsPerPixel() == 8 ? quadWhite : quadPink);
+    ostringstream fname;
+    fname << "diagnostic-" << id << ".pnm";
 
-	map<CvPoint, BarcodeInfo>::iterator it;
-	for (unsigned row = 0, rows = barcodeInfos.size(); row < rows; ++row) {
-		for (unsigned col = 0, cols = barcodeInfos[row].size(); col < cols;
-				++col) {
-			BarcodeInfo * info = barcodeInfos[row][col];
-			if ((info == NULL) || !info->isValid())
-				continue;
+    fp = fopen(fname.str().c_str(), "wb");
+    CHECK_NOTNULL(fp);
 
-			std::tr1::shared_ptr<const CvRect> rect = barcodeInfos[row][col]->getPostProcessBoundingBox();
-			dib.rectangle(rect->x, rect->y, rect->width, rect->height,
-					highlightQuad);
-		}
-	}
-}
+    pnm = dmtxDecodeCreateDiagnostic(dec, &totalBytes, &headerBytes, 0);
+    CHECK_NOTNULL(pnm);
 
-const char * Decoder::getBarcode(unsigned row, unsigned col) {
-	UA_ASSERT(row < PalletGrid::MAX_ROWS);
-	UA_ASSERT(col < PalletGrid::MAX_COLS);
+    bytesWritten = fwrite(pnm, sizeof(unsigned char), totalBytes, fp);
+    CHECK(bytesWritten == totalBytes);
 
-	BarcodeInfo * info = barcodeInfos[row][col];
-	if ((info == NULL) || !info->isValid())
-		return NULL;
-
-	return info->getMsg().c_str();
-}
-
-vector<BarcodeInfo *> & Decoder::getBarcodes() {
-	for (unsigned row = 0, rows = barcodeInfos.size(); row < rows; ++row) {
-		for (unsigned col = 0, cols = barcodeInfos[row].size(); col < cols;
-				++col) {
-			BarcodeInfo * info = barcodeInfos[row][col];
-			if ((info != NULL) && info->isValid()) {
-				barcodeInfosList.push_back(info);
-			}
-		}
-	}
-	return barcodeInfosList;
+    free(pnm);
+    fclose(fp);
 }

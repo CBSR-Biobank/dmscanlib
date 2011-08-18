@@ -27,76 +27,97 @@
 #include <memory>
 #include <vector>
 
+#if ! defined _VISUALC_
+#   include <tr1/memory>
+#endif
+
 class Dib;
 class Decoder;
 class ImgScanner;
-class BarcodeInfo;
+class PalletGrid;
+class PalletCell;
 
 using namespace std;
 
 class DmScanLib {
 public:
-	DmScanLib();
-	virtual ~DmScanLib();
+    DmScanLib(unsigned loggingLevel, bool logToFile = true);
+    virtual ~DmScanLib();
 
-	virtual int isTwainAvailable();
+    virtual int isTwainAvailable();
 
-	virtual int selectSourceAsDefault();
-	virtual int getScannerCapability();
-	virtual int scanImage(unsigned verbose, unsigned dpi, int brightness,
-			int contrast, double left, double top, double right, double bottom,
-			const char * filename);
-	virtual int scanFlatbed(unsigned verbose, unsigned dpi, int brightness,
-			int contrast, const char * filename);
-	virtual int decodePlate(unsigned verbose, unsigned dpi, int brightness,
-			int contrast, unsigned plateNum, double left, double top,
-			double right, double bottom, double scanGap, unsigned squareDev,
-			unsigned edgeThresh, unsigned corrections, double cellDistance,
-			double gapX, double gapY, unsigned profileA, unsigned profileB,
-			unsigned profileC, unsigned orientation);
-	virtual int decodeImage(unsigned verbose, unsigned plateNum,
-			const char * filename, double scanGap, unsigned squareDev,
-			unsigned edgeThresh, unsigned corrections, double cellDistance,
-			double gapX, double gapY, unsigned profileA, unsigned profileB,
-			unsigned profileC, unsigned orientation);
+    virtual int selectSourceAsDefault();
+    virtual int getScannerCapability();
+    virtual int scanImage(unsigned dpi, int brightness, int contrast,
+                          double left, double top, double right, double bottom,
+                          const char * filename);
+    virtual int scanFlatbed(unsigned dpi, int brightness, int contrast,
+                            const char * filename);
+    virtual int decodePlate(unsigned dpi, int brightness, int contrast,
+                            unsigned plateNum, double left, double top,
+                            double right, double bottom, double scanGap,
+                            unsigned squareDev, unsigned edgeThresh,
+                            unsigned corrections, double cellDistance,
+                            double gapX, double gapY, unsigned profileA,
+                            unsigned profileB, unsigned profileC,
+                            unsigned orientation);
+    virtual int decodeImage(unsigned plateNum, const char * filename,
+                            double scanGap, unsigned squareDev,
+                            unsigned edgeThresh, unsigned corrections,
+                            double cellDistance, double gapX, double gapY,
+                            unsigned profileA, unsigned profileB,
+                            unsigned profileC, unsigned orientation);
 
-	void configLogging(unsigned level, bool useFile = true);
+    void configLogging(unsigned level, bool useFile = true);
 
-	void setTextFileOutputEnable(bool enable) {
-		textFileOutputEnable = enable;
-	}
+    void setTextFileOutputEnable(bool enable) {
+        textFileOutputEnable = enable;
+    }
 
-	void setStdoutOutputEnable(bool enable) {
-		stdoutOutputEnable = enable;
-	}
+    void setStdoutOutputEnable(bool enable) {
+        stdoutOutputEnable = enable;
+    }
 
-	vector<BarcodeInfo *> & getBarcodes();
+    std::vector<std::tr1::shared_ptr<PalletCell> > & getDecodedCells();
 
 protected:
-	void saveResults(string & msg);
+    void saveResults(string & msg);
 
-	void formatCellMessages(unsigned plateNum, string & msg);
+    void formatCellMessages(unsigned plateNum, string & msg);
 
-	int isValidDpi(int dpi);
+    int isValidDpi(int dpi);
 
-	int decodeCommon(unsigned plateNum, Dib & dib, double scanGap,
-			unsigned squareDev, unsigned edgeThresh, unsigned corrections,
-			double cellDistance, double gapX, double gapY, unsigned profileA,
-			unsigned profileB, unsigned profileC, unsigned orientation,
-			const char *markedDibFilename);
+    int decodeCommon(const char *markedDibFilename);
 
-	auto_ptr<ImgScanner> imgScanner;
-	auto_ptr<Decoder> decoder;
+    static const string LIBRARY_NAME;
 
-	slTime starttime; // for debugging
-	slTime endtime;
-	slTime timediff;
+    std::tr1::shared_ptr<Dib> image;
+    std::tr1::shared_ptr<ImgScanner> imgScanner;
+    std::tr1::shared_ptr<PalletGrid> palletGrid;
+    std::tr1::shared_ptr<Decoder> decoder;
 
-	bool stdoutOutputEnable;
+    unsigned plateNum;
+    double scanGap;
+    unsigned squareDev;
+    unsigned edgeThresh;
+    unsigned corrections;
+    double cellDistance;
+    double gapX;
+    double gapY;
+    unsigned profileA;
+    unsigned profileB;
+    unsigned profileC;
+    unsigned orientation;
 
-	bool textFileOutputEnable;
+    slTime starttime; // for debugging
+    slTime endtime;
+    slTime timediff;
 
-	static bool loggingInitialized;
+    bool stdoutOutputEnable;
+
+    bool textFileOutputEnable;
+
+    static bool loggingInitialized;
 
 };
 

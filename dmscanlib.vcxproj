@@ -166,8 +166,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\BarcodeInfo.cpp" />
-    <ClCompile Include="src\BarcodeThread.cpp" />
     <ClCompile Include="src\Decoder.cpp" />
     <ClCompile Include="src\Dib.cpp" />
     <ClCompile Include="src\DmScanLib.cpp" />
@@ -176,8 +174,9 @@
     <ClCompile Include="src\ImgScannerFactory.cpp" />
     <ClCompile Include="src\ImgScannerImpl.cpp" />
     <ClCompile Include="src\IplContainer.cpp" />
+    <ClCompile Include="src\PalletCell.cpp" />
     <ClCompile Include="src\PalletGrid.cpp" />
-    <ClCompile Include="src\ProcessImageManager.cpp" />
+    <ClCompile Include="src\PalletThreadMgr.cpp" />
     <ClCompile Include="src\TestApp.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug-DLL|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|Win32'">true</ExcludedFromBuild>
@@ -192,9 +191,8 @@
     <ClCompile Include="src\cvblob\ComponentLabeling.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\BarcodeInfo.h" />
-    <ClInclude Include="src\BarcodeThread.h" />
     <ClInclude Include="src\Decoder.h" />
+    <ClInclude Include="src\DecodeResult.h" />
     <ClInclude Include="src\Dib.h" />
     <ClInclude Include="src\DmScanLib.h" />
     <ClInclude Include="src\DmScanLibInternal.h" />
@@ -203,9 +201,10 @@
     <ClInclude Include="src\ImgScannerFactory.h" />
     <ClInclude Include="src\ImgScannerImpl.h" />
     <ClInclude Include="src\IplContainer.h" />
+    <ClInclude Include="src\PalletCell.h" />
     <ClInclude Include="src\PalletGrid.h" />
-    <ClInclude Include="src\ProcessImageManager.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="src\PalletThreadMgr.h" />
     <ClInclude Include="src\utils\TimeUtil.h" />
     <ClInclude Include="src\utils\UaAssert.h" />
     <ClInclude Include="src\utils\UaLogger.h" />

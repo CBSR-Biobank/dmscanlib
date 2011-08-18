@@ -27,8 +27,6 @@
  */
 
 #include "ImgScannerImpl.h"
-#include "UaLogger.h"
-#include "UaAssert.h"
 
 #include <math.h>
 
@@ -75,7 +73,7 @@ bool ImgScannerImpl::twainAvailable() {
 
 unsigned ImgScannerImpl::invokeTwain(TW_IDENTITY * srcId, unsigned long dg,
                                    unsigned dat, unsigned msg, void * ptr) {
-   UA_ASSERT_NOT_NULL(g_pDSM_Entry);
+   CHECK_NOTNULL(g_pDSM_Entry);
    unsigned r = g_pDSM_Entry(&g_AppID, srcId, dg, dat, msg, ptr);
    UA_DOUT(2, 5, "invokeTwain: srcId/\""
            << ((srcId != NULL) ? srcId->ProductName : "NULL")
@@ -96,7 +94,7 @@ unsigned ImgScannerImpl::invokeTwain(TW_IDENTITY * srcId, unsigned long dg,
  *	have to be specified every time.
  */
 bool ImgScannerImpl::selectSourceAsDefault() {
-   UA_ASSERT_NOT_NULL(g_hLib);
+   CHECK_NOTNULL(g_hLib);
 
    // Create a static window whose handle is passed to DSM_Entry() when we
    // open the data source manager.
@@ -202,7 +200,7 @@ void ImgScannerImpl::setFloatToIntPair(const double f, short & whole,
  */
 HANDLE ImgScannerImpl::acquireImage(unsigned dpi, int brightness, int contrast,
                                   double left, double top, double right, double bottom) {
-   UA_ASSERT_NOT_NULL(g_hLib);
+   CHECK_NOTNULL(g_hLib);
 
    TW_UINT16 rc;
    TW_UINT32 handle = 0;
@@ -210,7 +208,7 @@ HANDLE ImgScannerImpl::acquireImage(unsigned dpi, int brightness, int contrast,
    TW_FIX32 value;
    HWND hwnd;
 
-   UA_ASSERT(sizeof(TW_FIX32) == sizeof(long));
+   CHECK(sizeof(TW_FIX32) == sizeof(long));
 
    if (!scannerSourceInit(hwnd, srcID)) {
       errorCode = SC_FAIL;
@@ -228,12 +226,12 @@ HANDLE ImgScannerImpl::acquireImage(unsigned dpi, int brightness, int contrast,
          || ((scannerCapability & CAP_DPI_600) && dpi == 600))) {
       errorCode = SC_INVALID_DPI;
       return NULL;
-   }   
+   }
 
 	double physicalWidth = getPhysicalDimensions(srcID, ICAP_PHYSICALWIDTH);
 	double physicalHeight = getPhysicalDimensions(srcID, ICAP_PHYSICALHEIGHT);
 
-	if ((left > physicalWidth) || (top > physicalHeight) 
+	if ((left > physicalWidth) || (top > physicalHeight)
 		|| (left + right > physicalWidth) || (top + bottom > physicalHeight)) {
       errorCode = SC_INVALID_VALUE;
       return NULL;
@@ -398,7 +396,7 @@ HANDLE ImgScannerImpl::acquireImage(unsigned dpi, int brightness, int contrast,
 HANDLE ImgScannerImpl::acquireFlatbed(unsigned dpi, int brightness, int contrast) {
 	TW_IDENTITY srcID;
 	HWND hwnd;
-      
+
 	errorCode = SC_FAIL;
 
 	if (!scannerSourceInit(hwnd, srcID)) {
@@ -407,7 +405,7 @@ HANDLE ImgScannerImpl::acquireFlatbed(unsigned dpi, int brightness, int contrast
 
 	double physicalWidth = getPhysicalDimensions(srcID, ICAP_PHYSICALWIDTH);
 	double physicalHeight = getPhysicalDimensions(srcID, ICAP_PHYSICALHEIGHT);
-	
+
    scannerSourceDeinit(hwnd, srcID);
 
 	return acquireImage(dpi, brightness, contrast, 0, 0, physicalWidth, physicalHeight);
@@ -415,7 +413,7 @@ HANDLE ImgScannerImpl::acquireFlatbed(unsigned dpi, int brightness, int contrast
 
 DmtxImage* ImgScannerImpl::acquireDmtxImage(unsigned dpi, int brightness,
                                           int contrast) {
-   UA_ASSERT_NOT_NULL(g_hLib);
+   CHECK_NOTNULL(g_hLib);
 
    HANDLE h = acquireImage(dpi, brightness, contrast, 0, 0, 0, 0);
    if (h == NULL) {
@@ -456,10 +454,10 @@ BOOL ImgScannerImpl::setCapOneValue(TW_IDENTITY * srcId, unsigned Cap,
    cap.Cap = Cap; // capability id
    cap.ConType = TWON_ONEVALUE; // container type
    cap.hContainer = GlobalAlloc(GHND, sizeof(TW_ONEVALUE));
-   UA_ASSERT_NOT_NULL(cap.hContainer);
+   CHECK_NOTNULL(cap.hContainer);
 
    pv = (pTW_ONEVALUE) GlobalLock(cap.hContainer);
-   UA_ASSERT_NOT_NULL(pv);
+   CHECK_NOTNULL(pv);
 
    pv->ItemType = ItemType;
    pv->Item = ItemVal;
@@ -493,7 +491,7 @@ int ImgScannerImpl::getScannerCapability() {
 }
 
 int ImgScannerImpl::getScannerCapabilityInternal(TW_IDENTITY & srcID) {
-   int capabilityCode = 0, xresolution = 0, yresolution = 0, 
+   int capabilityCode = 0, xresolution = 0, yresolution = 0,
 	   physicalwidth = 0, physicalheight = 0;
 
    setCapOneValue(&srcID, ICAP_UNITS, TWTY_UINT16, TWUN_INCHES);
@@ -598,13 +596,13 @@ int ImgScannerImpl::getResolutionCapability(TW_IDENTITY & srcID, TW_UINT16 cap) 
          unsigned int tempDpi = 0;
 
          pvalEnum = (pTW_ENUMERATION) GlobalLock(twCap.hContainer);
-         UA_ASSERT_NOT_NULL(pvalEnum);
+         CHECK_NOTNULL(pvalEnum);
 
          UA_DOUT(2, 6, "Number of supported Dpi: " << pvalEnum->NumItems);
          UA_DOUT(2, 6, "Dpi ItemType: " << pvalEnum->ItemType);
 
 		 for (index = 0; index < pvalEnum->NumItems; index++) {
-			 UA_ASSERTS(pvalEnum->ItemType == TWTY_FIX32, 
+			 UA_ASSERTS(pvalEnum->ItemType == TWTY_FIX32,
 				 "invalid item type: " << pvalEnum->ItemType);
 
 			 tempDpi
@@ -624,7 +622,7 @@ int ImgScannerImpl::getResolutionCapability(TW_IDENTITY & srcID, TW_UINT16 cap) 
          }
          break;
       }
-    
+
 		 //XXX Untested
 	  case TWON_ONEVALUE: {
 		  UA_DOUT(2, 5, "ConType = OneValue");
@@ -634,7 +632,7 @@ int ImgScannerImpl::getResolutionCapability(TW_IDENTITY & srcID, TW_UINT16 cap) 
 
 		  pvalOneValue = (pTW_ONEVALUE) GlobalLock(twCap.hContainer);
 
-		  UA_ASSERTS(pvalOneValue->ItemType == TWTY_FIX32, 
+		  UA_ASSERTS(pvalOneValue->ItemType == TWTY_FIX32,
 			  "invalid item type: " << pvalOneValue->ItemType);
 
 		  tempDpi = (unsigned int) twfix32ToFloat(
@@ -674,7 +672,7 @@ double ImgScannerImpl::getPhysicalDimensions(TW_IDENTITY & srcID, TW_UINT16 cap)
 
    UA_DOUT(2, 5, "twCap.ConType = " << twCap.ConType);
 
-   UA_ASSERTS(twCap.ConType ==  TWON_ONEVALUE, 
+   UA_ASSERTS(twCap.ConType ==  TWON_ONEVALUE,
 	   "invalid con type: " << twCap.ConType);
 
    pTW_ONEVALUE pvalOneValue;
@@ -682,7 +680,7 @@ double ImgScannerImpl::getPhysicalDimensions(TW_IDENTITY & srcID, TW_UINT16 cap)
 
    pvalOneValue = (pTW_ONEVALUE) GlobalLock(twCap.hContainer);
 
-   UA_ASSERTS(pvalOneValue->ItemType == TWTY_FIX32, 
+   UA_ASSERTS(pvalOneValue->ItemType == TWTY_FIX32,
 	   "invalid item type: " << pvalOneValue->ItemType);
 
    dimension = twfix32ToFloat(*(TW_FIX32 *) (void *) (&pvalOneValue->Item));
@@ -723,8 +721,8 @@ inline double ImgScannerImpl::twfix32ToFloat(TW_FIX32 fix32) {
  *	Unlock the handle to the image from twain, and free the memory.
  */
 void ImgScannerImpl::freeImage(HANDLE handle) {
-   UA_ASSERT_NOT_NULL(handle);
-   UA_ASSERT_NOT_NULL(g_hLib);
+   CHECK_NOTNULL(handle);
+   CHECK_NOTNULL(g_hLib);
    GlobalUnlock(handle);
    GlobalFree(handle);
 }
@@ -737,7 +735,7 @@ void ImgScannerImpl::freeImage(HANDLE handle) {
  *	If twain_32.dll was loaded, it will be removed from memory
  */
 void ImgScannerImpl::unloadTwain() {
-   UA_ASSERT_NOT_NULL(g_hLib);
+   CHECK_NOTNULL(g_hLib);
    FreeLibrary(g_hLib);
    g_hLib = NULL;
 }
