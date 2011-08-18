@@ -249,6 +249,7 @@ void createHistogramWindow(const char * windowName, CvHistogram* hist,
 struct HistogramWrapper {
 	CvHistogram * hist;
 	std::string filename;
+	std::string path;
 };
 
 int averageHistogramsInDirectory(int argc, char** argv) {
@@ -364,8 +365,97 @@ int averageHistogramsInDirectory(int argc, char** argv) {
 
 	return 0;
 }
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+int calculateHistogramForEachImage(int argc, char** argv) {
+
+	std::string directory;
+
+	std::vector<HistogramWrapper> histograms;
+	std::vector<HistogramWrapper>::iterator it;
+
+	if (argc == 2)
+		directory = std::string(argv[1]);
+	else
+		return -1;
+
+	struct dirent *entry;
+	DIR *dp;
+	dp = opendir(directory.c_str());
+	if (dp == NULL) {
+		perror("opendir");
+		return -1;
+	}
+
+	while ((entry = readdir(dp))) {
+		std::string filename = std::string(entry->d_name);
+		std::string path = directory + filename;
+		if (filename.find(".bmp") == std::string::npos
+				)//|| filename.find("missed") == std::string::npos
+			continue;
+
+		printf("Loading image: %s\n", filename.c_str());
+		IplImage* image = cvLoadImage((directory + filename).c_str());
+		if (image == NULL) {
+			printf("ERROR: could not load image: %s\n",
+					(directory + filename).c_str());
+			exit(-1);
+		}
+
+		CvHistogram* hist = generateHistogram(image);
+		if (hist == NULL) {
+			printf("ERROR: could not create histogram for image: %s\n",
+					(directory + filename).c_str());
+			exit(-1);
+		}
+		HistogramWrapper hw;
+		hw.hist = hist;
+		hw.filename = filename;
+		hw.path= path;
+
+		histograms.push_back(hw);
+
+		cvReleaseImage(&image);
+	}
+
+	for (it = histograms.begin(); it < histograms.end(); it++) {
+
+		CvMat histMatrix;
+		CvHistogram * hist;
+
+		hist = (*it).hist;
+		
+		printf("%s\n",(*it).path.c_str());
+/*
+		cvNamedWindow((*it).path.c_str(), 1);
+		cvMoveWindow((*it).path.c_str(), 500,500);
+		IplImage* image = cvLoadImage((*it).path.c_str());
+		cvShowImage((*it).path.c_str(), image);
+
+		createHistogramWindow((*it).filename.c_str(), hist, CV_RGB(0,255,0));
+		int key = cvWaitKey();
+*/
+		std::string processedName = (*it).filename + ".hist";
+/*
+		std::string processedName = (*it).filename + ".no.hist";
+
+		if(key == 121) // 'y' character
+			processedName = (*it).filename + ".yes.hist";
+*/		
+		saveHistogram(hist,(char *)processedName.c_str());
+		
+		//printf("key %d\n",key);
+
+//		cvReleaseImage(&image);
+//		cvDestroyAllWindows();
+		//saveHistogram(hist,
+
+	}
+	
+	return 0;
+}
 
 int main(int argc, char** argv) {
 
-	return averageHistogramsInDirectory(argc, argv);
+	return calculateHistogramForEachImage(argc, argv);
 }
