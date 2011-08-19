@@ -66,7 +66,7 @@ DmScanLib::~DmScanLib() {
     if (GCC_EXT VLOG_IS_ON(2)) {
         Util::getTime(endtime);
         Util::difftiime(starttime, endtime, timediff);
-        GCC_EXT VLOG(2) << "decodeCommon: time taken: " << timediff;
+        GCC_EXT VLOG(2) << "time taken: " << timediff;
     }
 }
 
