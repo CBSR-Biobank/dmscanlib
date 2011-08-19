@@ -27,8 +27,8 @@ REQUIRED PACKAGES ON UBUNTU
 
 JNI
 
-The JNI class used to interface to the dmscanlib is ScanLibImpl. To generate 
-the C header file use the following commands:
+  The JNI class used to interface to the dmscanlib is ScanLibImpl. To generate 
+  the C header file use the following commands:
 
    - cd to <scannerConfig_proj>/bin
    - javah -jni edu.ualberta.med.scannerconfig.dmscanlib.ScanLib
@@ -38,8 +38,8 @@ the C header file use the following commands:
 
 VALGRIND
 
-Use the following commands to check for memory leaks:
+  Use the following commands to check for memory leaks:
 
-valgrind --track-origins=yes --tool=memcheck --leak-check=yes -v \
-  --show-reachable=yes --num-callers=10 Linux-Debug/dmscanlib -d -p 1 \
-  -i <bmp_file> 
+  valgrind --track-origins=yes --tool=memcheck --leak-check=yes -v \
+    --show-reachable=yes --num-callers=10 Linux-Debug/dmscanlib -d -p 1 \
+    -i <bmp_file> 

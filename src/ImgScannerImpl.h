@@ -20,13 +20,14 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#if defined (WIN32) && ! defined(__MINGW32__)
+
 #include "ImgScanner.h"
 #include "Dib.h"
-#include "dmtx.h"
-#include "Singleton.h"
 #include "DmScanLib.h"
-#include "twain.h"     // Standard TWAIN header.
 
+#include <dmtx.h>
+#include <twain.h>     // Standard TWAIN header.
 #include <windows.h>
 
 using namespace std;
@@ -115,5 +116,8 @@ private:
 	// application process responsible for making calls to function DSM_Entry().
 	static TW_IDENTITY g_AppID;
 };
+
+#endif /* defined (WIN32) && ! defined(__MINGW32__) */
+
 
 #endif /* __INCLUDE_IMG_SCANNER_IMPL_H */

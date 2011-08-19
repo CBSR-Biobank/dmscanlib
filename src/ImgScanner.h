@@ -20,7 +20,13 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "dmtx.h"
+#include <dmtx.h>
+
+#ifdef _VISUALC_
+#   include <memory>
+#else
+#   include <tr1/memory>
+#endif
 
 #if defined (WIN32) && ! defined(__MINGW32__)
 #include <Windows.h>
@@ -37,6 +43,8 @@ public:
 	ImgScanner();
 
 	virtual ~ImgScanner();
+
+	static std::tr1::shared_ptr<ImgScanner> create();
 
 	virtual bool twainAvailable() = 0;
 

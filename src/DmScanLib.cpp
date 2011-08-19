@@ -32,14 +32,13 @@
 
 #include "DmScanLib.h"
 #include "DmScanLibInternal.h"
-#include "ImgScannerFactory.h"
+#include "ImgScanner.h"
 #include "ImgScanner.h"
 #include "PalletGrid.h"
 #include "Decoder.h"
 #include "Dib.h"
 
 #include <glog/logging.h>
-
 #include <stdio.h>
 #include <iostream>
 #include <fstream>
@@ -54,7 +53,7 @@ bool DmScanLib::loggingInitialized = false;
 
 DmScanLib::DmScanLib(unsigned loggingLevel, bool logToFile)
                 : image(new Dib()), imgScanner(
-                                ImgScannerFactory::getImgScanner()), stdoutOutputEnable(
+                                ImgScanner::create()), stdoutOutputEnable(
                                 false), textFileOutputEnable(false) {
     configLogging(loggingLevel, logToFile);
     if (GCC_EXT VLOG_IS_ON(2)) {
