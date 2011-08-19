@@ -56,7 +56,6 @@ public:
 
 	HANDLE acquireFlatbed(unsigned dpi, int brightness, int contrast);
 
-	DmtxImage* acquireDmtxImage(unsigned dpi, int brightness, int contrast);
 	void freeImage(HANDLE handle);
 
 	int getErrorCode() { return errorCode; }

@@ -57,8 +57,6 @@ public:
 
 	virtual HANDLE acquireFlatbed(unsigned dpi, int brightness, int contrast) = 0;
 
-	virtual DmtxImage* acquireDmtxImage(unsigned dpi, int brightness, int contrast) = 0;
-
 	virtual void freeImage(HANDLE handle) = 0;
 
 	int getErrorCode() { return errorCode; }

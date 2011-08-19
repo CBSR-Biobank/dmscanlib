@@ -411,42 +411,6 @@ HANDLE ImgScannerImpl::acquireFlatbed(unsigned dpi, int brightness, int contrast
 	return acquireImage(dpi, brightness, contrast, 0, 0, physicalWidth, physicalHeight);
 }
 
-DmtxImage* ImgScannerImpl::acquireDmtxImage(unsigned dpi, int brightness,
-                                          int contrast) {
-   CHECK_NOTNULL(g_hLib);
-
-   HANDLE h = acquireImage(dpi, brightness, contrast, 0, 0, 0, 0);
-   if (h == NULL) {
-	   LOG(ERROR) << "could not acquire handle for bitmap";
-      return NULL;
-   }
-
-   UCHAR *lpVoid, *pBits;
-   LPBITMAPINFOHEADER pHead;
-   lpVoid = (UCHAR *) GlobalLock(h);
-   pHead = (LPBITMAPINFOHEADER) lpVoid;
-   int width = pHead->biWidth;
-   int height = pHead->biHeight;
-   int m_nBits = pHead->biBitCount;
-   DmtxImage *theImage;
-
-   pBits = lpVoid + sizeof(BITMAPINFOHEADER);
-   theImage = dmtxImageCreate((unsigned char*) pBits, width, height,
-                              DmtxPack24bppRGB);
-
-   int rowPadBytes = (width * m_nBits) & 0x3;
-
-   VLOG(1) << "acquireDmtxImage: " << endl
-           << "lpVoid: " << *((unsigned*) lpVoid) << endl
-           << "sizeof(BITMAPINFOHEADER): " << sizeof(BITMAPINFOHEADER) << endl
-           << "Width: " << width << endl
-           << "height: " << height << endl
-           << "towPadBytes: " << rowPadBytes;
-   dmtxImageSetProp(theImage, DmtxPropRowPadBytes, rowPadBytes);
-   dmtxImageSetProp(theImage, DmtxPropImageFlip, DmtxFlipY); // DIBs are flipped in Y
-   return theImage;
-}
-
 BOOL ImgScannerImpl::setCapOneValue(TW_IDENTITY * srcId, unsigned Cap,
                                   unsigned ItemType, unsigned long ItemVal) {
    BOOL ret_value = FALSE;

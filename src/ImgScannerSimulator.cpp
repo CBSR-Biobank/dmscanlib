@@ -68,11 +68,6 @@ HANDLE ImgScannerSimulator::acquireFlatbed(unsigned dpi, int brightness, int con
 	return NULL;
 }
 
-DmtxImage* ImgScannerSimulator::acquireDmtxImage(unsigned dpi, int brightness, int contrast) {
-	__extension__ VLOG(2) << "acquireDmtxImage";
-	return NULL;
-}
-
 void ImgScannerSimulator::freeImage(HANDLE handle) {
 	__extension__ VLOG(2) << "freeImage";
 }
