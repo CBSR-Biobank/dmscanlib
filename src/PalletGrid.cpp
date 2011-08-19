@@ -105,7 +105,7 @@ void PalletGrid::applyFilters() {
 	if (image->getBitsPerPixel() != 8) {
 		filteredImage = image->convertGrayscale();
 	} else {
-		filteredImage = std::tr1::shared_ptr<Dib>(new Dib(*image.get()));
+		filteredImage = std::tr1::shared_ptr<Dib>(new Dib(*image));
 	}
 	filteredImage->tpPresetFilter();
 	if (GCC_EXT VLOG_IS_ON(2)) {
@@ -226,10 +226,10 @@ void PalletGrid::formatCellMessages(string & msg) {
 	out << "#Plate,Row,Col,Barcode" << endl;
 
 	for (unsigned i = 0, n = decodedCells.size(); i < n; ++i) {
-		PalletCell * cell = decodedCells[i].get();
-		const string & msg = cell->getBarcodeMsg();
-		out << plateNum << "," << static_cast<char>('A' + cell->getRow()) << ","
-				<< (cell->getCol() + 1) << "," << msg << endl;
+		PalletCell & cell = *decodedCells[i];
+		const string & msg = cell.getBarcodeMsg();
+		out << plateNum << "," << static_cast<char>('A' + cell.getRow()) << ","
+				<< (cell.getCol() + 1) << "," << msg << endl;
 	}
 	msg = out.str();
 }
