@@ -26,7 +26,7 @@
 #include "PalletCell.h"
 #include "Dib.h"
 
-#include <opencv/cxtypes.h>
+#include <opencv/cv.h>
 #include <glog/logging.h>
 #include <sstream>
 

@@ -40,14 +40,13 @@
 
 #include "DmScanLib.h"
 #include "DmScanLibInternal.h"
-#include "utils/SimpleOpt.h"
 #include "Decoder.h"
 #include "Dib.h"
 #include "ImgScanner.h"
+#include "utils/SimpleOpt.h"
 
 #ifndef WIN32
 #   include <limits>
-#   include <stdio.h>
 #endif
 
 #include <iostream>
@@ -65,52 +64,52 @@
 
 using namespace std;
 
-const char * USAGE_FMT =
-    "Usage: %s [OPTIONS]\n"
-        "Test tool for dmscanlib library."
-        "\n"
-        "  --debug NUM          Sets debugging level. Debugging messages are output\n"
-        "                       to stdout. Only when built UA_HAVE_DEBUG on.\n"
-        "  --debugfile          Send debugging output to file named dmscanlib.log.\n"
-        "  --select             Opens the scanner selection dialog.\n"
-        "  --capability         Query selected scanner for DPI and driver type settings.\n"
-        "  -h, --help           Displays this text.\n"
-        "\n"
-        "Scanner/Decoding Settings\n"
-        "  -d, --decode         Acquires an image from the scanner and Decodes the 2D barcodes.\n"
-        "                       Use with --plate option.\n"
-        "  --super				Super decode common.\n"
-        "  -s, --scan           Scans an image.\n"
-        "  -p, --plate NUM      The plate number to use.\n"
-        "  -i, --input FILE     Use the specified DIB image file instead of scanner.\n"
-        "  -o, --output FILE    Saves the image to the specified file name.\n"
-        "\n"
-        "  --dpi NUM            Dots per inch to use with scanner.\n"
-        "  --brightness NUM     The brightness setting to be used for scanning.\n"
-        "  --contrast NUM       The contrast setting to be used for scanning.\n"
-        "  --square-dev NUM     Maximum  deviation  (degrees)  from  squareness between adjacent\n"
-        "                       barcode sides. Default value is N=40, but  N=10  is  recommended\n"
-        "                       for  flat  applications  like faxes and other scanned documents.\n"
-        "                       Barcode regions found with corners <(90-N) or  >(90+N)  will  be\n"
-        "                       ignored by the decoder.\n"
-        "  --threshold NUM      Set  the  minimum edge threshold as a percentage of maximum. For\n"
-        "                       example, an edge between a pure white and pure black pixel would\n"
-        "                       have  an  intensity  of  100.  Edges  with intensities below the\n"
-        "                       indicated threshold will be ignored  by  the  decoding  process.\n"
-        "                       Lowering  the  threshold  will increase the amount of work to be\n"
-        "                       done, but may be necessary for low contrast or blurry images.\n"
-        "  --corrections NUM    The number of corrections to make.\n"
-        "  --celldist NUM       Distance between tube cells in inches.\n"
-        "  --gap NUM            Use scan grid with gap of NUM inches (or less) between lines.\n"
-        "  -v, --vertical       Pallet is in vertical orientation (default is horizontal).\n"
-        "  --outputBarcodes     Outputs barcodes and their locations to stdout.\n"
-        "\n"
-        "Scanning Coordinates\n"
-        "  -l, --left NUM       The left coordinate, in inches, for the scanning window.\n"
-        "  -t, --top NUM        The top coordinate, in inches, for the scanning window.\n"
-        "  -r, --right NUM      The left coordinate, in inches, for the scanning window.\n"
-        "  -b, --bottom NUM     The bottom coordinate, in inches, for the scanning window.\n"
-        "  -f, --flatbed        Scan the whole flatbed region\n";
+std::string USAGE_FMT(
+                "Usage: {progname} [OPTIONS]\n"
+                "Test tool for dmscanlib library."
+                "\n"
+                "  --debug NUM          Sets debugging level. Debugging messages are output\n"
+                "                       to stdout. Only when built UA_HAVE_DEBUG on.\n"
+                "  --debugfile          Send debugging output to file named dmscanlib.log.\n"
+                "  --select             Opens the scanner selection dialog.\n"
+                "  --capability         Query selected scanner for DPI and driver type settings.\n"
+                "  -h, --help           Displays this text.\n"
+                "\n"
+                "Scanner/Decoding Settings\n"
+                "  -d, --decode         Acquires an image from the scanner and Decodes the 2D barcodes.\n"
+                "                       Use with --plate option.\n"
+                "  --super				Super decode common.\n"
+                "  -s, --scan           Scans an image.\n"
+                "  -p, --plate NUM      The plate number to use.\n"
+                "  -i, --input FILE     Use the specified DIB image file instead of scanner.\n"
+                "  -o, --output FILE    Saves the image to the specified file name.\n"
+                "\n"
+                "  --dpi NUM            Dots per inch to use with scanner.\n"
+                "  --brightness NUM     The brightness setting to be used for scanning.\n"
+                "  --contrast NUM       The contrast setting to be used for scanning.\n"
+                "  --square-dev NUM     Maximum  deviation  (degrees)  from  squareness between adjacent\n"
+                "                       barcode sides. Default value is N=40, but  N=10  is  recommended\n"
+                "                       for  flat  applications  like faxes and other scanned documents.\n"
+                "                       Barcode regions found with corners <(90-N) or  >(90+N)  will  be\n"
+                "                       ignored by the decoder.\n"
+                "  --threshold NUM      Set  the  minimum edge threshold as a percentage of maximum. For\n"
+                "                       example, an edge between a pure white and pure black pixel would\n"
+                "                       have  an  intensity  of  100.  Edges  with intensities below the\n"
+                "                       indicated threshold will be ignored  by  the  decoding  process.\n"
+                "                       Lowering  the  threshold  will increase the amount of work to be\n"
+                "                       done, but may be necessary for low contrast or blurry images.\n"
+                "  --corrections NUM    The number of corrections to make.\n"
+                "  --celldist NUM       Distance between tube cells in inches.\n"
+                "  --gap NUM            Use scan grid with gap of NUM inches (or less) between lines.\n"
+                "  -v, --vertical       Pallet is in vertical orientation (default is horizontal).\n"
+                "  --outputBarcodes     Outputs barcodes and their locations to stdout.\n"
+                "\n"
+                "Scanning Coordinates\n"
+                "  -l, --left NUM       The left coordinate, in inches, for the scanning window.\n"
+                "  -t, --top NUM        The top coordinate, in inches, for the scanning window.\n"
+                "  -r, --right NUM      The left coordinate, in inches, for the scanning window.\n"
+                "  -b, --bottom NUM     The bottom coordinate, in inches, for the scanning window.\n"
+                "  -f, --flatbed        Scan the whole flatbed region\n");
 
 struct Options {
     unsigned dpi;
@@ -433,7 +432,10 @@ int TestApp::capability() {
 }
 
 void TestApp::usage() {
-    printf(USAGE_FMT, progname);
+    const string prognameStr("{progname}");
+    USAGE_FMT.replace(USAGE_FMT.find(prognameStr), prognameStr.length(),
+                      progname);
+    cout << USAGE_FMT;
 }
 
 bool TestApp::getCmdOptions(int argc, char ** argv) {

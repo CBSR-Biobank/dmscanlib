@@ -260,6 +260,7 @@ int DmScanLib::decodeImage(unsigned plateNum, const char *filename,
     }
 
     if (filename == NULL) {
+        LOG(ERROR) << "filename is null";
         return SC_FAIL;
     }
 
