@@ -36,7 +36,6 @@
 #endif
 
 ImgScannerSimulator::ImgScannerSimulator() {
-   errorCode = -1;
 }
 
 ImgScannerSimulator::~ImgScannerSimulator() {

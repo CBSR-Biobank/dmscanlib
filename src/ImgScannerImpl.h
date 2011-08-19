@@ -60,8 +60,6 @@ public:
 
 	int getErrorCode() { return errorCode; }
 
-
-
 private:
 
 	unsigned invokeTwain(TW_IDENTITY * srcId, unsigned long dg, unsigned dat,
@@ -114,6 +112,10 @@ private:
 	// g_AppID serves as a TWAIN identity structure that uniquely identifies the
 	// application process responsible for making calls to function DSM_Entry().
 	static TW_IDENTITY g_AppID;
+
+    int brightness;
+    int contrast;
+    int errorCode;
 };
 
 #endif /* defined (WIN32) && ! defined(__MINGW32__) */

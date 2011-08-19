@@ -52,9 +52,9 @@ const string DmScanLib::LIBRARY_NAME("dmscanlib");
 bool DmScanLib::loggingInitialized = false;
 
 DmScanLib::DmScanLib(unsigned loggingLevel, bool logToFile)
-                : image(new Dib()), imgScanner(
-                                ImgScanner::create()), stdoutOutputEnable(
-                                false), textFileOutputEnable(false) {
+                : imgScanner(ImgScanner::create()), stdoutOutputEnable(false),
+                  textFileOutputEnable(false) {
+
     configLogging(loggingLevel, logToFile);
     if (GCC_EXT VLOG_IS_ON(2)) {
         Util::getTime(starttime);
@@ -277,6 +277,7 @@ int DmScanLib::decodeImage(unsigned plateNum, const char *filename,
     this->profileC = profileC;
     this->orientation = orientation;
 
+    image = std::tr1::shared_ptr<Dib>(new Dib());
     image->readFromFile(filename);
 
     int result = decodeCommon("decode.bmp");
