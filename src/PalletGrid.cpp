@@ -25,8 +25,8 @@
 #include "PalletThreadMgr.h"
 #include "PalletCell.h"
 #include "Dib.h"
-#include "cxtypes.h"
 
+#include <opencv/cxtypes.h>
 #include <glog/logging.h>
 #include <sstream>
 

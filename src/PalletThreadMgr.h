@@ -26,9 +26,8 @@
  *		Author: Thomas Polasek
  */
 
-#include "cv.h"
-#include "dmtx.h"
-
+#include <opencv/cv.h>
+#include <dmtx.h>
 #include <string>
 
 #ifdef _VISUALC_

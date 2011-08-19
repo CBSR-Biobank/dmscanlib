@@ -24,9 +24,8 @@
 
 #include "DecodeResult.h"
 
-#include "dmtx.h"
-#include "cv.h"
-
+#include <dmtx.h>
+#include <opencv/cv.h>
 #include <string>
 
 #ifdef _VISUALC_

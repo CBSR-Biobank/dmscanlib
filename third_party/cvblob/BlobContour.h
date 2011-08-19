@@ -3,7 +3,7 @@
 
 
 #include "list"
-#include "cv.h"
+#include <opencv/cv.h>
 #include "cxtypes.h"
 
 //! Type of chain codes
