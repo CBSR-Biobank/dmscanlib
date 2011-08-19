@@ -40,7 +40,7 @@
 
 #include "DmScanLib.h"
 #include "DmScanLibInternal.h"
-#include "SimpleOpt.h"
+#include "utils/SimpleOpt.h"
 #include "Decoder.h"
 #include "Dib.h"
 #include "ImgScanner.h"
