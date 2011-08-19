@@ -66,6 +66,7 @@
 							<tool command="g++" commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}" errorParsers="org.eclipse.cdt.core.GLDErrorParser" id="cdt.managedbuild.tool.gnu.cpp.linker.base.618033240" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.base">
 								<option id="gnu.cpp.link.option.shared.758833990" name="Shared (-shared)" superClass="gnu.cpp.link.option.shared" value="false" valueType="boolean"/>
 								<option id="gnu.cpp.link.option.libs.219946775" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
+									<listOptionValue builtIn="false" value="dmtx"/>
 									<listOptionValue builtIn="false" value="cv"/>
 									<listOptionValue builtIn="false" value="glog"/>
 									<listOptionValue builtIn="false" value="OpenThreads"/>
@@ -100,7 +101,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="third_party/cvblob|third_party/libdmtx/test|third_party/libdmtx/dmtxvector2.c|third_party/libdmtx/dmtxtime.c|third_party/libdmtx/dmtxsymbol.c|third_party/libdmtx/dmtxscangrid.c|third_party/libdmtx/dmtxregion.c|third_party/libdmtx/dmtxreedsol.c|third_party/libdmtx/dmtxplacemod.c|third_party/libdmtx/dmtxmessage.c|third_party/libdmtx/dmtxmatrix3.c|third_party/libdmtx/dmtximage.c|third_party/libdmtx/dmtxencodestream.c|third_party/libdmtx/dmtxencodescheme.c|third_party/libdmtx/dmtxencodeoptimize.c|third_party/libdmtx/dmtxencodeedifact.c|third_party/libdmtx/dmtxencodec40textx12.c|third_party/libdmtx/dmtxencodebase256.c|third_party/libdmtx/dmtxencodeascii.c|third_party/libdmtx/dmtxencode.c|third_party/libdmtx/dmtxdecodescheme.c|third_party/libdmtx/dmtxdecode.c|third_party/libdmtx/dmtxbytelist.c|src/ImgScannerImpl.cpp|src/ImageScanner.cpp|DmScanlibJNI|src/libdmtx/dmtxencodestream.c|src/libdmtx/dmtxencodescheme.c|src/libdmtx/dmtxencodeoptimize.c|src/libdmtx/dmtxencodeedifact.c|src/libdmtx/dmtxencodec40textx12.c|src/libdmtx/dmtxencodebase256.c|src/libdmtx/dmtxencodeascii.c|src/libdmtx/dmtxdecodescheme.c|src/libdmtx/dmtxbytelist.c|scripts|src/DmScanLibWin32.cpp|src/utils/TimeUtilWin32.cpp|src/nvwa|src/libdmtx/dmtxvector2.c|src/libdmtx/dmtxtime.c|src/libdmtx/dmtxsymbol.c|src/libdmtx/dmtxstatic.h|src/libdmtx/dmtxscangrid.c|src/libdmtx/dmtxregion.c|src/libdmtx/dmtxreedsol.c|src/libdmtx/dmtxplacemod.c|src/libdmtx/dmtxmessage.c|src/libdmtx/dmtxmatrix3.c|src/libdmtx/dmtximage.c|src/libdmtx/dmtxfec.c|src/libdmtx/dmtxencode.c|src/libdmtx/dmtxdecode.c|src/DmScanLib_wrap.c|src/ImageGrabber.h|src/ImageGrabber.cpp|libdmtx/dmtxvector2.c|libdmtx/dmtxtime.c|libdmtx/dmtxsymbol.c|libdmtx/dmtxstatic.h|libdmtx/dmtxscangrid.c|libdmtx/dmtxregion.c|libdmtx/dmtxreedsol.c|libdmtx/dmtxplacemod.c|libdmtx/dmtxmessage.c|libdmtx/dmtxmatrix3.c|libdmtx/dmtximage.c|libdmtx/dmtxfec.c|libdmtx/dmtxencode.c|libdmtx/dmtxdecode.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="src/nvwa|scripts|src/ImgScannerImpl.cpp|src/utils/TimeUtilWin32.cpp|third_party/cvblob|third_party/libdmtx" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -201,7 +202,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="third_party/cvblob|third_party/libdmtx/test|third_party/libdmtx/dmtxvector2.c|third_party/libdmtx/dmtxtime.c|third_party/libdmtx/dmtxsymbol.c|third_party/libdmtx/dmtxscangrid.c|third_party/libdmtx/dmtxregion.c|third_party/libdmtx/dmtxreedsol.c|third_party/libdmtx/dmtxplacemod.c|third_party/libdmtx/dmtxmessage.c|third_party/libdmtx/dmtxmatrix3.c|third_party/libdmtx/dmtximage.c|third_party/libdmtx/dmtxencodestream.c|third_party/libdmtx/dmtxencodescheme.c|third_party/libdmtx/dmtxencodeoptimize.c|third_party/libdmtx/dmtxencodeedifact.c|third_party/libdmtx/dmtxencodec40textx12.c|third_party/libdmtx/dmtxencodebase256.c|third_party/libdmtx/dmtxencodeascii.c|third_party/libdmtx/dmtxencode.c|third_party/libdmtx/dmtxdecodescheme.c|third_party/libdmtx/dmtxdecode.c|third_party/libdmtx/dmtxbytelist.c|scripts|DmScanlibJNI/DmScanlib.cpp|src/ImgScannerImpl.cpp|src/libdmtx/dmtxencodestream.c|src/libdmtx/dmtxencodescheme.c|src/libdmtx/dmtxencodeoptimize.c|src/libdmtx/dmtxencodeedifact.c|src/libdmtx/dmtxencodec40textx12.c|src/libdmtx/dmtxencodebase256.c|src/libdmtx/dmtxencodeascii.c|src/libdmtx/dmtxdecodescheme.c|src/libdmtx/dmtxbytelist.c|src/utils/TimeUtilWin32.cpp|src/DmScanLibLinux.cpp|src/libdmtx/dmtxvector2.c|src/libdmtx/dmtxtime.c|src/libdmtx/dmtxsymbol.c|src/libdmtx/dmtxstatic.h|src/libdmtx/dmtxscangrid.c|src/libdmtx/dmtxregion.c|src/libdmtx/dmtxreedsol.c|src/libdmtx/dmtxplacemod.c|src/libdmtx/dmtxmessage.c|src/libdmtx/dmtxmatrix3.c|src/libdmtx/dmtximage.c|src/libdmtx/dmtxfec.c|src/libdmtx/dmtxencode.c|src/libdmtx/dmtxdecode.c|src/DmScanLib_wrap.c|libdmtx/dmtxvector2.c|libdmtx/dmtxtime.c|libdmtx/dmtxsymbol.c|libdmtx/dmtxstatic.h|libdmtx/dmtxscangrid.c|libdmtx/dmtxregion.c|libdmtx/dmtxreedsol.c|libdmtx/dmtxplacemod.c|libdmtx/dmtxmessage.c|libdmtx/dmtxmatrix3.c|libdmtx/dmtximage.c|libdmtx/dmtxfec.c|libdmtx/dmtxencode.c|libdmtx/dmtxdecode.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="scripts|src/ImgScannerSimulator.cpp|src/utils/TimeUtilLinux.cpp|third_party/cvblob" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -250,7 +251,6 @@
 									<listOptionValue builtIn="false" value="_DEBUG"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.include.paths.1234963400" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/dmscanlib/src/libdmtx}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/dmscanlib/src}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/dmscanlib/src/loki}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/dmscanlib/src/utils}&quot;"/>
@@ -280,7 +280,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="third_party/cvblob|third_party/libdmtx/test|third_party/libdmtx/dmtxvector2.c|third_party/libdmtx/dmtxtime.c|third_party/libdmtx/dmtxsymbol.c|third_party/libdmtx/dmtxscangrid.c|third_party/libdmtx/dmtxregion.c|third_party/libdmtx/dmtxreedsol.c|third_party/libdmtx/dmtxplacemod.c|third_party/libdmtx/dmtxmessage.c|third_party/libdmtx/dmtxmatrix3.c|third_party/libdmtx/dmtximage.c|third_party/libdmtx/dmtxencodestream.c|third_party/libdmtx/dmtxencodescheme.c|third_party/libdmtx/dmtxencodeoptimize.c|third_party/libdmtx/dmtxencodeedifact.c|third_party/libdmtx/dmtxencodec40textx12.c|third_party/libdmtx/dmtxencodebase256.c|third_party/libdmtx/dmtxencodeascii.c|third_party/libdmtx/dmtxencode.c|third_party/libdmtx/dmtxdecodescheme.c|third_party/libdmtx/dmtxdecode.c|third_party/libdmtx/dmtxbytelist.c|scripts|DmScanlibJNI/DmScanlib.cpp|src/ImgScannerImpl.cpp|src/libdmtx/dmtxencodestream.c|src/libdmtx/dmtxencodescheme.c|src/libdmtx/dmtxencodeoptimize.c|src/libdmtx/dmtxencodeedifact.c|src/libdmtx/dmtxencodec40textx12.c|src/libdmtx/dmtxencodebase256.c|src/libdmtx/dmtxencodeascii.c|src/libdmtx/dmtxdecodescheme.c|src/libdmtx/dmtxbytelist.c|src/utils/TimeUtilWin32.cpp|src/DmScanLibLinux.cpp|src/nvwa/static_mem_pool.h|src/nvwa/static_mem_pool.cpp|src/nvwa/static_assert.h|src/nvwa/set_assign.h|src/nvwa/pctimer.h|src/nvwa/object_level_lock.h|src/nvwa/mem_pool_base.h|src/nvwa/mem_pool_base.cpp|src/nvwa/fixed_mem_pool.h|src/nvwa/fast_mutex.h|src/nvwa/debug_new.h|src/nvwa/debug_new.cpp|src/nvwa/cont_ptr_utils.h|src/nvwa/class_level_lock.h|src/nvwa/bool_array.h|src/nvwa/bool_array.cpp|src/libdmtx/dmtxvector2.c|src/libdmtx/dmtxtime.c|src/libdmtx/dmtxsymbol.c|src/libdmtx/dmtxstatic.h|src/libdmtx/dmtxscangrid.c|src/libdmtx/dmtxregion.c|src/libdmtx/dmtxreedsol.c|src/libdmtx/dmtxplacemod.c|src/libdmtx/dmtxmessage.c|src/libdmtx/dmtxmatrix3.c|src/libdmtx/dmtximage.c|src/libdmtx/dmtxfec.c|src/libdmtx/dmtxencode.c|src/libdmtx/dmtxdecode.c|src/DmScanLib_wrap.c|libdmtx/dmtxvector2.c|libdmtx/dmtxtime.c|libdmtx/dmtxsymbol.c|libdmtx/dmtxstatic.h|libdmtx/dmtxscangrid.c|libdmtx/dmtxregion.c|libdmtx/dmtxreedsol.c|libdmtx/dmtxplacemod.c|libdmtx/dmtxmessage.c|libdmtx/dmtxmatrix3.c|libdmtx/dmtximage.c|libdmtx/dmtxfec.c|libdmtx/dmtxencode.c|libdmtx/dmtxdecode.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="scripts|src/ImgScannerSimulator.cpp|src/utils/TimeUtilLinux.cpp|third_party/cvblob" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -324,13 +324,8 @@
 									<listOptionValue builtIn="false" value="/usr/include/opencv/"/>
 									<listOptionValue builtIn="false" value="/usr/lib/jvm/java-6-sun-1.6.0.26/include"/>
 									<listOptionValue builtIn="false" value="/usr/lib/jvm/java-6-sun-1.6.0.26/include/linux"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/libdmtx}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/cvblob}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/opencv/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/nvwa}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/loki}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/utils}&quot;"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.preprocessor.def.1021147518" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="_DEBUG"/>
@@ -360,6 +355,7 @@
 							<tool command="g++" commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}" errorParsers="org.eclipse.cdt.core.GLDErrorParser" id="cdt.managedbuild.tool.gnu.cpp.linker.base.473881638" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.base">
 								<option id="gnu.cpp.link.option.shared.1138076553" name="Shared (-shared)" superClass="gnu.cpp.link.option.shared" value="true" valueType="boolean"/>
 								<option id="gnu.cpp.link.option.libs.215852185" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
+									<listOptionValue builtIn="false" value="dmtx"/>
 									<listOptionValue builtIn="false" value="cv"/>
 									<listOptionValue builtIn="false" value="glog"/>
 									<listOptionValue builtIn="false" value="OpenThreads"/>
@@ -380,7 +376,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="third_party/cvblob|third_party/libdmtx/test|third_party/libdmtx/dmtxvector2.c|third_party/libdmtx/dmtxtime.c|third_party/libdmtx/dmtxsymbol.c|third_party/libdmtx/dmtxscangrid.c|third_party/libdmtx/dmtxregion.c|third_party/libdmtx/dmtxreedsol.c|third_party/libdmtx/dmtxplacemod.c|third_party/libdmtx/dmtxmessage.c|third_party/libdmtx/dmtxmatrix3.c|third_party/libdmtx/dmtximage.c|third_party/libdmtx/dmtxencodestream.c|third_party/libdmtx/dmtxencodescheme.c|third_party/libdmtx/dmtxencodeoptimize.c|third_party/libdmtx/dmtxencodeedifact.c|third_party/libdmtx/dmtxencodec40textx12.c|third_party/libdmtx/dmtxencodebase256.c|third_party/libdmtx/dmtxencodeascii.c|third_party/libdmtx/dmtxencode.c|third_party/libdmtx/dmtxdecodescheme.c|third_party/libdmtx/dmtxdecode.c|third_party/libdmtx/dmtxbytelist.c|src/ImgScannerImpl.cpp|src/ImageScanner.cpp|DmScanlibJNI|src/libdmtx/dmtxencodestream.c|src/libdmtx/dmtxencodescheme.c|src/libdmtx/dmtxencodeoptimize.c|src/libdmtx/dmtxencodeedifact.c|src/libdmtx/dmtxencodec40textx12.c|src/libdmtx/dmtxencodebase256.c|src/libdmtx/dmtxencodeascii.c|src/libdmtx/dmtxdecodescheme.c|src/libdmtx/dmtxbytelist.c|scripts|src/DmScanLibWin32.cpp|src/utils/TimeUtilWin32.cpp|src/nvwa|src/libdmtx/dmtxvector2.c|src/libdmtx/dmtxtime.c|src/libdmtx/dmtxsymbol.c|src/libdmtx/dmtxstatic.h|src/libdmtx/dmtxscangrid.c|src/libdmtx/dmtxregion.c|src/libdmtx/dmtxreedsol.c|src/libdmtx/dmtxplacemod.c|src/libdmtx/dmtxmessage.c|src/libdmtx/dmtxmatrix3.c|src/libdmtx/dmtximage.c|src/libdmtx/dmtxfec.c|src/libdmtx/dmtxencode.c|src/libdmtx/dmtxdecode.c|src/DmScanLib_wrap.c|src/ImageGrabber.h|src/ImageGrabber.cpp|libdmtx/dmtxvector2.c|libdmtx/dmtxtime.c|libdmtx/dmtxsymbol.c|libdmtx/dmtxstatic.h|libdmtx/dmtxscangrid.c|libdmtx/dmtxregion.c|libdmtx/dmtxreedsol.c|libdmtx/dmtxplacemod.c|libdmtx/dmtxmessage.c|libdmtx/dmtxmatrix3.c|libdmtx/dmtximage.c|libdmtx/dmtxfec.c|libdmtx/dmtxencode.c|libdmtx/dmtxdecode.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="src/nvwa|scripts|src/ImgScannerImpl.cpp|src/utils/TimeUtilWin32.cpp|third_party/cvblob|third_party/libdmtx" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
