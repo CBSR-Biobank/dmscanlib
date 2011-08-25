@@ -338,49 +338,8 @@ unsigned Dib::getWidth() const {
     return width;
 }
 
-unsigned Dib::getRowPadBytes() const {
-    return rowPaddingBytes;
-}
-
 unsigned Dib::getBitsPerPixel() const {
     return colorBits;
-}
-
-unsigned char *Dib::getPixelBuffer() const {
-    CHECK_NOTNULL(pixels);
-    return pixels;
-}
-
-unsigned char Dib::getPixelAvgGrayscale(unsigned row, unsigned col) const {
-    CHECK(row < height);
-    CHECK(col < width);
-
-    unsigned char *ptr = pixels + row * rowBytes + col * bytesPerPixel;
-
-    if ((colorBits == 24) || (colorBits == 32)) {
-        return (unsigned char) (0.33333 * ptr[0] + 0.33333 * ptr[1]
-                        + 0.33333 * ptr[2]);
-    } else if (colorBits == 8) {
-        return *ptr;
-    }
-    CHECK(false) << "colorBits " << colorBits << " not implemented yet";
-    return 0;
-}
-
-inline unsigned char Dib::getPixelGrayscale(unsigned row, unsigned col) const {
-    CHECK(row < height);
-    CHECK(col < width);
-
-    unsigned char *ptr = pixels + row * rowBytes + col * bytesPerPixel;
-
-    if ((colorBits == 24) || (colorBits == 32)) {
-        return static_cast<unsigned char>(0.3333 * ptr[0] + 0.3333 * ptr[1]
-                        + 0.3333 * ptr[2]);
-    } else if (colorBits == 8) {
-        return *ptr;
-    }
-    CHECK(false) << "colorBits " << colorBits << " not implemented yet";
-    return 0;
 }
 
 void Dib::setPixel(unsigned x, unsigned y, const RgbQuad & quad) {
@@ -402,25 +361,6 @@ void Dib::setPixel(unsigned x, unsigned y, const RgbQuad & quad) {
     ptr[0] = quad.rgbBlue;
 }
 
-inline void Dib::setPixelGrayscale(unsigned row, unsigned col,
-                                   unsigned char value) {
-    CHECK(row < height);
-    CHECK(col < width);
-
-    unsigned char *ptr = pixels + row * rowBytes + col * bytesPerPixel;
-
-    if ((colorBits == 24) || (colorBits == 32)) {
-        ptr[0] = value;
-        ptr[1] = value;
-        ptr[2] = value;
-    } else if (colorBits == 8) {
-        *ptr = value;
-    } else {
-        assert(0);
-        /* can't assign RgbQuad to dib */
-    }
-}
-
 /*
  * [a,b)
  */
@@ -439,8 +379,8 @@ bool Dib::bound(unsigned min, unsigned & x, unsigned max) {
 }
 
 std::tr1::shared_ptr<Dib> Dib::convertGrayscale() const {
-    CHECK(getBitsPerPixel() == 24 || getBitsPerPixel() == 8);
-    CHECK(getPixelBuffer() != NULL);
+    CHECK(colorBits == 24 || colorBits == 8);
+    CHECK(pixels != NULL);
 
     if (getBitsPerPixel() == 8) {
         CHECK(false) << "already grayscale image.";

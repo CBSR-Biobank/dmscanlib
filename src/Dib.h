@@ -77,15 +77,7 @@ public:
 	unsigned getDpi() const;
 	unsigned getHeight() const;
 	unsigned getWidth() const;
-	unsigned getRowPadBytes() const;
 	unsigned getBitsPerPixel() const;
-	unsigned char * getPixelBuffer() const;
-	unsigned char getPixelAvgGrayscale(unsigned row, unsigned col) const;
-	inline unsigned char getPixelGrayscale(unsigned row, unsigned col) const;
-
-	void setPixel(unsigned row, unsigned col, const RgbQuad & quad);
-	inline void setPixelGrayscale(unsigned row, unsigned col,
-			unsigned char value);
 
 	void line(unsigned x0, unsigned y0, unsigned x1, unsigned y1, const RgbQuad & quad);
 
@@ -137,6 +129,7 @@ private:
 	void allocate(unsigned int allocateSize);
 	void deallocate();
 
+    void setPixel(unsigned row, unsigned col, const RgbQuad & quad);
 	unsigned getPaletteSize(unsigned bitCount) const;
 	unsigned getRowBytes(unsigned width, unsigned bitCount);
 	static bool bound(unsigned min, unsigned & x, unsigned max);
