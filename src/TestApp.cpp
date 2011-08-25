@@ -166,7 +166,7 @@ private:
 
     std::tr1::shared_ptr<DmScanLib> dmScanLib;
 
-    const char * progname;
+    const string progname;
 
     Options options;
 };
@@ -282,10 +282,7 @@ Options::Options() {
     profileC = (unsigned) -1;
 }
 
-TestApp::TestApp(int argc, char ** argv) {
-
-    progname = strrchr((char *) argv[0], DIR_SEP_CHR) + 1;
-
+TestApp::TestApp(int argc, char ** argv) : progname(argv[0]) {
     getCmdOptions(argc, argv);
 
     dmScanLib = std::tr1::shared_ptr<DmScanLib>(
@@ -619,6 +616,7 @@ bool TestApp::getCmdOptions(int argc, char ** argv) {
     }
     return true;
 }
+
 
 int main(int argc, char ** argv) {
     /*

@@ -30,12 +30,6 @@
 #include <glog/logging.h>
 #include <sstream>
 
-#ifdef _VISUALC_
-#   include <functional>
-#else
-#   include <tr1/functional>
-#endif
-
 PalletGrid::PalletGrid(unsigned pn, Orientation o,
 		std::tr1::shared_ptr<const Dib> img, unsigned gapX, unsigned gapY,
 		const unsigned(&profileWords)[3]) :
@@ -92,7 +86,7 @@ PalletGrid::PalletGrid(unsigned pn, Orientation o,
 			getCellRect(row, col, rect);
 			std::tr1::shared_ptr<PalletCell> cell(
 					new PalletCell(*this, row, col, rect));
-			allCells.push_back(cell);
+			enabledCells.push_back(cell);
 			cellsByRowCol[row][col] = cell;
 		}
 	}
@@ -183,14 +177,14 @@ unsigned PalletGrid::decodeCells(std::tr1::shared_ptr<Decoder> dcdr) {
 
 	bool found;
 	PalletThreadMgr imageManager(decoder);
-	imageManager.decodeCells(allCells);
+	imageManager.decodeCells(enabledCells);
 
-	for (unsigned i = 0, n = allCells.size(); i < n; ++i) {
-		PalletCell & cell = *allCells[i];
+	for (unsigned i = 0, n = enabledCells.size(); i < n; ++i) {
+		PalletCell & cell = *enabledCells[i];
 
 		found = (cell.getDecodeValid() && !cell.getBarcodeMsg().empty());
 		if (found) {
-			decodedCells.push_back(allCells[i]);
+			decodedCells.push_back(enabledCells[i]);
 		}
 
 		if (GCC_EXT VLOG_IS_ON(2)) {
@@ -235,31 +229,31 @@ void PalletGrid::formatCellMessages(string & msg) {
 }
 
 void PalletGrid::writeImageWithCells(std::string filename) {
-	CHECK(allCells.size() > 0) << "cells images not initialized yet";
+	CHECK(enabledCells.size() > 0) << "cells images not initialized yet";
 
 	RgbQuad white(255, 255, 255);
 	Dib markedImage(*image);
 
-	for (unsigned i = 0, n = allCells.size(); i < n; ++i) {
-		allCells[i]->drawCellBox(markedImage, white);
+	for (unsigned i = 0, n = enabledCells.size(); i < n; ++i) {
+		enabledCells[i]->drawCellBox(markedImage, white);
 	}
 
 	markedImage.writeToFile(filename.c_str());
 }
 
 void PalletGrid::writeImageWithBoundedBarcodes(std::string filename) {
-	CHECK(allCells.size() > 0) << "cells images not initialized yet";
+	CHECK(enabledCells.size() > 0) << "cells images not initialized yet";
 
 	RgbQuad red(255, 0, 0);
 	Dib markedImage(*image);
 
 	std::vector<const CvPoint *> corners;
 
-	for (unsigned i = 0, n = allCells.size(); i < n; ++i) {
-		if (!allCells[i]->getDecodeValid())
+	for (unsigned i = 0, n = enabledCells.size(); i < n; ++i) {
+		if (!enabledCells[i]->getDecodeValid())
 			continue;
 
-		allCells[i]->drawBarcodeBox(markedImage, red);
+		enabledCells[i]->drawBarcodeBox(markedImage, red);
 	}
 
 	markedImage.writeToFile(filename.c_str());

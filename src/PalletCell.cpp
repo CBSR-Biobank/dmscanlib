@@ -28,12 +28,13 @@ void PalletCell::run() {
     ostringstream id;
     id << row << "-" << col;
 
-    grid.getDecoder().decodeImage(getImage(), id.str(), decodeResult);
+    getImage();
+    grid.getDecoder().decodeImage(cellImage, id.str(), decodeResult);
     if (!decodeResult.msg.empty()) {
         grid.registerBarcodeMsg(decodeResult.msg);
 
         RAW_LOG(INFO,
-                "PalletCell::setDecodeInfo: (%d,%d) - %s", row, col, decodeResult.msg.c_str());
+                "run: (%d,%d) - %s", row, col, decodeResult.msg.c_str());
     }
 }
 

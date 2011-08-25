@@ -124,7 +124,7 @@ private:
     unsigned plateNum;
     Orientation orientation;
 
-    std::vector<std::tr1::shared_ptr<PalletCell> > allCells;
+    std::vector<std::tr1::shared_ptr<PalletCell> > enabledCells;
 
     std::vector<std::tr1::shared_ptr<PalletCell> > decodedCells;
 

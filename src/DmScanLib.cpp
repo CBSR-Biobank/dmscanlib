@@ -127,12 +127,7 @@ void DmScanLib::saveResults(string & msg) {
 
 int DmScanLib::scanImage(unsigned dpi, int brightness, int contrast,
                          double left, double top, double right, double bottom,
-                         const char *filename) {
-    if (filename == NULL) {
-        GCC_EXT VLOG(2) << "slScanImage: no file name specified";
-        return SC_FAIL;
-    }
-
+                         const string &filename) {
     GCC_EXT VLOG(2)
                     << "slScanImage: dpi/" << dpi << " brightness/"
                     << brightness << " contrast/" << contrast << " left/"
@@ -156,12 +151,7 @@ int DmScanLib::scanImage(unsigned dpi, int brightness, int contrast,
 }
 
 int DmScanLib::scanFlatbed(unsigned dpi, int brightness, int contrast,
-                           const char *filename) {
-    if (filename == NULL) {
-        GCC_EXT VLOG(2) << "slScanFlatbed: no file name specified";
-        return SC_FAIL;
-    }
-
+                           const string &filename) {
     GCC_EXT VLOG(2)
                     << "slScanFlatbed: dpi/" << dpi << " brightness/"
                     << brightness << " contrast/" << contrast << " filename/"
@@ -240,7 +230,7 @@ int DmScanLib::decodePlate(unsigned dpi, int brightness, int contrast,
     return result;
 }
 
-int DmScanLib::decodeImage(unsigned plateNum, const char *filename,
+int DmScanLib::decodeImage(unsigned plateNum, const string & filename,
                            double scanGap, unsigned squareDev,
                            unsigned edgeThresh, unsigned corrections,
                            double cellDistance, double gapX, double gapY,
@@ -259,11 +249,6 @@ int DmScanLib::decodeImage(unsigned plateNum, const char *filename,
         return SC_INVALID_PLATE_NUM;
     }
 
-    if (filename == NULL) {
-        LOG(ERROR) << "filename is null";
-        return SC_FAIL;
-    }
-
     this->plateNum = plateNum;
     this->scanGap = scanGap;
     this->squareDev = squareDev;
@@ -278,13 +263,16 @@ int DmScanLib::decodeImage(unsigned plateNum, const char *filename,
     this->orientation = orientation;
 
     image = std::tr1::shared_ptr<Dib>(new Dib());
-    image->readFromFile(filename);
+	bool readResult = image->readFromFile(filename);
+	if (!readResult) {
+		return SC_INVALID_IMAGE;
+	}
 
     int result = decodeCommon("decode.bmp");
     return result;
 }
 
-int DmScanLib::decodeCommon(const char *markedDibFilename) {
+int DmScanLib::decodeCommon(const string &markedDibFilename) {
     const unsigned profileWords[3] = { profileA, profileB, profileC };
     const unsigned dpi = image->getDpi();
 

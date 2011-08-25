@@ -110,8 +110,7 @@ void RgbQuad::set(unsigned char r, unsigned char g, unsigned char b) {
     rgbReserved = 0;
 }
 
-Dib::Dib()
-                : pixels(NULL), isAllocated(false) {
+Dib::Dib() : pixels(NULL), isAllocated(false) {
 }
 
 Dib::Dib(const Dib & src)
@@ -124,29 +123,6 @@ Dib::Dib(unsigned width, unsigned height, unsigned colorBits,
          unsigned pixelsPerMeter)
                 : pixels(NULL), isAllocated(false) {
     init(width, height, colorBits, pixelsPerMeter);
-}
-
-Dib::Dib(IplImageContainer & img)
-                : pixels(NULL), isAllocated(false) {
-
-    IplImage *src = img.getIplImage();
-
-    CHECK(src->depth == IPL_DEPTH_8U) <<
-    "Dib::Dib(IplImage & src) requires an unsigned 8bit image";
-
-    CvMat hdr, *matrix = NULL;
-    /* IplImage saves a flipped image */
-    cvFlip(src, src, 0);
-    matrix = cvGetMat(src, &hdr);
-
-    init(src->width, src->height, 8, img.getHorizontalResolution());
-    memcpy(pixels, matrix->data.ptr, src->imageSize);
-    cvFlip(src, src, 0);
-}
-
-Dib::Dib(char *filename)
-                : pixels(NULL), isAllocated(false) {
-    readFromFile(filename);
 }
 
 void Dib::init(unsigned width, unsigned height, unsigned colorBits,
@@ -242,13 +218,15 @@ void Dib::readFromHandle(HANDLE handle) {
 /**
  * All values in little-endian except for BitmapFileHeader.type.
  */
-void Dib::readFromFile(const char *filename) {
-    CHECK_NOTNULL(filename);
-
+bool Dib::readFromFile(const string & filename) {
     deallocate();
 
-    FILE *fh = fopen(filename, "rb"); // C4996
-    CHECK_NE(fh, (FILE *)NULL) << "could not open file " << filename;
+    FILE *fh = fopen(filename.c_str(), "rb"); // C4996
+
+    if (fh == NULL) {
+        LOG(ERROR) << "could not open file " << filename;
+        return false;
+    }
 
     unsigned char fileHeaderRaw[0xE];
     unsigned char infoHeaderRaw[0x28];
@@ -288,14 +266,10 @@ void Dib::readFromFile(const char *filename) {
     GCC_EXT VLOG(2)
                     << "readFromFile: rowBytes/" << rowBytes << " paddingBytes/"
                     << rowPaddingBytes;
+    return true;
 }
 
-unsigned Dib::getRowBytes(unsigned width, unsigned colorBits) {
-    return static_cast<unsigned>(ceil((width * colorBits) / 32.0)) << 2;
-}
-
-bool Dib::writeToFile(const char *filename) const {
-    CHECK_NOTNULL(filename);
+bool Dib::writeToFile(const string & filename) const {
     CHECK_NOTNULL(pixels);
 
     unsigned char fileHeaderRaw[0xE];
@@ -323,7 +297,7 @@ bool Dib::writeToFile(const char *filename) const {
     *(unsigned *) &infoHeaderRaw[0x2E - 0xE] = paletteSize;
     *(unsigned *) &infoHeaderRaw[0x32 - 0xE] = 0;
 
-    FILE *fh = fopen(filename, "wb"); // C4996
+    FILE *fh = fopen(filename.c_str(), "wb"); // C4996
     if (fh == NULL) {
         DLOG(ERROR) << "could not open file for writing";
         return false;
@@ -345,6 +319,10 @@ bool Dib::writeToFile(const char *filename) const {
     CHECK_EQ(r, imageSize);
     fclose(fh);
     return true;
+}
+
+unsigned Dib::getRowBytes(unsigned width, unsigned colorBits) {
+    return static_cast<unsigned>(ceil((width * colorBits) / 32.0)) << 2;
 }
 
 unsigned Dib::getDpi() const {
@@ -541,37 +519,6 @@ std::tr1::shared_ptr<Dib> Dib::crop(unsigned x0, unsigned y0, unsigned x1,
 }
 
 /*
- * /http://opencv.willowgarage.com/documentation/c/basic_structures.html
- *
- * cvmat: Matrices are stored row by row. All of the rows are padded (4 bytes).
- */
-auto_ptr<IplImageContainer> Dib::generateIplImage() {
-    CHECK_EQ(colorBits, 8)
-               << "generateIplImage requires an unsigned 8bit image";
-    CHECK_NOTNULL(pixels);
-
-    IplImage *image = NULL;
-    CvMat hdr, *matrix = NULL;
-    CvSize size;
-
-    size.width = width;
-    size.height = height;
-
-    image = cvCreateImage(size, IPL_DEPTH_8U, 1);
-    matrix = cvGetMat(image, &hdr);
-
-    memcpy(matrix->data.ptr, pixels, imageSize);
-
-    cvFlip(image, image, 0);
-
-    auto_ptr<IplImageContainer> iplContainer(new IplImageContainer(NULL));
-    iplContainer->setIplImage(image);
-    iplContainer->setHorizontalResolution(pixelsPerMeter);
-    iplContainer->setVerticalResolution(pixelsPerMeter);
-    return iplContainer;
-}
-
-/*
  * generate x,y coordinates to draw a line from x0,y0 to x1,y1 and output the
  * coordinates in the same direction that they are drawn.
  *
@@ -755,4 +702,29 @@ void Dib::convolveFast3x3(const float(&k)[9]) {
 
     delete[] imageIn;
     delete[] imageOut;
+}
+
+std::tr1::shared_ptr<DmtxImage> Dib::getDmtxImage() const {
+    int pack = DmtxPackCustom;
+
+    switch (colorBits) {
+    case 8:
+        pack = DmtxPack8bppK;
+        break;
+    case 24:
+        pack = DmtxPack24bppRGB;
+        break;
+    case 32:
+        pack = DmtxPack32bppXRGB;
+        break;
+    }
+
+    std::tr1::shared_ptr<DmtxImage>  image(
+                    dmtxImageCreate(pixels, width, height, pack));
+
+    //set the properties (pad bytes, flip)
+    dmtxImageSetProp(image.get(), DmtxPropRowPadBytes, rowPaddingBytes);
+    dmtxImageSetProp(image.get(), DmtxPropImageFlip, DmtxFlipY); // DIBs are flipped in Y
+    return image;
+
 }
