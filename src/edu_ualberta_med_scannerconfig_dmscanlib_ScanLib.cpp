@@ -263,7 +263,6 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
     ScanRegion region(env, _region);
 
     DmScanLib dmScanLib(verbose);
-    std::vector<std::tr1::shared_ptr<PalletCell> > * cells;
     int result = dmScanLib.decodePlate(dpi, brightness, contrast,
                                        plateNum, region.left, region.top,
                                        region.right, region.bottom, scanGap,
@@ -271,6 +270,7 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
                                        cellDistance, gapX, gapY, profileA,
                                        profileB, profileC, orientation);
 
+    std::vector<std::tr1::shared_ptr<PalletCell> > * cells;
     if (result == SC_SUCCESS) {
         cells = &dmScanLib.getDecodedCells();
     }
@@ -301,12 +301,12 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
     const char *filename = env->GetStringUTFChars(_filename, 0);
 
     DmScanLib dmScanLib(verbose);
-    std::vector<std::tr1::shared_ptr<PalletCell> > * cells;
     int result = dmScanLib.decodeImage(plateNum, filename, scanGap,
                                        squareDev, edgeThresh, corrections,
                                        cellDistance, gapX, gapY, profileA,
                                        profileB, profileC, orientation);
 
+    std::vector<std::tr1::shared_ptr<PalletCell> > * cells;
     if (result == SC_SUCCESS) {
         cells = &dmScanLib.getDecodedCells();
     }

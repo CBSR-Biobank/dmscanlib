@@ -216,7 +216,8 @@ int DmScanLib::decodePlate(unsigned dpi, int brightness, int contrast,
         GCC_EXT VLOG(2) << "could not acquire plate image: " << plateNum;
         return imgScanner->getErrorCode();
     }
-
+	
+    image = std::tr1::shared_ptr<Dib>(new Dib());
     image->readFromHandle(h);
     if (image->getDpi() != dpi) {
         return SC_INCORRECT_DPI_SCANNED;

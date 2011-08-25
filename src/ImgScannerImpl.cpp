@@ -81,7 +81,7 @@ unsigned ImgScannerImpl::invokeTwain(TW_IDENTITY * srcId, unsigned long dg,
            << " ptr/" << ptr << " returnCode/" << r;
 
    if ((srcId == NULL) && (r != TWRC_SUCCESS) && (r != TWRC_CHECKSTATUS)) {
-      VLOG(1) << "ImgScannerImpl::invokeTwain: unsuccessful call to twain";
+      VLOG(3) << "ImgScannerImpl::invokeTwain: unsuccessful call to twain";
    }
    return r;
 }
@@ -165,7 +165,7 @@ bool ImgScannerImpl::scannerSourceInit(HWND & hwnd, TW_IDENTITY & srcID) {
    if (rc != TWRC_SUCCESS) {
       // Unable to open default data source
       invokeTwain(NULL, DG_CONTROL, DAT_PARENT, MSG_CLOSEDSM, &hwnd);
-      VLOG(1) << "DG_CONTROL / DAT_PARENT / MSG_CLOSEDSM";
+      VLOG(3) << "DG_CONTROL / DAT_PARENT / MSG_CLOSEDSM";
       return false;
    }
    return true;
@@ -174,11 +174,11 @@ bool ImgScannerImpl::scannerSourceInit(HWND & hwnd, TW_IDENTITY & srcID) {
 void ImgScannerImpl::scannerSourceDeinit(HWND & hwnd, TW_IDENTITY & srcID) {
    // Close the data source.
    invokeTwain(&srcID, DG_CONTROL, DAT_IDENTITY, MSG_CLOSEDS, &srcID);
-   VLOG(1) << "DG_CONTROL / DAT_IDENTITY / MSG_CLOSEDS";
+   VLOG(3) << "DG_CONTROL / DAT_IDENTITY / MSG_CLOSEDS";
 
    // Close the data source manager.
    invokeTwain(NULL, DG_CONTROL, DAT_PARENT, MSG_CLOSEDSM, &hwnd);
-   VLOG(1) << "DG_CONTROL / DAT_PARENT / MSG_CLOSEDSM";
+   VLOG(3) << "DG_CONTROL / DAT_PARENT / MSG_CLOSEDSM";
 
    // Destroy window.
    DestroyWindow(hwnd);
@@ -284,13 +284,13 @@ HANDLE ImgScannerImpl::acquireImage(unsigned dpi, int brightness, int contrast,
 
    // Enable the default data source.
    rc = invokeTwain(&srcID, DG_CONTROL, DAT_USERINTERFACE, MSG_ENABLEDS, &ui);
-   VLOG(1) << "DG_CONTROL / DAT_USERINTERFACE / MSG_ENABLEDS";
+   VLOG(3) << "DG_CONTROL / DAT_USERINTERFACE / MSG_ENABLEDS";
    CHECK_EQ(rc, TWRC_SUCCESS) << "Unable to enable default data source";
 
    if (rc == TWRC_FAILURE) {
       errorCode = SC_FAIL;
       scannerSourceDeinit(hwnd, srcID);
-      VLOG(1) << "TWRC_FAILURE";
+      VLOG(3) << "TWRC_FAILURE";
       return NULL;
    }
 
@@ -313,7 +313,7 @@ HANDLE ImgScannerImpl::acquireImage(unsigned dpi, int brightness, int contrast,
       if (event.TWMessage == MSG_CLOSEDSREQ) {
          rc = invokeTwain(&srcID, DG_CONTROL, DAT_USERINTERFACE,
                           MSG_DISABLEDS, &ui);
-         VLOG(1) << "got MSG_CLOSEDSREQ: sending DG_CONTROL / DAT_USERINTERFACE / MSG_DISABLEDS";
+         VLOG(3) << "got MSG_CLOSEDSREQ: sending DG_CONTROL / DAT_USERINTERFACE / MSG_DISABLEDS";
          break;
       }
 
@@ -321,12 +321,12 @@ HANDLE ImgScannerImpl::acquireImage(unsigned dpi, int brightness, int contrast,
          TW_IMAGEINFO ii;
 
          rc = invokeTwain(&srcID, DG_IMAGE, DAT_IMAGEINFO, MSG_GET, &ii);
-         VLOG(1) << "DG_IMAGE / DAT_IMAGEINFO / MSG_GET";
+         VLOG(3) << "DG_IMAGE / DAT_IMAGEINFO / MSG_GET";
 
          if (rc == TWRC_FAILURE) {
             invokeTwain(&srcID, DG_CONTROL, DAT_PENDINGXFERS, MSG_RESET,
                         &pxfers);
-            VLOG(1) << "DG_CONTROL / DAT_PENDINGXFERS / MSG_RESET";
+            VLOG(3) << "DG_CONTROL / DAT_PENDINGXFERS / MSG_RESET";
             LOG(WARNING) << "Unable to obtain image information";
             break;
          }
@@ -342,7 +342,7 @@ HANDLE ImgScannerImpl::acquireImage(unsigned dpi, int brightness, int contrast,
          }
 
          //debug info
-         VLOG(1) << "acquire:"
+         VLOG(3) << "acquire:"
                  << " XResolution/" << ii.XResolution.Whole << "." << ii.XResolution.Frac
                  << " YResolution/" << ii.YResolution.Whole << "." << ii.YResolution.Frac
                  << " imageWidth/" << ii.ImageWidth
@@ -355,13 +355,13 @@ HANDLE ImgScannerImpl::acquireImage(unsigned dpi, int brightness, int contrast,
          // Perform the transfer.
          rc = invokeTwain(&srcID, DG_IMAGE, DAT_IMAGENATIVEXFER, MSG_GET,
                           &handle);
-         VLOG(1) << "DG_IMAGE / DAT_IMAGENATIVEXFER / MSG_GET";
+         VLOG(3) << "DG_IMAGE / DAT_IMAGENATIVEXFER / MSG_GET";
 
          // If image not successfully transferred ...
          if (rc != TWRC_XFERDONE) {
             invokeTwain(&srcID, DG_CONTROL, DAT_PENDINGXFERS, MSG_RESET,
                         &pxfers);
-            VLOG(1) << "DG_CONTROL / DAT_PENDINGXFERS / MSG_RESET";
+            VLOG(3) << "DG_CONTROL / DAT_PENDINGXFERS / MSG_RESET";
             LOG(WARNING) << "User aborted transfer or failure";
             errorCode = SC_INVALID_IMAGE;
             handle = 0;
@@ -371,18 +371,18 @@ HANDLE ImgScannerImpl::acquireImage(unsigned dpi, int brightness, int contrast,
          // acknowledge end of transfer.
          rc = invokeTwain(&srcID, DG_CONTROL, DAT_PENDINGXFERS, MSG_ENDXFER,
                           &pxfers);
-         VLOG(1) << "DG_CONTROL / DAT_PENDINGXFERS / MSG_ENDXFER";
+         VLOG(3) << "DG_CONTROL / DAT_PENDINGXFERS / MSG_ENDXFER";
 
          if (rc == TWRC_SUCCESS) {
             if (pxfers.Count != 0) {
                // Cancel all remaining transfers.
                invokeTwain(&srcID, DG_CONTROL, DAT_PENDINGXFERS,
                            MSG_RESET, &pxfers);
-               VLOG(1) << "DG_CONTROL / DAT_PENDINGXFERS / MSG_RESET";
+               VLOG(3) << "DG_CONTROL / DAT_PENDINGXFERS / MSG_RESET";
             } else {
                rc = invokeTwain(&srcID, DG_CONTROL, DAT_USERINTERFACE,
                                 MSG_DISABLEDS, &ui);
-               VLOG(1) << "DG_CONTROL / DAT_USERINTERFACE / MSG_DISABLEDS";
+               VLOG(3) << "DG_CONTROL / DAT_USERINTERFACE / MSG_DISABLEDS";
                break;
             }
          }
@@ -484,10 +484,10 @@ int ImgScannerImpl::getScannerCapabilityInternal(TW_IDENTITY & srcID) {
       string productnameStr = buf;
 
       if (productnameStr.find("wia") != string::npos) {
-         VLOG(6) << "Driver type is WIA: ProductName/" << productnameStr;
+         VLOG(7) << "Driver type is WIA: ProductName/" << productnameStr;
          capabilityCode |= CAP_IS_WIA;
       } else {
-         VLOG(6) << "Driver type is TWAIN (default)";
+         VLOG(7) << "Driver type is TWAIN (default)";
       }
    }
 
@@ -537,7 +537,7 @@ int ImgScannerImpl::getResolutionCapability(TW_IDENTITY & srcID, TW_UINT16 cap) 
             CHECK_GT(stepDpi, 0) << "TWON_RANGE stepSize was was not greater than zero.";
             CHECK_GT(minDpi, 0) << "TWON_RANGE minDpi was was not greater than zero.";
             CHECK_GE(maxDpi, minDpi) << "TWON_RANGE minDpi > naxDpi";
-            VLOG(6) << "Supports DPI Range {" << " Min:" << minDpi << " Max:" << maxDpi << " Step:" << stepDpi << " }";
+            VLOG(7) << "Supports DPI Range {" << " Min:" << minDpi << " Max:" << maxDpi << " Step:" << stepDpi << " }";
 
             if (300 - minDpi >= 0 && 300 <= maxDpi && (int) (300 - minDpi)
                 % (int) stepDpi == 0)
@@ -564,8 +564,8 @@ int ImgScannerImpl::getResolutionCapability(TW_IDENTITY & srcID, TW_UINT16 cap) 
          pvalEnum = (pTW_ENUMERATION) GlobalLock(twCap.hContainer);
          CHECK_NOTNULL(pvalEnum);
 
-         VLOG(6) << "Number of supported Dpi: " << pvalEnum->NumItems;
-         VLOG(6) << "Dpi ItemType: " << pvalEnum->ItemType;
+         VLOG(7) << "Number of supported Dpi: " << pvalEnum->NumItems;
+         VLOG(7) << "Dpi ItemType: " << pvalEnum->ItemType;
 
 		 for (index = 0; index < pvalEnum->NumItems; index++) {
 			 CHECK_EQ(pvalEnum->ItemType, TWTY_FIX32)
@@ -575,7 +575,7 @@ int ImgScannerImpl::getResolutionCapability(TW_IDENTITY & srcID, TW_UINT16 cap) 
 				 = (unsigned int) twfix32ToFloat(
 				 *(TW_FIX32 *) (void *) (&pvalEnum->ItemList[index
 				 * 4]));
-			 VLOG(6) << "Supports DPI (f32bit): " << tempDpi;
+			 VLOG(7) << "Supports DPI (f32bit): " << tempDpi;
 
             if (tempDpi == 300)
                capabilityCode |= CAP_DPI_300;
