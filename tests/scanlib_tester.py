@@ -16,7 +16,7 @@ scanLibTimeout = 30
 
 class Barcode(object):
 	position = None
-	value = ""
+	value = "" # immutable
 
 	def __init__(self,message=None,position=None,value=None):
 
@@ -59,6 +59,12 @@ class Barcode(object):
 	def __str__(self):
 		return "row/%02d col/%02d barcode/%s" % (int(self.position[0]),int(self.position[1]),self.value)
 
+	def __eq__(self,other):
+		return self.value == other.value
+
+	def __hash__(self):
+		return hash(self.value)
+
 	def getDict(self):
 		return {'position': self.position, 'value': self.value}
 
@@ -76,10 +82,13 @@ class ScanResult(object):
 		return self.timeTaken
 
 	def getBarcodesCount(self):
-		return len(self.barcodes)
+		return len(self.getBarcodes())
 
+	# removes any duplicate barcodes
+	# old versions of this script did not parse scanlib
+	# ouput 100% correctly.
 	def getBarcodes(self):
-		return self.barcodes
+		return list(set(self.barcodes))
 
 	def getFilename(self):
 		return self.filename
@@ -245,6 +254,9 @@ def generalTest(imageDir,outputFile):
 	sr.save(outputFile)
 	print "Wrote to file."
 
+
+
+
 def compareTest(resultsFile1,resultsFile2):
 	seperator("Comparison Test")
 
@@ -314,6 +326,7 @@ def compareTest(resultsFile1,resultsFile2):
 
 	padnums.pprint_table(sys.stdout, table)
 	print ""
+
 
 def main(argv):
 
