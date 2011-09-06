@@ -17,6 +17,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+
 /**
  * Implements the ImgScanner.
  *
@@ -26,8 +27,10 @@
  * Some portions of the implementation borrowed from EZTWAIN.
  */
 
+#include "DmScanLibInternal.h"
 #include "ImgScannerImpl.h"
 
+#include <glog/logging.h>
 #include <math.h>
 
 #if defined(USE_NVWA)
@@ -51,15 +54,12 @@ const char * ImgScannerImpl::TWAIN_DLL_FILENAME = "TWAIN_32.DLL";
  */
 ImgScannerImpl::ImgScannerImpl() :
       g_hLib(NULL), g_pDSM_Entry(NULL) {
-   ua::Logger::Instance().subSysHeaderSet(2, "ImgScanner");
-
    g_hLib = LoadLibraryA(TWAIN_DLL_FILENAME);
 
    if (g_hLib != NULL) {
       g_pDSM_Entry = (DSMENTRYPROC) GetProcAddress(g_hLib, "DSM_Entry");
 
-      UA_ASSERTS(g_pDSM_Entry != 0,
-                 "ImgScannerImpl: Unable to fetch DSM_Entry address");
+      CHECK_NOTNULL(g_pDSM_Entry); // Unable to fetch DSM_Entry address
    }
 }
 
@@ -75,13 +75,13 @@ unsigned ImgScannerImpl::invokeTwain(TW_IDENTITY * srcId, unsigned long dg,
                                    unsigned dat, unsigned msg, void * ptr) {
    CHECK_NOTNULL(g_pDSM_Entry);
    unsigned r = g_pDSM_Entry(&g_AppID, srcId, dg, dat, msg, ptr);
-   UA_DOUT(2, 5, "invokeTwain: srcId/\""
+   VLOG(5) << "invokeTwain: srcId/\""
            << ((srcId != NULL) ? srcId->ProductName : "NULL")
            << "\" dg/" << dg << " dat/" << dat << " msg/" << msg
-           << " ptr/" << ptr << " returnCode/" << r);
+           << " ptr/" << ptr << " returnCode/" << r;
 
    if ((srcId == NULL) && (r != TWRC_SUCCESS) && (r != TWRC_CHECKSTATUS)) {
-      UA_DOUT(2, 1, "ImgScannerImpl::invokeTwain: unsuccessful call to twain");
+      VLOG(3) << "ImgScannerImpl::invokeTwain: unsuccessful call to twain";
    }
    return r;
 }
@@ -102,7 +102,7 @@ bool ImgScannerImpl::selectSourceAsDefault() {
                              CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, HWND_DESKTOP, 0,
                              0 /* g_hinstDLL */, 0);
 
-   UA_ASSERTS(hwnd != 0, "Unable to create private window ");
+   CHECK_NOTNULL(hwnd); // Unable to create private window 
 
    TW_UINT16 rc;
    TW_IDENTITY srcID;
@@ -119,7 +119,7 @@ bool ImgScannerImpl::selectSourceAsDefault() {
    ZeroMemory (&srcID, sizeof(srcID));
    rc = invokeTwain(NULL, DG_CONTROL, DAT_IDENTITY, MSG_USERSELECT, &srcID);
 
-   UA_ASSERTS(rc != TWRC_FAILURE, "Unable to display user interface ");
+   CHECK_NE(rc, TWRC_FAILURE) << "Unable to display user interface ";
    if (rc == TWRC_CANCEL) {
       return false;
    }
@@ -128,7 +128,7 @@ bool ImgScannerImpl::selectSourceAsDefault() {
    invokeTwain(NULL, DG_CONTROL, DAT_PARENT, MSG_CLOSEDSM, &hwnd);
    DestroyWindow(hwnd);
 
-   UA_DOUT(2, 3, "selectSourceAsDefault: " << srcID.ProductName);
+   VLOG(3) << "selectSourceAsDefault: " << srcID.ProductName;
    return true;
 }
 
@@ -145,13 +145,13 @@ bool ImgScannerImpl::scannerSourceInit(HWND & hwnd, TW_IDENTITY & srcID) {
 
    ShowWindow(hwnd, SW_HIDE);
 
-   UA_ASSERTS(hwnd != 0, "Unable to create private window");
+   CHECK(hwnd != 0) << "Unable to create private window";
 
    SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE);
 
    // Open the data source manager.
    rc = invokeTwain(NULL, DG_CONTROL, DAT_PARENT, MSG_OPENDSM, &hwnd);
-   UA_ASSERTS(rc == TWRC_SUCCESS, "Unable to open data source manager");
+   CHECK_EQ(rc, TWRC_SUCCESS) << "Unable to open data source manager";
 
    // get the default source
    rc = invokeTwain(NULL, DG_CONTROL, DAT_IDENTITY, MSG_GETDEFAULT, &srcID);
@@ -165,7 +165,7 @@ bool ImgScannerImpl::scannerSourceInit(HWND & hwnd, TW_IDENTITY & srcID) {
    if (rc != TWRC_SUCCESS) {
       // Unable to open default data source
       invokeTwain(NULL, DG_CONTROL, DAT_PARENT, MSG_CLOSEDSM, &hwnd);
-      UA_DOUT(2, 1, "DG_CONTROL / DAT_PARENT / MSG_CLOSEDSM");
+      VLOG(3) << "DG_CONTROL / DAT_PARENT / MSG_CLOSEDSM";
       return false;
    }
    return true;
@@ -174,11 +174,11 @@ bool ImgScannerImpl::scannerSourceInit(HWND & hwnd, TW_IDENTITY & srcID) {
 void ImgScannerImpl::scannerSourceDeinit(HWND & hwnd, TW_IDENTITY & srcID) {
    // Close the data source.
    invokeTwain(&srcID, DG_CONTROL, DAT_IDENTITY, MSG_CLOSEDS, &srcID);
-   UA_DOUT(2, 1, "DG_CONTROL / DAT_IDENTITY / MSG_CLOSEDS");
+   VLOG(3) << "DG_CONTROL / DAT_IDENTITY / MSG_CLOSEDS";
 
    // Close the data source manager.
    invokeTwain(NULL, DG_CONTROL, DAT_PARENT, MSG_CLOSEDSM, &hwnd);
-   UA_DOUT(2, 1, "DG_CONTROL / DAT_PARENT / MSG_CLOSEDSM");
+   VLOG(3) << "DG_CONTROL / DAT_PARENT / MSG_CLOSEDSM";
 
    // Destroy window.
    DestroyWindow(hwnd);
@@ -208,7 +208,7 @@ HANDLE ImgScannerImpl::acquireImage(unsigned dpi, int brightness, int contrast,
    TW_FIX32 value;
    HWND hwnd;
 
-   CHECK(sizeof(TW_FIX32) == sizeof(long));
+   CHECK_EQ(sizeof(TW_FIX32), sizeof(long));
 
    if (!scannerSourceInit(hwnd, srcID)) {
       errorCode = SC_FAIL;
@@ -256,13 +256,13 @@ HANDLE ImgScannerImpl::acquireImage(unsigned dpi, int brightness, int contrast,
    value.Whole = contrast;
    setCapOneValue(&srcID, ICAP_CONTRAST, TWTY_FIX32, *(unsigned long*) &value);
 
-   UA_DOUT(2, 3, "acquireImage: source/\"" << srcID.ProductName << "\""
+   VLOG(3) << "acquireImage: source/\"" << srcID.ProductName << "\""
            << " brightness/" << brightness
            << " constrast/" << contrast
            << " left/" << left
            << " top/" << top
            << " right/" << right
-           << " bottom/" << bottom);
+           << " bottom/" << bottom;
 
    setCapOneValue(&srcID, ICAP_UNITS, TWTY_UINT16, TWUN_INCHES);
    TW_IMAGELAYOUT layout;
@@ -284,13 +284,13 @@ HANDLE ImgScannerImpl::acquireImage(unsigned dpi, int brightness, int contrast,
 
    // Enable the default data source.
    rc = invokeTwain(&srcID, DG_CONTROL, DAT_USERINTERFACE, MSG_ENABLEDS, &ui);
-   UA_DOUT(2, 1, "DG_CONTROL / DAT_USERINTERFACE / MSG_ENABLEDS");
-   UA_ASSERTS(rc == TWRC_SUCCESS, "Unable to enable default data source");
+   VLOG(3) << "DG_CONTROL / DAT_USERINTERFACE / MSG_ENABLEDS";
+   CHECK_EQ(rc, TWRC_SUCCESS) << "Unable to enable default data source";
 
    if (rc == TWRC_FAILURE) {
       errorCode = SC_FAIL;
       scannerSourceDeinit(hwnd, srcID);
-      UA_DOUT(2, 1, "TWRC_FAILURE");
+      VLOG(3) << "TWRC_FAILURE";
       return NULL;
    }
 
@@ -313,7 +313,7 @@ HANDLE ImgScannerImpl::acquireImage(unsigned dpi, int brightness, int contrast,
       if (event.TWMessage == MSG_CLOSEDSREQ) {
          rc = invokeTwain(&srcID, DG_CONTROL, DAT_USERINTERFACE,
                           MSG_DISABLEDS, &ui);
-         UA_DOUT(2, 1, "got MSG_CLOSEDSREQ: sending DG_CONTROL / DAT_USERINTERFACE / MSG_DISABLEDS");
+         VLOG(3) << "got MSG_CLOSEDSREQ: sending DG_CONTROL / DAT_USERINTERFACE / MSG_DISABLEDS";
          break;
       }
 
@@ -321,13 +321,13 @@ HANDLE ImgScannerImpl::acquireImage(unsigned dpi, int brightness, int contrast,
          TW_IMAGEINFO ii;
 
          rc = invokeTwain(&srcID, DG_IMAGE, DAT_IMAGEINFO, MSG_GET, &ii);
-         UA_DOUT(2, 1, "DG_IMAGE / DAT_IMAGEINFO / MSG_GET");
+         VLOG(3) << "DG_IMAGE / DAT_IMAGEINFO / MSG_GET";
 
          if (rc == TWRC_FAILURE) {
             invokeTwain(&srcID, DG_CONTROL, DAT_PENDINGXFERS, MSG_RESET,
                         &pxfers);
-            UA_DOUT(2, 1, "DG_CONTROL / DAT_PENDINGXFERS / MSG_RESET");
-            UA_WARN("Unable to obtain image information");
+            VLOG(3) << "DG_CONTROL / DAT_PENDINGXFERS / MSG_RESET";
+            LOG(WARNING) << "Unable to obtain image information";
             break;
          }
 
@@ -337,12 +337,12 @@ HANDLE ImgScannerImpl::acquireImage(unsigned dpi, int brightness, int contrast,
                                      || ((ii.BitsPerPixel != 8) && (ii.BitsPerPixel != 24)))) {
             invokeTwain(&srcID, DG_CONTROL, DAT_PENDINGXFERS, MSG_RESET,
                         &pxfers);
-            UA_WARN("Image compressed or not 8-bit/24-bit ");
+            LOG(WARNING) << "Image compressed or not 8-bit/24-bit ";
             break;
          }
 
          //debug info
-         UA_DOUT(2, 1, "acquire:"
+         VLOG(3) << "acquire:"
                  << " XResolution/" << ii.XResolution.Whole << "." << ii.XResolution.Frac
                  << " YResolution/" << ii.YResolution.Whole << "." << ii.YResolution.Frac
                  << " imageWidth/" << ii.ImageWidth
@@ -350,19 +350,19 @@ HANDLE ImgScannerImpl::acquireImage(unsigned dpi, int brightness, int contrast,
                  << " SamplesPerPixel/" << ii.SamplesPerPixel
                  << " bits per pixel/" << ii.BitsPerPixel
                  << " compression/" << ii.Compression
-                 << " pixelType/" << ii.PixelType);
+                 << " pixelType/" << ii.PixelType;
 
          // Perform the transfer.
          rc = invokeTwain(&srcID, DG_IMAGE, DAT_IMAGENATIVEXFER, MSG_GET,
                           &handle);
-         UA_DOUT(2, 1, "DG_IMAGE / DAT_IMAGENATIVEXFER / MSG_GET");
+         VLOG(3) << "DG_IMAGE / DAT_IMAGENATIVEXFER / MSG_GET";
 
          // If image not successfully transferred ...
          if (rc != TWRC_XFERDONE) {
             invokeTwain(&srcID, DG_CONTROL, DAT_PENDINGXFERS, MSG_RESET,
                         &pxfers);
-            UA_DOUT(2, 1, "DG_CONTROL / DAT_PENDINGXFERS / MSG_RESET");
-            UA_WARN("User aborted transfer or failure");
+            VLOG(3) << "DG_CONTROL / DAT_PENDINGXFERS / MSG_RESET";
+            LOG(WARNING) << "User aborted transfer or failure";
             errorCode = SC_INVALID_IMAGE;
             handle = 0;
             break;
@@ -371,18 +371,18 @@ HANDLE ImgScannerImpl::acquireImage(unsigned dpi, int brightness, int contrast,
          // acknowledge end of transfer.
          rc = invokeTwain(&srcID, DG_CONTROL, DAT_PENDINGXFERS, MSG_ENDXFER,
                           &pxfers);
-         UA_DOUT(2, 1, "DG_CONTROL / DAT_PENDINGXFERS / MSG_ENDXFER");
+         VLOG(3) << "DG_CONTROL / DAT_PENDINGXFERS / MSG_ENDXFER";
 
          if (rc == TWRC_SUCCESS) {
             if (pxfers.Count != 0) {
                // Cancel all remaining transfers.
                invokeTwain(&srcID, DG_CONTROL, DAT_PENDINGXFERS,
                            MSG_RESET, &pxfers);
-               UA_DOUT(2, 1, "DG_CONTROL / DAT_PENDINGXFERS / MSG_RESET");
+               VLOG(3) << "DG_CONTROL / DAT_PENDINGXFERS / MSG_RESET";
             } else {
                rc = invokeTwain(&srcID, DG_CONTROL, DAT_USERINTERFACE,
                                 MSG_DISABLEDS, &ui);
-               UA_DOUT(2, 1, "DG_CONTROL / DAT_USERINTERFACE / MSG_DISABLEDS");
+               VLOG(3) << "DG_CONTROL / DAT_USERINTERFACE / MSG_DISABLEDS";
                break;
             }
          }
@@ -409,40 +409,6 @@ HANDLE ImgScannerImpl::acquireFlatbed(unsigned dpi, int brightness, int contrast
    scannerSourceDeinit(hwnd, srcID);
 
 	return acquireImage(dpi, brightness, contrast, 0, 0, physicalWidth, physicalHeight);
-}
-
-DmtxImage* ImgScannerImpl::acquireDmtxImage(unsigned dpi, int brightness,
-                                          int contrast) {
-   CHECK_NOTNULL(g_hLib);
-
-   HANDLE h = acquireImage(dpi, brightness, contrast, 0, 0, 0, 0);
-   if (h == NULL) {
-      return NULL;
-   }
-   UCHAR *lpVoid, *pBits;
-   LPBITMAPINFOHEADER pHead;
-   lpVoid = (UCHAR *) GlobalLock(h);
-   pHead = (LPBITMAPINFOHEADER) lpVoid;
-   int width = pHead->biWidth;
-   int height = pHead->biHeight;
-   int m_nBits = pHead->biBitCount;
-   DmtxImage *theImage;
-
-   pBits = lpVoid + sizeof(BITMAPINFOHEADER);
-   theImage = dmtxImageCreate((unsigned char*) pBits, width, height,
-                              DmtxPack24bppRGB);
-
-   int rowPadBytes = (width * m_nBits) & 0x3;
-
-   UA_DOUT(2, 1,"acquireDmtxImage: " << endl
-           << "lpVoid: " << *((unsigned*) lpVoid) << endl
-           << "sizeof(BITMAPINFOHEADER): " << sizeof(BITMAPINFOHEADER) << endl
-           << "Width: " << width << endl
-           << "height: " << height << endl
-           << "towPadBytes: " << rowPadBytes);
-   dmtxImageSetProp(theImage, DmtxPropRowPadBytes, rowPadBytes);
-   dmtxImageSetProp(theImage, DmtxPropImageFlip, DmtxFlipY); // DIBs are flipped in Y
-   return theImage;
 }
 
 BOOL ImgScannerImpl::setCapOneValue(TW_IDENTITY * srcId, unsigned Cap,
@@ -485,7 +451,7 @@ int ImgScannerImpl::getScannerCapability() {
 
    int capabilityCode = getScannerCapabilityInternal(srcID);
    scannerSourceDeinit(hwnd, srcID);
-   UA_DOUT(2, 5, "Capability code: " << capabilityCode);
+   VLOG(5) << "Capability code: " << capabilityCode;
 
    return capabilityCode;
 }
@@ -504,7 +470,7 @@ int ImgScannerImpl::getScannerCapabilityInternal(TW_IDENTITY & srcID) {
 
    capabilityCode = xresolution;
 
-   UA_DOUT(2, 5, "Polling driver for driver type");
+   VLOG(5) << "Polling driver for driver type";
 
    if (srcID.ProductName != NULL) {
       char buf[256];
@@ -518,10 +484,10 @@ int ImgScannerImpl::getScannerCapabilityInternal(TW_IDENTITY & srcID) {
       string productnameStr = buf;
 
       if (productnameStr.find("wia") != string::npos) {
-         UA_DOUT(2, 6, "Driver type is WIA: ProductName/" << productnameStr);
+         VLOG(7) << "Driver type is WIA: ProductName/" << productnameStr;
          capabilityCode |= CAP_IS_WIA;
       } else {
-         UA_DOUT(2, 6, "Driver type is TWAIN (default)");
+         VLOG(7) << "Driver type is TWAIN (default)";
       }
    }
 
@@ -547,20 +513,20 @@ int ImgScannerImpl::getResolutionCapability(TW_IDENTITY & srcID, TW_UINT16 cap) 
    twCap.hContainer = NULL;
    result = getCapability(&srcID, twCap);
 
-   UA_DOUT(2, 5, "Polling scanner capbility");
+   VLOG(5) << "Polling scanner capbility";
    if (!result) {
-      UA_WARN("Failed to obtain valid dpi values");
+      LOG(WARNING) << "Failed to obtain valid dpi values";
       return 0;
    }
 
-   UA_DOUT(2, 5, "twCap.ConType = " << twCap.ConType);
+   VLOG(5) << "twCap.ConType = " << twCap.ConType;
 
    switch (twCap.ConType) {
 
       case TWON_RANGE: {
          double minDpi, maxDpi, stepDpi;
 
-         UA_DOUT(2, 5, "ConType = Range");
+         VLOG(5) << "ConType = Range";
 
          pvalRange = (pTW_RANGE) GlobalLock(twCap.hContainer);
          if (pvalRange->ItemType == TWTY_FIX32) {
@@ -568,10 +534,10 @@ int ImgScannerImpl::getResolutionCapability(TW_IDENTITY & srcID, TW_UINT16 cap) 
             maxDpi = uint32ToFloat(pvalRange->MaxValue);
             stepDpi = uint32ToFloat(pvalRange->StepSize);
 
-            UA_ASSERTS(stepDpi > 0, "TWON_RANGE stepSize was was not greater than zero.");
-            UA_ASSERTS(minDpi > 0, "TWON_RANGE minDpi was was not greater than zero.");
-            UA_ASSERTS(maxDpi >= minDpi, "TWON_RANGE minDpi > naxDpi");
-            UA_DOUT(2, 6, "Supports DPI Range {" << " Min:" << minDpi << " Max:" << maxDpi << " Step:" << stepDpi << " }");
+            CHECK_GT(stepDpi, 0) << "TWON_RANGE stepSize was was not greater than zero.";
+            CHECK_GT(minDpi, 0) << "TWON_RANGE minDpi was was not greater than zero.";
+            CHECK_GE(maxDpi, minDpi) << "TWON_RANGE minDpi > naxDpi";
+            VLOG(7) << "Supports DPI Range {" << " Min:" << minDpi << " Max:" << maxDpi << " Step:" << stepDpi << " }";
 
             if (300 - minDpi >= 0 && 300 <= maxDpi && (int) (300 - minDpi)
                 % (int) stepDpi == 0)
@@ -589,7 +555,7 @@ int ImgScannerImpl::getResolutionCapability(TW_IDENTITY & srcID, TW_UINT16 cap) 
       }
 
       case TWON_ENUMERATION: {
-         UA_DOUT(2, 5, "ConType = Enumeration");
+         VLOG(5) << "ConType = Enumeration";
 
          pTW_ENUMERATION pvalEnum;
          TW_UINT16 index;
@@ -598,18 +564,18 @@ int ImgScannerImpl::getResolutionCapability(TW_IDENTITY & srcID, TW_UINT16 cap) 
          pvalEnum = (pTW_ENUMERATION) GlobalLock(twCap.hContainer);
          CHECK_NOTNULL(pvalEnum);
 
-         UA_DOUT(2, 6, "Number of supported Dpi: " << pvalEnum->NumItems);
-         UA_DOUT(2, 6, "Dpi ItemType: " << pvalEnum->ItemType);
+         VLOG(7) << "Number of supported Dpi: " << pvalEnum->NumItems;
+         VLOG(7) << "Dpi ItemType: " << pvalEnum->ItemType;
 
 		 for (index = 0; index < pvalEnum->NumItems; index++) {
-			 UA_ASSERTS(pvalEnum->ItemType == TWTY_FIX32,
-				 "invalid item type: " << pvalEnum->ItemType);
+			 CHECK_EQ(pvalEnum->ItemType, TWTY_FIX32)
+				 << "invalid item type: " << pvalEnum->ItemType;
 
 			 tempDpi
 				 = (unsigned int) twfix32ToFloat(
 				 *(TW_FIX32 *) (void *) (&pvalEnum->ItemList[index
 				 * 4]));
-			 UA_DOUT(2, 6, "Supports DPI (f32bit): " << tempDpi);
+			 VLOG(7) << "Supports DPI (f32bit): " << tempDpi;
 
             if (tempDpi == 300)
                capabilityCode |= CAP_DPI_300;
@@ -625,19 +591,19 @@ int ImgScannerImpl::getResolutionCapability(TW_IDENTITY & srcID, TW_UINT16 cap) 
 
 		 //XXX Untested
 	  case TWON_ONEVALUE: {
-		  UA_DOUT(2, 5, "ConType = OneValue");
+		  VLOG(5) << "ConType = OneValue";
 
 		  pTW_ONEVALUE pvalOneValue;
 		  unsigned int tempDpi = 0;
 
 		  pvalOneValue = (pTW_ONEVALUE) GlobalLock(twCap.hContainer);
 
-		  UA_ASSERTS(pvalOneValue->ItemType == TWTY_FIX32,
-			  "invalid item type: " << pvalOneValue->ItemType);
+		  CHECK_EQ(pvalOneValue->ItemType, TWTY_FIX32) << 
+			  "invalid item type: " << pvalOneValue->ItemType;
 
 		  tempDpi = (unsigned int) twfix32ToFloat(
 			  *(TW_FIX32 *) (void *) (&pvalOneValue->Item));
-		  UA_DOUT(2, 6, "Supports DPI (f32bit): " << tempDpi);
+		  VLOG(6) << "Supports DPI (f32bit): " << tempDpi;
 
          if (tempDpi == 300)
             capabilityCode |= CAP_DPI_300;
@@ -651,7 +617,7 @@ int ImgScannerImpl::getResolutionCapability(TW_IDENTITY & srcID, TW_UINT16 cap) 
       }
 
       default:
-         UA_WARN("Unexpected dpi contype");
+         LOG(WARNING) << "Unexpected dpi contype";
          break;
    }
    GlobalUnlock(twCap.hContainer);
@@ -668,26 +634,26 @@ double ImgScannerImpl::getPhysicalDimensions(TW_IDENTITY & srcID, TW_UINT16 cap)
    twCap.hContainer = NULL;
 
    result = getCapability(&srcID, twCap);
-   UA_ASSERTS(result, "Failed to obtain valid dpi values");
+   CHECK(result != NULL) << "Failed to obtain valid dpi values";
 
-   UA_DOUT(2, 5, "twCap.ConType = " << twCap.ConType);
+   VLOG(5) << "twCap.ConType = " << twCap.ConType;
 
-   UA_ASSERTS(twCap.ConType ==  TWON_ONEVALUE,
-	   "invalid con type: " << twCap.ConType);
+   CHECK_EQ(twCap.ConType,  TWON_ONEVALUE)
+	   << "invalid con type: " << twCap.ConType;
 
    pTW_ONEVALUE pvalOneValue;
    double dimension = 0;
 
    pvalOneValue = (pTW_ONEVALUE) GlobalLock(twCap.hContainer);
 
-   UA_ASSERTS(pvalOneValue->ItemType == TWTY_FIX32,
-	   "invalid item type: " << pvalOneValue->ItemType);
+   CHECK_EQ(pvalOneValue->ItemType, TWTY_FIX32) << 
+	   "invalid item type: " << pvalOneValue->ItemType;
 
    dimension = twfix32ToFloat(*(TW_FIX32 *) (void *) (&pvalOneValue->Item));
 
    GlobalUnlock(twCap.hContainer);
    GlobalFree(twCap.hContainer);
-   UA_DOUT(2, 5, "physical dimention " << cap << " is " << dimension);
+   VLOG(5) << "physical dimention " << cap << " is " << dimension;
    return dimension;
 }
 

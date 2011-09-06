@@ -23,6 +23,7 @@
 #pragma warning(disable : 4996)
 #endif
 
+#include "DmScanLibInternal.h"
 #include "Decoder.h"
 #include "Dib.h"
 
@@ -44,13 +45,14 @@ Decoder::Decoder(unsigned _dpi, double g, unsigned s, unsigned t, unsigned c,
 Decoder::~Decoder() {
 }
 
-void Decoder::decodeImage(std::tr1::weak_ptr<const Dib> dib,
+void Decoder::decodeImage(std::tr1::shared_ptr<const Dib> dib,
                           const std::string & id, DecodeResult & decodeResult) {
-    DmtxImage * image = createDmtxImageFromDib(*dib.lock());
     int minEdgeSize, maxEdgeSize;
 
-    DmtxDecode *dec = dmtxDecodeCreate(image, 1);
+    DmtxImage * dmtxImage = dib->getDmtxImage();
+    DmtxDecode *dec = dmtxDecodeCreate(dmtxImage, 1);
     CHECK_NOTNULL(dec);
+
 
     // slightly smaller than the new tube edge
     minEdgeSize = static_cast<int>(0.08 * dpi);
@@ -79,7 +81,7 @@ dmtxDecodeSetProp    (dec, DmtxPropEdgeMin, minEdgeSize);
             msgFound = true;
             getDecodeInfo(dec, reg, msg, decodeResult);
 
-            if (__extension__ VLOG_IS_ON(2)) {
+            if (GCC_EXT VLOG_IS_ON(2)) {
                 showStats(dec, reg, msg);
             }
             dmtxMessageDestroy(&msg);
@@ -87,12 +89,12 @@ dmtxDecodeSetProp    (dec, DmtxPropEdgeMin, minEdgeSize);
         dmtxRegionDestroy(&reg);
     }
 
-    if (__extension__ VLOG_IS_ON(5)) {
+    if (GCC_EXT VLOG_IS_ON(5)) {
         writeDiagnosticImage(dec, id);
     }
 
     dmtxDecodeDestroy(&dec);
-    dmtxImageDestroy(&image);
+    dmtxImageDestroy(&dmtxImage);
 }
 
 void Decoder::getDecodeInfo(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg,
@@ -126,33 +128,8 @@ void Decoder::getDecodeInfo(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg,
     }
 }
 
-DmtxImage * Decoder::createDmtxImageFromDib(const Dib & dib) {
-    int pack = DmtxPackCustom;
-    unsigned padding = dib.getRowPadBytes();
-
-    switch (dib.getBitsPerPixel()) {
-    case 8:
-        pack = DmtxPack8bppK;
-        break;
-    case 24:
-        pack = DmtxPack24bppRGB;
-        break;
-    case 32:
-        pack = DmtxPack32bppXRGB;
-        break;
-    }
-
-    DmtxImage * image = dmtxImageCreate(dib.getPixelBuffer(), dib.getWidth(),
-                                        dib.getHeight(), pack);
-
-    //set the properties (pad bytes, flip)
-    dmtxImageSetProp(image, DmtxPropRowPadBytes, padding);
-    dmtxImageSetProp(image, DmtxPropImageFlip, DmtxFlipY); // DIBs are flipped in Y
-    return image;
-}
-
 void Decoder::showStats(DmtxDecode * dec, DmtxRegion * reg, DmtxMessage * msg) {
-    if (__extension__ !VLOG_IS_ON(5)) return;
+    if (GCC_EXT !VLOG_IS_ON(5)) return;
 
     int height;
     int dataWordLength;
@@ -180,7 +157,7 @@ void Decoder::showStats(DmtxDecode * dec, DmtxRegion * reg, DmtxMessage * msg) {
     rotateInt = (int) (rotate * 180 / M_PI + 0.5);
     if (rotateInt >= 360) rotateInt -= 360;
 
-    __extension__ VLOG(5)
+    GCC_EXT VLOG(5)
                     << "\n--------------------------------------------------"
                     << "\n       Matrix Size: "
                     << dmtxGetSymbolAttribute(DmtxSymAttribSymbolRows,
@@ -216,7 +193,7 @@ void Decoder::showStats(DmtxDecode * dec, DmtxRegion * reg, DmtxMessage * msg) {
 }
 
 void Decoder::writeDiagnosticImage(DmtxDecode *dec, const std::string & id) {
-    if (__extension__ !VLOG_IS_ON(5)) return;
+    if (GCC_EXT !VLOG_IS_ON(5)) return;
 
     int totalBytes, headerBytes;
     int bytesWritten;

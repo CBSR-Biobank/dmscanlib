@@ -21,12 +21,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "cv.h"
-#include "cvblob/BlobResult.h"
-#include "IplContainer.h"
+
+#include <dmtx.h>
+#include <opencv/cv.h>
 
 #ifdef WIN32
 #   include <windows.h>
+#   undef ERROR
 #else
 typedef void* HANDLE;
 #endif
@@ -58,36 +59,25 @@ public:
 
 	Dib();
 	Dib(const Dib & src);
-	Dib(IplImageContainer & src);
 	Dib(unsigned width, unsigned height, unsigned colorBits,
 			unsigned pixelsPerMeter);
-	Dib(char * filename);
 
 	~Dib();
 
-	void readFromFile(const char * filename);
-	bool writeToFile(const char * filename) const;
+	bool readFromFile(const std::string & filename);
+	bool writeToFile(const std::string & filename) const;
 
 	std::tr1::shared_ptr<Dib> convertGrayscale() const;
 
 	std::tr1::shared_ptr<Dib> crop(unsigned x0, unsigned y0, unsigned x1,
 			unsigned y1) const;
 
-	auto_ptr<IplImageContainer> generateIplImage();
 	void tpPresetFilter();
 
 	unsigned getDpi() const;
 	unsigned getHeight() const;
 	unsigned getWidth() const;
-	unsigned getRowPadBytes() const;
 	unsigned getBitsPerPixel() const;
-	unsigned char * getPixelBuffer() const;
-	unsigned char getPixelAvgGrayscale(unsigned row, unsigned col) const;
-	inline unsigned char getPixelGrayscale(unsigned row, unsigned col) const;
-
-	void setPixel(unsigned row, unsigned col, const RgbQuad & quad);
-	inline void setPixelGrayscale(unsigned row, unsigned col,
-			unsigned char value);
 
 	void line(unsigned x0, unsigned y0, unsigned x1, unsigned y1, const RgbQuad & quad);
 
@@ -99,6 +89,8 @@ public:
 			const RgbQuad & quad);
 
 	void readFromHandle(HANDLE handle);
+
+	DmtxImage * getDmtxImage() const;
 
 private:
 
@@ -137,6 +129,7 @@ private:
 	void allocate(unsigned int allocateSize);
 	void deallocate();
 
+    void setPixel(unsigned row, unsigned col, const RgbQuad & quad);
 	unsigned getPaletteSize(unsigned bitCount) const;
 	unsigned getRowBytes(unsigned width, unsigned bitCount);
 	static bool bound(unsigned min, unsigned & x, unsigned max);

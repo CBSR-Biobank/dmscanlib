@@ -76,8 +76,8 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>.\src\openthreads;.\src\cvblob;.\src\boost;.\src\opencv\include;src;src/libdmtx;src/loki;src/utils;$(JAVA_HOME)\include;$(JAVA_HOME)\include\win32;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_VISUALC_;WIN32;_DEBUG;_CONSOLE;UA_LOGGER;STANDALONE;THREADED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>src;third_party/include;third_party/libdmtx;$(JAVA_HOME)\include;$(JAVA_HOME)\include\win32;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;_VISUALC_;WIN32;_DEBUG;_CONSOLE;UA_LOGGER;STANDALONE;THREADED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -87,9 +87,9 @@
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>cv210.lib;cxcore210.lib;user32.lib;libcmtd.lib;OpenThreadsWin32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libglog.lib;cv210.lib;cxcore210.lib;user32.lib;libcmtd.lib;OpenThreadsWin32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ShowProgress>NotSet</ShowProgress>
-      <AdditionalLibraryDirectories>lib\win32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>third_party\lib\win32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries> libcmt.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
@@ -104,7 +104,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>false</OmitFramePointers>
-      <AdditionalIncludeDirectories>.\src\cvblob;.\src\openthreads;.\src\opencv\include;src;src/libdmtx;src/loki;src/utils;$(JAVA_HOME)\include;$(JAVA_HOME)\include\win32;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src;third_party/include;third_party/libdmtx;$(JAVA_HOME)\include;$(JAVA_HOME)\include\win32;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_VISUALC_;_WIN32;__WIN32__;WIN32;_CONSOLE;UA_LOGGER;BUILD_DLL;THREADED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
@@ -120,9 +120,9 @@
       <LinkLibraryDependencies>true</LinkLibraryDependencies>
     </ProjectReference>
     <Link>
-      <AdditionalDependencies>cv210.lib;cxcore210.lib;user32.lib;OpenThreadsWin32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libglog.lib;cv210.lib;cxcore210.lib;user32.lib;OpenThreadsWin32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ShowProgress>NotSet</ShowProgress>
-      <AdditionalLibraryDirectories>lib\win32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>third_party\lib\win32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <ModuleDefinitionFile>dmscanlib.def</ModuleDefinitionFile>
       <GenerateDebugInformation>false</GenerateDebugInformation>
@@ -138,7 +138,7 @@
       <FavorSizeOrSpeed>Neither</FavorSizeOrSpeed>
       <OmitFramePointers>false</OmitFramePointers>
       <WholeProgramOptimization>false</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>.\src\cvblob;.\src\openthreads;.\src\opencv\include;src;src/libdmtx;src/loki;src/utils;$(JAVA_HOME)\include;$(JAVA_HOME)\include\win32;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src;third_party/include;third_party/libdmtx;$(JAVA_HOME)\include;$(JAVA_HOME)\include\win32;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_VISUALC_;_WIN32;__WIN32__;WIN32;_CONSOLE;UA_LOGGER;BUILD_DLL;THREADED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
@@ -153,9 +153,9 @@
       <LinkLibraryDependencies>true</LinkLibraryDependencies>
     </ProjectReference>
     <Link>
-      <AdditionalDependencies>cv210.lib;cxcore210.lib;user32.lib;OpenThreadsWin32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libglog.lib;cv210.lib;cxcore210.lib;user32.lib;OpenThreadsWin32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ShowProgress>NotSet</ShowProgress>
-      <AdditionalLibraryDirectories>.\src\opencv\win32;.\src\openthreads;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>third_party\lib\win32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <ModuleDefinitionFile>dmscanlib.def</ModuleDefinitionFile>
       <GenerateDebugInformation>false</GenerateDebugInformation>
@@ -171,9 +171,7 @@
     <ClCompile Include="src\DmScanLib.cpp" />
     <ClCompile Include="src\edu_ualberta_med_scannerconfig_dmscanlib_ScanLib.cpp" />
     <ClCompile Include="src\ImgScanner.cpp" />
-    <ClCompile Include="src\ImgScannerFactory.cpp" />
     <ClCompile Include="src\ImgScannerImpl.cpp" />
-    <ClCompile Include="src\IplContainer.cpp" />
     <ClCompile Include="src\PalletCell.cpp" />
     <ClCompile Include="src\PalletGrid.cpp" />
     <ClCompile Include="src\PalletThreadMgr.cpp" />
@@ -182,13 +180,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="src\utils\TimeUtilWin32.cpp" />
-    <ClCompile Include="src\utils\UaLogger.cpp" />
-    <ClCompile Include="src\libdmtx\Dmtx.c" />
-    <ClCompile Include="src\cvblob\Blob.cpp" />
-    <ClCompile Include="src\cvblob\BlobContour.cpp" />
-    <ClCompile Include="src\cvblob\BlobOperators.cpp" />
-    <ClCompile Include="src\cvblob\BlobResult.cpp" />
-    <ClCompile Include="src\cvblob\ComponentLabeling.cpp" />
+    <ClCompile Include="third_party\libdmtx\dmtx.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Decoder.h" />
@@ -198,29 +190,42 @@
     <ClInclude Include="src\DmScanLibInternal.h" />
     <ClInclude Include="src\edu_ualberta_med_scannerconfig_dmscanlib_ScanLib.h" />
     <ClInclude Include="src\ImgScanner.h" />
-    <ClInclude Include="src\ImgScannerFactory.h" />
     <ClInclude Include="src\ImgScannerImpl.h" />
-    <ClInclude Include="src\IplContainer.h" />
     <ClInclude Include="src\PalletCell.h" />
     <ClInclude Include="src\PalletGrid.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="src\PalletThreadMgr.h" />
     <ClInclude Include="src\utils\TimeUtil.h" />
-    <ClInclude Include="src\utils\UaAssert.h" />
-    <ClInclude Include="src\utils\UaLogger.h" />
-    <ClInclude Include="src\libdmtx\Dmtx.h" />
     <ClInclude Include="src\utils\SimpleGlob.h" />
     <ClInclude Include="src\utils\SimpleOpt.h" />
-    <ClInclude Include="src\Twain.h" />
-    <ClInclude Include="src\cvblob\Blob.h" />
-    <ClInclude Include="src\cvblob\BlobContour.h" />
-    <ClInclude Include="src\cvblob\BlobLibraryConfiguration.h" />
-    <ClInclude Include="src\cvblob\BlobOperators.h" />
-    <ClInclude Include="src\cvblob\BlobResult.h" />
-    <ClInclude Include="src\cvblob\ComponentLabeling.h" />
+    <ClInclude Include="third_party\glog\logging.h" />
+    <ClInclude Include="third_party\glog\log_severity.h" />
+    <ClInclude Include="third_party\glog\raw_logging.h" />
+    <ClInclude Include="third_party\glog\stl_logging.h" />
+    <ClInclude Include="third_party\glog\vlog_is_on.h" />
+    <ClInclude Include="third_party\libdmtx\dmtx.h" />
+    <ClInclude Include="third_party\loki\LokiExport.h" />
+    <ClInclude Include="third_party\loki\Singleton.h" />
+    <ClInclude Include="third_party\loki\Threads.h" />
+    <ClInclude Include="third_party\opencv\cv.h" />
+    <ClInclude Include="third_party\opencv\cvcompat.h" />
+    <ClInclude Include="third_party\opencv\cvinternal.h" />
+    <ClInclude Include="third_party\opencv\cvtypes.h" />
+    <ClInclude Include="third_party\opencv\cvver.h" />
+    <ClInclude Include="third_party\opencv\cvwimage.h" />
+    <ClInclude Include="third_party\opencv\cxcore.h" />
+    <ClInclude Include="third_party\opencv\cxerror.h" />
+    <ClInclude Include="third_party\opencv\cxflann.h" />
+    <ClInclude Include="third_party\opencv\cxmisc.h" />
+    <ClInclude Include="third_party\opencv\cxtypes.h" />
+    <ClInclude Include="third_party\twain.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="dmscanlib.def" />
+    <None Include="third_party\openthreads\Exports" />
+    <None Include="third_party\openthreads\Mutex" />
+    <None Include="third_party\openthreads\ScopedLock" />
+    <None Include="third_party\openthreads\Thread" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="dmscanlib.rc" />

@@ -1,3 +1,4 @@
+#include "DmScanLibInternal.h"
 #include "PalletCell.h"
 #include "PalletGrid.h"
 #include "Dib.h"
@@ -27,12 +28,13 @@ void PalletCell::run() {
     ostringstream id;
     id << row << "-" << col;
 
-    grid.getDecoder().decodeImage(getImage(), id.str(), decodeResult);
+    getImage();
+    grid.getDecoder().decodeImage(cellImage, id.str(), decodeResult);
     if (!decodeResult.msg.empty()) {
         grid.registerBarcodeMsg(decodeResult.msg);
 
         RAW_LOG(INFO,
-                "PalletCell::setDecodeInfo: (%d,%d) - %s", row, col, decodeResult.msg.c_str());
+                "run: (%d,%d) - %s", row, col, decodeResult.msg.c_str());
     }
 }
 
@@ -50,7 +52,7 @@ const string & PalletCell::getBarcodeMsg() {
 
 void PalletCell::writeImage(std::string basename) {
     // do not write diagnostic image is log level is less than 9
-    if (__extension__ !VLOG_IS_ON(5)) return;
+    if (GCC_EXT !VLOG_IS_ON(5)) return;
 
     ostringstream fname;
     fname << basename << "-" << row << "-" << col << ".bmp";

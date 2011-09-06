@@ -24,9 +24,8 @@
 
 #include "DecodeResult.h"
 
-#include "dmtx.h"
-#include "cv.h"
-
+#include <dmtx.h>
+#include <opencv/cv.h>
 #include <string>
 
 #ifdef _VISUALC_
@@ -51,7 +50,7 @@ public:
             unsigned edgeThresh, unsigned corrections, double cellDistance);
     virtual ~Decoder();
 
-    void decodeImage(std::tr1::weak_ptr<const Dib> dib, const std::string & id,
+    void decodeImage(std::tr1::shared_ptr<const Dib> dib, const std::string & id,
                      DecodeResult & decodeResult);
 
 private:

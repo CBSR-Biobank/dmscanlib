@@ -1,7 +1,7 @@
 #ifndef __INC_DECODE_RESULT_H
 #define __INC_DECODE_RESULT_H
 
-#include "cv.h"
+#include <opencv/cv.h>
 
 #include <string>
 
