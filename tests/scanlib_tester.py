@@ -16,7 +16,7 @@ scanLibTimeout = 30
 
 class Barcode(object):
 	position = None
-	value = ""
+	value = "" # immutable
 
 	def __init__(self,message=None,position=None,value=None):
 
@@ -59,6 +59,12 @@ class Barcode(object):
 	def __str__(self):
 		return "row/%02d col/%02d barcode/%s" % (int(self.position[0]),int(self.position[1]),self.value)
 
+	def __eq__(self,other):
+		return self.value == other.value
+
+	def __hash__(self):
+		return hash(self.value)
+
 	def getDict(self):
 		return {'position': self.position, 'value': self.value}
 
@@ -76,10 +82,13 @@ class ScanResult(object):
 		return self.timeTaken
 
 	def getBarcodesCount(self):
-		return len(self.barcodes)
+		return len(self.getBarcodes())
 
+	# removes any duplicate barcodes
+	# old versions of this script did not parse scanlib
+	# ouput 100% correctly.
 	def getBarcodes(self):
-		return self.barcodes
+		return list(set(self.barcodes))
 
 	def getFilename(self):
 		return self.filename
@@ -245,8 +254,10 @@ def generalTest(imageDir,outputFile):
 	sr.save(outputFile)
 	print "Wrote to file."
 
+
+
+
 def compareTest(resultsFile1,resultsFile2):
-	seperator("Comparison Test")
 
 	if not os.path.isfile(resultsFile1):
 		print "Could not load results file 1"
@@ -265,12 +276,44 @@ def compareTest(resultsFile1,resultsFile2):
 	filenames1 = map(lambda x: os.path.basename(x.getFilename()),src1.scanResults)
 	filenames2 =  map(lambda x: os.path.basename(x.getFilename()),src2.scanResults)
 
+	intersectedFiles = [val for val in filenames1 if val in filenames2]
+
+	seperator("Barcodes Only Found in Results1")
+	for sf in intersectedFiles:
+	
+		sr1 = src1.getScanResultFromFilename(sf)
+		sr2 = src2.getScanResultFromFilename(sf)
+	
+		barcodes1 = sr1.getBarcodes()
+		barcodes2 = sr2.getBarcodes()
+
+		
+		for b in barcodes1:
+			if b not in barcodes2:
+				print str(b)
+
+
+	seperator("Barcodes Only Found in Results2")
+
+	for sf in intersectedFiles:
+		sr1 = src1.getScanResultFromFilename(sf)
+		sr2 = src2.getScanResultFromFilename(sf)
+	
+		barcodes1 = sr1.getBarcodes()
+		barcodes2 = sr2.getBarcodes()
+
+		for b in barcodes2:
+			if b not in barcodes1:
+				print str(b)
+
+	seperator("Comparison Test")
+
 	table = [["","Image", "Barcodes Scanned", "Time Duration"]]
 
 	total_bc_1, total_bc_2 = [0,0]
 	total_t_1, total_t_2 = [0,0]
 
-	for sf in [val for val in filenames1 if val in filenames2]: #intersection
+	for sf in intersectedFiles: #intersection
 		sr1 = src1.getScanResultFromFilename(sf)
 		sr2 = src2.getScanResultFromFilename(sf)
 
@@ -314,6 +357,7 @@ def compareTest(resultsFile1,resultsFile2):
 
 	padnums.pprint_table(sys.stdout, table)
 	print ""
+
 
 def main(argv):
 

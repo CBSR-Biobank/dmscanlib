@@ -1,27 +1,34 @@
 How to use dmscanlib:
 -----------------
 
-Decoding Images
-====================================
-1. Scan the bottom of a pallet at 300, 400, or 600 dpi.
+  Decoding Images
+  ====================================
+  1. Scan the bottom of a pallet at 300, 400, or 600 dpi.
 
-2. Save the file as a BMP. (eg. pallet.bmp)
+  2. Save the file as a BMP. (eg. pallet.bmp)
 
-3. Extract and run dmscanlib.exe with the following arguments:
-	./dmscanlib.exe -p 1 -d -i pallet.bmp
+  3. Extract and run dmscanlib.exe with the following arguments:
+  	./dmscanlib.exe -p 1 -d -i pallet.bmp
 
-4. A file dmscanlib.txt will be created, it will contain the barccodes of each test tube successfully decoded.
+  4. A file dmscanlib.txt will be created, it will contain the barccodes of each test tube successfully decoded.
 
-5. Debugging files that will be created include: blobRegions.bmp, decoded.bmp, filtered.bmp.
+  5. Debugging files that will be created include: blobRegions.bmp, decoded.bmp, filtered.bmp.
 
-6. For additional command line arguments: ./dmscanlib.exe --help
+  6. For additional command line arguments: ./dmscanlib.exe --help
+
+REQUIRED PACKAGES ON UBUNTU
+
+  - libdmtx-dev
+  - libopenthreads-dev
+  - libcv-dev
+  - libgoogle-glog-dev
 
 
 
 JNI
 
-The JNI class used to interface to the dmscanlib is ScanLibImpl. To generate 
-the C header file use the following commands:
+  The JNI class used to interface to the dmscanlib is ScanLibImpl. To generate 
+  the C header file use the following commands:
 
    - cd to <scannerConfig_proj>/bin
    - javah -jni edu.ualberta.med.scannerconfig.dmscanlib.ScanLib
@@ -31,8 +38,8 @@ the C header file use the following commands:
 
 VALGRIND
 
-Use the following commands to check for memory leaks:
+  Use the following commands to check for memory leaks:
 
-valgrind --track-origins=yes --tool=memcheck --leak-check=yes -v \
-  --show-reachable=yes --num-callers=10 Linux-Debug/dmscanlib -d -p 1 \
-  -i <bmp_file> 
+  valgrind --track-origins=yes --tool=memcheck --leak-check=yes -v \
+    --show-reachable=yes --num-callers=10 Linux-Debug/dmscanlib -d -p 1 \
+    -i <bmp_file> 

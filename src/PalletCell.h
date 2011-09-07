@@ -3,9 +3,8 @@
 
 #include "DecodeResult.h"
 
-#include "cv.h"
-#include "dmtx.h"
-
+#include <opencv/cv.h>
+#include <dmtx.h>
 #include <string>
 #include <ostream>
 #include <OpenThreads/Mutex>

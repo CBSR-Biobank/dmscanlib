@@ -72,7 +72,7 @@ public:
     void applyFilters();
 
     Decoder & getDecoder() {
-        return *decoder.get();
+        return *decoder;
     }
 
     std::tr1::shared_ptr<const Dib> getCellImage(unsigned row, unsigned col);
@@ -124,7 +124,7 @@ private:
     unsigned plateNum;
     Orientation orientation;
 
-    std::vector<std::tr1::shared_ptr<PalletCell> > allCells;
+    std::vector<std::tr1::shared_ptr<PalletCell> > enabledCells;
 
     std::vector<std::tr1::shared_ptr<PalletCell> > decodedCells;
 

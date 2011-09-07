@@ -21,7 +21,7 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "TimeUtil.h"
+#include "utils/TimeUtil.h"
 
 #include <string>
 #include <memory>
@@ -29,6 +29,12 @@
 
 #if ! defined _VISUALC_
 #   include <tr1/memory>
+#endif
+
+#ifdef WIN32
+#   define GCC_EXT
+#else
+#   define GCC_EXT __extension__
 #endif
 
 class Dib;
@@ -50,9 +56,9 @@ public:
     virtual int getScannerCapability();
     virtual int scanImage(unsigned dpi, int brightness, int contrast,
                           double left, double top, double right, double bottom,
-                          const char * filename);
+                          const string & filename);
     virtual int scanFlatbed(unsigned dpi, int brightness, int contrast,
-                            const char * filename);
+                            const string & filename);
     virtual int decodePlate(unsigned dpi, int brightness, int contrast,
                             unsigned plateNum, double left, double top,
                             double right, double bottom, double scanGap,
@@ -61,7 +67,7 @@ public:
                             double gapX, double gapY, unsigned profileA,
                             unsigned profileB, unsigned profileC,
                             unsigned orientation);
-    virtual int decodeImage(unsigned plateNum, const char * filename,
+    virtual int decodeImage(unsigned plateNum, const string & filename,
                             double scanGap, unsigned squareDev,
                             unsigned edgeThresh, unsigned corrections,
                             double cellDistance, double gapX, double gapY,
@@ -87,7 +93,7 @@ protected:
 
     int isValidDpi(int dpi);
 
-    int decodeCommon(const char *markedDibFilename);
+    int decodeCommon(const string &markedDibFilename);
 
     static const string LIBRARY_NAME;
 

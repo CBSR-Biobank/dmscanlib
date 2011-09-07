@@ -1,8 +1,8 @@
 #ifndef __INCLUDE_IMAGE_SCANNER_H
 #define __INCLUDE_IMAGE_SCANNER_H
 /*
-Dmscanlib is a software library and standalone application that scans 
-and decodes libdmtx compatible test-tubes. It is currently designed 
+Dmscanlib is a software library and standalone application that scans
+and decodes libdmtx compatible test-tubes. It is currently designed
 to decode 12x8 pallets that use 2D data-matrix laser etched test-tubes.
 Copyright (C) 2010 Canadian Biosample Repository
 
@@ -20,7 +20,13 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "dmtx.h"
+#include <dmtx.h>
+
+#ifdef _VISUALC_
+#   include <memory>
+#else
+#   include <tr1/memory>
+#endif
 
 #if defined (WIN32) && ! defined(__MINGW32__)
 #include <Windows.h>
@@ -38,6 +44,8 @@ public:
 
 	virtual ~ImgScanner();
 
+	static std::tr1::shared_ptr<ImgScanner> create();
+
 	virtual bool twainAvailable() = 0;
 
 	virtual bool selectSourceAsDefault() = 0;
@@ -49,16 +57,11 @@ public:
 
 	virtual HANDLE acquireFlatbed(unsigned dpi, int brightness, int contrast) = 0;
 
-	virtual DmtxImage* acquireDmtxImage(unsigned dpi, int brightness, int contrast) = 0;
-
 	virtual void freeImage(HANDLE handle) = 0;
 
-	int getErrorCode() { return errorCode; }
+	virtual int getErrorCode() = 0;
 
 protected:
-	int brightness;
-	int contrast;
-	int errorCode;
 };
 
 #endif /* __INCLUDE_IMAGE_SCANNER_H */

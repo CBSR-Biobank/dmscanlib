@@ -1,4 +1,4 @@
-#include <edu_ualberta_med_scannerconfig_dmscanlib_ScanLib.h>
+#include "edu_ualberta_med_scannerconfig_dmscanlib_ScanLib.h"
 #include "DmScanLib.h"
 #include "DmScanLibInternal.h"
 #include "PalletCell.h"
@@ -36,13 +36,11 @@ public:
 private:
 };
 
-const char * getResultCodeMsg(int resultCode) {
-    const char * message = NULL;
-
+void getResultCodeMsg(int resultCode, string & message) {
 #ifdef WIN32
     switch (resultCode) {
         case SC_SUCCESS:
-        message = NULL;
+        message = "";
         break;
         case SC_FAIL:
         message = "operation failed";
@@ -72,7 +70,7 @@ const char * getResultCodeMsg(int resultCode) {
 #else
     switch (resultCode) {
     case SC_SUCCESS:
-        message = NULL;
+        message = "";
         break;
     case SC_FAIL:
     case SC_TWAIN_UNAVAIL:
@@ -92,7 +90,6 @@ const char * getResultCodeMsg(int resultCode) {
         break;
     }
 #endif
-    return message;
 }
 
 jobject createScanResultObject(JNIEnv * env, int resultCode, int value) {
@@ -104,10 +101,13 @@ jobject createScanResultObject(JNIEnv * env, int resultCode, int value) {
     jmethodID cons = env->GetMethodID(scanLibResultClass, "<init>",
                                       "(IILjava/lang/String;)V");
 
+    string msg;
+    getResultCodeMsg(resultCode, msg);
+
     jvalue data[3];
     data[0].i = resultCode;
     data[1].i = value;
-    data[2].l = env->NewStringUTF(getResultCodeMsg(resultCode));
+    data[2].l = env->NewStringUTF(msg.c_str());
 
     return env->NewObjectA(scanLibResultClass, cons, data);
 }
@@ -123,10 +123,13 @@ jobject createDecodeResultObject(
     jmethodID cons = env->GetMethodID(resultClass, "<init>",
                                       "(IILjava/lang/String;)V");
 
+    string msg;
+    getResultCodeMsg(resultCode, msg);
+
     jvalue data[3];
     data[0].i = resultCode;
     data[1].i = 0;
-    data[2].l = env->NewStringUTF(getResultCodeMsg(resultCode));
+    data[2].l = env->NewStringUTF(msg.c_str());
 
     jobject resultObj = env->NewObjectA(resultClass, cons, data);
 
@@ -260,7 +263,6 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
     ScanRegion region(env, _region);
 
     DmScanLib dmScanLib(verbose);
-    std::vector<std::tr1::shared_ptr<PalletCell> > * cells;
     int result = dmScanLib.decodePlate(dpi, brightness, contrast,
                                        plateNum, region.left, region.top,
                                        region.right, region.bottom, scanGap,
@@ -268,6 +270,7 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
                                        cellDistance, gapX, gapY, profileA,
                                        profileB, profileC, orientation);
 
+    std::vector<std::tr1::shared_ptr<PalletCell> > * cells;
     if (result == SC_SUCCESS) {
         cells = &dmScanLib.getDecodedCells();
     }
@@ -298,12 +301,12 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
     const char *filename = env->GetStringUTFChars(_filename, 0);
 
     DmScanLib dmScanLib(verbose);
-    std::vector<std::tr1::shared_ptr<PalletCell> > * cells;
     int result = dmScanLib.decodeImage(plateNum, filename, scanGap,
                                        squareDev, edgeThresh, corrections,
                                        cellDistance, gapX, gapY, profileA,
                                        profileB, profileC, orientation);
 
+    std::vector<std::tr1::shared_ptr<PalletCell> > * cells;
     if (result == SC_SUCCESS) {
         cells = &dmScanLib.getDecodedCells();
     }

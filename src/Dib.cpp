@@ -26,10 +26,13 @@
 
 #ifdef _VISUALC_
 #pragma warning(disable : 4996)  // disable fopen warnings
-#else
-//#include <strings.h>
 #endif
 
+#ifdef WIN32
+#undef ERROR
+#endif
+
+#include "DmScanLibInternal.h"
 #include "Dib.h"
 
 #include <glog/logging.h>
@@ -107,8 +110,7 @@ void RgbQuad::set(unsigned char r, unsigned char g, unsigned char b) {
     rgbReserved = 0;
 }
 
-Dib::Dib()
-                : pixels(NULL), isAllocated(false) {
+Dib::Dib() : pixels(NULL), isAllocated(false) {
 }
 
 Dib::Dib(const Dib & src)
@@ -123,32 +125,8 @@ Dib::Dib(unsigned width, unsigned height, unsigned colorBits,
     init(width, height, colorBits, pixelsPerMeter);
 }
 
-Dib::Dib(IplImageContainer & img)
-                : pixels(NULL), isAllocated(false) {
-
-    IplImage *src = img.getIplImage();
-
-    CHECK(src->depth == IPL_DEPTH_8U) <<
-    "Dib::Dib(IplImage & src) requires an unsigned 8bit image";
-
-    CvMat hdr, *matrix = NULL;
-    /* IplImage saves a flipped image */
-    cvFlip(src, src, 0);
-    matrix = cvGetMat(src, &hdr);
-
-    init(src->width, src->height, 8, img.getHorizontalResolution());
-    memcpy(pixels, matrix->data.ptr, src->imageSize);
-    cvFlip(src, src, 0);
-}
-
-Dib::Dib(char *filename)
-                : pixels(NULL), isAllocated(false) {
-    readFromFile(filename);
-}
-
 void Dib::init(unsigned width, unsigned height, unsigned colorBits,
                unsigned pixelsPerMeter, bool allocatePixelBuf) {
-
     this->size = 40;
     this->width = width;
     this->height = height;
@@ -164,7 +142,7 @@ void Dib::init(unsigned width, unsigned height, unsigned colorBits,
     if (allocatePixelBuf) {
         allocate(imageSize);
     }
-    __extension__ VLOG(5) << "constructor: image size is " << imageSize;
+    GCC_EXT VLOG(5) << "constructor: image size is " << imageSize;
 }
 
 Dib::~Dib() {
@@ -226,27 +204,29 @@ void Dib::readFromHandle(HANDLE handle) {
     pixels = reinterpret_cast <unsigned char *>(dibHeaderPtr)
     + sizeof(BITMAPINFOHEADER) + paletteSize * sizeof(RgbQuad);
 
-    UA_DOUT(4, 5, "readFromHandle: "
+    GCC_EXT VLOG(2) << "readFromHandle: "
                     << " size/" << size
                     << " width/" << width
                     << " height/" << height
                     << " colorBits/" << colorBits
                     << " imageSize/" << imageSize
                     << " rowBytes/" << rowBytes
-                    << " paddingBytes/" << rowPaddingBytes << " dpi/" << getDpi());
+                    << " paddingBytes/" << rowPaddingBytes << " dpi/" << getDpi();
 #endif
 }
 
 /**
  * All values in little-endian except for BitmapFileHeader.type.
  */
-void Dib::readFromFile(const char *filename) {
-    CHECK_NOTNULL(filename);
-
+bool Dib::readFromFile(const string & filename) {
     deallocate();
 
-    FILE *fh = fopen(filename, "rb"); // C4996
-    CHECK_NE(fh, (FILE *)NULL) << "could not open file " << filename;
+    FILE *fh = fopen(filename.c_str(), "rb"); // C4996
+
+    if (fh == NULL) {
+        LOG(ERROR) << "could not open file " << filename;
+        return false;
+    }
 
     unsigned char fileHeaderRaw[0xE];
     unsigned char infoHeaderRaw[0x28];
@@ -283,17 +263,13 @@ void Dib::readFromFile(const char *filename) {
     CHECK(r = imageSize);
     fclose(fh);
 
-    __extension__ VLOG(2)
+    GCC_EXT VLOG(2)
                     << "readFromFile: rowBytes/" << rowBytes << " paddingBytes/"
                     << rowPaddingBytes;
+    return true;
 }
 
-unsigned Dib::getRowBytes(unsigned width, unsigned colorBits) {
-    return static_cast<unsigned>(ceil((width * colorBits) / 32.0)) << 2;
-}
-
-bool Dib::writeToFile(const char *filename) const {
-    CHECK_NOTNULL(filename);
+bool Dib::writeToFile(const string & filename) const {
     CHECK_NOTNULL(pixels);
 
     unsigned char fileHeaderRaw[0xE];
@@ -321,7 +297,7 @@ bool Dib::writeToFile(const char *filename) const {
     *(unsigned *) &infoHeaderRaw[0x2E - 0xE] = paletteSize;
     *(unsigned *) &infoHeaderRaw[0x32 - 0xE] = 0;
 
-    FILE *fh = fopen(filename, "wb"); // C4996
+    FILE *fh = fopen(filename.c_str(), "wb"); // C4996
     if (fh == NULL) {
         DLOG(ERROR) << "could not open file for writing";
         return false;
@@ -345,6 +321,10 @@ bool Dib::writeToFile(const char *filename) const {
     return true;
 }
 
+unsigned Dib::getRowBytes(unsigned width, unsigned colorBits) {
+    return static_cast<unsigned>(ceil((width * colorBits) / 32.0)) << 2;
+}
+
 unsigned Dib::getDpi() const {
     // 1 inch = 0.0254 meters
     return static_cast<unsigned>(pixelsPerMeter * 0.0254 + 0.5);
@@ -358,49 +338,8 @@ unsigned Dib::getWidth() const {
     return width;
 }
 
-unsigned Dib::getRowPadBytes() const {
-    return rowPaddingBytes;
-}
-
 unsigned Dib::getBitsPerPixel() const {
     return colorBits;
-}
-
-unsigned char *Dib::getPixelBuffer() const {
-    CHECK_NOTNULL(pixels);
-    return pixels;
-}
-
-unsigned char Dib::getPixelAvgGrayscale(unsigned row, unsigned col) const {
-    CHECK(row < height);
-    CHECK(col < width);
-
-    unsigned char *ptr = pixels + row * rowBytes + col * bytesPerPixel;
-
-    if ((colorBits == 24) || (colorBits == 32)) {
-        return (unsigned char) (0.33333 * ptr[0] + 0.33333 * ptr[1]
-                        + 0.33333 * ptr[2]);
-    } else if (colorBits == 8) {
-        return *ptr;
-    }
-    CHECK(false) << "colorBits " << colorBits << " not implemented yet";
-    return 0;
-}
-
-inline unsigned char Dib::getPixelGrayscale(unsigned row, unsigned col) const {
-    CHECK(row < height);
-    CHECK(col < width);
-
-    unsigned char *ptr = pixels + row * rowBytes + col * bytesPerPixel;
-
-    if ((colorBits == 24) || (colorBits == 32)) {
-        return static_cast<unsigned char>(0.3333 * ptr[0] + 0.3333 * ptr[1]
-                        + 0.3333 * ptr[2]);
-    } else if (colorBits == 8) {
-        return *ptr;
-    }
-    CHECK(false) << "colorBits " << colorBits << " not implemented yet";
-    return 0;
 }
 
 void Dib::setPixel(unsigned x, unsigned y, const RgbQuad & quad) {
@@ -422,25 +361,6 @@ void Dib::setPixel(unsigned x, unsigned y, const RgbQuad & quad) {
     ptr[0] = quad.rgbBlue;
 }
 
-inline void Dib::setPixelGrayscale(unsigned row, unsigned col,
-                                   unsigned char value) {
-    CHECK(row < height);
-    CHECK(col < width);
-
-    unsigned char *ptr = pixels + row * rowBytes + col * bytesPerPixel;
-
-    if ((colorBits == 24) || (colorBits == 32)) {
-        ptr[0] = value;
-        ptr[1] = value;
-        ptr[2] = value;
-    } else if (colorBits == 8) {
-        *ptr = value;
-    } else {
-        assert(0);
-        /* can't assign RgbQuad to dib */
-    }
-}
-
 /*
  * [a,b)
  */
@@ -459,20 +379,20 @@ bool Dib::bound(unsigned min, unsigned & x, unsigned max) {
 }
 
 std::tr1::shared_ptr<Dib> Dib::convertGrayscale() const {
-    CHECK(getBitsPerPixel() == 24 || getBitsPerPixel() == 8);
-    CHECK(getPixelBuffer() != NULL);
+    CHECK(colorBits == 24 || colorBits == 8);
+    CHECK(pixels != NULL);
 
     if (getBitsPerPixel() == 8) {
         CHECK(false) << "already grayscale image.";
     }
 
-    __extension__ VLOG(2)
+    GCC_EXT VLOG(2)
                     << "convertGrayscale: Converting from 24 bit to 8 bit.";
 
     // 24bpp -> 8bpp
     Dib * dest = new Dib(width, height, 8, pixelsPerMeter);
 
-    __extension__ VLOG(2)
+    GCC_EXT VLOG(2)
                     << "convertGrayscale: Made dib";
 
     unsigned char *srcRowPtr = pixels;
@@ -496,7 +416,7 @@ std::tr1::shared_ptr<Dib> Dib::convertGrayscale() const {
         destRowPtr += dest->rowBytes;
     }
 
-    __extension__ VLOG(2)
+    GCC_EXT VLOG(2)
                     << "convertGrayscale: Generated 8 bit grayscale image.";
 
     return std::tr1::shared_ptr<Dib>(dest);
@@ -536,37 +456,6 @@ std::tr1::shared_ptr<Dib> Dib::crop(unsigned x0, unsigned y0, unsigned x1,
         destRowPtr += croppedImg->rowBytes;
     }
     return croppedImg;
-}
-
-/*
- * /http://opencv.willowgarage.com/documentation/c/basic_structures.html
- *
- * cvmat: Matrices are stored row by row. All of the rows are padded (4 bytes).
- */
-auto_ptr<IplImageContainer> Dib::generateIplImage() {
-    CHECK_EQ(colorBits, 8)
-               << "generateIplImage requires an unsigned 8bit image";
-    CHECK_NOTNULL(pixels);
-
-    IplImage *image = NULL;
-    CvMat hdr, *matrix = NULL;
-    CvSize size;
-
-    size.width = width;
-    size.height = height;
-
-    image = cvCreateImage(size, IPL_DEPTH_8U, 1);
-    matrix = cvGetMat(image, &hdr);
-
-    memcpy(matrix->data.ptr, pixels, imageSize);
-
-    cvFlip(image, image, 0);
-
-    auto_ptr<IplImageContainer> iplContainer(new IplImageContainer(NULL));
-    iplContainer->setIplImage(image);
-    iplContainer->setHorizontalResolution(pixelsPerMeter);
-    iplContainer->setVerticalResolution(pixelsPerMeter);
-    return iplContainer;
 }
 
 /*
@@ -658,28 +547,28 @@ void Dib::tpPresetFilter() {
     switch (getDpi()) {
 
     case 400:
-        __extension__ VLOG(2)
+        GCC_EXT VLOG(2)
                     << "tpPresetFilter: Applying DPI_400_KERNEL";
         convolveFast3x3(Dib::DPI_400_KERNEL);
         break;
 
     case 600:
-        __extension__ VLOG(2)
+        GCC_EXT VLOG(2)
                     << "tpPresetFilter: Applying BLANK_KERNEL";
         convolveFast3x3(Dib::BLANK_KERNEL);
 
-        __extension__ VLOG(2)
+        GCC_EXT VLOG(2)
                     << "tpPresetFilter: Applying BLUR_KERNEL";
         convolveFast3x3(Dib::BLUR_KERNEL);
         break;
 
     case 300:
-        __extension__ VLOG(2)
+        GCC_EXT VLOG(2)
                     << "tpPresetFilter: No filter applied (300 dpi)";
         break;
 
     default:
-        __extension__ VLOG(2)
+        GCC_EXT VLOG(2)
                     << "tpPresetFilter: No filter applied (default) dpi/" << getDpi();
         break;
     }
@@ -753,4 +642,30 @@ void Dib::convolveFast3x3(const float(&k)[9]) {
 
     delete[] imageIn;
     delete[] imageOut;
+}
+
+/**
+ * The caller must detroy the image.
+ */
+DmtxImage * Dib::getDmtxImage() const {
+    int pack = DmtxPackCustom;
+
+    switch (colorBits) {
+    case 8:
+        pack = DmtxPack8bppK;
+        break;
+    case 24:
+        pack = DmtxPack24bppRGB;
+        break;
+    case 32:
+        pack = DmtxPack32bppXRGB;
+        break;
+    }
+
+    DmtxImage * image =  dmtxImageCreate(pixels, width, height, pack);
+
+    //set the properties (pad bytes, flip)
+    dmtxImageSetProp(image, DmtxPropRowPadBytes, rowPaddingBytes);
+    dmtxImageSetProp(image, DmtxPropImageFlip, DmtxFlipY); // DIBs are flipped in Y
+    return image;
 }

@@ -36,7 +36,6 @@
 #endif
 
 ImgScannerSimulator::ImgScannerSimulator() {
-   errorCode = -1;
 }
 
 ImgScannerSimulator::~ImgScannerSimulator() {
@@ -65,11 +64,6 @@ HANDLE ImgScannerSimulator::acquireImage(unsigned dpi, int brightness, int contr
 
 HANDLE ImgScannerSimulator::acquireFlatbed(unsigned dpi, int brightness, int contrast) {
 	__extension__ VLOG(2) << "acquireFlatbed";
-	return NULL;
-}
-
-DmtxImage* ImgScannerSimulator::acquireDmtxImage(unsigned dpi, int brightness, int contrast) {
-	__extension__ VLOG(2) << "acquireDmtxImage";
 	return NULL;
 }
 
