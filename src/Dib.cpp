@@ -644,7 +644,10 @@ void Dib::convolveFast3x3(const float(&k)[9]) {
     delete[] imageOut;
 }
 
-std::tr1::shared_ptr<DmtxImage> Dib::getDmtxImage() const {
+/**
+ * The caller must detroy the image.
+ */
+DmtxImage * Dib::getDmtxImage() const {
     int pack = DmtxPackCustom;
 
     switch (colorBits) {
@@ -659,12 +662,10 @@ std::tr1::shared_ptr<DmtxImage> Dib::getDmtxImage() const {
         break;
     }
 
-    std::tr1::shared_ptr<DmtxImage>  image(
-                    dmtxImageCreate(pixels, width, height, pack));
+    DmtxImage * image =  dmtxImageCreate(pixels, width, height, pack);
 
     //set the properties (pad bytes, flip)
-    dmtxImageSetProp(image.get(), DmtxPropRowPadBytes, rowPaddingBytes);
-    dmtxImageSetProp(image.get(), DmtxPropImageFlip, DmtxFlipY); // DIBs are flipped in Y
+    dmtxImageSetProp(image, DmtxPropRowPadBytes, rowPaddingBytes);
+    dmtxImageSetProp(image, DmtxPropImageFlip, DmtxFlipY); // DIBs are flipped in Y
     return image;
-
 }

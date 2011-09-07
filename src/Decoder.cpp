@@ -49,8 +49,8 @@ void Decoder::decodeImage(std::tr1::shared_ptr<const Dib> dib,
                           const std::string & id, DecodeResult & decodeResult) {
     int minEdgeSize, maxEdgeSize;
 
-    std::tr1::shared_ptr<DmtxImage> dmtxImage = dib->getDmtxImage();
-    DmtxDecode *dec = dmtxDecodeCreate(dmtxImage.get(), 1);
+    DmtxImage * dmtxImage = dib->getDmtxImage();
+    DmtxDecode *dec = dmtxDecodeCreate(dmtxImage, 1);
     CHECK_NOTNULL(dec);
 
 
@@ -94,6 +94,7 @@ dmtxDecodeSetProp    (dec, DmtxPropEdgeMin, minEdgeSize);
     }
 
     dmtxDecodeDestroy(&dec);
+    dmtxImageDestroy(&dmtxImage);
 }
 
 void Decoder::getDecodeInfo(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg,

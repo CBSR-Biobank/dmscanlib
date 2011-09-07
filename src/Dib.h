@@ -90,7 +90,7 @@ public:
 
 	void readFromHandle(HANDLE handle);
 
-	std::tr1::shared_ptr<DmtxImage> getDmtxImage() const;
+	DmtxImage * getDmtxImage() const;
 
 private:
 
