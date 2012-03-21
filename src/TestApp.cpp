@@ -299,8 +299,7 @@ TestApp::TestApp(int argc, char ** argv) : progname(argv[0]) {
 
     if (options.decode) {
         result = decode();
-    }
-    if (options.scan) {
+    } else if (options.scan) {
         result = scan();
     } else if (options.select) {
         result = slSelectSourceAsDefault();

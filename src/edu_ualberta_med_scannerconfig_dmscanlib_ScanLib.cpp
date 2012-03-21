@@ -270,7 +270,7 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
                                        cellDistance, gapX, gapY, profileA,
                                        profileB, profileC, orientation);
 
-    std::vector<std::tr1::shared_ptr<PalletCell> > * cells;
+	std::vector<std::tr1::shared_ptr<PalletCell> > * cells = NULL;
     if (result == SC_SUCCESS) {
         cells = &dmScanLib.getDecodedCells();
     }
@@ -306,7 +306,7 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
                                        cellDistance, gapX, gapY, profileA,
                                        profileB, profileC, orientation);
 
-    std::vector<std::tr1::shared_ptr<PalletCell> > * cells;
+    std::vector<std::tr1::shared_ptr<PalletCell> > * cells = NULL;
     if (result == SC_SUCCESS) {
         cells = &dmScanLib.getDecodedCells();
     }
