@@ -50,6 +50,6 @@ void Util::getTimestamp(std::string & str_r) {
     str_r = buf_a;
 }
 
-void Util::difftiime(slTime & start, slTime & end, slTime & diff) {
+void Util::difftime(slTime & start, slTime & end, slTime & diff) {
 	diff = end - start;
 }

@@ -30,7 +30,7 @@ SRC := \
 INCLUDE_PATH := . src src/utils third_party/libdmtx third_party/glog/src \
 	/usr/lib/jvm/jdk1.6.0_32/include /usr/lib/jvm/jdk1.6.0_32/include/linux
 LIBS := -lglog -ldmtx -lOpenThreads
-LIB_PATH := third_party/glog/.libs
+LIB_PATH :=
 
 BUILD_DIR := obj
 BUILD_DIR_FULL_PATH := $(CURDIR)/$(BUILD_DIR)
@@ -94,7 +94,7 @@ ifndef VERBOSE
   SILENT := @
 endif
 
-.PHONY: all everything clean doc
+.PHONY: all everything clean doc check-syntax
 
 all: $(PROJECT)
 
@@ -146,3 +146,5 @@ $(CURDIR)/$(BUILD_DIR)/%.d : %.cpp
 		| $(SED) '\''s|\($(notdir $*)\)\.o[ :]*|\1.o $@: |g'\'' > $@; \
 		[ -s $@ ] || rm -f $@'
 
+check-syntax:
+	$(CXX) $(CXXFLAGS) -Wall -Wextra -pedantic -fsyntax-only $(SRCS)

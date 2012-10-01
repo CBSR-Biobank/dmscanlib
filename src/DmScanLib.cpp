@@ -64,7 +64,7 @@ DmScanLib::DmScanLib(unsigned loggingLevel, bool logToFile)
 DmScanLib::~DmScanLib() {
     if (GCC_EXT VLOG_IS_ON(2)) {
         Util::getTime(endtime);
-        Util::difftiime(starttime, endtime, timediff);
+        Util::difftime(starttime, endtime, timediff);
         GCC_EXT VLOG(2) << "time taken: " << timediff;
     }
 }

@@ -37,7 +37,7 @@ class Util {
 public:
 	static void getTime(slTime & tm);
 	static void getTimestamp(std::string & str_r);
-	static void difftiime(slTime & start, slTime & end, slTime & diff);
+	static void difftime(slTime & start, slTime & end, slTime & diff);
 
 private:
 };

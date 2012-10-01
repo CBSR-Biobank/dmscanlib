@@ -45,7 +45,7 @@ void Util::getTimestamp(std::string & str_r) {
     str_r = buf_a;
 }
 
-void Util::difftiime(slTime & start, slTime & end, slTime & diff) {
+void Util::difftime(slTime & start, slTime & end, slTime & diff) {
 	diff.tv_sec = end.tv_sec - start.tv_sec;
 	diff.tv_usec = end.tv_usec - start.tv_usec;
 	if (diff.tv_usec < 0) {
