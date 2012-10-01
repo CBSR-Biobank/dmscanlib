@@ -21,9 +21,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "structs.h"
 
 #include <dmtx.h>
-#include <opencv/cv.h>
 
 #ifdef WIN32
 #   include <windows.h>
@@ -81,7 +81,7 @@ public:
 
 	void line(unsigned x0, unsigned y0, unsigned x1, unsigned y1, const RgbQuad & quad);
 
-	void line(const CvPoint & start, const CvPoint & end, const RgbQuad & quad) {
+	void line(const Point & start, const Point & end, const RgbQuad & quad) {
 	    line(start.x, start.y, end.x, end.y, quad);
 	}
 

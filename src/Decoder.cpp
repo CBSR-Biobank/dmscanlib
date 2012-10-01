@@ -29,6 +29,8 @@
 
 #include <glog/logging.h>
 #include <stdio.h>
+#include <math.h>
+#include <stdlib.h>
 
 #if defined(USE_NVWA)
 #   include "debug_new.h"
@@ -68,7 +70,6 @@ dmtxDecodeSetProp    (dec, DmtxPropEdgeMin, minEdgeSize);
     (dec, DmtxPropSquareDevn, squareDev);
     dmtxDecodeSetProp(dec, DmtxPropEdgeThresh, edgeThresh);
 
-    bool msgFound = false;
     DmtxRegion * reg;
     while (1) {
         reg = dmtxRegionFindNext(dec, NULL);
@@ -78,7 +79,6 @@ dmtxDecodeSetProp    (dec, DmtxPropEdgeMin, minEdgeSize);
 
         DmtxMessage *msg = dmtxDecodeMatrixRegion(dec, reg, corrections);
         if (msg != NULL) {
-            msgFound = true;
             getDecodeInfo(dec, reg, msg, decodeResult);
 
             if (GCC_EXT VLOG_IS_ON(2)) {

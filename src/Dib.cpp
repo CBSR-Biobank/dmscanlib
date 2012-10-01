@@ -38,6 +38,7 @@
 #include <glog/logging.h>
 #include <stdio.h>
 #include <algorithm>
+#include <math.h>
 
 using namespace std;
 
@@ -576,7 +577,7 @@ void Dib::tpPresetFilter() {
 
 // Can only be used for grayscale Dibs
 void Dib::convolveFast3x3(const float(&k)[9]) {
-    CHECK_EQ(colorBits, 8)
+   CHECK_EQ(colorBits, (unsigned) 8)
                << "convolveFast3x3 requires an unsigned 8bit image";
 
     unsigned size = height * width;

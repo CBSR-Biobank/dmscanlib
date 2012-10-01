@@ -1,13 +1,12 @@
 #ifndef __INC_DECODE_RESULT_H
 #define __INC_DECODE_RESULT_H
 
-#include <opencv/cv.h>
-
+#include "structs.h"
 #include <string>
 
 struct DecodeResult {
     std::string msg;
-    CvPoint corners[4];
+    Point corners[4];
 };
 
 

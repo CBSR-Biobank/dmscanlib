@@ -36,7 +36,7 @@
 class Decoder;
 class Dib;
 class PalletCell;
-struct CvRect;
+class Rect;
 
 class PalletGrid {
 public:
@@ -119,7 +119,7 @@ public:
     std::tr1::shared_ptr<const Dib> getCellImage(const PalletCell & cell);
 
 private:
-    void getCellRect(unsigned row, unsigned col, CvRect & rect);
+    void getCellRect(unsigned row, unsigned col, Rect & rect);
 
     unsigned plateNum;
     Orientation orientation;

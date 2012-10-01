@@ -14,7 +14,7 @@
 #   include <tr1/functional>
 #endif
 
-PalletCell::PalletCell(PalletGrid & pg, unsigned r, unsigned c, CvRect & pos)
+PalletCell::PalletCell(PalletGrid & pg, unsigned r, unsigned c, Rect & pos)
                 : grid(pg), row(r), col(c), parentRect(pos) {
 }
 
@@ -65,7 +65,7 @@ void PalletCell::drawCellBox(Dib & image, const RgbQuad & color) const {
 }
 
 void PalletCell::drawBarcodeBox(Dib & image, const RgbQuad & color) const {
-    CvPoint corners[4];
+    Point corners[4];
 
     for (unsigned i = 0; i < 4; ++i) {
         corners[i].x = decodeResult.corners[i].x + parentRect.x;

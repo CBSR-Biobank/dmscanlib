@@ -20,13 +20,7 @@
  You should have received a copy of the GNU General Public License
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-/*
- * processImageManager.h
- *		Created on: 6-Jul-2010
- *		Author: Thomas Polasek
- */
 
-#include <opencv/cv.h>
 #include <dmtx.h>
 #include <string>
 

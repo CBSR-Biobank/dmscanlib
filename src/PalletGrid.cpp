@@ -25,8 +25,8 @@
 #include "PalletThreadMgr.h"
 #include "PalletCell.h"
 #include "Dib.h"
+#include "structs.h"
 
-#include <opencv/cv.h>
 #include <glog/logging.h>
 #include <sstream>
 
@@ -75,7 +75,7 @@ PalletGrid::PalletGrid(unsigned pn, Orientation o,
 	}
 
 	// initialize enabled cells
-	CvRect rect;
+	Rect rect;
 	cellsByRowCol.resize(MAX_ROWS);
 	for (unsigned row = 0, rows = MAX_ROWS; row < rows; ++row) {
 		cellsByRowCol[row].resize(MAX_COLS);
@@ -107,7 +107,7 @@ void PalletGrid::applyFilters() {
 	}
 }
 
-void PalletGrid::getCellRect(unsigned row, unsigned col, CvRect & rect) {
+void PalletGrid::getCellRect(unsigned row, unsigned col, Rect & rect) {
 	CHECK(row < MAX_ROWS);
 	CHECK(col < MAX_COLS);
 
@@ -157,7 +157,7 @@ std::tr1::shared_ptr<const Dib> PalletGrid::getCellImage(
 
 	CHECK(cellEnabled[MAX_COLS * row + col]);
 
-	const CvRect & rect = cell.getParentPos();
+	const Rect & rect = cell.getParentPos();
 
 	return filteredImage->crop(rect.x, rect.y, rect.x + rect.width,
 			rect.y + rect.height);
@@ -247,7 +247,7 @@ void PalletGrid::writeImageWithBoundedBarcodes(std::string filename) {
 	RgbQuad red(255, 0, 0);
 	Dib markedImage(*image);
 
-	std::vector<const CvPoint *> corners;
+	std::vector<const Point *> corners;
 
 	for (unsigned i = 0, n = enabledCells.size(); i < n; ++i) {
 		if (!enabledCells[i]->getDecodeValid())
