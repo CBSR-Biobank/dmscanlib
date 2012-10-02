@@ -15,6 +15,7 @@ LANG := en_US                # for gcc error messages
 
 SRC := \
 	Dib.cpp \
+	RgbQuad.cpp \
 	PalletThreadMgr.cpp \
 	PalletCell.cpp \
 	DmScanLib.cpp \
@@ -146,5 +147,6 @@ $(CURDIR)/$(BUILD_DIR)/%.d : %.cpp
 		| $(SED) '\''s|\($(notdir $*)\)\.o[ :]*|\1.o $@: |g'\'' > $@; \
 		[ -s $@ ] || rm -f $@'
 
+# for emacs flymake
 check-syntax:
-	$(CXX) $(CXXFLAGS) -Wall -Wextra -pedantic -fsyntax-only $(SRCS)
+	$(CXX) -Wall -Wextra -pedantic -fsyntax-only -o nul -S $(CHK_SOURCES)

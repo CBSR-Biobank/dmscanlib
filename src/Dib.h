@@ -40,19 +40,7 @@ typedef void* HANDLE;
 
 using namespace std;
 
-/* Colour palette
- */
-struct RgbQuad {
-
-	RgbQuad();
-	RgbQuad(unsigned char r, unsigned char g, unsigned char b);
-	void set(unsigned char r, unsigned char g, unsigned char b);
-
-	unsigned char rgbRed;
-	unsigned char rgbGreen;
-	unsigned char rgbBlue;
-	unsigned char rgbReserved;
-};
+class RgbQuad;
 
 class Dib {
 public:

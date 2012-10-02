@@ -25,6 +25,7 @@
 #include "PalletThreadMgr.h"
 #include "PalletCell.h"
 #include "Dib.h"
+#include "RgbQuad.h"
 #include "geometry.h"
 
 #include <glog/logging.h>
