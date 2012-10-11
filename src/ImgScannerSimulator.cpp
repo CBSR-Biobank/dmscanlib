@@ -42,31 +42,31 @@ ImgScannerSimulator::~ImgScannerSimulator() {
 }
 
 bool ImgScannerSimulator::twainAvailable() {
-	__extension__ VLOG(2) << "twainAvailable";
+	 VLOG(2) << "twainAvailable";
    return false;
 }
 
 bool ImgScannerSimulator::selectSourceAsDefault() {
-	__extension__ VLOG(2) << "selectSourceAsDefault";
+	 VLOG(2) << "selectSourceAsDefault";
    return false;
 }
 
 int ImgScannerSimulator::getScannerCapability() {
-	__extension__ VLOG(2) << "getScannerCapability";
+	 VLOG(2) << "getScannerCapability";
 	return 0;
 }
 
 HANDLE ImgScannerSimulator::acquireImage(unsigned dpi, int brightness, int contrast,
 	double top, double left, double bottom, double right) {
-	__extension__ VLOG(2) << "acquireImage";
+	 VLOG(2) << "acquireImage";
 	return NULL;
 }
 
 HANDLE ImgScannerSimulator::acquireFlatbed(unsigned dpi, int brightness, int contrast) {
-	__extension__ VLOG(2) << "acquireFlatbed";
+	 VLOG(2) << "acquireFlatbed";
 	return NULL;
 }
 
 void ImgScannerSimulator::freeImage(HANDLE handle) {
-	__extension__ VLOG(2) << "freeImage";
+	 VLOG(2) << "freeImage";
 }

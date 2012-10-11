@@ -81,7 +81,7 @@ dmtxDecodeSetProp    (dec, DmtxPropEdgeMin, minEdgeSize);
         if (msg != NULL) {
             getDecodeInfo(dec, reg, msg, decodeResult);
 
-            if (GCC_EXT VLOG_IS_ON(2)) {
+            if (VLOG_IS_ON(2)) {
                 showStats(dec, reg, msg);
             }
             dmtxMessageDestroy(&msg);
@@ -89,7 +89,7 @@ dmtxDecodeSetProp    (dec, DmtxPropEdgeMin, minEdgeSize);
         dmtxRegionDestroy(&reg);
     }
 
-    if (GCC_EXT VLOG_IS_ON(5)) {
+    if (VLOG_IS_ON(5)) {
         writeDiagnosticImage(dec, id);
     }
 
@@ -105,7 +105,7 @@ void Decoder::getDecodeInfo(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg,
 
     DmtxVector2 p00, p10, p11, p01;
 
-    decodeResult.msg.assign((char *) msg->output, msg->outputIdx);
+    decodeResult.msg.assign((char *)msg->output, msg->outputIdx);
 
     int height = dmtxDecodeGetProp(dec, DmtxPropHeight);
     p00.X = p00.Y = p10.Y = p01.X = 0.0;
@@ -129,7 +129,7 @@ void Decoder::getDecodeInfo(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg,
 }
 
 void Decoder::showStats(DmtxDecode * dec, DmtxRegion * reg, DmtxMessage * msg) {
-    if (GCC_EXT !VLOG_IS_ON(5)) return;
+    if (!VLOG_IS_ON(5)) return;
 
     int height;
     int dataWordLength;
@@ -149,16 +149,14 @@ void Decoder::showStats(DmtxDecode * dec, DmtxRegion * reg, DmtxMessage * msg) {
     dataWordLength = dmtxGetSymbolAttribute(DmtxSymAttribSymbolDataWords,
                                             reg->sizeIdx);
 
-    rotate = (2 * M_PI)
-                    + (atan2(reg->fit2raw[0][1], reg->fit2raw[1][1])
-                                    - atan2(reg->fit2raw[1][0],
-                                            reg->fit2raw[0][0])) / 2.0;
+	rotate = (2 * M_PI)
+			+ (atan2(reg->fit2raw[0][1], reg->fit2raw[1][1])
+					- atan2(reg->fit2raw[1][0], reg->fit2raw[0][0])) / 2.0;
 
     rotateInt = (int) (rotate * 180 / M_PI + 0.5);
     if (rotateInt >= 360) rotateInt -= 360;
 
-    GCC_EXT VLOG(5)
-                    << "\n--------------------------------------------------"
+    VLOG(5) << "\n--------------------------------------------------"
                     << "\n       Matrix Size: "
                     << dmtxGetSymbolAttribute(DmtxSymAttribSymbolRows,
                                               reg->sizeIdx)
@@ -193,7 +191,7 @@ void Decoder::showStats(DmtxDecode * dec, DmtxRegion * reg, DmtxMessage * msg) {
 }
 
 void Decoder::writeDiagnosticImage(DmtxDecode *dec, const std::string & id) {
-    if (GCC_EXT !VLOG_IS_ON(5)) return;
+    if (!VLOG_IS_ON(5)) return;
 
     int totalBytes, headerBytes;
     int bytesWritten;

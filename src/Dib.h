@@ -24,6 +24,7 @@
 #include "geometry.h"
 
 #include <dmtx.h>
+#include <string>
 
 #ifdef WIN32
 #   include <windows.h>
@@ -53,7 +54,7 @@ public:
 	~Dib();
 
 	bool readFromFile(const std::string & filename);
-	bool writeToFile(const std::string & filename) const;
+	bool writeToFile(const string & filename) const;
 
 	std::tr1::shared_ptr<Dib> convertGrayscale() const;
 

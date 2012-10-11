@@ -136,7 +136,7 @@ void Dib::init(unsigned width, unsigned height, unsigned colorBits,
    if (allocatePixelBuf) {
       allocate(imageSize);
    }
-   GCC_EXT VLOG(5) << "constructor: image size is " << imageSize;
+   VLOG(5) << "constructor: image size is " << imageSize;
 }
 
 Dib::~Dib() {
@@ -198,7 +198,7 @@ void Dib::readFromHandle(HANDLE handle) {
    pixels = reinterpret_cast <unsigned char *>(dibHeaderPtr)
       + sizeof(BITMAPINFOHEADER) + paletteSize * sizeof(RgbQuad);
 
-   GCC_EXT VLOG(2) << "readFromHandle: "
+   VLOG(2) << "readFromHandle: "
                    << " size/" << size
                    << " width/" << width
                    << " height/" << height
@@ -257,7 +257,7 @@ bool Dib::readFromFile(const string & filename) {
    CHECK(r = imageSize);
    fclose(fh);
 
-   GCC_EXT VLOG(2)
+   VLOG(2)
       << "readFromFile: rowBytes/" << rowBytes << " paddingBytes/"
       << rowPaddingBytes;
    return true;
@@ -382,13 +382,13 @@ std::tr1::shared_ptr<Dib> Dib::convertGrayscale() const {
       CHECK(false) << "already grayscale image.";
    }
 
-   GCC_EXT VLOG(2)
+   VLOG(2)
       << "convertGrayscale: Converting from 24 bit to 8 bit.";
 
    // 24bpp -> 8bpp
    Dib * dest = new Dib(width, height, 8, pixelsPerMeter);
 
-   GCC_EXT VLOG(2)
+   VLOG(2)
       << "convertGrayscale: Made dib";
 
    unsigned char *srcRowPtr = pixels;
@@ -412,7 +412,7 @@ std::tr1::shared_ptr<Dib> Dib::convertGrayscale() const {
       destRowPtr += dest->rowBytes;
    }
 
-   GCC_EXT VLOG(2)
+   VLOG(2)
       << "convertGrayscale: Generated 8 bit grayscale image.";
 
    return std::tr1::shared_ptr<Dib>(dest);
@@ -543,28 +543,28 @@ void Dib::tpPresetFilter() {
    switch (getDpi()) {
 
       case 400:
-         GCC_EXT VLOG(2)
+         VLOG(2)
             << "tpPresetFilter: Applying DPI_400_KERNEL";
          convolveFast3x3(Dib::DPI_400_KERNEL);
          break;
 
       case 600:
-         GCC_EXT VLOG(2)
+         VLOG(2)
             << "tpPresetFilter: Applying BLANK_KERNEL";
          convolveFast3x3(Dib::BLANK_KERNEL);
 
-         GCC_EXT VLOG(2)
+         VLOG(2)
             << "tpPresetFilter: Applying BLUR_KERNEL";
          convolveFast3x3(Dib::BLUR_KERNEL);
          break;
 
       case 300:
-         GCC_EXT VLOG(2)
+         VLOG(2)
             << "tpPresetFilter: No filter applied (300 dpi)";
          break;
 
       default:
-         GCC_EXT VLOG(2)
+         VLOG(2)
             << "tpPresetFilter: No filter applied (default) dpi/" << getDpi();
          break;
    }

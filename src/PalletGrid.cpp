@@ -51,7 +51,7 @@ PalletGrid::PalletGrid(unsigned pn, Orientation o,
 		CHECK(false) << "orientation invalid: " << orientation;
 	}
 
-	GCC_EXT VLOG(2)
+	VLOG(2)
 			<< "PalletGrid: orientation/" << orientation << " width/"
 					<< imgWidth << " height/" << imgHeight << " imgValid/"
 					<< imgValid;
@@ -103,7 +103,7 @@ void PalletGrid::applyFilters() {
 		filteredImage = std::tr1::shared_ptr<Dib>(new Dib(*image));
 	}
 	filteredImage->tpPresetFilter();
-	if (GCC_EXT VLOG_IS_ON(2)) {
+	if (VLOG_IS_ON(2)) {
 		image->writeToFile("filtered.bmp");
 	}
 }
@@ -169,10 +169,10 @@ unsigned PalletGrid::decodeCells(std::tr1::shared_ptr<Decoder> dcdr) {
 
 	decoder = dcdr;
 
-	if (GCC_EXT VLOG_IS_ON(3)) {
+	if (VLOG_IS_ON(3)) {
 		string str;
 		getProfileAsString(str);
-		GCC_EXT VLOG(3) << "Profile: \n" << str;
+		VLOG(3) << "Profile: \n" << str;
 		writeImageWithCells("cellRegions.bmp");
 	}
 
@@ -188,7 +188,7 @@ unsigned PalletGrid::decodeCells(std::tr1::shared_ptr<Decoder> dcdr) {
 			decodedCells.push_back(enabledCells[i]);
 		}
 
-		if (GCC_EXT VLOG_IS_ON(2)) {
+		if (VLOG_IS_ON(2)) {
 			cell.writeImage(found ? "found" : "missed");
 		}
 	}

@@ -61,7 +61,7 @@ void PalletThreadMgr::threadHandler() {
 
     do {
         threadProcessRange(first, last);
-        GCC_EXT VLOG(2)
+        VLOG(2)
                         << "Threads for cells finished: " << first << "/"
                         << last - 1;
 

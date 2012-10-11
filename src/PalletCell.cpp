@@ -52,7 +52,7 @@ const string & PalletCell::getBarcodeMsg() {
 
 void PalletCell::writeImage(std::string basename) {
     // do not write diagnostic image is log level is less than 9
-    if (GCC_EXT !VLOG_IS_ON(5)) return;
+    if (!VLOG_IS_ON(5)) return;
 
     ostringstream fname;
     fname << basename << "-" << row << "-" << col << ".bmp";

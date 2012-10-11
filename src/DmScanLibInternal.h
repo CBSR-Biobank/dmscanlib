@@ -31,12 +31,6 @@
 #   include <tr1/memory>
 #endif
 
-#ifdef WIN32
-#   define GCC_EXT
-#else
-#   define GCC_EXT __extension__
-#endif
-
 class Dib;
 class Decoder;
 class ImgScanner;
@@ -58,7 +52,7 @@ public:
                           double left, double top, double right, double bottom,
                           const string & filename);
     virtual int scanFlatbed(unsigned dpi, int brightness, int contrast,
-                            const string & filename);
+                            const char * filename);
     virtual int decodePlate(unsigned dpi, int brightness, int contrast,
                             unsigned plateNum, double left, double top,
                             double right, double bottom, double scanGap,
