@@ -26,6 +26,7 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include <jni.h>
 
 #if ! defined _VISUALC_
 #   include <tr1/memory>
@@ -38,6 +39,12 @@ class PalletGrid;
 class PalletCell;
 
 using namespace std;
+
+void getResultCodeMsg(int resultCode, string & message);
+jobject createScanResultObject(JNIEnv * env, int resultCode, int value);
+jobject createDecodeResultObject(
+                JNIEnv * env, int resultCode,
+                std::vector<std::tr1::shared_ptr<PalletCell> > * cells);
 
 class DmScanLib {
 public:
