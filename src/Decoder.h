@@ -22,7 +22,7 @@
  */
 
 
-#include "DecodeResult.h"
+#include "DecodedWell.h"
 
 #include <dmtx.h>
 #include <string>
@@ -49,13 +49,12 @@ public:
             unsigned edgeThresh, unsigned corrections, double cellDistance);
     virtual ~Decoder();
 
-    void decodeImage(std::tr1::shared_ptr<const Dib> dib, const std::string & id,
-                     DecodeResult & decodeResult);
+    void decodeImage(const Dib & dib, DecodedWell & decodedWell);
 
 private:
     static DmtxImage * createDmtxImageFromDib(const Dib & dib);
     void getDecodeInfo(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg,
-                       DecodeResult & decodeResult);
+                       DecodedWell & DecodedWell);
 
     void writeDiagnosticImage(DmtxDecode *dec, const string & id);
 

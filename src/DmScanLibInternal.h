@@ -36,15 +36,15 @@ class Dib;
 class Decoder;
 class ImgScanner;
 class PalletGrid;
-class PalletCell;
+class WellDecoder;
 
 using namespace std;
 
 void getResultCodeMsg(int resultCode, string & message);
 jobject createScanResultObject(JNIEnv * env, int resultCode, int value);
-jobject createDecodeResultObject(
+jobject createDecodedWellObject(
                 JNIEnv * env, int resultCode,
-                std::vector<std::tr1::shared_ptr<PalletCell> > * cells);
+                std::vector<std::tr1::shared_ptr<WellDecoder> > * cells);
 
 class DmScanLib {
 public:
@@ -59,21 +59,16 @@ public:
                           double left, double top, double right, double bottom,
                           const string & filename);
     virtual int scanFlatbed(unsigned dpi, int brightness, int contrast,
-                            const char * filename);
-    virtual int decodePlate(unsigned dpi, int brightness, int contrast,
-                            unsigned plateNum, double left, double top,
-                            double right, double bottom, double scanGap,
+                            const string & filename);
+    virtual int scanAndDecode(unsigned dpi, int brightness, int contrast,
+                            double left, double top, double right,
+                            double bottom, double scanGap,
                             unsigned squareDev, unsigned edgeThresh,
-                            unsigned corrections, double cellDistance,
-                            double gapX, double gapY, unsigned profileA,
-                            unsigned profileB, unsigned profileC,
-                            unsigned orientation);
-    virtual int decodeImage(unsigned plateNum, const string & filename,
+                            unsigned corrections, double cellDistance);
+    virtual int decodeImage(const string & filename,
                             double scanGap, unsigned squareDev,
                             unsigned edgeThresh, unsigned corrections,
-                            double cellDistance, double gapX, double gapY,
-                            unsigned profileA, unsigned profileB,
-                            unsigned profileC, unsigned orientation);
+                            double cellDistance);
 
     void configLogging(unsigned level, bool useFile = true);
 
@@ -85,7 +80,7 @@ public:
         stdoutOutputEnable = enable;
     }
 
-    std::vector<std::tr1::shared_ptr<PalletCell> > & getDecodedCells();
+    std::vector<std::tr1::shared_ptr<WellDecoder> > & getDecodedCells();
 
 protected:
     void saveResults(string & msg);
@@ -96,6 +91,8 @@ protected:
 
     int decodeCommon(const string &markedDibFilename);
 
+    void applyFilters();
+
     static const string LIBRARY_NAME;
 
     std::tr1::shared_ptr<Dib> image;
@@ -103,18 +100,11 @@ protected:
     std::tr1::shared_ptr<PalletGrid> palletGrid;
     std::tr1::shared_ptr<Decoder> decoder;
 
-    unsigned plateNum;
     double scanGap;
     unsigned squareDev;
     unsigned edgeThresh;
     unsigned corrections;
     double cellDistance;
-    double gapX;
-    double gapY;
-    unsigned profileA;
-    unsigned profileB;
-    unsigned profileC;
-    unsigned orientation;
 
     slTime starttime; // for debugging
     slTime endtime;

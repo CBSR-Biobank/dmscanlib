@@ -6,9 +6,9 @@
 #include "DmScanLib.h"
 #include "ScanRegion.h"
 #include "DmScanLibInternal.h"
-#include "PalletCell.h"
 
 #include <iostream>
+#include <vector>
 
 using namespace std;
 
@@ -32,9 +32,8 @@ jobject createScanResultObject(JNIEnv * env, int resultCode, int value) {
     return env->NewObjectA(scanLibResultClass, cons, data);
 }
 
-jobject createDecodeResultObject(
-                JNIEnv * env, int resultCode,
-                std::vector<std::tr1::shared_ptr<PalletCell> > * cells) {
+jobject createDecodeResultObject(JNIEnv * env, int resultCode,
+                std::vector<std::tr1::shared_ptr<DecodedWell> > * wells) {
     jclass resultClass = env->FindClass(
                     "edu/ualberta/med/scannerconfig/dmscanlib/DecodeResult");
 
@@ -53,17 +52,16 @@ jobject createDecodeResultObject(
 
     jobject resultObj = env->NewObjectA(resultClass, cons, data);
 
-    jmethodID setCellMethod = env->GetMethodID(resultClass, "setCell",
-                                               "(IILjava/lang/String;)V");
+    jmethodID setCellMethod = env->GetMethodID(resultClass, "addWell",
+    		"(Ljava/lang/String;Ljava/lang/String;)V");
 
-    if (cells != NULL) {
-        for (unsigned i = 0, n = cells->size(); i < n; ++i) {
-            PalletCell & cell = *(*cells)[i];
+    if (wells != NULL) {
+        for (unsigned i = 0, n = wells->size(); i < n; ++i) {
+        	DecodedWell & well = *(*wells)[i];
             jvalue data[3];
 
-            data[0].i = cell.getRow();
-            data[1].i = cell.getCol();
-            data[2].l = env->NewStringUTF(cell.getBarcodeMsg().c_str());
+            data[0].i = env->NewStringUTF(well.getLabel().c_str());
+            data[1].l = env->NewStringUTF(well.getMessage().c_str());
 
             env->CallObjectMethodA(resultObj, setCellMethod, data);
         }
@@ -80,11 +78,7 @@ jobject createDecodeResultObject(
  * Signature: (JJLjava/lang/String;DJJJDDDJJJJ)Ledu/ualberta/med/scannerconfig/dmscanlib/DecodeResult;
  */
 JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_decodeImage(
-                JNIEnv * env, jobject obj, jlong _verbose, jlong _plateNum,
-                jstring _filename, jdouble scanGap, jlong _squareDev,
-                jlong _edgeThresh, jlong _corrections, jdouble cellDistance,
-                jdouble gapX, jdouble gapY, jlong _profileA, jlong _profileB,
-                jlong _profileC, jlong _orientation) {
+		JNIEnv * env, jobject, jlong, jstring, jobject, jobjectArray) {
 
     unsigned verbose = static_cast<unsigned>(_verbose);
     unsigned plateNum = static_cast<unsigned>(_plateNum);
@@ -98,16 +92,14 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
     const char *filename = env->GetStringUTFChars(_filename, 0);
 
     DmScanLib dmScanLib(verbose);
-    int result = dmScanLib.decodeImage(plateNum, filename, scanGap,
-                                       squareDev, edgeThresh, corrections,
-                                       cellDistance, gapX, gapY, profileA,
-                                       profileB, profileC, orientation);
+    int result = dmScanLib.decodeImage(filename, scanGap, squareDev, edgeThresh,
+    		corrections, cellDistance);
 
-    std::vector<std::tr1::shared_ptr<PalletCell> > * cells = NULL;
+    std::vector<std::tr1::shared_ptr<WellDecoder> > * cells = NULL;
     if (result == SC_SUCCESS) {
         cells = &dmScanLib.getDecodedCells();
     }
-    jobject resultObj = createDecodeResultObject(env, result, cells);
+    jobject resultObj = createDecodedWellObject(env, result, cells);
     env->ReleaseStringUTFChars(_filename, filename);
     return resultObj;
 }
@@ -117,11 +109,44 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
  * Method:    decodeImage
  * Signature: (JLjava/lang/String;Ledu/ualberta/med/scannerconfig/dmscanlib/DecodeOptions;[Ledu/ualberta/med/scannerconfig/dmscanlib/Well;)Ledu/ualberta/med/scannerconfig/dmscanlib/DecodeResult;
  */
-JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_decodeImage
-  (JNIEnv * env, jobject obj, jlong _verbose, jstring _filename, jobject decodeOptions, jobjectArray wells) {
+JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_decodeImage(
+		JNIEnv * env, jobject obj, jlong _verbose, jstring _filename,
+		jobject _decodeOptions, jobjectArray _wellRects) {
 
     unsigned verbose = static_cast<unsigned>(_verbose);
     const char *filename = env->GetStringUTFChars(_filename, 0);
+
+    DecodeOptions decodeOptions(env, _decodeOptions);
+
+    jobject wellRectJavaObj;
+    jsize numWells = env->GetArrayLength(wellRects);
+    jclass wellRectJavaClass = NULL;
+    jmethodID wellRectCornerXMethodID = NULL;
+    jmethodID wellRectCornerYMethodID = NULL;
+
+    std::vector<std::tr1::shared_ptr<WellRectangle> > wellRects;
+
+    for (unsigned i = 0; i < numWells; ++i) {
+    	wellRectJavaObj = env->GetObjectArrayElement(_wellRects, i);
+
+    	if (wellRectJavaClass == NULL) {
+    		wellRectJavaClass = env->GetObjectClass(wellRectJavaObj);
+    	    wellRectCornerXMethodID = env->GetMethodID(wellRectJavaClass,
+    	    		"getCornerX", "(I)D");
+    	    if(env->ExceptionOccurred()) {
+    	    	return NULL;
+    	    }
+    	    wellRectCornerYMethodID = env->GetMethodID(wellRectJavaClass,
+    	    		"getCornerY", "(I)D");
+    	    if(env->ExceptionOccurred()) {
+    	    	return NULL;
+    	    }
+    	}
+
+    	std::tr1::shared_ptr<WellRectangle> rect(new WellRectangle());
+
+    	env->DeleteLocalRef(wellRectJavaObj);
+    }
 
     DmScanLib dmScanLib(verbose);
 }

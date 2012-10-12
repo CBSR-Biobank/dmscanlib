@@ -184,7 +184,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Decoder.h" />
-    <ClInclude Include="src\DecodeResult.h" />
+    <ClInclude Include="src\DecodedWell.h" />
     <ClInclude Include="src\Dib.h" />
     <ClInclude Include="src\DmScanLib.h" />
     <ClInclude Include="src\DmScanLibInternal.h" />

@@ -166,7 +166,7 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
     if (result == SC_SUCCESS) {
         cells = &dmScanLib.getDecodedCells();
     }
-    return createDecodeResultObject(env, result, cells);
+    return createDecodedWellObject(env, result, cells);
 }
 
 

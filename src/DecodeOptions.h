@@ -1,3 +1,6 @@
+#ifndef DECODEOPTIONS_H_
+#define DECODEOPTIONS_H_
+
 /*
  * DecodeOptions.h
  *
@@ -5,21 +8,18 @@
  *      Author: nelson
  */
 
-#ifndef DECODEOPTIONS_H_
-#define DECODEOPTIONS_H_
+#include <jni.h>
 
 class DecodeOptions {
 public:
 	DecodeOptions(JNIEnv *env, jobject scanRegionObj);
-	virtual ~DecodeOptions() { };
+	virtual ~DecodeOptions();
 
     double scanGap;
     long squareDev;
     long edgeThresh;
     long corrections;
     double cellDistance;
-    double gapX;
-    double gapY;
 };
 
 #endif /* DECODEOPTIONS_H_ */

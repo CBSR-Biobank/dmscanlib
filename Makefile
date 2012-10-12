@@ -14,6 +14,8 @@ MTYPE := $(shell uname -m)
 LANG := en_US                # for gcc error messages
 
 SRC := \
+	DecodedWell.cpp \
+	WellCoordinates.cpp \
 	Dib.cpp \
 	RgbQuad.cpp \
 	PalletThreadMgr.cpp \

@@ -3,7 +3,7 @@
  */
 
 #include "ScanRegion.h"
-#include "stddef.h"
+#include <stddef.h>
 
 ScanRegion::ScanRegion(JNIEnv *env, jobject scanRegionObj) {
     jclass scanSettingsJavaClass = env->GetObjectClass(scanRegionObj);
@@ -12,14 +12,14 @@ ScanRegion::ScanRegion(JNIEnv *env, jobject scanRegionObj) {
     // javap -s -p edu.ualberta.med.scannerconfig.dmscanlib.ScanRegion
     jmethodID getMethod = env->GetMethodID(scanSettingsJavaClass, "getLeft",
                                            "()D");
-    left = env->CallDoubleMethod(scanRegionObj, getMethod, NULL);
+    point1.x = env->CallDoubleMethod(scanRegionObj, getMethod, NULL);
 
     getMethod = env->GetMethodID(scanSettingsJavaClass, "getTop", "()D");
-    top = env->CallDoubleMethod(scanRegionObj, getMethod, NULL);
+    point1.y = env->CallDoubleMethod(scanRegionObj, getMethod, NULL);
 
     getMethod = env->GetMethodID(scanSettingsJavaClass, "getRight", "()D");
-    right = env->CallDoubleMethod(scanRegionObj, getMethod, NULL);
+    point2.x = env->CallDoubleMethod(scanRegionObj, getMethod, NULL);
 
     getMethod = env->GetMethodID(scanSettingsJavaClass, "getBottom", "()D");
-    bottom = env->CallDoubleMethod(scanRegionObj, getMethod, NULL);
+    point2.y = env->CallDoubleMethod(scanRegionObj, getMethod, NULL);
 }

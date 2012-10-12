@@ -1,16 +1,18 @@
 #ifndef __INC_STRUCTS_H
 #define __INC_STRUCTS_H
 
+template <typename T>
 struct Point {
-   unsigned x;
-   unsigned y;
+   T x;
+   T y;
+
+   Point (T _x, T _y) : x(_x), y(_y) { }
+   Point() { }
 };
 
+template <typename T>
 struct Rect {
-   unsigned x;
-   unsigned y;
-   unsigned width;
-   unsigned height;
+   Point<T> corners[4];
 };
 
 

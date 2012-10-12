@@ -1,7 +1,9 @@
 #ifndef __INC_PALLET_CELL_H
 #define __INC_PALLET_CELL_H
 
-#include "DecodeResult.h"
+#include "DecodedWell.h"
+#include "WellRectangle.h"
+#include "geometry.h"
 
 #include <dmtx.h>
 #include <string>
@@ -16,39 +18,33 @@
 #   include <tr1/memory>
 #endif
 
+using namespace std;
+
+class Decoder;
 class Dib;
 struct RgbQuad;
 class PalletGrid;
 
-class PalletCell : public OpenThreads::Thread {
+class WellDecoder : public OpenThreads::Thread {
 public:
-   PalletCell(PalletGrid & grid, unsigned row, unsigned col,
-              Rect & parentPos);
+   WellDecoder(Decoder & decoder, WellRectangle<int> & _wellCoordinates);
 
-   virtual ~PalletCell();
+   virtual ~WellDecoder();
 
    virtual void run();
 
    bool isFinished();
 
-   void decodeCallback(std::string & decodedMsg, Point(&corners)[4]);
+   void decodeCallback(std::string & decodedMsg, Point<unsigned>(&corners)[4]);
 
-   std::tr1::shared_ptr<const Dib> getImage();
+   std::tr1::shared_ptr<const Dib> getImage() const;
 
-   const Rect & getParentPos() const {
-      return parentRect;
-   }
-
-   const unsigned getRow() const {
-      return row;
-   }
-
-   const unsigned getCol() const {
-      return col;
+   const WellRectangle<int> & geRectangle() const {
+      return wellRectangle;
    }
 
    const bool getDecodeValid() {
-      return !decodeResult.msg.empty();
+      return !decodedWell.getMessage().empty();
    }
 
    const std::string & getBarcodeMsg();
@@ -61,14 +57,12 @@ public:
 
 private:
 
-   PalletGrid & grid;
-   const unsigned row;
-   const unsigned col;
-   Rect parentRect;
+   Decoder & decoder;
+   WellRectangle<int> & wellRectangle;
    std::tr1::shared_ptr<const Dib> cellImage;
-   DecodeResult decodeResult;
+   DecodedWell decodedWell;
 
-   friend std::ostream & operator<<(std::ostream & os, PalletCell & m);
+   friend std::ostream & operator<<(std::ostream & os, WellDecoder & m);
 };
 
 #endif /* __INC_PALLET_CELL_H */

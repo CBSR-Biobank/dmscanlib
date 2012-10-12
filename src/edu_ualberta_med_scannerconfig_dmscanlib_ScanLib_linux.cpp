@@ -93,7 +93,7 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
 /*
  * Class:     edu_ualberta_med_scannerconfig_dmscanlib_ScanLib
  * Method:    slDecodePlate
- * Signature: (JJIIJDDDDDJJJDDDJJJJ)Ledu/ualberta/med/scannerconfig/dmscanlib/DecodeResult;
+ * Signature: (JJIIJDDDDDJJJDDDJJJJ)Ledu/ualberta/med/scannerconfig/dmscanlib/DecodedWell;
  */
 JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_decodePlate(
                 JNIEnv * env, jobject obj, jlong _verbose, jlong _dpi,

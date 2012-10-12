@@ -35,7 +35,7 @@
 using namespace std;
 
 class Dib;
-class PalletCell;
+class WellDecoder;
 class DecodeInfo;
 class BarcodeThread;
 class Decoder;
@@ -45,7 +45,7 @@ public:
 	PalletThreadMgr(std::tr1::shared_ptr<Decoder> decoder);
 	~PalletThreadMgr();
 
-	void decodeCells(std::vector<std::tr1::shared_ptr<PalletCell> > & cells);
+	void decodeCells(std::vector<std::tr1::shared_ptr<WellDecoder> > & cells);
 
 private:
 	static const unsigned THREAD_NUM;
@@ -54,7 +54,7 @@ private:
 	void threadProcessRange(unsigned int first, unsigned int last);
 
 	std::tr1::shared_ptr<Decoder> decoder;
-	vector<std::tr1::shared_ptr<PalletCell> > allThreads;
+	vector<std::tr1::shared_ptr<WellDecoder> > allThreads;
 	unsigned numThreads;
 };
 

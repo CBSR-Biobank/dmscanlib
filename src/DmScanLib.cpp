@@ -34,7 +34,6 @@
 #include "DmScanLibInternal.h"
 #include "ImgScanner.h"
 #include "ImgScanner.h"
-#include "PalletGrid.h"
 #include "Decoder.h"
 #include "Dib.h"
 
@@ -154,7 +153,7 @@ int DmScanLib::scanImage(unsigned dpi, int brightness, int contrast,
 }
 
 int DmScanLib::scanFlatbed(unsigned dpi, int brightness, int contrast,
-		const char * filename) {
+		const string & filename) {
 	VLOG(2)
 			<< "slScanFlatbed: dpi/" << dpi << " brightness/" << brightness
 					<< " contrast/" << contrast << " filename/" << filename;
@@ -174,46 +173,32 @@ int DmScanLib::scanFlatbed(unsigned dpi, int brightness, int contrast,
 	return SC_SUCCESS;
 }
 
-int DmScanLib::decodePlate(unsigned dpi, int brightness, int contrast,
-		unsigned plateNum, double left, double top, double right, double bottom,
-		double scanGap, unsigned squareDev, unsigned edgeThresh,
-		unsigned corrections, double cellDistance, double gapX, double gapY,
-		unsigned profileA, unsigned profileB, unsigned profileC,
-		unsigned orientation) {
+int DmScanLib::scanAndDecode(unsigned dpi, int brightness, int contrast,
+        double left, double top, double right, double bottom,
+        double scanGap, unsigned squareDev, unsigned edgeThresh,
+        unsigned corrections, double cellDistance) {
 	VLOG(2)
 			<< "decodePlate: dpi/" << dpi << " brightness/" << brightness
-					<< " contrast/" << contrast << " plateNum/" << plateNum
+					<< " contrast/" << contrast
 					<< " left/" << left << " top/" << top << " right/" << right
 					<< " bottom/" << bottom << " scanGap/" << scanGap
 					<< " squareDev/" << squareDev << " edgeThresh/"
 					<< edgeThresh << " corrections/" << corrections
-					<< " cellDistance/" << cellDistance << " gapX/" << gapX
-					<< " gapY/" << gapY << " orientation/" << orientation;
-
-	if ((plateNum < MIN_PLATE_NUM) || (plateNum > MAX_PLATE_NUM)) {
-		return SC_INVALID_PLATE_NUM;
-	}
+					<< " cellDistance/" << cellDistance;
 
 	HANDLE h;
 	int result;
 
-	this->plateNum = plateNum;
 	this->scanGap = scanGap;
 	this->squareDev = squareDev;
 	this->edgeThresh = edgeThresh;
 	this->corrections = corrections;
 	this->cellDistance = cellDistance;
-	this->gapX = gapX;
-	this->gapY = gapY;
-	this->profileA = profileA;
-	this->profileB = profileB;
-	this->profileC = profileC;
-	this->orientation = orientation;
 
 	h = imgScanner->acquireImage(dpi, brightness, contrast, left, top, right,
 			bottom);
 	if (h == NULL) {
-		VLOG(2) << "could not acquire plate image: " << plateNum;
+		VLOG(2) << "could not acquire image";
 		return imgScanner->getErrorCode();
 	}
 
@@ -231,36 +216,21 @@ int DmScanLib::decodePlate(unsigned dpi, int brightness, int contrast,
 	return result;
 }
 
-int DmScanLib::decodeImage(unsigned plateNum, const string & filename,
+int DmScanLib::decodeImage(const string & filename,
 		double scanGap, unsigned squareDev, unsigned edgeThresh,
-		unsigned corrections, double cellDistance, double gapX, double gapY,
-		unsigned profileA, unsigned profileB, unsigned profileC,
-		unsigned orientation) {
+		unsigned corrections, double cellDistance) {
 
 	VLOG(2)
-			<< "decodeImage: plateNum/" << plateNum << " filename/" << filename
+			<< "decodeImage: filename/" << filename
 					<< " scanGap/" << scanGap << " squareDev/" << squareDev
 					<< " edgeThresh/" << edgeThresh << " corrections/"
-					<< corrections << " cellDistance/" << cellDistance
-					<< " gapX/" << gapX << " gapY/" << gapY << " orientation/"
-					<< orientation;
+					<< corrections << " cellDistance/" << cellDistance;
 
-	if ((plateNum < MIN_PLATE_NUM) || (plateNum > MAX_PLATE_NUM)) {
-		return SC_INVALID_PLATE_NUM;
-	}
-
-	this->plateNum = plateNum;
 	this->scanGap = scanGap;
 	this->squareDev = squareDev;
 	this->edgeThresh = edgeThresh;
 	this->corrections = corrections;
 	this->cellDistance = cellDistance;
-	this->gapX = gapX;
-	this->gapY = gapY;
-	this->profileA = profileA;
-	this->profileB = profileB;
-	this->profileC = profileC;
-	this->orientation = orientation;
 
 	image = std::tr1::shared_ptr<Dib>(new Dib());
 	bool readResult = image->readFromFile(filename);
@@ -273,7 +243,6 @@ int DmScanLib::decodeImage(unsigned plateNum, const string & filename,
 }
 
 int DmScanLib::decodeCommon(const string &markedDibFilename) {
-	const unsigned profileWords[3] = { profileA, profileB, profileC };
 	const unsigned dpi = image->getDpi();
 
 	VLOG(2) << "DecodeCommon: dpi/" << dpi;
@@ -286,25 +255,7 @@ int DmScanLib::decodeCommon(const string &markedDibFilename) {
 			new Decoder(dpi, scanGap, squareDev, edgeThresh, corrections,
 					cellDistance));
 
-	PalletGrid::Orientation palletOrientation = (
-			(orientation == 0) ?
-					PalletGrid::ORIENTATION_HORIZONTAL :
-					PalletGrid::ORIENTATION_VERTICAL);
-
-	unsigned gapXpixels = dpi * static_cast<unsigned>(gapX);
-	unsigned gapYpixels = dpi * static_cast<unsigned>(gapY);
-
-	palletGrid = std::tr1::shared_ptr<PalletGrid>(
-			new PalletGrid(plateNum, palletOrientation, image, gapXpixels,
-					gapYpixels, profileWords));
-
-	if (!palletGrid->isImageValid()) {
-		return SC_INVALID_IMAGE;
-	}
-
-	palletGrid->applyFilters();
-	unsigned decodeCount = palletGrid->decodeCells(decoder);
-	palletGrid->writeImageWithBoundedBarcodes(markedDibFilename);
+	applyFilters();
 
 	if (decodeCount == 0) {
 		return SC_INVALID_IMAGE;
@@ -326,7 +277,17 @@ int DmScanLib::decodeCommon(const string &markedDibFilename) {
 	return SC_SUCCESS;
 }
 
-std::vector<std::tr1::shared_ptr<PalletCell> > & DmScanLib::getDecodedCells() {
+void DmScanLib::applyFilters() {
+	if (image->getBitsPerPixel() != 8) {
+		image->convertGrayscale();
+	}
+	image->tpPresetFilter();
+	if (VLOG_IS_ON(2)) {
+		image->writeToFile("filtered.bmp");
+	}
+}
+
+std::vector<std::tr1::shared_ptr<WellDecoder> > & DmScanLib::getDecodedCells() {
 	return palletGrid->getDecodedCells();
 }
 
@@ -367,7 +328,7 @@ int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
 		unsigned orientation) {
 	DmScanLib dmScanLib(verbose);
 	dmScanLib.setTextFileOutputEnable(true);
-	return dmScanLib.decodePlate(dpi, brightness, contrast, plateNum, left, top,
+	return dmScanLib.decodePlate(dpi, brightness, contrast, left, top,
 			right, bottom, scanGap, squareDev, edgeThresh, corrections,
 			cellDistance, gapX, gapY, profileA, profileB, profileC, orientation);
 }

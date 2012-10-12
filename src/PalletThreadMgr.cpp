@@ -20,8 +20,8 @@
 
 #include "DmScanLibInternal.h"
 #include "PalletThreadMgr.h"
-#include "PalletCell.h"
 #include "Decoder.h"
+#include "WellDecoder.h"
 #include "Dib.h"
 
 #include <algorithm>
@@ -72,7 +72,7 @@ void PalletThreadMgr::threadHandler() {
 }
 
 void PalletThreadMgr::decodeCells(
-                std::vector<std::tr1::shared_ptr<PalletCell> > & cells) {
+                std::vector<std::tr1::shared_ptr<WellDecoder> > & cells) {
     numThreads = cells.size();
     allThreads.resize(numThreads);
 

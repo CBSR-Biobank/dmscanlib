@@ -70,7 +70,7 @@ public:
 
 	void line(unsigned x0, unsigned y0, unsigned x1, unsigned y1, const RgbQuad & quad);
 
-	void line(const Point & start, const Point & end, const RgbQuad & quad) {
+   void line(const Point<int> & start, const Point<int> & end, const RgbQuad & quad) {
 	    line(start.x, start.y, end.x, end.y, quad);
 	}
 
