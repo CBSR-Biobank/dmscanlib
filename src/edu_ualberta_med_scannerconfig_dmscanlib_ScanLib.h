@@ -76,10 +76,10 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
 /*
  * Class:     edu_ualberta_med_scannerconfig_dmscanlib_ScanLib
  * Method:    decodeImage
- * Signature: (JJLjava/lang/String;DJJJDDDJJJJ)Ledu/ualberta/med/scannerconfig/dmscanlib/DecodeResult;
+ * Signature: (JLjava/lang/String;Ledu/ualberta/med/scannerconfig/dmscanlib/DecodeOptions;[Ledu/ualberta/med/scannerconfig/dmscanlib/Well;)Ledu/ualberta/med/scannerconfig/dmscanlib/DecodeResult;
  */
 JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_decodeImage
-  (JNIEnv *, jobject, jlong, jlong, jstring, jdouble, jlong, jlong, jlong, jdouble, jdouble, jdouble, jlong, jlong, jlong, jlong);
+  (JNIEnv *, jobject, jlong, jstring, jobject, jobjectArray);
 
 #ifdef __cplusplus
 }

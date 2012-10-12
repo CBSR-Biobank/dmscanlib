@@ -112,3 +112,17 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
     return resultObj;
 }
 
+/*
+ * Class:     edu_ualberta_med_scannerconfig_dmscanlib_ScanLib
+ * Method:    decodeImage
+ * Signature: (JLjava/lang/String;Ledu/ualberta/med/scannerconfig/dmscanlib/DecodeOptions;[Ledu/ualberta/med/scannerconfig/dmscanlib/Well;)Ledu/ualberta/med/scannerconfig/dmscanlib/DecodeResult;
+ */
+JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_decodeImage
+  (JNIEnv * env, jobject obj, jlong _verbose, jstring _filename, jobject decodeOptions, jobjectArray wells) {
+
+    unsigned verbose = static_cast<unsigned>(_verbose);
+    const char *filename = env->GetStringUTFChars(_filename, 0);
+
+    DmScanLib dmScanLib(verbose);
+}
+

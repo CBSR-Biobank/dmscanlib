@@ -104,4 +104,3 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
                 jlong _profileC, jlong _orientation) {
     return createScanResultObject(env, SC_FAIL, SC_FAIL);
 }
-

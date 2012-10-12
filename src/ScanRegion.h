@@ -6,6 +6,7 @@
 class ScanRegion {
 public:
     ScanRegion(JNIEnv *env, jobject scanRegionObj);
+    virtual ~ScanRegion() { };
 
     double left;
     double top;
