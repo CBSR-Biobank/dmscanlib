@@ -16,7 +16,8 @@ using namespace std;
 
 template<typename T> class WellRectangle {
 public:
-   WellRectangle(const string & label);
+   WellRectangle(const char * label, T x1, T y1, T x2, T y2,	T x3, T y3,
+		   T x4, T y4);
 
 	virtual ~WellRectangle() {
 	}
@@ -25,11 +26,15 @@ public:
 		return label;
 	}
 
+	const Rect<T> & getRectangle() const {
+		return rect;
+	}
+
 	Point<T> & getCorner(unsigned cornerId) const;
 
 private:
 	const string label;
-	Rect<T> rect;
+	const Rect<T> rect;
 };
 
 #endif /* WELLCOORDINATES_H_ */

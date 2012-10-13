@@ -6,7 +6,6 @@
 #include "DmScanLib.h"
 #include "ScanRegion.h"
 #include "DmScanLibInternal.h"
-#include "PalletCell.h"
 
 #include <iostream>
 

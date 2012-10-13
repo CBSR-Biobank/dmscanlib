@@ -27,7 +27,8 @@ class PalletGrid;
 
 class WellDecoder : public OpenThreads::Thread {
 public:
-   WellDecoder(Decoder & decoder, WellRectangle<int> & _wellCoordinates);
+   WellDecoder(const Dib & image, Decoder & decoder,
+		   WellRectangle<unsigned> & _wellRectangle);
 
    virtual ~WellDecoder();
 
@@ -37,10 +38,20 @@ public:
 
    void decodeCallback(std::string & decodedMsg, Point<unsigned>(&corners)[4]);
 
-   std::tr1::shared_ptr<const Dib> getImage() const;
+	const string & getLabel() {
+		return decodedWell.getWellRectangle().getLabel();
+	}
 
-   const WellRectangle<int> & geRectangle() const {
-      return wellRectangle;
+	const string & getMessage() const {
+		return decodedWell.getMessage();
+	}
+
+   const Rect<unsigned> & getWellRectangle() const {
+      return decodedWell.getWellRectangle().getRectangle();
+   }
+
+   const Rect<unsigned> & getDecodedRectangle() const {
+	   return decodedWell.getDecodedRect();
    }
 
    const bool getDecodeValid() {
@@ -56,10 +67,9 @@ public:
    void writeImage(std::string basename);
 
 private:
-
+   const Dib & scannedImage;
    Decoder & decoder;
-   WellRectangle<int> & wellRectangle;
-   std::tr1::shared_ptr<const Dib> cellImage;
+   std::tr1::shared_ptr<const Dib> wellImage;
    DecodedWell decodedWell;
 
    friend std::ostream & operator<<(std::ostream & os, WellDecoder & m);

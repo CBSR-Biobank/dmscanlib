@@ -15,17 +15,17 @@ LANG := en_US                # for gcc error messages
 
 SRC := \
 	DecodedWell.cpp \
-	WellCoordinates.cpp \
+	WellRectangle.cpp \
+	WellDecoder.cpp \
 	Dib.cpp \
 	RgbQuad.cpp \
 	PalletThreadMgr.cpp \
-	PalletCell.cpp \
 	DmScanLib.cpp \
 	Decoder.cpp \
 	TestApp.cpp \
 	ImgScanner.cpp \
-	edu_ualberta_med_scannerconfig_dmscanlib_ScanLib.cpp \
-	PalletGrid.cpp \
+	edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_common.cpp \
+	edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_linux.cpp \
 	TimeUtilLinux.cpp \
 	ImgScannerSimulator.cpp
 

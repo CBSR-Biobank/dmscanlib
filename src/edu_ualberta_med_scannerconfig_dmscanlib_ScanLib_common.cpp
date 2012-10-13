@@ -5,7 +5,9 @@
 #include "edu_ualberta_med_scannerconfig_dmscanlib_ScanLib.h"
 #include "DmScanLib.h"
 #include "ScanRegion.h"
+#include "DecodeOptions.h"
 #include "DmScanLibInternal.h"
+#include "DecodedWell.h"
 
 #include <iostream>
 #include <vector>
@@ -60,47 +62,13 @@ jobject createDecodeResultObject(JNIEnv * env, int resultCode,
         	DecodedWell & well = *(*wells)[i];
             jvalue data[3];
 
-            data[0].i = env->NewStringUTF(well.getLabel().c_str());
+            data[0].l = env->NewStringUTF(well.getLabel().c_str());
             data[1].l = env->NewStringUTF(well.getMessage().c_str());
 
             env->CallObjectMethodA(resultObj, setCellMethod, data);
         }
     }
 
-    return resultObj;
-}
-
-
-
-/*
- * Class:     edu_ualberta_med_scannerconfig_dmscanlib_ScanLib
- * Method:    slDecodeImage
- * Signature: (JJLjava/lang/String;DJJJDDDJJJJ)Ledu/ualberta/med/scannerconfig/dmscanlib/DecodeResult;
- */
-JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_decodeImage(
-		JNIEnv * env, jobject, jlong, jstring, jobject, jobjectArray) {
-
-    unsigned verbose = static_cast<unsigned>(_verbose);
-    unsigned plateNum = static_cast<unsigned>(_plateNum);
-    unsigned squareDev = static_cast<unsigned>(_squareDev);
-    unsigned edgeThresh = static_cast<unsigned>(_edgeThresh);
-    unsigned corrections = static_cast<unsigned>(_corrections);
-    unsigned profileA = static_cast<unsigned>(_profileA);
-    unsigned profileB = static_cast<unsigned>(_profileB);
-    unsigned profileC = static_cast<unsigned>(_profileC);
-    unsigned orientation = static_cast<unsigned>(_orientation);
-    const char *filename = env->GetStringUTFChars(_filename, 0);
-
-    DmScanLib dmScanLib(verbose);
-    int result = dmScanLib.decodeImage(filename, scanGap, squareDev, edgeThresh,
-    		corrections, cellDistance);
-
-    std::vector<std::tr1::shared_ptr<WellDecoder> > * cells = NULL;
-    if (result == SC_SUCCESS) {
-        cells = &dmScanLib.getDecodedCells();
-    }
-    jobject resultObj = createDecodedWellObject(env, result, cells);
-    env->ReleaseStringUTFChars(_filename, filename);
     return resultObj;
 }
 
@@ -119,35 +87,66 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
     DecodeOptions decodeOptions(env, _decodeOptions);
 
     jobject wellRectJavaObj;
-    jsize numWells = env->GetArrayLength(wellRects);
+    jsize numWells = env->GetArrayLength(_wellRects);
     jclass wellRectJavaClass = NULL;
-    jmethodID wellRectCornerXMethodID = NULL;
-    jmethodID wellRectCornerYMethodID = NULL;
+    jmethodID wellRectGetLabelMethodID = NULL;
+    jmethodID wellRectGetCornerXMethodID = NULL;
+    jmethodID wellRectGetCornerYMethodID = NULL;
 
-    std::vector<std::tr1::shared_ptr<WellRectangle> > wellRects;
+    vector<std::tr1::shared_ptr<WellRectangle<double>  > > wellRects;
 
-    for (unsigned i = 0; i < numWells; ++i) {
+    for (unsigned i = 0; i < static_cast<unsigned>(numWells); ++i) {
     	wellRectJavaObj = env->GetObjectArrayElement(_wellRects, i);
 
     	if (wellRectJavaClass == NULL) {
     		wellRectJavaClass = env->GetObjectClass(wellRectJavaObj);
-    	    wellRectCornerXMethodID = env->GetMethodID(wellRectJavaClass,
+
+    		wellRectGetLabelMethodID = env->GetMethodID(wellRectJavaClass,
+    	    		"getLabel", "()Ljava/lang/String");
+    	    if(env->ExceptionOccurred()) {
+    	    	return NULL;
+    	    }
+
+    	    wellRectGetCornerXMethodID = env->GetMethodID(wellRectJavaClass,
     	    		"getCornerX", "(I)D");
     	    if(env->ExceptionOccurred()) {
     	    	return NULL;
     	    }
-    	    wellRectCornerYMethodID = env->GetMethodID(wellRectJavaClass,
+
+    	    wellRectGetCornerYMethodID = env->GetMethodID(wellRectJavaClass,
     	    		"getCornerY", "(I)D");
     	    if(env->ExceptionOccurred()) {
     	    	return NULL;
     	    }
     	}
 
-    	std::tr1::shared_ptr<WellRectangle> rect(new WellRectangle());
+    	jobject labelJobj = env->CallObjectMethod(wellRectJavaClass, wellRectGetLabelMethodID);
+    	const char * label = env->GetStringUTFChars((jstring) labelJobj, NULL);
 
+    	double x1 = env->CallDoubleMethod(wellRectJavaObj, wellRectGetCornerXMethodID, 0);
+    	double y1 = env->CallDoubleMethod(wellRectJavaObj, wellRectGetCornerYMethodID, 0);
+
+    	double x2 = env->CallDoubleMethod(wellRectJavaObj, wellRectGetCornerXMethodID, 1);
+    	double y2 = env->CallDoubleMethod(wellRectJavaObj, wellRectGetCornerYMethodID, 1);
+
+    	double x3 = env->CallDoubleMethod(wellRectJavaObj, wellRectGetCornerXMethodID, 2);
+    	double y3 = env->CallDoubleMethod(wellRectJavaObj, wellRectGetCornerYMethodID, 2);
+
+    	double x4 = env->CallDoubleMethod(wellRectJavaObj, wellRectGetCornerXMethodID, 3);
+    	double y4 = env->CallDoubleMethod(wellRectJavaObj, wellRectGetCornerYMethodID, 3);
+
+    	std::tr1::shared_ptr<WellRectangle<double> > rect(
+    			new WellRectangle<double>(label, x1, y1, x2, y2, x3, y3, x4, y4));
+
+    	env->ReleaseStringUTFChars((jstring) labelJobj, label);
     	env->DeleteLocalRef(wellRectJavaObj);
     }
 
     DmScanLib dmScanLib(verbose);
+    dmScanLib.decodeImage(filename, decodeOptions, wellRects);
+    env->ReleaseStringUTFChars(_filename, filename);
+
+    // TODO create result object
+    return NULL;
 }
 

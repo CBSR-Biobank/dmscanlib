@@ -10,16 +10,21 @@ ScanRegion::ScanRegion(JNIEnv *env, jobject scanRegionObj) {
 
     // run the following command to obtain method signatures from a class.
     // javap -s -p edu.ualberta.med.scannerconfig.dmscanlib.ScanRegion
-    jmethodID getMethod = env->GetMethodID(scanSettingsJavaClass, "getLeft",
-                                           "()D");
-    point1.x = env->CallDoubleMethod(scanRegionObj, getMethod, NULL);
+    jmethodID getMethodGetPointX = env->GetMethodID(scanSettingsJavaClass,
+    		"getPointX", "(I)Ljava/lang/Double");
+    if(env->ExceptionOccurred()) {
+    	return;
+    }
 
-    getMethod = env->GetMethodID(scanSettingsJavaClass, "getTop", "()D");
-    point1.y = env->CallDoubleMethod(scanRegionObj, getMethod, NULL);
+    jmethodID getMethodGetPointY = env->GetMethodID(scanSettingsJavaClass,
+    		"getPointY", "(I)Ljava/lang/Double");
+    if(env->ExceptionOccurred()) {
+    	return;
+    }
 
-    getMethod = env->GetMethodID(scanSettingsJavaClass, "getRight", "()D");
-    point2.x = env->CallDoubleMethod(scanRegionObj, getMethod, NULL);
+    point1.x = env->CallDoubleMethod(scanRegionObj, getMethodGetPointX, 0);
+    point1.y = env->CallDoubleMethod(scanRegionObj, getMethodGetPointY, 0);
 
-    getMethod = env->GetMethodID(scanSettingsJavaClass, "getBottom", "()D");
-    point2.y = env->CallDoubleMethod(scanRegionObj, getMethod, NULL);
+    point2.x = env->CallDoubleMethod(scanRegionObj, getMethodGetPointX, 1);
+    point2.y = env->CallDoubleMethod(scanRegionObj, getMethodGetPointY, 1);
 }

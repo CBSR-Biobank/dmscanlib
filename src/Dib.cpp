@@ -420,6 +420,9 @@ std::tr1::shared_ptr<Dib> Dib::convertGrayscale() const {
 
 /*
  * DIBs are flipped in Y
+ *
+ * TODO At the moment crops are only done on the bounding box. In the future
+ * any rectangle, at any angle, should be allowed.
  */
 std::tr1::shared_ptr<Dib> Dib::crop(unsigned x0, unsigned y0, unsigned x1,
                                     unsigned y1) const {
@@ -463,7 +466,7 @@ std::tr1::shared_ptr<Dib> Dib::crop(unsigned x0, unsigned y0, unsigned x1,
  *
  * Taken from: http://en.wikipedia.org/wiki/Bresenham's_line_algorithm
  */
-void Dib::line(unsigned x0, unsigned y0, unsigned x1, unsigned y1,
+void Dib::drawLine(unsigned x0, unsigned y0, unsigned x1, unsigned y1,
                const RgbQuad & quad) {
    CHECK(y0 < height);
    CHECK(y1 < height);
@@ -530,13 +533,19 @@ void Dib::line(unsigned x0, unsigned y0, unsigned x1, unsigned y1,
    }
 }
 
-void Dib::rectangle(unsigned x, unsigned y, unsigned width, unsigned height,
-                    const RgbQuad & quad) {
-   line(x, y, x, y + height, quad);
-   line(x, y, x + width, y, quad);
-   line(x + width, y, x + width, y + height, quad);
-   line(x, y + height, x + width, y + height, quad);
+void Dib::drawRectangle(const Rect<unsigned> & rect, const RgbQuad & quad) {
+   drawLine(rect.corners[0], rect.corners[1], quad);
+   drawLine(rect.corners[1], rect.corners[2], quad);
+   drawLine(rect.corners[2], rect.corners[3], quad);
+   drawLine(rect.corners[3], rect.corners[0], quad);
+}
 
+void Dib::drawRectangle(unsigned x, unsigned y, unsigned width, unsigned height,
+                    const RgbQuad & quad) {
+   drawLine(x, y, x, y + height, quad);
+   drawLine(x, y, x + width, y, quad);
+   drawLine(x + width, y, x + width, y + height, quad);
+   drawLine(x, y + height, x + width, y + height, quad);
 }
 
 void Dib::tpPresetFilter() {

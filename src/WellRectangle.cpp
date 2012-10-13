@@ -10,19 +10,19 @@
 #include <glog/logging.h>
 
 template<typename T>
-WellRectangle<T>::WellRectangle(const string & _label, T left, T top,
-		T right, T bottom) : label(_label) {
-	this->rect.corners[0].x = left;
-	this->rect.corners[0].y = top;
+WellRectangle<T>::WellRectangle(const char * _label, T x1, T y1,
+		T x2, T y2,	T x3, T y3, T x4, T y4) : label(_label) {
+	rect.corners[0].x = x1;
+	rect.corners[0].y = y1;
 
-	this->rect.corners[1].x = right;
-	this->rect.corners[1].y = top;
+	rect.corners[1].x = x2;
+	rect.corners[1].y = y2;
 
-	this->rect.corners[2].x = left;
-	this->rect.corners[2].y = bottom;
+	rect.corners[2].x = x3;
+	rect.corners[2].y = y3;
 
-	this->rect.corners[3].x = right;
-	this->rect.corners[3].y = bottom;
+	rect.corners[3].x = x4;
+	rect.corners[3].y = y4;
 }
 
 template<typename T>

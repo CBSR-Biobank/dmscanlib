@@ -35,6 +35,7 @@
 #include "ImgScanner.h"
 #include "ImgScanner.h"
 #include "Decoder.h"
+#include "DecodeOptions.h"
 #include "Dib.h"
 
 #include <glog/logging.h>
@@ -216,9 +217,8 @@ int DmScanLib::scanAndDecode(unsigned dpi, int brightness, int contrast,
 	return result;
 }
 
-int DmScanLib::decodeImage(const string & filename,
-		double scanGap, unsigned squareDev, unsigned edgeThresh,
-		unsigned corrections, double cellDistance) {
+int DmScanLib::decodeImage(const char * filename, DecodeOptions & decodeOptions,
+		vector<std::tr1::shared_ptr<WellRectangle<double>  > > & wellRects) {
 
 	VLOG(2)
 			<< "decodeImage: filename/" << filename
@@ -255,25 +255,25 @@ int DmScanLib::decodeCommon(const string &markedDibFilename) {
 			new Decoder(dpi, scanGap, squareDev, edgeThresh, corrections,
 					cellDistance));
 
-	applyFilters();
-
-	if (decodeCount == 0) {
-		return SC_INVALID_IMAGE;
-	}
-
-	// only get here if some cells were decoded
-	if (stdoutOutputEnable || textFileOutputEnable) {
-		string msg;
-		palletGrid->formatCellMessages(msg);
-
-		if (textFileOutputEnable) {
-			saveResults(msg);
-		}
-
-		if (stdoutOutputEnable) {
-			cout << msg;
-		}
-	}
+//	applyFilters();
+//
+//	if (decodeCount == 0) {
+//		return SC_INVALID_IMAGE;
+//	}
+//
+//	// only get here if some cells were decoded
+//	if (stdoutOutputEnable || textFileOutputEnable) {
+//		string msg;
+//		palletGrid->formatCellMessages(msg);
+//
+//		if (textFileOutputEnable) {
+//			saveResults(msg);
+//		}
+//
+//		if (stdoutOutputEnable) {
+//			cout << msg;
+//		}
+//	}
 	return SC_SUCCESS;
 }
 
@@ -287,9 +287,9 @@ void DmScanLib::applyFilters() {
 	}
 }
 
-std::vector<std::tr1::shared_ptr<WellDecoder> > & DmScanLib::getDecodedCells() {
-	return palletGrid->getDecodedCells();
-}
+//std::vector<std::tr1::shared_ptr<WellDecoder> > & DmScanLib::getDecodedCells() {
+	//return palletGrid->getDecodedCells();
+//}
 
 int slIsTwainAvailable() {
 	DmScanLib dmScanLib(0);
@@ -320,7 +320,7 @@ int slScanImage(unsigned verbose, unsigned dpi, int brightness, int contrast,
 			bottom, filename);
 }
 
-int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
+int slScanAndDecode(unsigned verbose, unsigned dpi, int brightness, int contrast,
 		unsigned plateNum, double left, double top, double right, double bottom,
 		double scanGap, unsigned squareDev, unsigned edgeThresh,
 		unsigned corrections, double cellDistance, double gapX, double gapY,
@@ -328,9 +328,9 @@ int slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
 		unsigned orientation) {
 	DmScanLib dmScanLib(verbose);
 	dmScanLib.setTextFileOutputEnable(true);
-	return dmScanLib.decodePlate(dpi, brightness, contrast, left, top,
+	return dmScanLib.scanAndDecode(dpi, brightness, contrast, left, top,
 			right, bottom, scanGap, squareDev, edgeThresh, corrections,
-			cellDistance, gapX, gapY, profileA, profileB, profileC, orientation);
+			cellDistance);
 }
 
 int slDecodeImage(unsigned verbose, unsigned plateNum, const char * filename,
@@ -340,8 +340,9 @@ int slDecodeImage(unsigned verbose, unsigned plateNum, const char * filename,
 		unsigned orientation) {
 	DmScanLib dmScanLib(verbose);
 	dmScanLib.setTextFileOutputEnable(true);
-	return dmScanLib.decodeImage(plateNum, filename, scanGap, squareDev,
-			edgeThresh, corrections, cellDistance, gapX, gapY, profileA,
-			profileB, profileC, orientation);
+//	return dmScanLib.decodeImage(plateNum, filename, scanGap, squareDev,
+//			edgeThresh, corrections, cellDistance, gapX, gapY, profileA,
+//			profileB, profileC, orientation);
+	return -1;
 }
 

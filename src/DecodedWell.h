@@ -16,21 +16,31 @@ using namespace std;
 
 class DecodedWell {
 public:
-	DecodedWell(WellRectangle<unsigned> & wellCoordinates);
+	DecodedWell(WellRectangle<unsigned> & wellRectangle);
 	virtual ~DecodedWell();
 
-	const WellRectangle<unsigned> & getWellCoordinates() const;
+	const WellRectangle<unsigned> & getWellRectangle() const {
+		return wellRectangle;
+	}
 
-	const string & getMessage() const;
+	const string & getMessage() const {
+		return message;
+	}
 
 	void setMessage(const char * message, int messageLength);
 
-	const string & getLabel() { return wellCoordinates.getLabel(); }
+	const string & getLabel() {
+		return wellRectangle.getLabel();
+	}
 
 	void setCorner(unsigned cornerId, unsigned x, unsigned y);
 
+	const Rect<unsigned> & getDecodedRect() const {
+		return decodeRect;
+	}
+
 private:
-	const WellRectangle<unsigned> & wellCoordinates;
+	const WellRectangle<unsigned> & wellRectangle;
 	Rect<unsigned> decodeRect;
 	string message;
 };

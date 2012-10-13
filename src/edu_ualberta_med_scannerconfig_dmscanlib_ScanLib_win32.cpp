@@ -6,7 +6,6 @@
 #include "DmScanLib.h"
 #include "ScanRegion.h"
 #include "DmScanLibInternal.h"
-#include "PalletCell.h"
 
 #include <iostream>
 
@@ -99,8 +98,8 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
 
     DmScanLib dmScanLib(verbose);
     int result = dmScanLib.scanImage(dpi, brightness, contrast,
-                                     region.left, region.top, region.right,
-                                     region.bottom, filename);
+    		region.point1.x, region.point1.y, region.point2.x, region.point2.y,
+    		filename);
     jobject resultObj = createScanResultObject(env, result, result);
     env->ReleaseStringUTFChars(_filename, filename);
     return resultObj;
@@ -155,18 +154,12 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
     ScanRegion region(env, _region);
 
     DmScanLib dmScanLib(verbose);
-    int result = dmScanLib.decodePlate(dpi, brightness, contrast,
-                                       plateNum, region.left, region.top,
-                                       region.right, region.bottom, scanGap,
-                                       squareDev, edgeThresh, corrections,
-                                       cellDistance, gapX, gapY, profileA,
-                                       profileB, profileC, orientation);
+    int result = dmScanLib.scanAndDecode(dpi, brightness, contrast,
+    		region.point1.x, region.point1.y, region.point2.x, region.point2.y,
+    		scanGap, squareDev, edgeThresh, corrections, cellDistance);
 
-	std::vector<std::tr1::shared_ptr<PalletCell> > * cells = NULL;
-    if (result == SC_SUCCESS) {
-        cells = &dmScanLib.getDecodedCells();
-    }
-    return createDecodedWellObject(env, result, cells);
+    // TODO: needs implementation
+    return NULL;
 }
 
 

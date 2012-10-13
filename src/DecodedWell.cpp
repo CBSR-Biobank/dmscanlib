@@ -7,20 +7,11 @@
 
 #include "DecodedWell.h"
 
-DecodedWell::DecodedWell(WellRectangle<unsigned> & _wellCoordinates)
-      :wellCoordinates(_wellCoordinates) {
-
+DecodedWell::DecodedWell(WellRectangle<unsigned> & _wellRectangle)
+      :wellRectangle(_wellRectangle) {
 }
 
 DecodedWell::~DecodedWell() {
-}
-
-const WellRectangle<unsigned> & DecodedWell::getWellCoordinates() const {
-	return wellCoordinates;
-}
-
-const string & DecodedWell::getMessage() const {
-	return message;
 }
 
 void DecodedWell::setMessage(const char * message, int messageLength) {

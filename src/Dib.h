@@ -68,14 +68,16 @@ public:
 	unsigned getWidth() const;
 	unsigned getBitsPerPixel() const;
 
-	void line(unsigned x0, unsigned y0, unsigned x1, unsigned y1, const RgbQuad & quad);
+	void drawLine(unsigned x0, unsigned y0, unsigned x1, unsigned y1, const RgbQuad & quad);
 
-   void line(const Point<int> & start, const Point<int> & end, const RgbQuad & quad) {
-	    line(start.x, start.y, end.x, end.y, quad);
+    void drawLine(const Point<unsigned> & start, const Point<unsigned> & end, const RgbQuad & quad) {
+	    drawLine(start.x, start.y, end.x, end.y, quad);
 	}
 
-	void rectangle(unsigned x, unsigned y, unsigned width, unsigned height,
+	void drawRectangle(unsigned x, unsigned y, unsigned width, unsigned height,
 			const RgbQuad & quad);
+
+	void drawRectangle(const Rect<unsigned> & rect, const RgbQuad & quad);
 
 	void readFromHandle(HANDLE handle);
 

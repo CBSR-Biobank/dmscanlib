@@ -21,6 +21,7 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "WellRectangle.h"
 #include "utils/TimeUtil.h"
 
 #include <string>
@@ -35,40 +36,38 @@
 class Dib;
 class Decoder;
 class ImgScanner;
-class PalletGrid;
 class WellDecoder;
+class DecodeOptions;
+class DecodedWell;
 
 using namespace std;
 
 void getResultCodeMsg(int resultCode, string & message);
 jobject createScanResultObject(JNIEnv * env, int resultCode, int value);
-jobject createDecodedWellObject(
-                JNIEnv * env, int resultCode,
-                std::vector<std::tr1::shared_ptr<WellDecoder> > * cells);
+jobject createDecodedResultObject(JNIEnv * env, int resultCode,
+        std::vector<std::tr1::shared_ptr<DecodedWell> > * wells);
 
 class DmScanLib {
 public:
     DmScanLib(unsigned loggingLevel, bool logToFile = true);
     virtual ~DmScanLib();
 
-    virtual int isTwainAvailable();
+     int isTwainAvailable();
 
-    virtual int selectSourceAsDefault();
-    virtual int getScannerCapability();
-    virtual int scanImage(unsigned dpi, int brightness, int contrast,
-                          double left, double top, double right, double bottom,
-                          const string & filename);
-    virtual int scanFlatbed(unsigned dpi, int brightness, int contrast,
-                            const string & filename);
-    virtual int scanAndDecode(unsigned dpi, int brightness, int contrast,
+     int selectSourceAsDefault();
+     int getScannerCapability();
+     int scanImage(unsigned dpi, int brightness, int contrast,
+                   double left, double top, double right, double bottom,
+                   const string & filename);
+     int scanFlatbed(unsigned dpi, int brightness, int contrast,
+                     const string & filename);
+     int scanAndDecode(unsigned dpi, int brightness, int contrast,
                             double left, double top, double right,
                             double bottom, double scanGap,
                             unsigned squareDev, unsigned edgeThresh,
                             unsigned corrections, double cellDistance);
-    virtual int decodeImage(const string & filename,
-                            double scanGap, unsigned squareDev,
-                            unsigned edgeThresh, unsigned corrections,
-                            double cellDistance);
+    int decodeImage(const char * filename, DecodeOptions & decodeOptions,
+    		vector<std::tr1::shared_ptr<WellRectangle<double>  > > & wellRects);
 
     void configLogging(unsigned level, bool useFile = true);
 
@@ -80,7 +79,7 @@ public:
         stdoutOutputEnable = enable;
     }
 
-    std::vector<std::tr1::shared_ptr<WellDecoder> > & getDecodedCells();
+    //std::vector<std::tr1::shared_ptr<WellDecoder> > & getDecodedCells();
 
 protected:
     void saveResults(string & msg);
@@ -97,7 +96,6 @@ protected:
 
     std::tr1::shared_ptr<Dib> image;
     std::tr1::shared_ptr<ImgScanner> imgScanner;
-    std::tr1::shared_ptr<PalletGrid> palletGrid;
     std::tr1::shared_ptr<Decoder> decoder;
 
     double scanGap;
