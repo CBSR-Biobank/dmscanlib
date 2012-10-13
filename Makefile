@@ -15,6 +15,7 @@ LANG := en_US                # for gcc error messages
 
 SRC := \
 	DecodedWell.cpp \
+	DecodeOptions.cpp \
 	WellRectangle.cpp \
 	WellDecoder.cpp \
 	Dib.cpp \
@@ -40,7 +41,7 @@ BUILD_DIR_FULL_PATH := $(CURDIR)/$(BUILD_DIR)
 
 CC := g++
 CXX := $(CC)
-CFLAGS := -fmessage-length=0 -fPIC
+CFLAGS := -fmessage-length=0 -fPIC -std=gnu++0x
 SED := /bin/sed
 
 ifeq ($(OSTYPE),mingw32)

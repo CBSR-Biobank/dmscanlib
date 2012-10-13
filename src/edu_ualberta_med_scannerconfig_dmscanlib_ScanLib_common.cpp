@@ -143,7 +143,7 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
     	std::tr1::shared_ptr<WellRectangle<double> > rect(
     			new WellRectangle<double>(label, x1, y1, x2, y2, x3, y3, x4, y4));
 
-    	VLOG(3) << rect;
+    	VLOG(3) << *rect;
 
     	env->ReleaseStringUTFChars((jstring) labelJobj, label);
     	env->DeleteLocalRef(wellRectJavaObj);

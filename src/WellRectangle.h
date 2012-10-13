@@ -10,6 +10,7 @@
 
 #include "geometry.h"
 
+#include <ostream>
 #include <string>
 
 using namespace std;
@@ -19,8 +20,7 @@ class WellRectangle;
 
 template<typename T>
 ostream & operator<<(ostream &os, const WellRectangle<T> & m) {
-	os << m.getLabel() << ": " << "\"" << m.getMessage() << "\" - "
-			<< m.getDecodedRectangle();
+	os << "WellRect: "<< m.getLabel() << " - " << m.getRectangle();
 	return os;
 }
 

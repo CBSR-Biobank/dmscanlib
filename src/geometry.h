@@ -1,7 +1,7 @@
 #ifndef __INC_STRUCTS_H
 #define __INC_STRUCTS_H
 
-#include <string>
+#include <ostream>
 
 using namespace std;
 
@@ -19,11 +19,10 @@ struct Rect;
 
 template<typename T>
 ostream & operator<<(ostream &os, const Rect<T> & m) {
-	os << "hi";
-    //os << "(" << m.corners[0].x << ", " << m.corners[0].y << "), "
-    //   << "(" << m.corners[2].x << ", " << m.corners[2].y << "), "
-    //   << "(" << m.corners[3].x << ", " << m.corners[3].y << "), "
-    //   << "(" << m.corners[1].x << ", " << m.corners[1].y << ")";
+    os << "(" << m.corners[0].x << ", " << m.corners[0].y << "), "
+       << "(" << m.corners[1].x << ", " << m.corners[1].y << "), "
+       << "(" << m.corners[2].x << ", " << m.corners[2].y << "), "
+       << "(" << m.corners[3].x << ", " << m.corners[3].y << ")";
     return os;
 }
 
