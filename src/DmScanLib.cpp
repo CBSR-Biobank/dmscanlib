@@ -97,15 +97,15 @@ int DmScanLib::isValidDpi(int dpi) {
 }
 
 void DmScanLib::configLogging(unsigned level, bool useFile) {
-	if (!loggingInitialized) {
-		google::InitGoogleLogging(LIBRARY_NAME.c_str());
-		FLAGS_v = level;
-		FLAGS_stderrthreshold = (level > 0) ? google::INFO : google::ERROR;
-		FLAGS_logtostderr = !useFile;
-		FLAGS_alsologtostderr = !useFile;
+	if (loggingInitialized)  return;
 
-		loggingInitialized = true;
-	}
+	google::InitGoogleLogging(LIBRARY_NAME.c_str());
+	FLAGS_v = level;
+	FLAGS_stderrthreshold = (level > 0) ? google::INFO : google::ERROR;
+	FLAGS_logtostderr = !useFile;
+	FLAGS_alsologtostderr = !useFile;
+
+	loggingInitialized = true;
 }
 
 void DmScanLib::saveResults(string & msg) {

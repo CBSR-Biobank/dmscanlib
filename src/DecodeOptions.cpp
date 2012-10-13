@@ -59,6 +59,5 @@ DecodeOptions::DecodeOptions(JNIEnv *env, jobject decodeOptionsObj) {
 }
 
 DecodeOptions::~DecodeOptions() {
-	// TODO Auto-generated destructor stub
 }
 

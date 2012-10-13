@@ -1,6 +1,10 @@
 #ifndef __INC_STRUCTS_H
 #define __INC_STRUCTS_H
 
+#include <string>
+
+using namespace std;
+
 template <typename T>
 struct Point {
    T x;
@@ -11,9 +15,21 @@ struct Point {
 };
 
 template <typename T>
-struct Rect {
-   Point<T> corners[4];
+struct Rect;
 
+template<typename T>
+ostream & operator<<(ostream &os, const Rect<T> & m) {
+	os << "hi";
+    //os << "(" << m.corners[0].x << ", " << m.corners[0].y << "), "
+    //   << "(" << m.corners[2].x << ", " << m.corners[2].y << "), "
+    //   << "(" << m.corners[3].x << ", " << m.corners[3].y << "), "
+    //   << "(" << m.corners[1].x << ", " << m.corners[1].y << ")";
+    return os;
+}
+
+
+template <typename T>
+struct Rect {
    Rect(T x1, T y1, T x2, T y2, T x3, T y3, T x4, T y4) :
 	   corners( {
 	   Point<T>(x1, y1),
@@ -23,6 +39,8 @@ struct Rect {
    {
 
    }
+   Point<T> corners[4];
+	friend ostream & operator<< <> (std::ostream & os, const Rect<T> & m);
 };
 
 

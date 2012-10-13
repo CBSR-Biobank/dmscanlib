@@ -88,7 +88,7 @@ public:
     int decodeImage(const char * filename, DecodeOptions & decodeOptions,
     		vector<std::tr1::shared_ptr<WellRectangle<double>  > > & wellRects);
 
-    void configLogging(unsigned level, bool useFile = true);
+    static void configLogging(unsigned level, bool useFile = true);
 
     void setTextFileOutputEnable(bool enable) {
         textFileOutputEnable = enable;

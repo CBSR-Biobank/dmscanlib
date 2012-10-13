@@ -10,6 +10,7 @@
 
 #include <iostream>
 #include <vector>
+#include <glog/logging.h>
 
 using namespace std;
 
@@ -85,23 +86,28 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
 
     DecodeOptions decodeOptions(env, _decodeOptions);
 
+    vector<std::tr1::shared_ptr<WellRectangle<double>  > > wellRects;
+
     jobject wellRectJavaObj;
-    jsize numWells = env->GetArrayLength(_wellRects);
     jclass wellRectJavaClass = NULL;
     jmethodID wellRectGetLabelMethodID = NULL;
     jmethodID wellRectGetCornerXMethodID = NULL;
     jmethodID wellRectGetCornerYMethodID = NULL;
 
-    vector<std::tr1::shared_ptr<WellRectangle<double>  > > wellRects;
+    jsize numWells = env->GetArrayLength(_wellRects);
 
-    for (unsigned i = 0; i < static_cast<unsigned>(numWells); ++i) {
+	// TODO check for max well rectangle objects
+
+    DmScanLib::configLogging(3, false);
+
+    for (int i = 0; i < static_cast<int>(numWells); ++i) {
     	wellRectJavaObj = env->GetObjectArrayElement(_wellRects, i);
 
     	if (wellRectJavaClass == NULL) {
     		wellRectJavaClass = env->GetObjectClass(wellRectJavaObj);
 
     		wellRectGetLabelMethodID = env->GetMethodID(wellRectJavaClass,
-    	    		"getLabel", "()Ljava/lang/String");
+    	    		"getLabel", "()Ljava/lang/String;");
     	    if(env->ExceptionOccurred()) {
     	    	return NULL;
     	    }
@@ -119,7 +125,7 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
     	    }
     	}
 
-    	jobject labelJobj = env->CallObjectMethod(wellRectJavaClass, wellRectGetLabelMethodID);
+    	jobject labelJobj = env->CallObjectMethod(wellRectJavaObj, wellRectGetLabelMethodID);
     	const char * label = env->GetStringUTFChars((jstring) labelJobj, NULL);
 
     	double x1 = env->CallDoubleMethod(wellRectJavaObj, wellRectGetCornerXMethodID, 0);
@@ -136,6 +142,8 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
 
     	std::tr1::shared_ptr<WellRectangle<double> > rect(
     			new WellRectangle<double>(label, x1, y1, x2, y2, x3, y3, x4, y4));
+
+    	VLOG(3) << rect;
 
     	env->ReleaseStringUTFChars((jstring) labelJobj, label);
     	env->DeleteLocalRef(wellRectJavaObj);

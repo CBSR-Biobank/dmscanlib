@@ -15,6 +15,16 @@
 using namespace std;
 
 template<typename T>
+class WellRectangle;
+
+template<typename T>
+ostream & operator<<(ostream &os, const WellRectangle<T> & m) {
+	os << m.getLabel() << ": " << "\"" << m.getMessage() << "\" - "
+			<< m.getDecodedRectangle();
+	return os;
+}
+
+template<typename T>
 class WellRectangle {
 public:
    WellRectangle(const char * label, T x1, T y1, T x2, T y2,	T x3, T y3,
@@ -36,6 +46,8 @@ public:
 private:
 	const string label;
 	const Rect<T> rect;
+
+	friend ostream & operator<< <> (std::ostream & os, const WellRectangle<T> & m);
 };
 
 #endif /* WELLCOORDINATES_H_ */
