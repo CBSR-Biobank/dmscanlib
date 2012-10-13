@@ -1,5 +1,6 @@
-#ifndef __INC_SCANLIB_H
-#define __INC_SCANLIB_H
+#ifndef __INC_SCANLIB_INTERNAL_H
+#define __INC_SCANLIB_INTERNAL_H
+
 /*
  Dmscanlib is a software library and standalone application that scans
  and decodes libdmtx compatible test-tubes. It is currently designed
@@ -20,27 +21,17 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "WellRectangle.h"
+#include "utils/TimeUtil.h"
 
-#if defined(WIN32) && defined(BUILD_DLL) && ! defined(STANDALONE)
-/* DLL export */
-#   define EXPORT __declspec(dllexport)
-#elif defined(WIN32) && ! defined(STANDALONE)
-/* EXE import */
-#   define EXPORT __declspec(dllimport)
-#else
-#   define EXPORT
-#endif
+#include <string>
+#include <memory>
+#include <vector>
+#include <jni.h>
 
-#ifdef WIN32
-#   define NOGDI
-#   include <windows.h>
+#if ! defined _VISUALC_
+#   include <tr1/memory>
 #endif
-
-const unsigned MIN_PLATE_NUM = 1;
-const unsigned MAX_PLATE_NUM = 5;
 
 /**
  * Return codes used by the DLL API.
@@ -60,200 +51,88 @@ const unsigned CAP_DPI_400 = 0x04;
 const unsigned CAP_DPI_600 = 0x08;
 const unsigned CAP_IS_SCANNER = 0x10;
 
-/**
- * Queries the availability of the TWAIN driver.
- *
- * @return SC_SUCCESS if available, and SC_TWAIN_UNAVAIL if unavailable.
- */
-EXPORT int slIsTwainAvailable();
 
-typedef int (*SL_IS_TWAIN_AVAILABLE)();
+class Dib;
+class Decoder;
+class ImgScanner;
+class WellDecoder;
+class DecodeOptions;
+class DecodedWell;
 
-/**
- * Creates a dialog box to allow the user to select the scanner to use by
- * default.
- *
- * @return SC_SUCCESS when selected by the user, and SC_INVALID_VALUE if
- * the user cancelled the selection dialog.
- */
-EXPORT int slSelectSourceAsDefault();
+using namespace std;
 
-typedef int (*SL_SELECT_SOURCE_AS_DEFAULT)();
+void getResultCodeMsg(int resultCode, string & message);
+jobject createScanResultObject(JNIEnv * env, int resultCode, int value);
+jobject createDecodedResultObject(JNIEnv * env, int resultCode,
+        std::vector<std::tr1::shared_ptr<DecodedWell> > * wells);
 
-/**
- * Queries the selected scanner for the driver type and supported dpis
- *
- * @return Bit 1: Is set if driver type is WIA, Bits 2,3,4: Is set if driver supports 300,400,600 dpi
- */
-EXPORT int slGetScannerCapability();
-typedef int (*SL_GET_SCANNER_CAPABILITY)();
+class DmScanLib {
+public:
+    DmScanLib(unsigned loggingLevel, bool logToFile = true);
+    virtual ~DmScanLib();
 
-/**
- * Scans an image for the specified dimensions. The image is in Windows BMP
- * format.
- *
- * @param verbose    The amount of logging information to generate. 1 is minimal
- *                   and 9 is very detailed. Logging information is appended to
- *                 file dmscanlib.log.
- * @param dpi        The dots per inch for the image. Possible values are 200,
- *                   300, 400, 600, 720, 800.
- * @param brightness a value between -1000 and 1000.
- * @param contrast   a value between -1000 and 1000.
- * @param left       The left margin in inches.
- * @param top        The top margin in inches.
- * @param right      The width in inches.
- * @param bottom     The height in inches.
- * @param filename   The file name to save the bitmap to.
- *
- * @return SC_SUCCESS if valid. SC_FAIL unable to scan an image.
- */
-EXPORT int slScanImage(unsigned verbose, unsigned dpi, int brightness,
-                       int contrast, double left, double top, double right,
-                       double bottom, const char * filename);
+     int isTwainAvailable();
 
-typedef int (*SL_SCAN_IMAGE)(unsigned verbose, unsigned dpi, double left,
-                             double top, double right, double bottom,
-                             const char * filename);
+     int selectSourceAsDefault();
+     int getScannerCapability();
+     int scanImage(unsigned dpi, int brightness, int contrast,
+                   double left, double top, double right, double bottom,
+                   const char * filename);
+     int scanFlatbed(unsigned dpi, int brightness, int contrast,
+                     const char * filename);
+     int scanAndDecode(unsigned dpi, int brightness, int contrast,
+                            double left, double top, double right,
+                            double bottom, double scanGap,
+                            unsigned squareDev, unsigned edgeThresh,
+                            unsigned corrections, double cellDistance);
+    int decodeImage(const char * filename, DecodeOptions & decodeOptions,
+    		vector<std::tr1::shared_ptr<WellRectangle<double>  > > & wellRects);
 
-/**
- * Scans the whole flatbed region. The image is in Windows BMP format.
- *
- * @param verbose    The amount of logging information to generate. 1 is minimal
- *                   and 9 is very detailed. Logging information is appended to
- *                   file dmscanlib.log.
- * @param dpi        The dots per inch for the image. Possible values are 200,
- *                   300, 400, 600, 720, 800.
- * @param brightness a value between -1000 and 1000.
- * @param contrast   a value between -1000 and 1000.
- * @param filename   The file name to save the bitmap to.
- *
- * @return SC_SUCCESS if valid. SC_FAIL unable to scan an image.
- */
-EXPORT int slScanFlatbed(unsigned verbose, unsigned dpi, int brightness,
-                         int contrast, const char * filename);
+    void configLogging(unsigned level, bool useFile = true);
 
-typedef int (*SL_SCAN_FLATBED)(unsigned verbose, unsigned dpi,
-                               const char * filename);
+    void setTextFileOutputEnable(bool enable) {
+        textFileOutputEnable = enable;
+    }
 
-/**
- * From the regions specified in the INI file for the corresponding plate,
- * scans an image and then decodes all the regions. The decoded barcodes are
- * written to the file "dmscanlib.txt". The scanlib.txt file is a comma separated
- * value file with the following columns: Plate, Row, Column, Barcode.
- *
- * Calling this function also creates the "decoded.bmp" windows bitmap file.
- * This file shows a green square around the barcodes that were successfully
- * decoded. If the regions failed to decode then a red square is drawn around
- * it.
- *
- * @param verbose      The amount of logging information to generate. 1 is minimal
- *                     and 9 is very detailed. Logging information is appended to
- *                     file dmscanlib.log.
- * @param dpi          The dots per inch for the image. Possible values are 200,
- *                     300, 400, 600, 720, 800.
- * @param brightness   a value between -1000 and 1000.
- * @param contrast     a value between -1000 and 1000.
- * @param plateNum     The plate number. Must be a number beteeen 1 and 5.
- * @param left         The left margin in inches.
- * @param top          The top margin in inches.
- * @param right        The width in inches.
- * @param bottom       The height in inches.
- * @param scanGap      The number of pixels to use for scan grid gap. This is a
- * 				       libdmtx parameter.
- * @param squareDev    Maximum  deviation  (degrees)  from  squareness between
- *                     adjacent barcode sides. Default value is N=40, but N=10
- *                     is  recommended for  flat  applications  like faxes and
- *                     other scanned documents. Barcode regions found with
- *                     corners <(90-N) or >(90+N) will be ignored by the decoder.
- * @param edgeThresh   Set  the  minimum edge threshold as a percentage of
- *                     maximum. For example, an edge between a pure white and pure
- *                     black pixel would have  an  intensity  of  100.  Edges
- *                     with intensities below the indicated threshold will be
- *                     ignored  by  the  decoding  process. Lowering  the
- *                     threshold  will increase the amount of work to be done,
- *                     but may be necessary for low contrast or blurry images.
- * @param corrections  The number of corrections to make while decoding.
- * @param cellDistance The distance in inches to use between cells.
- * @param gapX         The grid cell width in inches.
- * @param gapY         The grid cell height in inches.
- *
- * @return SC_SUCCESS if the decoding process was successful. SC_INVALID_IMAGE
- * if the scanned image is invalid. SC_INVALID_POSITION if no sample found on
- * row A or column 1 of the pallet. SC_POS_CALC_ERROR if sample positions could
- *  not be determined.
- */
-EXPORT int
-slDecodePlate(unsigned verbose, unsigned dpi, int brightness, int contrast,
-              unsigned plateNum, double left, double top, double right,
-              double bottom, double scanGap, unsigned squareDev,
-              unsigned edgeThresh, unsigned corrections, double cellDistance,
-              double gapX, double gapY, unsigned profileA, unsigned profileB,
-              unsigned profileC, unsigned orientation);
+    void setStdoutOutputEnable(bool enable) {
+        stdoutOutputEnable = enable;
+    }
 
-typedef int (*SL_DECODE_PLATE)(unsigned verbose, unsigned dpi, int brightness,
-                               int contrast, unsigned plateNum, double left,
-                               double top, double right, double bottom,
-                               double scanGap, unsigned squareDev,
-                               unsigned edgeThresh, unsigned corrections,
-                               double cellDistance, double gapX, double gapY,
-                               unsigned profileA, unsigned profileB,
-                               unsigned profileC, unsigned orientation);
+    //std::vector<std::tr1::shared_ptr<WellDecoder> > & getDecodedCells();
 
-/**
- * From the regions specified in the INI file for the corresponding plate,
- * decodes all the regions. The decoded barcodes are written to the file
- * "dmscanlib.txt". The scanlib.txt file is a comma separated value file with the
- * following columns: Plate, Row, Column, Barcode.
- *
- * Calling this function also creates the "decoded.bmp" windows bitmap file.
- * This file shows a green square around the barcodes that were successfully
- * decoded. If the regions failed to decode then a red square is drawn around
- * it.
- *
- * @param verbose    The amount of logging information to generate. 1 is minimal
- *                   and 9 is very detailed. Logging information is appended to
- *                   file dmscanlib.log.
- * @param plateNum   The plate number. Must be a number beteen 1 and 4.
- * @param filename   The windows bitmap file to decode.
- * @param scanGap    The number of pixels to use for scan grid gap. This is a
- * 				     libdmtx parameter.
- * @param squareDev  Maximum  deviation  (degrees)  from  squareness between
- *                   adjacent barcode sides. Default value is N=40, but N=10
- *                   is  recommended for  flat  applications  like faxes and
- *                   other scanned documents. Barcode regions found with
- *                   corners <(90-N) or >(90+N) will be ignored by the decoder.
- * @param edgeThresh Set  the  minimum edge threshold as a percentage of
- *                   maximum. For example, an edge between a pure white and pure
- *                   black pixel would have  an  intensity  of  100.  Edges
- *                   with intensities below the indicated threshold will be
- *                   ignored  by  the  decoding  process. Lowering  the
- *                   threshold  will increase the amount of work to be done,
- *                   but may be necessary for low contrast or blurry images.
- * @param corrections The number of corrections to make while decoding.
- * @param cellDistance The distance in inches to use between cells.
- *
- * @return SC_SUCCESS if the decoding process was successful. SC_INVALID_IMAGE
- * if the scanned image is invalid. SC_INVALID_POSITION if no tube found on row
- * A or column 1 of the pallet. SC_POS_CALC_ERROR if sample positions could
- *  not be determined.
- */
-EXPORT int slDecodeImage(unsigned verbose, unsigned plateNum,
-                         const char * filename, double scanGap,
-                         unsigned squareDev, unsigned edgeThresh,
-                         unsigned corrections, double cellDistance, double gapX,
-                         double gapY, unsigned profileA, unsigned profileB,
-                         unsigned profileC, unsigned orientation);
+protected:
+    void saveResults(string & msg);
 
-typedef int (*SL_DECODE_IMAGE)(unsigned verbose, unsigned plateNum,
-                               const char * filename, double scanGap,
-                               unsigned squareDev, unsigned edgeThresh,
-                               unsigned corrections, double cellDistance,
-                               double gapX, double gapY, unsigned profileA,
-                               unsigned profileB, unsigned profileC,
-                               unsigned orientation);
+    void formatCellMessages(unsigned plateNum, string & msg);
 
-#ifdef __cplusplus
-}
-#endif
+    int isValidDpi(int dpi);
 
-#endif /* __INC_SCANLIB_H */
+    int decodeCommon(const string &markedDibFilename);
+
+    void applyFilters();
+
+    static const string LIBRARY_NAME;
+
+    std::tr1::shared_ptr<Dib> image;
+    std::tr1::shared_ptr<ImgScanner> imgScanner;
+    std::tr1::shared_ptr<Decoder> decoder;
+
+    double scanGap;
+    unsigned squareDev;
+    unsigned edgeThresh;
+    unsigned corrections;
+    double cellDistance;
+
+    slTime starttime; // for debugging
+    slTime endtime;
+    slTime timediff;
+
+    bool stdoutOutputEnable;
+
+    bool textFileOutputEnable;
+
+    static bool loggingInitialized;
+
+};
+
+#endif /* __INC_SCANLIB_INTERNAL_H */

@@ -23,7 +23,7 @@
 #pragma warning(disable : 4996)
 #endif
 
-#include "DmScanLibInternal.h"
+#include "DmScanLib.h"
 #include "Decoder.h"
 #include "Dib.h"
 

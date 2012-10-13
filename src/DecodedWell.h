@@ -16,7 +16,7 @@ using namespace std;
 
 class DecodedWell {
 public:
-	DecodedWell(WellRectangle<unsigned> & wellRectangle);
+	DecodedWell(const WellRectangle<unsigned> & wellRectangle);
 	virtual ~DecodedWell();
 
 	const WellRectangle<unsigned> & getWellRectangle() const {
@@ -36,12 +36,12 @@ public:
 	void setCorner(unsigned cornerId, unsigned x, unsigned y);
 
 	const Rect<unsigned> & getDecodedRect() const {
-		return decodeRect;
+		return decodedRect;
 	}
 
 private:
 	const WellRectangle<unsigned> & wellRectangle;
-	Rect<unsigned> decodeRect;
+	Rect<unsigned> decodedRect;
 	string message;
 };
 

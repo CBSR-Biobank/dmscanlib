@@ -31,7 +31,6 @@
 #endif
 
 #include "DmScanLib.h"
-#include "DmScanLibInternal.h"
 #include "ImgScanner.h"
 #include "ImgScanner.h"
 #include "Decoder.h"
@@ -130,7 +129,7 @@ void DmScanLib::saveResults(string & msg) {
 
 int DmScanLib::scanImage(unsigned dpi, int brightness, int contrast,
 		double left, double top, double right, double bottom,
-		const string &filename) {
+		const char * filename) {
 	VLOG(2)
 			<< "slScanImage: dpi/" << dpi << " brightness/" << brightness
 					<< " contrast/" << contrast << " left/" << left << " top/"
@@ -154,7 +153,7 @@ int DmScanLib::scanImage(unsigned dpi, int brightness, int contrast,
 }
 
 int DmScanLib::scanFlatbed(unsigned dpi, int brightness, int contrast,
-		const string & filename) {
+		const char * filename) {
 	VLOG(2)
 			<< "slScanFlatbed: dpi/" << dpi << " brightness/" << brightness
 					<< " contrast/" << contrast << " filename/" << filename;

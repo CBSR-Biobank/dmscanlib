@@ -12,6 +12,8 @@
 
 class DecodeOptions {
 public:
+	DecodeOptions(double scanGap, long squareDev, long edgeThresh,
+		    long corrections, double cellDistance);
 	DecodeOptions(JNIEnv *env, jobject scanRegionObj);
 	virtual ~DecodeOptions();
 

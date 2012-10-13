@@ -18,7 +18,7 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "DmScanLibInternal.h"
+#include "DmScanLib.h"
 #include "PalletThreadMgr.h"
 #include "Decoder.h"
 #include "WellDecoder.h"
@@ -37,8 +37,8 @@ using namespace std;
 
 const unsigned PalletThreadMgr::THREAD_NUM = 8;
 
-PalletThreadMgr::PalletThreadMgr(std::tr1::shared_ptr<Decoder> dec)
-                : decoder(dec) {
+PalletThreadMgr::PalletThreadMgr(std::tr1::shared_ptr<Decoder> dec) :
+		decoder(dec) {
 }
 
 PalletThreadMgr::~PalletThreadMgr() {
@@ -46,41 +46,39 @@ PalletThreadMgr::~PalletThreadMgr() {
 
 //first is inclusive , last is exclusive
 void PalletThreadMgr::threadProcessRange(unsigned first, unsigned last) {
-    for (unsigned int i = first; i < last; i++) {
-        allThreads[i]->start();
-    }
+	for (unsigned int i = first; i < last; i++) {
+		allThreads[i]->start();
+	}
 
-    for (unsigned int j = first; j < last; j++) {
-        allThreads[j]->join();
-    }
+	for (unsigned int j = first; j < last; j++) {
+		allThreads[j]->join();
+	}
 }
 
 void PalletThreadMgr::threadHandler() {
-    unsigned first = 0;
-    unsigned last = min(numThreads, THREAD_NUM);
+	unsigned first = 0;
+	unsigned last = min(numThreads, THREAD_NUM);
 
-    do {
-        threadProcessRange(first, last);
-        VLOG(2)
-                        << "Threads for cells finished: " << first << "/"
-                        << last - 1;
+	do {
+		threadProcessRange(first, last);
+		VLOG(2)
+				<< "Threads for cells finished: " << first << "/" << last - 1;
 
-        first = last;
-        last = min(last + THREAD_NUM, numThreads);
-    }
-    while (first < numThreads);
+		first = last;
+		last = min(last + THREAD_NUM, numThreads);
+	} while (first < numThreads);
 }
 
 void PalletThreadMgr::decodeCells(
-                std::vector<std::tr1::shared_ptr<WellDecoder> > & cells) {
-    numThreads = cells.size();
-    allThreads.resize(numThreads);
+		std::vector<std::tr1::shared_ptr<WellDecoder> > & cells) {
+	numThreads = cells.size();
+	allThreads.resize(numThreads);
 
-    for (unsigned i = 0; i < numThreads; ++i) {
-        //cells[i]->run();
-        allThreads[i] = cells[i];
-    }
+	for (unsigned i = 0; i < numThreads; ++i) {
+		//cells[i]->run();
+		allThreads[i] = cells[i];
+	}
 
-    threadHandler();
+	threadHandler();
 }
 

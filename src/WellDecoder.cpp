@@ -6,11 +6,11 @@
  */
 
 #include "WellDecoder.h"
-#include "DmScanLibInternal.h"
 #include "Dib.h"
 #include "Decoder.h"
 #include "DecodedWell.h"
 
+#include <sstream>
 #include <glog/logging.h>
 #include <glog/raw_logging.h>
 

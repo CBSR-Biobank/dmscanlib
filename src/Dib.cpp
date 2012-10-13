@@ -34,7 +34,7 @@
 
 #include "Dib.h"
 #include "RgbQuad.h"
-#include "DmScanLibInternal.h"
+#include "DmScanLib.h"
 
 #include <glog/logging.h>
 #include <stdio.h>

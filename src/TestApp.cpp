@@ -39,8 +39,8 @@
 #endif
 
 #include "DmScanLib.h"
-#include "DmScanLibInternal.h"
 #include "Decoder.h"
+#include "DecodeOptions.h"
 #include "Dib.h"
 #include "ImgScanner.h"
 #include "utils/SimpleOpt.h"
@@ -302,7 +302,7 @@ TestApp::TestApp(int argc, char ** argv) : progname(argv[0]) {
     } else if (options.scan) {
         result = scan();
     } else if (options.select) {
-        result = slSelectSourceAsDefault();
+        result = dmScanLib->selectSourceAsDefault();
     } else if (options.capability) {
         result = capability();
     }
@@ -342,13 +342,13 @@ TestApp::~TestApp() {
 
 int TestApp::decode() {
     if (options.infile != NULL) {
-        return dmScanLib->decodeImage(options.plateNum, options.infile,
-                                      options.gap, options.squareDev,
-                                      options.threshold, options.corrections,
-                                      options.cellDistance, options.gapX,
-                                      options.gapY, options.profileA,
-                                      options.profileB, options.profileC,
-                                      options.orientation);
+    	DecodeOptions decodeOptions(options.gap, options.squareDev,
+                options.threshold, options.corrections,
+                options.cellDistance);
+
+    	vector<std::tr1::shared_ptr<WellRectangle<double>  > > wellRects;
+
+        return dmScanLib->decodeImage(options.infile, decodeOptions, wellRects);
     }
 
     if ((options.left == 0.0) && (options.right == 0.0) && (options.top == 0.0)
@@ -362,15 +362,12 @@ int TestApp::decode() {
         return SC_FAIL;
     }
 
-    return dmScanLib->decodePlate(options.dpi, options.brightness,
-                                  options.contrast, options.plateNum,
+    return dmScanLib->scanAndDecode(options.dpi, options.brightness,
+                                  options.contrast,
                                   options.left, options.top, options.right,
                                   options.bottom, options.gap,
                                   options.squareDev, options.threshold,
-                                  options.corrections, options.cellDistance,
-                                  options.gapX, options.gapY, options.profileA,
-                                  options.profileB, options.profileC,
-                                  options.orientation);
+                                  options.corrections, options.cellDistance);
 }
 
 int TestApp::scan() {
@@ -380,18 +377,17 @@ int TestApp::scan() {
     }
 
     if (options.flatbed) {
-        return slScanFlatbed(options.debugLevel, options.dpi,
-                             options.brightness, options.contrast,
-                             options.outfile);
+    	return dmScanLib->scanFlatbed(options.dpi, options.brightness,
+    			options.contrast, options.outfile);
     }
 
-    return slScanImage(options.debugLevel, options.dpi, options.brightness,
+    return dmScanLib->scanImage(options.dpi, options.brightness,
                        options.contrast, options.left, options.top,
                        options.right, options.bottom, options.outfile);
 }
 
 int TestApp::capability() {
-    unsigned caps = slGetScannerCapability();
+    unsigned caps = dmScanLib->getScannerCapability();
 
     if ((caps & 0x01) == 0) {
         cout << "  Scanner is TWAIN" << endl;

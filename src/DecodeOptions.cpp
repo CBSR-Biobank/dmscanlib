@@ -9,6 +9,17 @@
 #include <stddef.h>
 #include <jni.h>
 
+
+DecodeOptions::DecodeOptions(double scanGap, long squareDev,
+		long edgeThresh, long corrections, double cellDistance) {
+
+    this->scanGap       = scanGap;
+    this->squareDev     = squareDev;
+    this->edgeThresh    = edgeThresh;
+    this->corrections   = corrections;
+    this->cellDistance  = cellDistance;
+}
+
 DecodeOptions::DecodeOptions(JNIEnv *env, jobject decodeOptionsObj) {
     jclass decodeOptionsJavaClass = env->GetObjectClass(decodeOptionsObj);
 

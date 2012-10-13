@@ -5,7 +5,6 @@
 #include "edu_ualberta_med_scannerconfig_dmscanlib_ScanLib.h"
 #include "DmScanLib.h"
 #include "ScanRegion.h"
-#include "DmScanLibInternal.h"
 
 #include <iostream>
 

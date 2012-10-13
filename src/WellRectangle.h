@@ -14,7 +14,8 @@
 
 using namespace std;
 
-template<typename T> class WellRectangle {
+template<typename T>
+class WellRectangle {
 public:
    WellRectangle(const char * label, T x1, T y1, T x2, T y2,	T x3, T y3,
 		   T x4, T y4);
@@ -30,7 +31,7 @@ public:
 		return rect;
 	}
 
-	Point<T> & getCorner(unsigned cornerId) const;
+	const Point<T> & getCorner(unsigned cornerId) const;
 
 private:
 	const string label;

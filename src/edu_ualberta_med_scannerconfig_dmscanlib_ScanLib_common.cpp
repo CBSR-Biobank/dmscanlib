@@ -6,7 +6,6 @@
 #include "DmScanLib.h"
 #include "ScanRegion.h"
 #include "DecodeOptions.h"
-#include "DmScanLibInternal.h"
 #include "DecodedWell.h"
 
 #include <iostream>

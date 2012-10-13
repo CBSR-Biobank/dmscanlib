@@ -7,8 +7,11 @@
 
 #include "DecodedWell.h"
 
-DecodedWell::DecodedWell(WellRectangle<unsigned> & _wellRectangle)
-      :wellRectangle(_wellRectangle) {
+#include <glog/logging.h>
+
+DecodedWell::DecodedWell(const WellRectangle<unsigned> & _wellRectangle)
+      : wellRectangle(_wellRectangle), decodedRect(0, 0, 0, 0, 0, 0, 0, 0)
+{
 }
 
 DecodedWell::~DecodedWell() {
@@ -16,4 +19,10 @@ DecodedWell::~DecodedWell() {
 
 void DecodedWell::setMessage(const char * message, int messageLength) {
    this->message.assign(message, messageLength);
+}
+
+void DecodedWell::setCorner(unsigned cornerId, unsigned x, unsigned y) {
+     CHECK(cornerId < 4);
+     decodedRect.corners[cornerId].x = x;
+     decodedRect.corners[cornerId].y = y;
 }
