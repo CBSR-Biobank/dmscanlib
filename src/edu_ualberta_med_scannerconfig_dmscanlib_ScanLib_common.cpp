@@ -6,7 +6,7 @@
 #include "DmScanLib.h"
 #include "ScanRegion.h"
 #include "DecodeOptions.h"
-#include "DecodedWell.h"
+#include "WellDecoder.h"
 
 #include <iostream>
 #include <vector>
@@ -36,7 +36,7 @@ jobject createScanResultObject(JNIEnv * env, int resultCode, int value) {
 }
 
 jobject createDecodeResultObject(JNIEnv * env, int resultCode,
-                std::vector<unique_ptr<DecodedWell> > * wells) {
+                std::vector<unique_ptr<WellDecoder> > * wells) {
     jclass resultClass = env->FindClass(
                     "edu/ualberta/med/scannerconfig/dmscanlib/DecodeResult");
 
@@ -60,11 +60,11 @@ jobject createDecodeResultObject(JNIEnv * env, int resultCode,
 
     if (wells != NULL) {
         for (unsigned i = 0, n = wells->size(); i < n; ++i) {
-        	DecodedWell & well = *(*wells)[i];
+        	WellDecoder & wellDecoder = *(*wells)[i];
             jvalue data[3];
 
-            data[0].l = env->NewStringUTF(well.getLabel().c_str());
-            data[1].l = env->NewStringUTF(well.getMessage().c_str());
+            data[0].l = env->NewStringUTF(wellDecoder.getLabel().c_str());
+            data[1].l = env->NewStringUTF(wellDecoder.getMessage().c_str());
 
             env->CallObjectMethodA(resultObj, setCellMethod, data);
         }

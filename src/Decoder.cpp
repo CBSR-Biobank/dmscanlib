@@ -23,9 +23,9 @@
 #pragma warning(disable : 4996)
 #endif
 
+#include "Decoder.h"
 #include "DmScanLib.h"
 #include "DecodeOptions.h"
-#include "Decoder.h"
 #include "Dib.h"
 #include "WellDecoder.h"
 #include "DecodeThreadMgr.h"
@@ -82,7 +82,7 @@ int Decoder::decodeWellRects() {
 		wellRectsConverted.push_back(std::move(wellRectConverted));
 
 		unique_ptr<WellDecoder> wellDecoder(
-				new WellDecoder(image, *this, *wellRectConverted));
+				new WellDecoder(*this, *wellRectConverted));
 
 		VLOG(2) << * wellDecoder;
 
@@ -106,7 +106,7 @@ void Decoder::applyFilters() {
 	}
 }
 
-void Decoder::decodeWellRect(const Dib & wellRectImage, DecodedWell & decodedWell) const {
+void Decoder::decodeWellRect(const Dib & wellRectImage, WellDecoder & wellDecoder) const {
 	const unsigned dpi = wellRectImage.getDpi();
 	CHECK((dpi == 300) || (dpi == 400) || (dpi == 600));
 
@@ -139,7 +139,7 @@ void Decoder::decodeWellRect(const Dib & wellRectImage, DecodedWell & decodedWel
 
 		DmtxMessage *msg = dmtxDecodeMatrixRegion(dec, reg, decodeOptions.corrections);
 		if (msg != NULL) {
-			getDecodeInfo(dec, reg, msg, decodedWell);
+			getDecodeInfo(dec, reg, msg, wellDecoder);
 
 			if (VLOG_IS_ON(2)) {
 				showStats(dec, reg, msg);
@@ -150,7 +150,7 @@ void Decoder::decodeWellRect(const Dib & wellRectImage, DecodedWell & decodedWel
 	}
 
 	if (VLOG_IS_ON(5)) {
-		writeDiagnosticImage(dec, decodedWell.getLabel());
+		writeDiagnosticImage(dec, wellDecoder.getLabel());
 	}
 
 	dmtxDecodeDestroy(&dec);
@@ -158,14 +158,14 @@ void Decoder::decodeWellRect(const Dib & wellRectImage, DecodedWell & decodedWel
 }
 
 void Decoder::getDecodeInfo(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg,
-		DecodedWell & DecodedWell) const {
+		WellDecoder & wellDecoder) const {
 	CHECK_NOTNULL(dec);
 	CHECK_NOTNULL(reg);
 	CHECK_NOTNULL(msg);
 
 	DmtxVector2 p00, p10, p11, p01;
 
-	DecodedWell.setMessage((char *) msg->output, msg->outputIdx);
+	wellDecoder.setMessage((char *) msg->output, msg->outputIdx);
 
 	int height = dmtxDecodeGetProp(dec, DmtxPropHeight);
 	p00.X = p00.Y = p10.Y = p01.X = 0.0;
@@ -183,7 +183,7 @@ void Decoder::getDecodeInfo(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg,
 	DmtxVector2 * p[4] = { &p00, &p10, &p11, &p01 };
 
 	for (unsigned i = 0; i < 4; ++i) {
-		DecodedWell.setCorner(i, static_cast<unsigned>(p[i]->X),
+		wellDecoder.setCorner(i, static_cast<unsigned>(p[i]->X),
 				static_cast<unsigned>(p[i]->Y));
 	}
 }

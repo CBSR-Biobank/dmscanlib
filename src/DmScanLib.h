@@ -53,14 +53,13 @@ class Decoder;
 class ImgScanner;
 class WellDecoder;
 class DecodeOptions;
-class DecodedWell;
 
 using namespace std;
 
 void getResultCodeMsg(int resultCode, string & message);
 jobject createScanResultObject(JNIEnv * env, int resultCode, int value);
 jobject createDecodedResultObject(JNIEnv * env, int resultCode,
-        std::vector<unique_ptr<DecodedWell> > * wells);
+        std::vector<unique_ptr<WellDecoder> > * wells);
 
 class DmScanLib {
 public:
@@ -111,7 +110,7 @@ protected:
     slTime endtime;
     slTime timediff;
 
-    unique_ptr<ImgScanner> imgScanner;
+    std::unique_ptr<ImgScanner> imgScanner;
 
     bool stdoutOutputEnable;
 

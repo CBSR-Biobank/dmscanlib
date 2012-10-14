@@ -34,6 +34,7 @@
 #include "ImgScanner.h"
 #include "Decoder.h"
 #include "DecodeOptions.h"
+#include "WellDecoder.h"
 #include "Dib.h"
 
 #include <glog/logging.h>

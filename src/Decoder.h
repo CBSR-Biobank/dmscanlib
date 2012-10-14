@@ -21,8 +21,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "WellRectangle.h"
 
-#include "DecodedWell.h"
 
 #include <dmtx.h>
 #include <string>
@@ -42,8 +42,8 @@
 using namespace std;
 
 class Dib;
-struct RgbQuad;
 class DecodeOptions;
+class WellDecoder;
 
 class Decoder {
 public:
@@ -51,7 +51,7 @@ public:
     		vector<unique_ptr<WellRectangle<double>  > > & wellRects);
     virtual ~Decoder();
     int decodeWellRects();
-    void decodeWellRect(const Dib & wellRectImage, DecodedWell & decodedWell) const;
+    void decodeWellRect(const Dib & wellRectImage, WellDecoder & wellDecoder) const;
 
     const Dib & getWorkingImage() const {
     	return *filteredImage;
@@ -61,7 +61,7 @@ private:
     void applyFilters();
     static DmtxImage * createDmtxImageFromDib(const Dib & dib);
     void getDecodeInfo(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg,
-                       DecodedWell & DecodedWell) const;
+    		WellDecoder & wellDecoder) const;
 
     void writeDiagnosticImage(DmtxDecode *dec, const string & id) const;
 

@@ -1,7 +1,6 @@
 #ifndef __INC_PALLET_CELL_H
 #define __INC_PALLET_CELL_H
 
-#include "DecodedWell.h"
 #include "WellRectangle.h"
 #include "geometry.h"
 
@@ -22,8 +21,8 @@ class PalletGrid;
 
 class WellDecoder : public OpenThreads::Thread {
 public:
-   WellDecoder(const Dib & image, const Decoder & decoder,
-		   const WellRectangle<unsigned> & _wellRectangle);
+	WellDecoder(const Decoder & decoder,
+			const WellRectangle<unsigned> & _wellRectangle);
 
    virtual ~WellDecoder();
 
@@ -34,26 +33,30 @@ public:
    void decodeCallback(std::string & decodedMsg, Point<unsigned>(&corners)[4]);
 
 	const string & getLabel() {
-		return decodedWell.getWellRectangle().getLabel();
+		return wellRectangle.getLabel();
 	}
 
 	const string & getMessage() const {
-		return decodedWell.getMessage();
+		return message;
 	}
 
+	void setMessage(const char * message, int messageLength);
+
    const Rect<unsigned> & getWellRectangle() const {
-      return decodedWell.getWellRectangle().getRectangle();
+      return wellRectangle.getRectangle();
    }
 
    const Rect<unsigned> & getDecodedRectangle() const {
-	   return decodedWell.getDecodedRect();
+	   return decodedRect;
    }
 
    const bool getDecodeValid() {
-      return !decodedWell.getMessage().empty();
+	   return message.empty();
    }
 
    const std::string & getBarcodeMsg();
+
+	void setCorner(unsigned cornerId, unsigned x, unsigned y);
 
    void drawCellBox(Dib & image, const RgbQuad & color) const;
 
@@ -64,7 +67,9 @@ public:
 private:
    const Decoder & decoder;
    unique_ptr<const Dib> wellImage;
-   DecodedWell decodedWell;
+   const WellRectangle<unsigned> & wellRectangle;
+   Rect<unsigned> decodedRect;
+   string message;
 
    friend std::ostream & operator<<(std::ostream & os, WellDecoder & m);
 };
