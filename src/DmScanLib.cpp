@@ -174,26 +174,15 @@ int DmScanLib::scanFlatbed(unsigned dpi, int brightness, int contrast,
 }
 
 int DmScanLib::scanAndDecode(unsigned dpi, int brightness, int contrast,
-        double left, double top, double right, double bottom,
-        double scanGap, unsigned squareDev, unsigned edgeThresh,
-        unsigned corrections, double cellDistance) {
-	VLOG(2)
-			<< "decodePlate: dpi/" << dpi << " brightness/" << brightness
-					<< " contrast/" << contrast
-					<< " left/" << left << " top/" << top << " right/" << right
-					<< " bottom/" << bottom << " scanGap/" << scanGap
-					<< " squareDev/" << squareDev << " edgeThresh/"
-					<< edgeThresh << " corrections/" << corrections
-					<< " cellDistance/" << cellDistance;
+		double left, double top, double right, double bottom,
+		const DecodeOptions & decodeOptions) {
+	VLOG(2) << "decodePlate: dpi/" << dpi << " brightness/" << brightness
+			<< " contrast/" << contrast
+			<< " left/" << left << " top/" << top << " right/" << right
+			<< " bottom/" << bottom << decodeOptions;
 
 	HANDLE h;
 	int result;
-
-	this->scanGap = scanGap;
-	this->squareDev = squareDev;
-	this->edgeThresh = edgeThresh;
-	this->corrections = corrections;
-	this->cellDistance = cellDistance;
 
 	h = imgScanner->acquireImage(dpi, brightness, contrast, left, top, right,
 			bottom);
@@ -209,27 +198,18 @@ int DmScanLib::scanAndDecode(unsigned dpi, int brightness, int contrast,
 	}
 
 	image->writeToFile("scanned.bmp");
-	result = decodeCommon("decode.bmp");
+	result = decodeCommon(decodeOptions, "decode.bmp");
 
 	imgScanner->freeImage(h);
 	VLOG(2) << "decodeCommon returned: " << result;
 	return result;
 }
 
-int DmScanLib::decodeImage(const char * filename, DecodeOptions & decodeOptions,
+int DmScanLib::decodeImageWells(const char * filename,
+		const DecodeOptions & decodeOptions,
 		vector<std::tr1::shared_ptr<WellRectangle<double>  > > & wellRects) {
 
-	VLOG(2)
-			<< "decodeImage: filename/" << filename
-					<< " scanGap/" << scanGap << " squareDev/" << squareDev
-					<< " edgeThresh/" << edgeThresh << " corrections/"
-					<< corrections << " cellDistance/" << cellDistance;
-
-	this->scanGap = scanGap;
-	this->squareDev = squareDev;
-	this->edgeThresh = edgeThresh;
-	this->corrections = corrections;
-	this->cellDistance = cellDistance;
+	VLOG(2) << "decodeImage: filename/" << filename << decodeOptions;
 
 	image = std::tr1::shared_ptr<Dib>(new Dib());
 	bool readResult = image->readFromFile(filename);
@@ -237,11 +217,12 @@ int DmScanLib::decodeImage(const char * filename, DecodeOptions & decodeOptions,
 		return SC_INVALID_IMAGE;
 	}
 
-	int result = decodeCommon("decode.bmp");
+	int result = decodeCommon(decodeOptions, "decode.bmp");
 	return result;
 }
 
-int DmScanLib::decodeCommon(const string &markedDibFilename) {
+int DmScanLib::decodeCommon(const DecodeOptions & decodeOptions,
+		const string &markedDibFilename) {
 	const unsigned dpi = image->getDpi();
 
 	VLOG(2) << "DecodeCommon: dpi/" << dpi;
@@ -250,12 +231,10 @@ int DmScanLib::decodeCommon(const string &markedDibFilename) {
 		return SC_INVALID_DPI;
 	}
 
-	decoder = std::tr1::shared_ptr<Decoder>(
-			new Decoder(dpi, scanGap, squareDev, edgeThresh, corrections,
-					cellDistance));
+	decoder = std::tr1::shared_ptr<Decoder>(new Decoder(dpi, decodeOptions));
 
-//	applyFilters();
-//
+	applyFilters();
+
 //	if (decodeCount == 0) {
 //		return SC_INVALID_IMAGE;
 //	}
@@ -290,58 +269,4 @@ void DmScanLib::applyFilters() {
 	//return palletGrid->getDecodedCells();
 //}
 
-int slIsTwainAvailable() {
-	DmScanLib dmScanLib(0);
-	return dmScanLib.isTwainAvailable();
-}
-
-int slSelectSourceAsDefault() {
-	DmScanLib dmScanLib(0);
-	return dmScanLib.selectSourceAsDefault();
-}
-
-int slGetScannerCapability() {
-	DmScanLib dmScanLib(0);
-	return dmScanLib.getScannerCapability();
-}
-
-int slScanFlatbed(unsigned verbose, unsigned dpi, int brightness, int contrast,
-		const char * filename) {
-	DmScanLib dmScanLib(verbose);
-	return dmScanLib.scanFlatbed(dpi, brightness, contrast, filename);
-}
-
-int slScanImage(unsigned verbose, unsigned dpi, int brightness, int contrast,
-		double left, double top, double right, double bottom,
-		const char * filename) {
-	DmScanLib dmScanLib(verbose);
-	return dmScanLib.scanImage(dpi, brightness, contrast, left, top, right,
-			bottom, filename);
-}
-
-int slScanAndDecode(unsigned verbose, unsigned dpi, int brightness, int contrast,
-		unsigned plateNum, double left, double top, double right, double bottom,
-		double scanGap, unsigned squareDev, unsigned edgeThresh,
-		unsigned corrections, double cellDistance, double gapX, double gapY,
-		unsigned profileA, unsigned profileB, unsigned profileC,
-		unsigned orientation) {
-	DmScanLib dmScanLib(verbose);
-	dmScanLib.setTextFileOutputEnable(true);
-	return dmScanLib.scanAndDecode(dpi, brightness, contrast, left, top,
-			right, bottom, scanGap, squareDev, edgeThresh, corrections,
-			cellDistance);
-}
-
-int slDecodeImage(unsigned verbose, unsigned plateNum, const char * filename,
-		double scanGap, unsigned squareDev, unsigned edgeThresh,
-		unsigned corrections, double cellDistance, double gapX, double gapY,
-		unsigned profileA, unsigned profileB, unsigned profileC,
-		unsigned orientation) {
-	DmScanLib dmScanLib(verbose);
-	dmScanLib.setTextFileOutputEnable(true);
-//	return dmScanLib.decodeImage(plateNum, filename, scanGap, squareDev,
-//			edgeThresh, corrections, cellDistance, gapX, gapY, profileA,
-//			profileB, profileC, orientation);
-	return -1;
-}
 

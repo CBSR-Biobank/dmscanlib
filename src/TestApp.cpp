@@ -348,7 +348,7 @@ int TestApp::decode() {
 
     	vector<std::tr1::shared_ptr<WellRectangle<double>  > > wellRects;
 
-        return dmScanLib->decodeImage(options.infile, decodeOptions, wellRects);
+        return dmScanLib->decodeImageWells(options.infile, decodeOptions, wellRects);
     }
 
     if ((options.left == 0.0) && (options.right == 0.0) && (options.top == 0.0)

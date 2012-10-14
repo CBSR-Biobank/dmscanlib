@@ -8,7 +8,12 @@
  *      Author: nelson
  */
 
+class Decoder;
+
 #include <jni.h>
+#include <ostream>
+
+using namespace std;
 
 class DecodeOptions {
 public:
@@ -16,6 +21,11 @@ public:
 		    long corrections, double cellDistance);
 	DecodeOptions(JNIEnv *env, jobject scanRegionObj);
 	virtual ~DecodeOptions();
+
+private:
+
+	friend class Decoder;
+	friend ostream & operator<<(std::ostream & os, const DecodeOptions & m);
 
     double scanGap;
     long squareDev;

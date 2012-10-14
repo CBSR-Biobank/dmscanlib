@@ -150,7 +150,7 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
     }
 
     DmScanLib dmScanLib(verbose);
-    dmScanLib.decodeImage(filename, decodeOptions, wellRects);
+    dmScanLib.decodeImageWells(filename, decodeOptions, wellRects);
     env->ReleaseStringUTFChars(_filename, filename);
 
     // TODO create result object

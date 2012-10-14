@@ -24,6 +24,7 @@
 #endif
 
 #include "DmScanLib.h"
+#include "DecodeOptions.h"
 #include "Decoder.h"
 #include "Dib.h"
 
@@ -38,10 +39,8 @@
 
 using namespace std;
 
-Decoder::Decoder(unsigned _dpi, double g, unsigned s, unsigned t, unsigned c,
-		double dist) :
-		dpi(_dpi), scanGap(g), squareDev(s), edgeThresh(t), corrections(c), cellDistance(
-				dist) {
+Decoder::Decoder(unsigned _dpi, const DecodeOptions & _decodeOptions) :
+		dpi(_dpi), decodeOptions(_decodeOptions) {
 }
 
 Decoder::~Decoder() {
@@ -64,9 +63,9 @@ void Decoder::decodeImage(const Dib & dib, DecodedWell & decodedWell) {
 	dmtxDecodeSetProp(dec, DmtxPropEdgeMax, maxEdgeSize);
 	dmtxDecodeSetProp(dec, DmtxPropSymbolSize, DmtxSymbolSquareAuto);
 	dmtxDecodeSetProp(dec, DmtxPropScanGap,
-			static_cast<unsigned>(scanGap * dpi));
-	dmtxDecodeSetProp(dec, DmtxPropSquareDevn, squareDev);
-	dmtxDecodeSetProp(dec, DmtxPropEdgeThresh, edgeThresh);
+			static_cast<unsigned>(decodeOptions.scanGap * dpi));
+	dmtxDecodeSetProp(dec, DmtxPropSquareDevn, decodeOptions.squareDev);
+	dmtxDecodeSetProp(dec, DmtxPropEdgeThresh, decodeOptions.edgeThresh);
 
 	DmtxRegion * reg;
 	while (1) {
@@ -75,7 +74,7 @@ void Decoder::decodeImage(const Dib & dib, DecodedWell & decodedWell) {
 			break;
 		}
 
-		DmtxMessage *msg = dmtxDecodeMatrixRegion(dec, reg, corrections);
+		DmtxMessage *msg = dmtxDecodeMatrixRegion(dec, reg, decodeOptions.corrections);
 		if (msg != NULL) {
 			getDecodeInfo(dec, reg, msg, decodedWell);
 

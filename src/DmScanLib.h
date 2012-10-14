@@ -68,35 +68,34 @@ jobject createDecodedResultObject(JNIEnv * env, int resultCode,
 
 class DmScanLib {
 public:
-    DmScanLib(unsigned loggingLevel, bool logToFile = true);
-    virtual ~DmScanLib();
+	DmScanLib(unsigned loggingLevel, bool logToFile = true);
+	virtual ~DmScanLib();
 
-     int isTwainAvailable();
+	int isTwainAvailable();
 
-     int selectSourceAsDefault();
-     int getScannerCapability();
-     int scanImage(unsigned dpi, int brightness, int contrast,
-                   double left, double top, double right, double bottom,
-                   const char * filename);
-     int scanFlatbed(unsigned dpi, int brightness, int contrast,
-                     const char * filename);
-     int scanAndDecode(unsigned dpi, int brightness, int contrast,
-                            double left, double top, double right,
-                            double bottom, double scanGap,
-                            unsigned squareDev, unsigned edgeThresh,
-                            unsigned corrections, double cellDistance);
-    int decodeImage(const char * filename, DecodeOptions & decodeOptions,
-    		vector<std::tr1::shared_ptr<WellRectangle<double>  > > & wellRects);
+	int selectSourceAsDefault();
+	int getScannerCapability();
+	int scanImage(unsigned dpi, int brightness, int contrast,
+			double left, double top, double right, double bottom,
+			const char * filename);
+	int scanFlatbed(unsigned dpi, int brightness, int contrast,
+			const char * filename);
+	int scanAndDecode(unsigned dpi, int brightness, int contrast,
+			double left, double top, double right, double bottom,
+			const DecodeOptions & decodeOptions);
+	int decodeImageWells(const char * filename,
+			const DecodeOptions & decodeOptions,
+			vector<std::tr1::shared_ptr<WellRectangle<double>  > > & wellRects);
 
-    static void configLogging(unsigned level, bool useFile = true);
+	static void configLogging(unsigned level, bool useFile = true);
 
-    void setTextFileOutputEnable(bool enable) {
-        textFileOutputEnable = enable;
-    }
+	void setTextFileOutputEnable(bool enable) {
+		textFileOutputEnable = enable;
+	}
 
-    void setStdoutOutputEnable(bool enable) {
-        stdoutOutputEnable = enable;
-    }
+	void setStdoutOutputEnable(bool enable) {
+		stdoutOutputEnable = enable;
+	}
 
     //std::vector<std::tr1::shared_ptr<WellDecoder> > & getDecodedCells();
 
@@ -107,7 +106,8 @@ protected:
 
     int isValidDpi(int dpi);
 
-    int decodeCommon(const string &markedDibFilename);
+    int decodeCommon(const DecodeOptions & decodeOptions,
+    		const string &markedDibFilename);
 
     void applyFilters();
 
@@ -116,12 +116,6 @@ protected:
     std::tr1::shared_ptr<Dib> image;
     std::tr1::shared_ptr<ImgScanner> imgScanner;
     std::tr1::shared_ptr<Decoder> decoder;
-
-    double scanGap;
-    unsigned squareDev;
-    unsigned edgeThresh;
-    unsigned corrections;
-    double cellDistance;
 
     slTime starttime; // for debugging
     slTime endtime;

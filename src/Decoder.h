@@ -41,12 +41,11 @@ using namespace std;
 
 class Dib;
 struct RgbQuad;
-class BinRegion;
+class DecodeOptions;
 
 class Decoder {
 public:
-    Decoder(unsigned dpi, double scanGap, unsigned squareDev,
-            unsigned edgeThresh, unsigned corrections, double cellDistance);
+    Decoder(unsigned dpi, const DecodeOptions & decodeOptions);
     virtual ~Decoder();
 
     void decodeImage(const Dib & dib, DecodedWell & decodedWell);
@@ -61,11 +60,7 @@ private:
     void showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
 
     unsigned dpi;
-    double scanGap;
-    unsigned squareDev;
-    unsigned edgeThresh;
-    unsigned corrections;
-    double cellDistance;
+    const DecodeOptions & decodeOptions;
 };
 
 #endif /* DECODER_H_ */

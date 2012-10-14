@@ -61,3 +61,11 @@ DecodeOptions::DecodeOptions(JNIEnv *env, jobject decodeOptionsObj) {
 DecodeOptions::~DecodeOptions() {
 }
 
+ostream & operator<<(ostream &os, const DecodeOptions & m) {
+	os << " scanGap/" << m.scanGap
+			<< " squareDev/" << m.squareDev
+			<< " edgeThresh/" << m.edgeThresh
+			<< " corrections/"	<< m.corrections
+			<< " cellDistance/" << m.cellDistance;;
+	return os;
+}
