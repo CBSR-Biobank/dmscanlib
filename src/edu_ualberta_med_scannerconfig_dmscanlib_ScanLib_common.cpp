@@ -10,6 +10,7 @@
 
 #include <iostream>
 #include <vector>
+#include <memory>
 #include <glog/logging.h>
 
 using namespace std;
@@ -35,7 +36,7 @@ jobject createScanResultObject(JNIEnv * env, int resultCode, int value) {
 }
 
 jobject createDecodeResultObject(JNIEnv * env, int resultCode,
-                std::vector<std::tr1::shared_ptr<DecodedWell> > * wells) {
+                std::vector<unique_ptr<DecodedWell> > * wells) {
     jclass resultClass = env->FindClass(
                     "edu/ualberta/med/scannerconfig/dmscanlib/DecodeResult");
 
@@ -86,7 +87,7 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
 
     DecodeOptions decodeOptions(env, _decodeOptions);
 
-    vector<std::tr1::shared_ptr<WellRectangle<double>  > > wellRects;
+    vector<unique_ptr<WellRectangle<double>  > > wellRects;
 
     jobject wellRectJavaObj;
     jclass wellRectJavaClass = NULL;
@@ -140,10 +141,12 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
     	double x4 = env->CallDoubleMethod(wellRectJavaObj, wellRectGetCornerXMethodID, 3);
     	double y4 = env->CallDoubleMethod(wellRectJavaObj, wellRectGetCornerYMethodID, 3);
 
-    	std::tr1::shared_ptr<WellRectangle<double> > rect(
+    	unique_ptr<WellRectangle<double> > wellRect(
     			new WellRectangle<double>(label, x1, y1, x2, y2, x3, y3, x4, y4));
 
-    	VLOG(3) << *rect;
+    	VLOG(3) << *wellRect;
+
+    	wellRects.push_back(std::move(wellRect));
 
     	env->ReleaseStringUTFChars((jstring) labelJobj, label);
     	env->DeleteLocalRef(wellRectJavaObj);

@@ -26,6 +26,8 @@
 
 #include <dmtx.h>
 #include <string>
+#include <vector>
+#include <memory>
 
 #ifdef _VISUALC_
 #   include <memory>
@@ -45,22 +47,32 @@ class DecodeOptions;
 
 class Decoder {
 public:
-    Decoder(unsigned dpi, const DecodeOptions & decodeOptions);
+    Decoder(const Dib & image, const DecodeOptions & decodeOptions,
+    		vector<unique_ptr<WellRectangle<double>  > > & wellRects);
     virtual ~Decoder();
+    int decodeWellRects();
+    void decodeWellRect(const Dib & wellRectImage, DecodedWell & decodedWell) const;
 
-    void decodeImage(const Dib & dib, DecodedWell & decodedWell);
+    const Dib & getWorkingImage() const {
+    	return *filteredImage;
+    }
 
 private:
+    void applyFilters();
     static DmtxImage * createDmtxImageFromDib(const Dib & dib);
     void getDecodeInfo(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg,
-                       DecodedWell & DecodedWell);
+                       DecodedWell & DecodedWell) const;
 
-    void writeDiagnosticImage(DmtxDecode *dec, const string & id);
+    void writeDiagnosticImage(DmtxDecode *dec, const string & id) const;
 
-    void showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
+    void showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg) const;
 
-    unsigned dpi;
+    const Dib & image;
+    unique_ptr<Dib> filteredImage;
     const DecodeOptions & decodeOptions;
+    const vector<unique_ptr<WellRectangle<double>  > > & wellRects;
+	vector<unique_ptr<WellRectangle<unsigned> > > wellRectsConverted;
+	vector<unique_ptr<WellDecoder> > wellDecoders;
 };
 
 #endif /* DECODER_H_ */

@@ -23,12 +23,11 @@
 
 #include <dmtx.h>
 #include <string>
+#include <memory>
 
 #ifdef _VISUALC_
-#   include <memory>
 #   include <functional>
 #else
-#   include <tr1/memory>
 #   include <tr1/functional>
 #endif
 
@@ -40,12 +39,12 @@ class DecodeInfo;
 class BarcodeThread;
 class Decoder;
 
-class PalletThreadMgr {
+class DecodeThreadMgr {
 public:
-	PalletThreadMgr(std::tr1::shared_ptr<Decoder> decoder);
-	~PalletThreadMgr();
+	DecodeThreadMgr(Decoder & decoder);
+	~DecodeThreadMgr();
 
-	void decodeCells(std::vector<std::tr1::shared_ptr<WellDecoder> > & cells);
+	void decodeWells(std::vector<unique_ptr<WellDecoder> > & wellDecoders);
 
 private:
 	static const unsigned THREAD_NUM;
@@ -53,8 +52,8 @@ private:
 	void threadHandler();
 	void threadProcessRange(unsigned int first, unsigned int last);
 
-	std::tr1::shared_ptr<Decoder> decoder;
-	vector<std::tr1::shared_ptr<WellDecoder> > allThreads;
+	const Decoder & decoder;
+	vector<unique_ptr<WellDecoder> > allThreads;
 	unsigned numThreads;
 };
 

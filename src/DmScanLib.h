@@ -29,10 +29,6 @@
 #include <vector>
 #include <jni.h>
 
-#if ! defined _VISUALC_
-#   include <tr1/memory>
-#endif
-
 /**
  * Return codes used by the DLL API.
  */
@@ -64,7 +60,7 @@ using namespace std;
 void getResultCodeMsg(int resultCode, string & message);
 jobject createScanResultObject(JNIEnv * env, int resultCode, int value);
 jobject createDecodedResultObject(JNIEnv * env, int resultCode,
-        std::vector<std::tr1::shared_ptr<DecodedWell> > * wells);
+        std::vector<unique_ptr<DecodedWell> > * wells);
 
 class DmScanLib {
 public:
@@ -82,10 +78,11 @@ public:
 			const char * filename);
 	int scanAndDecode(unsigned dpi, int brightness, int contrast,
 			double left, double top, double right, double bottom,
-			const DecodeOptions & decodeOptions);
+			const DecodeOptions & decodeOptions,
+			vector<unique_ptr<WellRectangle<double>  > > & wellRects);
 	int decodeImageWells(const char * filename,
 			const DecodeOptions & decodeOptions,
-			vector<std::tr1::shared_ptr<WellRectangle<double>  > > & wellRects);
+			vector<unique_ptr<WellRectangle<double>  > > & wellRects);
 
 	static void configLogging(unsigned level, bool useFile = true);
 
@@ -97,8 +94,6 @@ public:
 		stdoutOutputEnable = enable;
 	}
 
-    //std::vector<std::tr1::shared_ptr<WellDecoder> > & getDecodedCells();
-
 protected:
     void saveResults(string & msg);
 
@@ -106,20 +101,17 @@ protected:
 
     int isValidDpi(int dpi);
 
-    int decodeCommon(const DecodeOptions & decodeOptions,
-    		const string &markedDibFilename);
-
-    void applyFilters();
+    int decodeCommon(const Dib & image, const DecodeOptions & decodeOptions,
+    		const string &markedDibFilename,
+    	    vector<unique_ptr<WellRectangle<double>  > > & wellRects);
 
     static const string LIBRARY_NAME;
-
-    std::tr1::shared_ptr<Dib> image;
-    std::tr1::shared_ptr<ImgScanner> imgScanner;
-    std::tr1::shared_ptr<Decoder> decoder;
 
     slTime starttime; // for debugging
     slTime endtime;
     slTime timediff;
+
+    unique_ptr<ImgScanner> imgScanner;
 
     bool stdoutOutputEnable;
 

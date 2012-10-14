@@ -27,6 +27,8 @@
 #include "DecodeOptions.h"
 #include "Decoder.h"
 #include "Dib.h"
+#include "WellDecoder.h"
+#include "DecodeThreadMgr.h"
 
 #include <glog/logging.h>
 #include <stdio.h>
@@ -39,25 +41,86 @@
 
 using namespace std;
 
-Decoder::Decoder(unsigned _dpi, const DecodeOptions & _decodeOptions) :
-		dpi(_dpi), decodeOptions(_decodeOptions) {
+Decoder::Decoder(const Dib & _image, const DecodeOptions & _decodeOptions,
+		vector<unique_ptr<WellRectangle<double>  > > & _wellRects) :
+		image(_image), decodeOptions(_decodeOptions), wellRects(_wellRects)
+{
+	wellRectsConverted.resize(wellRects.size());
+	wellDecoders.resize(wellRects.size());
+	applyFilters();
 }
 
 Decoder::~Decoder() {
 }
 
-void Decoder::decodeImage(const Dib & dib, DecodedWell & decodedWell) {
-	int minEdgeSize, maxEdgeSize;
+int Decoder::decodeWellRects() {
+	const unsigned dpi = image.getDpi();
 
-	DmtxImage * dmtxImage = dib.getDmtxImage();
+	VLOG(2) << "DecodeCommon: dpi/" << dpi << " numWellRects/" << wellRects.size();
+
+	if ((dpi != 300) && (dpi != 400) && (dpi != 600)) {
+		return -1;
+	}
+
+	for(unsigned i = 0, n = wellRects.size(); i < n; ++i) {
+		WellRectangle<double> & wellRect = *wellRects[i];
+
+		unique_ptr<WellRectangle<unsigned> > wellRectConverted(
+				new WellRectangle<unsigned>(wellRect.getLabel().c_str(),
+						static_cast<unsigned>(dpi * wellRect.getCornerX(0)),
+						static_cast<unsigned>(dpi * wellRect.getCornerY(0)),
+						static_cast<unsigned>(dpi * wellRect.getCornerX(1)),
+						static_cast<unsigned>(dpi * wellRect.getCornerY(1)),
+						static_cast<unsigned>(dpi * wellRect.getCornerX(2)),
+						static_cast<unsigned>(dpi * wellRect.getCornerY(2)),
+						static_cast<unsigned>(dpi * wellRect.getCornerX(3)),
+						static_cast<unsigned>(dpi * wellRect.getCornerY(3))
+				));
+
+		VLOG(2) << *wellRectConverted;
+
+		wellRectsConverted.push_back(std::move(wellRectConverted));
+
+		unique_ptr<WellDecoder> wellDecoder(
+				new WellDecoder(image, *this, *wellRectConverted));
+
+		VLOG(2) << * wellDecoder;
+
+		wellDecoders.push_back(std::move(wellDecoder));
+	}
+
+	DecodeThreadMgr threadMgr(*this);
+	threadMgr.decodeWells(wellDecoders);
+
+	return 0;
+}
+
+void Decoder::applyFilters() {
+	filteredImage = (image.getBitsPerPixel() != 8)
+					? std::move(image.convertGrayscale())
+					: unique_ptr<Dib>(new Dib(image));
+
+	filteredImage->tpPresetFilter();
+	if (VLOG_IS_ON(2)) {
+		filteredImage->writeToFile("filtered.bmp");
+	}
+}
+
+void Decoder::decodeWellRect(const Dib & wellRectImage, DecodedWell & decodedWell) const {
+	const unsigned dpi = wellRectImage.getDpi();
+	CHECK((dpi == 300) || (dpi == 400) || (dpi == 600));
+
+	DmtxImage * dmtxImage = wellRectImage.getDmtxImage();
 	DmtxDecode *dec = dmtxDecodeCreate(dmtxImage, 1);
+
+	CHECK_NOTNULL(dmtxImage);
 	CHECK_NOTNULL(dec);
 
 	// slightly smaller than the new tube edge
-	minEdgeSize = static_cast<int>(0.08 * dpi);
+	int minEdgeSize = static_cast<int>(0.08 * dpi);
 
 	// slightly bigger than the Nunc edge
-	maxEdgeSize = static_cast<int>(0.18 * dpi);
+	int maxEdgeSize = static_cast<int>(0.18 * dpi);
 
 	dmtxDecodeSetProp(dec, DmtxPropEdgeMin, minEdgeSize);
 	dmtxDecodeSetProp(dec, DmtxPropEdgeMax, maxEdgeSize);
@@ -95,7 +158,7 @@ void Decoder::decodeImage(const Dib & dib, DecodedWell & decodedWell) {
 }
 
 void Decoder::getDecodeInfo(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg,
-		DecodedWell & DecodedWell) {
+		DecodedWell & DecodedWell) const {
 	CHECK_NOTNULL(dec);
 	CHECK_NOTNULL(reg);
 	CHECK_NOTNULL(msg);
@@ -125,7 +188,7 @@ void Decoder::getDecodeInfo(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg,
 	}
 }
 
-void Decoder::showStats(DmtxDecode * dec, DmtxRegion * reg, DmtxMessage * msg) {
+void Decoder::showStats(DmtxDecode * dec, DmtxRegion * reg, DmtxMessage * msg) const {
 	if (!VLOG_IS_ON(5))
 		return;
 
@@ -155,33 +218,32 @@ void Decoder::showStats(DmtxDecode * dec, DmtxRegion * reg, DmtxMessage * msg) {
 	if (rotateInt >= 360)
 		rotateInt -= 360;
 
-	VLOG(5)
-			<< "\n--------------------------------------------------"
-					<< "\n       Matrix Size: "
-					<< dmtxGetSymbolAttribute(DmtxSymAttribSymbolRows,
-							reg->sizeIdx) << " x "
-					<< dmtxGetSymbolAttribute(DmtxSymAttribSymbolCols,
-							reg->sizeIdx) << "\n    Data Codewords: "
-					<< dataWordLength - msg->padCount << " (capacity "
-					<< dataWordLength << ")" << "\n   Error Codewords: "
-					<< dmtxGetSymbolAttribute(DmtxSymAttribSymbolErrorWords,
-							reg->sizeIdx) << "\n      Data Regions: "
-					<< dmtxGetSymbolAttribute(DmtxSymAttribHorizDataRegions,
-							reg->sizeIdx) << " x "
-					<< dmtxGetSymbolAttribute(DmtxSymAttribVertDataRegions,
-							reg->sizeIdx) << "\nInterleaved Blocks: "
-					<< dmtxGetSymbolAttribute(DmtxSymAttribInterleavedBlocks,
-							reg->sizeIdx) << "\n    Rotation Angle: "
-					<< rotateInt << "\n          Corner 0: (" << p00.X << ", "
-					<< height - 1 - p00.Y << ")" << "\n          Corner 1: ("
-					<< p10.X << ", " << height - 1 - p10.Y << ")"
-					<< "\n          Corner 2: (" << p11.X << ", "
-					<< height - 1 - p11.Y << ")" << "\n          Corner 3: ("
-					<< p01.X << ", " << height - 1 - p01.Y << ")"
-					<< "\n--------------------------------------------------";
+	VLOG(5) << "\n--------------------------------------------------"
+			<< "\n       Matrix Size: "
+			<< dmtxGetSymbolAttribute(DmtxSymAttribSymbolRows, reg->sizeIdx)
+			<< " x "
+			<< dmtxGetSymbolAttribute(DmtxSymAttribSymbolCols, reg->sizeIdx)
+			<< "\n    Data Codewords: "
+			<< dataWordLength - msg->padCount << " (capacity "
+			<< dataWordLength << ")" << "\n   Error Codewords: "
+			<< dmtxGetSymbolAttribute(DmtxSymAttribSymbolErrorWords, reg->sizeIdx)
+			<< "\n      Data Regions: "
+			<< dmtxGetSymbolAttribute(DmtxSymAttribHorizDataRegions, reg->sizeIdx)
+			<< " x "
+			<< dmtxGetSymbolAttribute(DmtxSymAttribVertDataRegions, reg->sizeIdx)
+			<< "\nInterleaved Blocks: "
+			<< dmtxGetSymbolAttribute(DmtxSymAttribInterleavedBlocks, reg->sizeIdx)
+			<< "\n    Rotation Angle: "
+			<< rotateInt << "\n          Corner 0: (" << p00.X << ", "
+			<< height - 1 - p00.Y << ")" << "\n          Corner 1: ("
+			<< p10.X << ", " << height - 1 - p10.Y << ")"
+			<< "\n          Corner 2: (" << p11.X << ", "
+			<< height - 1 - p11.Y << ")" << "\n          Corner 3: ("
+			<< p01.X << ", " << height - 1 - p01.Y << ")"
+			<< "\n--------------------------------------------------";
 }
 
-void Decoder::writeDiagnosticImage(DmtxDecode *dec, const std::string & id) {
+void Decoder::writeDiagnosticImage(DmtxDecode *dec, const std::string & id) const {
 	if (!VLOG_IS_ON(5))
 		return;
 

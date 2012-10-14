@@ -56,9 +56,9 @@ public:
 	bool readFromFile(const std::string & filename);
 	bool writeToFile(const string & filename) const;
 
-	std::tr1::shared_ptr<Dib> convertGrayscale() const;
+	unique_ptr<Dib> convertGrayscale() const;
 
-	std::tr1::shared_ptr<Dib> crop(unsigned x0, unsigned y0, unsigned x1,
+	unique_ptr<Dib> crop(unsigned x0, unsigned y0, unsigned x1,
 			unsigned y1) const;
 
 	void tpPresetFilter();

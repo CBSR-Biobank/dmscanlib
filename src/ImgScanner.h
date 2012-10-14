@@ -21,18 +21,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include <dmtx.h>
-
-#ifdef _VISUALC_
-#   include <memory>
-#else
-#   include <tr1/memory>
-#endif
+#include <memory>
 
 #if defined (WIN32) && ! defined(__MINGW32__)
 #include <Windows.h>
 #else
 typedef void* HANDLE;
 #endif
+
+using namespace std;
 
 /**
  * This class interfaces with the TWAIN driver to acquire images from the
@@ -44,7 +41,7 @@ public:
 
 	virtual ~ImgScanner();
 
-	static std::tr1::shared_ptr<ImgScanner> create();
+	static unique_ptr<ImgScanner> create();
 
 	virtual bool twainAvailable() = 0;
 

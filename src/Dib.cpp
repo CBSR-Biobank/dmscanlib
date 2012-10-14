@@ -374,7 +374,7 @@ bool Dib::bound(unsigned min, unsigned & x, unsigned max) {
    return valueChanged;
 }
 
-std::tr1::shared_ptr<Dib> Dib::convertGrayscale() const {
+unique_ptr<Dib> Dib::convertGrayscale() const {
    CHECK(colorBits == 24 || colorBits == 8);
    CHECK(pixels != NULL);
 
@@ -382,8 +382,7 @@ std::tr1::shared_ptr<Dib> Dib::convertGrayscale() const {
       CHECK(false) << "already grayscale image.";
    }
 
-   VLOG(2)
-      << "convertGrayscale: Converting from 24 bit to 8 bit.";
+   VLOG(2) << "convertGrayscale: Converting from 24 bit to 8 bit.";
 
    // 24bpp -> 8bpp
    Dib * dest = new Dib(width, height, 8, pixelsPerMeter);
@@ -415,7 +414,7 @@ std::tr1::shared_ptr<Dib> Dib::convertGrayscale() const {
    VLOG(2)
       << "convertGrayscale: Generated 8 bit grayscale image.";
 
-   return std::tr1::shared_ptr<Dib>(dest);
+   return unique_ptr<Dib>(dest);
 }
 
 /*
@@ -424,7 +423,7 @@ std::tr1::shared_ptr<Dib> Dib::convertGrayscale() const {
  * TODO At the moment crops are only done on the bounding box. In the future
  * any rectangle, at any angle, should be allowed.
  */
-std::tr1::shared_ptr<Dib> Dib::crop(unsigned x0, unsigned y0, unsigned x1,
+unique_ptr<Dib> Dib::crop(unsigned x0, unsigned y0, unsigned x1,
                                     unsigned y1) const {
    CHECK(x1 > x0);
    CHECK(y1 > y0);
@@ -437,7 +436,7 @@ std::tr1::shared_ptr<Dib> Dib::crop(unsigned x0, unsigned y0, unsigned x1,
    unsigned cWidth = x1 - x0;
    unsigned cHeight = y1 - y0;
 
-   std::tr1::shared_ptr<Dib> croppedImg(
+   unique_ptr<Dib> croppedImg(
       new Dib(cWidth, cHeight, colorBits, pixelsPerMeter));
 
    unsigned char *srcRowPtr = pixels + (height - y1) * rowBytes

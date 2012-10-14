@@ -8,15 +8,10 @@
 #include <dmtx.h>
 #include <string>
 #include <ostream>
+#include <memory>
 #include <OpenThreads/Mutex>
 #include <OpenThreads/ScopedLock>
 #include <OpenThreads/Thread>
-
-#ifdef _VISUALC_
-#   include <memory>
-#else
-#   include <tr1/memory>
-#endif
 
 using namespace std;
 
@@ -27,8 +22,8 @@ class PalletGrid;
 
 class WellDecoder : public OpenThreads::Thread {
 public:
-   WellDecoder(const Dib & image, Decoder & decoder,
-		   WellRectangle<unsigned> & _wellRectangle);
+   WellDecoder(const Dib & image, const Decoder & decoder,
+		   const WellRectangle<unsigned> & _wellRectangle);
 
    virtual ~WellDecoder();
 
@@ -67,9 +62,8 @@ public:
    void writeImage(std::string basename);
 
 private:
-   const Dib & scannedImage;
-   Decoder & decoder;
-   std::tr1::shared_ptr<const Dib> wellImage;
+   const Decoder & decoder;
+   unique_ptr<const Dib> wellImage;
    DecodedWell decodedWell;
 
    friend std::ostream & operator<<(std::ostream & os, WellDecoder & m);

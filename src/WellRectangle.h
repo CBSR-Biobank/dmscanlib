@@ -43,6 +43,10 @@ public:
 
 	const Point<T> & getCorner(unsigned cornerId) const;
 
+	const T getCornerX(unsigned cornerId) const;
+
+	const T getCornerY(unsigned cornerId) const;
+
 private:
 	const string label;
 	const Rect<T> rect;

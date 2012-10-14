@@ -32,7 +32,6 @@
 
 #include "DmScanLib.h"
 #include "ImgScanner.h"
-#include "ImgScanner.h"
 #include "Decoder.h"
 #include "DecodeOptions.h"
 #include "Dib.h"
@@ -54,9 +53,9 @@ const string DmScanLib::LIBRARY_NAME("dmscanlib");
 bool DmScanLib::loggingInitialized = false;
 
 DmScanLib::DmScanLib(unsigned loggingLevel, bool logToFile) :
-		imgScanner(ImgScanner::create()), stdoutOutputEnable(false), textFileOutputEnable(
-				false) {
-
+		imgScanner(std::move(ImgScanner::create())),
+		stdoutOutputEnable(false), textFileOutputEnable(false)
+{
 	configLogging(loggingLevel, logToFile);
 	if (VLOG_IS_ON(2)) {
 		Util::getTime(starttime);
@@ -175,7 +174,8 @@ int DmScanLib::scanFlatbed(unsigned dpi, int brightness, int contrast,
 
 int DmScanLib::scanAndDecode(unsigned dpi, int brightness, int contrast,
 		double left, double top, double right, double bottom,
-		const DecodeOptions & decodeOptions) {
+		const DecodeOptions & decodeOptions,
+		vector<unique_ptr<WellRectangle<double>  > > & wellRects) {
 	VLOG(2) << "decodePlate: dpi/" << dpi << " brightness/" << brightness
 			<< " contrast/" << contrast
 			<< " left/" << left << " top/" << top << " right/" << right
@@ -191,14 +191,14 @@ int DmScanLib::scanAndDecode(unsigned dpi, int brightness, int contrast,
 		return imgScanner->getErrorCode();
 	}
 
-	image = std::tr1::shared_ptr<Dib>(new Dib());
-	image->readFromHandle(h);
-	if (image->getDpi() != dpi) {
+	Dib image;
+	image.readFromHandle(h);
+	if (image.getDpi() != dpi) {
 		return SC_INCORRECT_DPI_SCANNED;
 	}
 
-	image->writeToFile("scanned.bmp");
-	result = decodeCommon(decodeOptions, "decode.bmp");
+	image.writeToFile("scanned.bmp");
+	result = decodeCommon(image, decodeOptions, "decode.bmp", wellRects);
 
 	imgScanner->freeImage(h);
 	VLOG(2) << "decodeCommon returned: " << result;
@@ -207,33 +207,28 @@ int DmScanLib::scanAndDecode(unsigned dpi, int brightness, int contrast,
 
 int DmScanLib::decodeImageWells(const char * filename,
 		const DecodeOptions & decodeOptions,
-		vector<std::tr1::shared_ptr<WellRectangle<double>  > > & wellRects) {
+		vector<unique_ptr<WellRectangle<double>  > > & wellRects) {
 
-	VLOG(2) << "decodeImage: filename/" << filename << decodeOptions;
+	VLOG(2) << "decodeImage: filename/" << filename
+			<< " numWellRects/" << wellRects.size()
+			<< decodeOptions;
 
-	image = std::tr1::shared_ptr<Dib>(new Dib());
-	bool readResult = image->readFromFile(filename);
+	Dib image;
+	bool readResult = image.readFromFile(filename);
 	if (!readResult) {
 		return SC_INVALID_IMAGE;
 	}
 
-	int result = decodeCommon(decodeOptions, "decode.bmp");
+	int result = decodeCommon(image, decodeOptions, "decode.bmp", wellRects);
 	return result;
 }
 
-int DmScanLib::decodeCommon(const DecodeOptions & decodeOptions,
-		const string &markedDibFilename) {
-	const unsigned dpi = image->getDpi();
+int DmScanLib::decodeCommon(const Dib & image, const DecodeOptions & decodeOptions,
+		const string &markedDibFilename,
+	    vector<unique_ptr<WellRectangle<double>  > > & wellRects) {
 
-	VLOG(2) << "DecodeCommon: dpi/" << dpi;
-
-	if ((dpi != 300) && (dpi != 400) && (dpi != 600)) {
-		return SC_INVALID_DPI;
-	}
-
-	decoder = std::tr1::shared_ptr<Decoder>(new Decoder(dpi, decodeOptions));
-
-	applyFilters();
+	Decoder decoder(image, decodeOptions, wellRects);
+	decoder.decodeWellRects();
 
 //	if (decodeCount == 0) {
 //		return SC_INVALID_IMAGE;
@@ -255,17 +250,7 @@ int DmScanLib::decodeCommon(const DecodeOptions & decodeOptions,
 	return SC_SUCCESS;
 }
 
-void DmScanLib::applyFilters() {
-	if (image->getBitsPerPixel() != 8) {
-		image->convertGrayscale();
-	}
-	image->tpPresetFilter();
-	if (VLOG_IS_ON(2)) {
-		image->writeToFile("filtered.bmp");
-	}
-}
-
-//std::vector<std::tr1::shared_ptr<WellDecoder> > & DmScanLib::getDecodedCells() {
+//std::vector<unique_ptr<WellDecoder> > & DmScanLib::getDecodedCells() {
 	//return palletGrid->getDecodedCells();
 //}
 

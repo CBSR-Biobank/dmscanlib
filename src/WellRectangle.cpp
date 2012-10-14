@@ -16,6 +16,20 @@ WellRectangle<T>::WellRectangle(const char * _label, T x1, T y1,
 {
 }
 
+
+template<typename T>
+const T WellRectangle<T>::getCornerX(unsigned cornerId) const {
+    CHECK(cornerId < 4);
+    return rect.corners[cornerId].x;
+}
+
+template<typename T>
+const T WellRectangle<T>::getCornerY(unsigned cornerId) const {
+    CHECK(cornerId < 4);
+    return rect.corners[cornerId].y;
+
+}
+
 template<typename T>
 const Point<T> & WellRectangle<T>::getCorner(unsigned cornerId) const {
 	CHECK(cornerId < 4);

@@ -9,7 +9,6 @@
 #include <stddef.h>
 #include <jni.h>
 
-
 DecodeOptions::DecodeOptions(double scanGap, long squareDev,
 		long edgeThresh, long corrections, double cellDistance) {
 

@@ -17,12 +17,12 @@
 #ifdef _VISUALC_
 #   include <functional>
 #else
-#   include <tr1/functional>
+//#   include <tr1/functional>
 #endif
 
-WellDecoder::WellDecoder(const Dib & _image, Decoder & _decoder,
-		WellRectangle<unsigned> & _wellRectangle) :
-		scannedImage(_image), decoder(_decoder), decodedWell(_wellRectangle) {
+WellDecoder::WellDecoder(const Dib & _image, const Decoder & _decoder,
+		const WellRectangle<unsigned> & _wellRectangle) :
+		decoder(_decoder), decodedWell(_wellRectangle) {
 }
 
 WellDecoder::~WellDecoder() {
@@ -36,8 +36,8 @@ void WellDecoder::run() {
     id << decodedWell.getWellRectangle().getLabel();
 
     // TODO: get bounding box for well rectangle
-    wellImage = scannedImage.crop(0,0,0,0);
-    decoder.decodeImage(*wellImage.get(), decodedWell);
+    wellImage = std::move(decoder.getWorkingImage().crop(0,0,0,0));
+    decoder.decodeWellRect(*wellImage, decodedWell);
     if (!decodedWell.getMessage().empty()) {
 
         RAW_LOG(INFO, "run: (%s) - %s",
@@ -69,13 +69,7 @@ void WellDecoder::drawBarcodeBox(Dib & image, const RgbQuad & color) const {
 }
 
 ostream & operator<<(ostream &os, WellDecoder & m) {
-	const Rect<unsigned> & rect = m.getDecodedRectangle();
-
-    os << m.getLabel() << ": "
-       << "\"" << m.getMessage() << "\" ("
-       << rect.corners[0].x << ", " << rect.corners[0].y << "), "
-       << "(" << rect.corners[2].x << ", " << rect.corners[2].y << "), "
-       << "(" << rect.corners[3].x << ", "  << rect.corners[3].y << "), "
-       << "(" << rect.corners[1].x << ", " << rect.corners[1].y  << ")";
+    os << m.getLabel();
+    //<< ": " << "\"" << m.getMessage() << "\" " m.getDecodedRectangle();
     return os;
 }
