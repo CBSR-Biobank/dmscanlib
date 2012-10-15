@@ -26,9 +26,9 @@
 #include "Decoder.h"
 #include "DmScanLib.h"
 #include "DecodeOptions.h"
-#include "Dib.h"
+#include "dib/Dib.h"
 #include "WellDecoder.h"
-#include "DecodeThreadMgr.h"
+#include "decoder/DecodeThreadMgr.h"
 
 #include <glog/logging.h>
 #include <stdio.h>
@@ -45,7 +45,6 @@ Decoder::Decoder(const Dib & _image, const DecodeOptions & _decodeOptions,
 		vector<unique_ptr<WellRectangle<double>  > > & _wellRects) :
 		image(_image), decodeOptions(_decodeOptions), wellRects(_wellRects)
 {
-	wellRectsConverted.resize(wellRects.size());
 	wellDecoders.resize(wellRects.size());
 	applyFilters();
 }
@@ -77,19 +76,13 @@ int Decoder::decodeWellRects() {
 						static_cast<unsigned>(dpi * wellRect.getCornerY(3))
 				));
 
-		VLOG(2) << *wellRectConverted;
-
-		wellRectsConverted.push_back(std::move(wellRectConverted));
-
 		unique_ptr<WellDecoder> wellDecoder(
-				new WellDecoder(*this, *wellRectConverted));
+				new WellDecoder(*this, std::move(wellRectConverted)));
 
-		VLOG(2) << * wellDecoder;
-
-		wellDecoders.push_back(std::move(wellDecoder));
+		wellDecoders[i] = std::move(wellDecoder);
 	}
 
-	DecodeThreadMgr threadMgr(*this);
+	DecodeThreadMgr threadMgr;
 	threadMgr.decodeWells(wellDecoders);
 
 	return 0;

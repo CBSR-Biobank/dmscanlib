@@ -31,11 +31,11 @@
 #endif
 
 #include "DmScanLib.h"
-#include "ImgScanner.h"
-#include "Decoder.h"
-#include "DecodeOptions.h"
-#include "WellDecoder.h"
-#include "Dib.h"
+#include "imgscanner/ImgScanner.h"
+#include "decoder/Decoder.h"
+#include "decoder/DecodeOptions.h"
+#include "decoder/WellDecoder.h"
+#include "dib/Dib.h"
 
 #include <glog/logging.h>
 #include <stdio.h>

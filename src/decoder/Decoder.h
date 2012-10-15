@@ -29,12 +29,6 @@
 #include <vector>
 #include <memory>
 
-#ifdef _VISUALC_
-#   include <memory>
-#else
-#   include <tr1/memory>
-#endif
-
 #ifdef WIN32
 #include <windows.h>
 #endif
@@ -71,7 +65,6 @@ private:
     unique_ptr<Dib> filteredImage;
     const DecodeOptions & decodeOptions;
     const vector<unique_ptr<WellRectangle<double>  > > & wellRects;
-	vector<unique_ptr<WellRectangle<unsigned> > > wellRectsConverted;
 	vector<unique_ptr<WellDecoder> > wellDecoders;
 };
 

@@ -22,7 +22,7 @@ class PalletGrid;
 class WellDecoder : public OpenThreads::Thread {
 public:
 	WellDecoder(const Decoder & decoder,
-			const WellRectangle<unsigned> & _wellRectangle);
+			unique_ptr<const WellRectangle<unsigned> > _wellRectangle);
 
    virtual ~WellDecoder();
 
@@ -32,8 +32,8 @@ public:
 
    void decodeCallback(std::string & decodedMsg, Point<unsigned>(&corners)[4]);
 
-	const string & getLabel() {
-		return wellRectangle.getLabel();
+	const string & getLabel() const {
+		return wellRectangle->getLabel();
 	}
 
 	const string & getMessage() const {
@@ -43,7 +43,7 @@ public:
 	void setMessage(const char * message, int messageLength);
 
    const Rect<unsigned> & getWellRectangle() const {
-      return wellRectangle.getRectangle();
+      return wellRectangle->getRectangle();
    }
 
    const Rect<unsigned> & getDecodedRectangle() const {
@@ -66,8 +66,8 @@ public:
 
 private:
    const Decoder & decoder;
+   unique_ptr<const WellRectangle<unsigned> > wellRectangle;
    unique_ptr<const Dib> wellImage;
-   const WellRectangle<unsigned> & wellRectangle;
    Rect<unsigned> decodedRect;
    string message;
 

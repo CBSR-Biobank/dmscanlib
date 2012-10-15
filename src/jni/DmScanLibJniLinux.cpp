@@ -2,7 +2,7 @@
  * Contains the code used in the library when building it for Linux.
  */
 
-#include "edu_ualberta_med_scannerconfig_dmscanlib_ScanLib.h"
+#include "DmScanLibJni.h"
 #include "DmScanLib.h"
 #include "ScanRegion.h"
 

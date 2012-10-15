@@ -21,7 +21,7 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "WellRectangle.h"
+#include "decoder/WellRectangle.h"
 #include "utils/TimeUtil.h"
 
 #include <string>

@@ -6,7 +6,7 @@
  */
 
 #include "WellDecoder.h"
-#include "Dib.h"
+#include "dib/Dib.h"
 #include "Decoder.h"
 
 #include <sstream>
@@ -20,8 +20,8 @@
 #endif
 
 WellDecoder::WellDecoder(const Decoder & _decoder,
-		const WellRectangle<unsigned> & _wellRectangle) :
-		decoder(_decoder), wellRectangle(_wellRectangle),
+		unique_ptr<const WellRectangle<unsigned>> _wellRectangle) :
+		decoder(_decoder), wellRectangle(std::move(_wellRectangle)),
 		decodedRect(0, 0, 0, 0, 0, 0, 0, 0)
 {
 }
@@ -34,13 +34,13 @@ WellDecoder::~WellDecoder() {
  */
 void WellDecoder::run() {
     ostringstream id;
-    id << wellRectangle.getLabel();
+    id << wellRectangle->getLabel();
 
     // TODO: get bounding box for well rectangle
     wellImage = std::move(decoder.getWorkingImage().crop(0,0,0,0));
     decoder.decodeWellRect(*wellImage, *this);
     if (!message.empty()) {
-    	RAW_LOG(INFO, "run: (%s) - %s", wellRectangle.getLabel().c_str(),
+    	RAW_LOG(INFO, "run: (%s) - %s", wellRectangle->getLabel().c_str(),
     			message.c_str());
     }
 }
@@ -59,12 +59,12 @@ void WellDecoder::writeImage(std::string basename) {
     if (!VLOG_IS_ON(5)) return;
 
     ostringstream fname;
-    fname << basename << "-" << wellRectangle.getLabel().c_str() << ".bmp";
+    fname << basename << "-" << wellRectangle->getLabel().c_str() << ".bmp";
     wellImage->writeToFile(fname.str().c_str());
 }
 
 void WellDecoder::drawCellBox(Dib & image, const RgbQuad & color) const {
-    image.drawRectangle(wellRectangle.getRectangle(), color);
+    image.drawRectangle(wellRectangle->getRectangle(), color);
 }
 
 void WellDecoder::drawBarcodeBox(Dib & image, const RgbQuad & color) const {
@@ -78,7 +78,6 @@ void WellDecoder::setCorner(unsigned cornerId, unsigned x, unsigned y) {
 }
 
 ostream & operator<<(ostream &os, WellDecoder & m) {
-    os << m.getLabel();
-    //<< ": " << "\"" << m.getMessage() << "\" " m.getDecodedRectangle();
+    os << m.getLabel() << ": \"" << m.getMessage() << "\" "<< m.decodedRect;
     return os;
 }

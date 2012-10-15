@@ -2,11 +2,11 @@
  * Contains JNI code common to both MS Windows and Linux.
  */
 
-#include "edu_ualberta_med_scannerconfig_dmscanlib_ScanLib.h"
+#include "DmScanLibJni.h"
 #include "DmScanLib.h"
 #include "ScanRegion.h"
-#include "DecodeOptions.h"
-#include "WellDecoder.h"
+#include "decoder/DecodeOptions.h"
+#include "decoder/WellDecoder.h"
 
 #include <iostream>
 #include <vector>

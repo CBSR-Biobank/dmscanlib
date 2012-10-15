@@ -20,9 +20,7 @@
 
 #include "DmScanLib.h"
 #include "DecodeThreadMgr.h"
-#include "Decoder.h"
 #include "WellDecoder.h"
-#include "Dib.h"
 
 #include <algorithm>
 #include <memory>
@@ -37,7 +35,7 @@ using namespace std;
 
 const unsigned DecodeThreadMgr::THREAD_NUM = 8;
 
-DecodeThreadMgr::DecodeThreadMgr(Decoder & _decoder) : decoder(_decoder) {
+DecodeThreadMgr::DecodeThreadMgr() {
 }
 
 DecodeThreadMgr::~DecodeThreadMgr() {
@@ -48,9 +46,10 @@ void DecodeThreadMgr::decodeWells(vector<unique_ptr<WellDecoder> > & wellDecoder
 	allThreads.resize(numThreads);
 
 	for (unsigned i = 0; i < numThreads; ++i) {
+		WellDecoder & wellDecoder = *wellDecoders[i];
 		//wellDecoders[i]->run();
-		VLOG(2) << *wellDecoders[i];
-		allThreads.push_back(std::move(wellDecoders[i]));
+		VLOG(2) << wellDecoder;
+		allThreads[i] = wellDecoders[i].get();
 	}
 
 	threadHandler();

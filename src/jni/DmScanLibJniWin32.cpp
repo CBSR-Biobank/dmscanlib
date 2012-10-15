@@ -2,10 +2,9 @@
  * Contains the code used in the library when building it for MS Windows.
  */
 
-#include "edu_ualberta_med_scannerconfig_dmscanlib_ScanLib.h"
+#include "jni/DmScanLibJni.h"
 #include "DmScanLib.h"
 #include "ScanRegion.h"
-#include "DmScanLibInternal.h"
 
 #include <iostream>
 

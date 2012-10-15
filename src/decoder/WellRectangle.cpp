@@ -16,6 +16,13 @@ WellRectangle<T>::WellRectangle(const char * _label, T x1, T y1,
 {
 }
 
+template<typename T>
+WellRectangle<T>::WellRectangle(const char * _label, T x1, T y1, T x2, T y2)  :
+	label(_label), rect(x1, y1, x1, y2, x2, y1, x2, y2)
+{
+
+}
+
 
 template<typename T>
 const T WellRectangle<T>::getCornerX(unsigned cornerId) const {

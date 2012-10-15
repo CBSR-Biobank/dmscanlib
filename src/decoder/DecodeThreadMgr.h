@@ -2,7 +2,7 @@
 #define __INC_PROCESS_IMAGE_MANAGER_H
 
 /*
- Dmscanlib is a software library and standalone application that scans
+ Dmscanlib is a software library and stand alone application that scans
  and decodes libdmtx compatible test-tubes. It is currently designed
  to decode 12x8 pallets that use 2D data-matrix laser etched test-tubes.
  Copyright (C) 2010 Canadian Biosample Repository
@@ -33,18 +33,14 @@
 
 using namespace std;
 
-class Dib;
 class WellDecoder;
-class DecodeInfo;
-class BarcodeThread;
-class Decoder;
 
 class DecodeThreadMgr {
 public:
-	DecodeThreadMgr(Decoder & decoder);
+	DecodeThreadMgr();
 	~DecodeThreadMgr();
 
-	void decodeWells(std::vector<unique_ptr<WellDecoder> > & wellDecoders);
+	void decodeWells(vector<unique_ptr<WellDecoder> > & wellDecoders);
 
 private:
 	static const unsigned THREAD_NUM;
@@ -52,8 +48,7 @@ private:
 	void threadHandler();
 	void threadProcessRange(unsigned int first, unsigned int last);
 
-	const Decoder & decoder;
-	vector<unique_ptr<WellDecoder> > allThreads;
+	vector<WellDecoder *> allThreads;
 	unsigned numThreads;
 };
 

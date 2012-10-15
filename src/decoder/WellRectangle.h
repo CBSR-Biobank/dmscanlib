@@ -30,6 +30,9 @@ public:
    WellRectangle(const char * label, T x1, T y1, T x2, T y2,	T x3, T y3,
 		   T x4, T y4);
 
+   // bounding box constructor
+   WellRectangle(const char * label, T x1, T y1, T x2, T y2);
+
 	virtual ~WellRectangle() {
 	}
 
