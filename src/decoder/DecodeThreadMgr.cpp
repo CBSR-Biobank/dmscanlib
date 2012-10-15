@@ -46,9 +46,6 @@ void DecodeThreadMgr::decodeWells(vector<unique_ptr<WellDecoder> > & wellDecoder
 	allThreads.resize(numThreads);
 
 	for (unsigned i = 0; i < numThreads; ++i) {
-		WellDecoder & wellDecoder = *wellDecoders[i];
-		//wellDecoders[i]->run();
-		VLOG(2) << wellDecoder;
 		allThreads[i] = wellDecoders[i].get();
 	}
 

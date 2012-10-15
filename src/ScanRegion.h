@@ -14,8 +14,7 @@ public:
     ScanRegion(JNIEnv *env, jobject scanRegionObj);
     virtual ~ScanRegion() { };
 
-    Point<double> point1;
-    Point<double> point2;
+    BoundingBox<double> boundingBox;
 
 private:
 };

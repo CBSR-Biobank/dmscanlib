@@ -22,9 +22,9 @@ ScanRegion::ScanRegion(JNIEnv *env, jobject scanRegionObj) {
     	return;
     }
 
-    point1.x = env->CallDoubleMethod(scanRegionObj, getMethodGetPointX, 0);
-    point1.y = env->CallDoubleMethod(scanRegionObj, getMethodGetPointY, 0);
+    boundingBox.points[0].x = env->CallDoubleMethod(scanRegionObj, getMethodGetPointX, 0);
+    boundingBox.points[0].y = env->CallDoubleMethod(scanRegionObj, getMethodGetPointY, 0);
 
-    point2.x = env->CallDoubleMethod(scanRegionObj, getMethodGetPointX, 1);
-    point2.y = env->CallDoubleMethod(scanRegionObj, getMethodGetPointY, 1);
+    boundingBox.points[1].x = env->CallDoubleMethod(scanRegionObj, getMethodGetPointX, 1);
+    boundingBox.points[1].y = env->CallDoubleMethod(scanRegionObj, getMethodGetPointY, 1);
 }

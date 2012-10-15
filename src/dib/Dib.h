@@ -61,6 +61,11 @@ public:
 	unique_ptr<Dib> crop(unsigned x0, unsigned y0, unsigned x1,
 			unsigned y1) const;
 
+	unique_ptr<Dib> crop(const BoundingBox<unsigned> bbox) const {
+		return std::move(crop(bbox.points[0].x, bbox.points[0].y,
+				bbox.points[1].x, bbox.points[1].y));
+	}
+
 	void tpPresetFilter();
 
 	unsigned getDpi() const;

@@ -8,6 +8,7 @@
 #include "WellDecoder.h"
 #include "dib/Dib.h"
 #include "Decoder.h"
+#include "geometry.h"
 
 #include <sstream>
 #include <glog/logging.h>
@@ -37,7 +38,10 @@ void WellDecoder::run() {
     id << wellRectangle->getLabel();
 
     // TODO: get bounding box for well rectangle
-    wellImage = std::move(decoder.getWorkingImage().crop(0,0,0,0));
+    BoundingBox<unsigned> bbox;
+    Rect2BoundingBox(wellRectangle->getRectangle(), bbox);
+
+    wellImage = std::move(decoder.getWorkingImage().crop(bbox));
     decoder.decodeWellRect(*wellImage, *this);
     if (!message.empty()) {
     	RAW_LOG(INFO, "run: (%s) - %s", wellRectangle->getLabel().c_str(),
