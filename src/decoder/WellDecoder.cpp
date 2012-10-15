@@ -38,8 +38,7 @@ void WellDecoder::run() {
     id << wellRectangle->getLabel();
 
     // TODO: get bounding box for well rectangle
-    BoundingBox<unsigned> bbox;
-    Rect2BoundingBox(wellRectangle->getRectangle(), bbox);
+    BoundingBox<unsigned> bbox(wellRectangle->getRectangle());
 
     wellImage = std::move(decoder.getWorkingImage().crop(bbox));
     decoder.decodeWellRect(*wellImage, *this);

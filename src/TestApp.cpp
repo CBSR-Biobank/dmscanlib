@@ -66,7 +66,7 @@ namespace {
 class TestApp : public ::testing::Test {
 protected:
     TestApp() {
-
+        DmScanLib::configLogging(3, false);
     }
 
     ~TestApp() {
@@ -83,15 +83,16 @@ private:
 };
 
 TEST_F(TestApp, ScanImage) {
-    DmScanLib::configLogging(3, false);
 
     vector<unique_ptr<WellRectangle<double>  > > wellRects;
 
-	unique_ptr<WellRectangle<double> > wellRect(
-			new WellRectangle<double>("A12", 10.0 / 400.0, 20.0 / 400.0,
-	                130.0 / 400.0, 130.0 / 400.0));
+	wellRects.push_back(unique_ptr<WellRectangle<double> >(
+			new WellRectangle<double>("A12", 10.0 / 400.0, 24.0 / 400.0,
+	                130.0 / 400.0, 120.0 / 400.0)));
 
-	wellRects.push_back(std::move(wellRect));
+	wellRects.push_back(unique_ptr<WellRectangle<double> >(
+			new WellRectangle<double>("A11", 150.0 / 400.0, 24.0 / 400.0,
+            250.0 / 400.0, 120.0 / 400.0)));
 
     DecodeOptions decodeOptions(0.085, 15, 5, 10, 0.345);
 

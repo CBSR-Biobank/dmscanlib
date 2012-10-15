@@ -58,13 +58,7 @@ public:
 
 	unique_ptr<Dib> convertGrayscale() const;
 
-	unique_ptr<Dib> crop(unsigned x0, unsigned y0, unsigned x1,
-			unsigned y1) const;
-
-	unique_ptr<Dib> crop(const BoundingBox<unsigned> bbox) const {
-		return std::move(crop(bbox.points[0].x, bbox.points[0].y,
-				bbox.points[1].x, bbox.points[1].y));
-	}
+	unique_ptr<Dib> crop(const BoundingBox<unsigned> & bbox) const;
 
 	void tpPresetFilter();
 
@@ -128,7 +122,6 @@ private:
     void setPixel(unsigned row, unsigned col, const RgbQuad & quad);
 	unsigned getPaletteSize(unsigned bitCount) const;
 	unsigned getRowBytes(unsigned width, unsigned bitCount);
-	static bool bound(unsigned min, unsigned & x, unsigned max);
 	void convolveFast3x3(const float(&kernel)[9]);
 
 };

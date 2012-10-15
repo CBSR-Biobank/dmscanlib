@@ -357,23 +357,6 @@ void Dib::setPixel(unsigned x, unsigned y, const RgbQuad & quad) {
    ptr[0] = quad.getBlue();
 }
 
-/*
- * [a,b)
- */
-bool Dib::bound(unsigned min, unsigned & x, unsigned max) {
-   bool valueChanged = false;
-
-   if (x < min) {
-      x = min;
-      valueChanged = true;
-   }
-   if (x >= max) {
-      x = max - 1;
-      valueChanged = true;
-   }
-   return valueChanged;
-}
-
 unique_ptr<Dib> Dib::convertGrayscale() const {
    CHECK(colorBits == 24 || colorBits == 8);
    CHECK(pixels != NULL);
@@ -423,24 +406,26 @@ unique_ptr<Dib> Dib::convertGrayscale() const {
  * TODO At the moment crops are only done on the bounding box. In the future
  * any rectangle, at any angle, should be allowed.
  */
-unique_ptr<Dib> Dib::crop(unsigned x0, unsigned y0, unsigned x1,
-                                    unsigned y1) const {
-   CHECK(x1 > x0);
-   CHECK(y1 > y0);
+unique_ptr<Dib> Dib::crop(const BoundingBox<unsigned> & bbox) const {
+   CHECK(bbox.points[1].x > bbox.points[0].x);
+   CHECK(bbox.points[1].y > bbox.points[0].y);
 
-   bound(0, x0, width);
-   bound(0, x1, width);
-   bound(0, y0, height);
-   bound(0, y1, height);
+   BoundingBox<unsigned> boundBbox(bbox);
 
-   unsigned cWidth = x1 - x0;
-   unsigned cHeight = y1 - y0;
+   boundBbox.points[0].x =  min(bbox.points[0].x, width-1);
+   boundBbox.points[1].x =  min(bbox.points[1].x, width-1);
+
+   boundBbox.points[0].y =  min(bbox.points[0].y, height-1);
+   boundBbox.points[1].y =  min(bbox.points[1].y, height-1);
+
+   unsigned cWidth = boundBbox.points[1].x - boundBbox.points[0].x;
+   unsigned cHeight = boundBbox.points[1].y - boundBbox.points[0].y;
 
    unique_ptr<Dib> croppedImg(
       new Dib(cWidth, cHeight, colorBits, pixelsPerMeter));
 
-   unsigned char *srcRowPtr = pixels + (height - y1) * rowBytes
-      + x0 * croppedImg->bytesPerPixel;
+   unsigned char *srcRowPtr = pixels + (height - boundBbox.points[1].y) * rowBytes
+      + boundBbox.points[0].x * croppedImg->bytesPerPixel;
    unsigned char *destRowPtr = croppedImg->pixels;
    unsigned row = 0;
 

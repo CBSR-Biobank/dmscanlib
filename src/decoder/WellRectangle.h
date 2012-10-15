@@ -27,11 +27,13 @@ ostream & operator<<(ostream &os, const WellRectangle<T> & m) {
 template<typename T>
 class WellRectangle {
 public:
-   WellRectangle(const char * label, T x1, T y1, T x2, T y2,	T x3, T y3,
-		   T x4, T y4);
+	WellRectangle(const char * label, T x1, T y1, T x2, T y2,	T x3, T y3,
+			T x4, T y4);
 
-   // bounding box constructor
-   WellRectangle(const char * label, T x1, T y1, T x2, T y2);
+	WellRectangle(const char * label, const Rect<T> & rect);
+
+	// bounding box constructor
+	WellRectangle(const char * label, T x1, T y1, T x2, T y2);
 
 	virtual ~WellRectangle() {
 	}

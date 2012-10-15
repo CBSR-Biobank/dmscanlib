@@ -62,28 +62,34 @@ int Decoder::decodeWellRects() {
 	}
 
 	for(unsigned i = 0, n = wellRects.size(); i < n; ++i) {
-		WellRectangle<double> & wellRect = *wellRects[i];
+		const WellRectangle<double> & wellRect = *wellRects[i];
 
-		unique_ptr<WellRectangle<unsigned> > wellRectConverted(
-				new WellRectangle<unsigned>(wellRect.getLabel().c_str(),
-						static_cast<unsigned>(dpi * wellRect.getCornerX(0)),
-						static_cast<unsigned>(dpi * wellRect.getCornerY(0)),
-						static_cast<unsigned>(dpi * wellRect.getCornerX(1)),
-						static_cast<unsigned>(dpi * wellRect.getCornerY(1)),
-						static_cast<unsigned>(dpi * wellRect.getCornerX(2)),
-						static_cast<unsigned>(dpi * wellRect.getCornerY(2)),
-						static_cast<unsigned>(dpi * wellRect.getCornerX(3)),
-						static_cast<unsigned>(dpi * wellRect.getCornerY(3))
-				));
+		Rect<double> factoredRect(wellRect.getRectangle());
+		factoredRect.scale(static_cast<double>(dpi));
 
-		unique_ptr<WellDecoder> wellDecoder(
-				new WellDecoder(*this, std::move(wellRectConverted)));
+		Rect<unsigned> convertedRect(
+				static_cast<unsigned>(factoredRect.corners[0].x),
+				static_cast<unsigned>(factoredRect.corners[0].y),
+				static_cast<unsigned>(factoredRect.corners[1].x),
+				static_cast<unsigned>(factoredRect.corners[1].y),
+				static_cast<unsigned>(factoredRect.corners[2].x),
+				static_cast<unsigned>(factoredRect.corners[2].y),
+				static_cast<unsigned>(factoredRect.corners[3].x),
+				static_cast<unsigned>(factoredRect.corners[3].y)
+				);
 
-		wellDecoders[i] = std::move(wellDecoder);
+		wellDecoders[i] = unique_ptr<WellDecoder>(
+				new WellDecoder(*this, unique_ptr<WellRectangle<unsigned> >(
+						new WellRectangle<unsigned>(wellRect.getLabel().c_str(),
+								convertedRect))));
 	}
 
 	DecodeThreadMgr threadMgr;
 	threadMgr.decodeWells(wellDecoders);
+
+	for(unsigned i = 0, n = wellDecoders.size(); i < n; ++i) {
+		VLOG(2) << *wellDecoders[i];
+	}
 
 	return 0;
 }
@@ -134,7 +140,7 @@ void Decoder::decodeWellRect(const Dib & wellRectImage, WellDecoder & wellDecode
 		if (msg != NULL) {
 			getDecodeInfo(dec, reg, msg, wellDecoder);
 
-			if (VLOG_IS_ON(2)) {
+			if (VLOG_IS_ON(5)) {
 				showStats(dec, reg, msg);
 			}
 			dmtxMessageDestroy(&msg);
