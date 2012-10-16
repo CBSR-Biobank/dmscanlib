@@ -27,7 +27,6 @@
 #include <string>
 #include <memory>
 #include <vector>
-#include <jni.h>
 
 /**
  * Return codes used by the DLL API.
@@ -55,11 +54,6 @@ class WellDecoder;
 class DecodeOptions;
 
 using namespace std;
-
-void getResultCodeMsg(int resultCode, string & message);
-jobject createScanResultObject(JNIEnv * env, int resultCode, int value);
-jobject createDecodedResultObject(JNIEnv * env, int resultCode,
-        std::vector<unique_ptr<WellDecoder> > * wells);
 
 class DmScanLib {
 public:
@@ -93,6 +87,8 @@ public:
 		stdoutOutputEnable = enable;
 	}
 
+    const vector<WellDecoder *> & getDecodedWells() const;
+
 protected:
     void saveResults(string & msg);
 
@@ -104,6 +100,8 @@ protected:
     		const string &decodedDibFilename,
     	    vector<unique_ptr<WellRectangle<double>  > > & wellRects);
 
+    void writeDecodedImage(const Dib & image, const string & decodedDibFilename);
+
     static const string LIBRARY_NAME;
 
     slTime starttime; // for debugging
@@ -111,6 +109,8 @@ protected:
     slTime timediff;
 
     std::unique_ptr<ImgScanner> imgScanner;
+
+    std::unique_ptr<Decoder> decoder;
 
     bool stdoutOutputEnable;
 

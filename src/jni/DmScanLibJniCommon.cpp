@@ -3,6 +3,7 @@
  */
 
 #include "DmScanLibJni.h"
+#include "DmScanLibJniInternal.h"
 #include "DmScanLib.h"
 #include "ScanRegion.h"
 #include "decoder/DecodeOptions.h"
@@ -36,7 +37,7 @@ jobject createScanResultObject(JNIEnv * env, int resultCode, int value) {
 }
 
 jobject createDecodeResultObject(JNIEnv * env, int resultCode,
-                std::vector<unique_ptr<WellDecoder> > * wells) {
+                const std::vector<WellDecoder *> & wellDecoders) {
     jclass resultClass = env->FindClass(
                     "edu/ualberta/med/scannerconfig/dmscanlib/DecodeResult");
 
@@ -55,12 +56,12 @@ jobject createDecodeResultObject(JNIEnv * env, int resultCode,
 
     jobject resultObj = env->NewObjectA(resultClass, cons, data);
 
-    jmethodID setCellMethod = env->GetMethodID(resultClass, "addWell",
-    		"(Ljava/lang/String;Ljava/lang/String;)V");
+    if (wellDecoders.size() > 0) {
+        jmethodID setCellMethod = env->GetMethodID(resultClass, "addWell",
+        		"(Ljava/lang/String;Ljava/lang/String;)V");
 
-    if (wells != NULL) {
-        for (unsigned i = 0, n = wells->size(); i < n; ++i) {
-        	WellDecoder & wellDecoder = *(*wells)[i];
+        for (unsigned i = 0, n = wellDecoders.size(); i < n; ++i) {
+        	WellDecoder & wellDecoder = *wellDecoders[i];
             jvalue data[3];
 
             data[0].l = env->NewStringUTF(wellDecoder.getLabel().c_str());
@@ -153,10 +154,9 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
     }
 
     DmScanLib dmScanLib(verbose);
-    dmScanLib.decodeImageWells(filename, decodeOptions, wellRects);
+    int result = dmScanLib.decodeImageWells(filename, decodeOptions, wellRects);
     env->ReleaseStringUTFChars(_filename, filename);
 
-    // TODO create result object
-    return NULL;
+    return createDecodeResultObject(env,result, dmScanLib.getDecodedWells());
 }
 
