@@ -93,10 +93,25 @@ struct Rect {
 
 	}
 
+	Rect<T> & operator=(const Rect<T> & rhs) {
+		for (unsigned i = 0; i < 4; ++i) {
+			corners[i].x = rhs.corners[i].x;
+			corners[i].y = rhs.corners[i].y;
+		}
+		return *this;
+	}
+
 	void scale(T factor) {
 		for (unsigned i = 0; i < 4; ++i) {
 			corners[i].x *= factor;
 			corners[i].y *= factor;
+		}
+	}
+
+	void translate(Point<T> & distance) {
+		for (unsigned i = 0; i < 4; ++i) {
+			corners[i].x += distance.x;
+			corners[i].y += distance.y;
 		}
 	}
 

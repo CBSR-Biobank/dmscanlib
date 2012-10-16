@@ -58,7 +58,7 @@ int Decoder::decodeWellRects() {
 	VLOG(2) << "DecodeCommon: dpi/" << dpi << " numWellRects/" << wellRects.size();
 
 	if ((dpi != 300) && (dpi != 400) && (dpi != 600)) {
-		return -1;
+		return SC_INCORRECT_DPI_SCANNED;
 	}
 
 	for(unsigned i = 0, n = wellRects.size(); i < n; ++i) {
@@ -88,16 +88,20 @@ int Decoder::decodeWellRects() {
 	threadMgr.decodeWells(wellDecoders);
 
 	for(unsigned i = 0, n = wellDecoders.size(); i < n; ++i) {
-		VLOG(2) << *wellDecoders[i];
+		WellDecoder & wellDecoder = *wellDecoders[i];
+		VLOG(2) << wellDecoder;
+		if (!wellDecoder.getMessage().empty()) {
+			++decodedWellCount;
+			decodedWells.push_back(&wellDecoder);
+		}
 	}
-
-	return 0;
+	return SC_SUCCESS;
 }
 
 void Decoder::applyFilters() {
 	filteredImage = (image.getBitsPerPixel() != 8)
-					? std::move(image.convertGrayscale())
-					: unique_ptr<Dib>(new Dib(image));
+			? std::move(image.convertGrayscale())
+			: unique_ptr<Dib>(new Dib(image));
 
 	filteredImage->tpPresetFilter();
 	if (VLOG_IS_ON(2)) {
@@ -116,13 +120,11 @@ void Decoder::decodeWellRect(const Dib & wellRectImage, WellDecoder & wellDecode
 	CHECK_NOTNULL(dec);
 
 	// slightly smaller than the new tube edge
-	int minEdgeSize = static_cast<int>(0.08 * dpi);
+	dmtxDecodeSetProp(dec, DmtxPropEdgeMin, static_cast<int>(0.08 * dpi));
 
 	// slightly bigger than the Nunc edge
-	int maxEdgeSize = static_cast<int>(0.18 * dpi);
+	dmtxDecodeSetProp(dec, DmtxPropEdgeMax, static_cast<int>(0.18 * dpi));
 
-	dmtxDecodeSetProp(dec, DmtxPropEdgeMin, minEdgeSize);
-	dmtxDecodeSetProp(dec, DmtxPropEdgeMax, maxEdgeSize);
 	dmtxDecodeSetProp(dec, DmtxPropSymbolSize, DmtxSymbolSquareAuto);
 	dmtxDecodeSetProp(dec, DmtxPropScanGap,
 			static_cast<unsigned>(decodeOptions.scanGap * dpi));
@@ -179,17 +181,12 @@ void Decoder::getDecodeInfo(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg,
 	p11.Y = height - 1 - p11.Y;
 	p01.Y = height - 1 - p01.Y;
 
-	DmtxVector2 * p[4] = { &p00, &p10, &p11, &p01 };
-
-	for (unsigned i = 0; i < 4; ++i) {
-		wellDecoder.setCorner(i, static_cast<unsigned>(p[i]->X),
-				static_cast<unsigned>(p[i]->Y));
-	}
+	Rect<unsigned> decodeRect(p00.X, p00.Y, p10.X, p10.Y, p11.X, p11.Y, p01.X, p01.Y);
+	wellDecoder.setDecodeRectangle(decodeRect);
 }
 
 void Decoder::showStats(DmtxDecode * dec, DmtxRegion * reg, DmtxMessage * msg) const {
-	if (!VLOG_IS_ON(5))
-		return;
+	if (!VLOG_IS_ON(5)) return;
 
 	int height;
 	int dataWordLength;
@@ -266,3 +263,4 @@ void Decoder::writeDiagnosticImage(DmtxDecode *dec, const std::string & id) cons
 	free(pnm);
 	fclose(fp);
 }
+

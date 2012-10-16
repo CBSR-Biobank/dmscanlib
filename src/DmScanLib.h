@@ -36,7 +36,7 @@ const int SC_SUCCESS = 0;
 const int SC_FAIL = -1;
 const int SC_TWAIN_UNAVAIL = -2;
 const int SC_INVALID_DPI = -3;
-const int SC_INVALID_PLATE_NUM = -4;
+const int SC_INVALID_NOTHING_DECODED = -4;
 const int SC_INVALID_VALUE = -5;
 const int SC_INVALID_IMAGE = -6;
 const int SC_INCORRECT_DPI_SCANNED = -9;
@@ -101,7 +101,7 @@ protected:
     int isValidDpi(int dpi);
 
     int decodeCommon(const Dib & image, const DecodeOptions & decodeOptions,
-    		const string &markedDibFilename,
+    		const string &decodedDibFilename,
     	    vector<unique_ptr<WellRectangle<double>  > > & wellRects);
 
     static const string LIBRARY_NAME;

@@ -23,8 +23,8 @@ void getResultCodeMsg(int resultCode, string & message) {
     case SC_INCORRECT_DPI_SCANNED:
         message = "operation not supported on your operating system";
         break;
-    case SC_INVALID_PLATE_NUM:
-        message = "invalid plate number specified";
+    case SC_INVALID_NOTHING_DECODED:
+        message = "no datamatrix barcodes could be decoded from the image";
         break;
     case SC_INVALID_VALUE:
         message = "invalid value specified";

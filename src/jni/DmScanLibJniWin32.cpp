@@ -24,15 +24,14 @@ void getResultCodeMsg(int resultCode, string & message) {
 	case SC_INVALID_DPI:
 		message = "invalid DPI specified";
 		break;
-	case SC_INVALID_PLATE_NUM:
-		message = "invalid plate number specified";
-		break;
 	case SC_INVALID_VALUE:
 		message = "invalid value specified";
 		break;
 	case SC_INVALID_IMAGE:
 		message = "invalid image scanned";
 		break;
+    case SC_INVALID_NOTHING_DECODED:
+        message = "no datamatrix barcodes could be decoded from the image";
 	case SC_INCORRECT_DPI_SCANNED:
 		message = "incorrect DPI on scanned image";
 		break;

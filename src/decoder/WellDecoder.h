@@ -24,13 +24,13 @@ public:
 	WellDecoder(const Decoder & decoder,
 			unique_ptr<const WellRectangle<unsigned> > _wellRectangle);
 
-   virtual ~WellDecoder();
+	virtual ~WellDecoder();
 
-   virtual void run();
+	virtual void run();
 
-   bool isFinished();
+	bool isFinished();
 
-   void decodeCallback(std::string & decodedMsg, Point<unsigned>(&corners)[4]);
+	void decodeCallback(std::string & decodedMsg, Point<unsigned>(&corners)[4]);
 
 	const string & getLabel() const {
 		return wellRectangle->getLabel();
@@ -42,36 +42,29 @@ public:
 
 	void setMessage(const char * message, int messageLength);
 
-   const Rect<unsigned> & getWellRectangle() const {
-      return wellRectangle->getRectangle();
-   }
+	const Rect<unsigned> & getWellRectangle() const {
+		return wellRectangle->getRectangle();
+	}
 
-   const Rect<unsigned> & getDecodedRectangle() const {
-	   return decodedRect;
-   }
+	const Rect<unsigned> & getDecodedRectangle() const {
+		return decodedRect;
+	}
 
-   const bool getDecodeValid() {
-	   return message.empty();
-   }
+	void setDecodeRectangle(Rect<unsigned> & rect);
 
-   const std::string & getBarcodeMsg();
-
-	void setCorner(unsigned cornerId, unsigned x, unsigned y);
-
-   void drawCellBox(Dib & image, const RgbQuad & color) const;
-
-   void drawBarcodeBox(Dib & image, const RgbQuad & color) const;
-
-   void writeImage(std::string basename);
+	const bool getDecodeValid() {
+		return message.empty();
+	}
 
 private:
-   const Decoder & decoder;
-   unique_ptr<const WellRectangle<unsigned> > wellRectangle;
-   unique_ptr<const Dib> wellImage;
-   Rect<unsigned> decodedRect;
-   string message;
+	const Decoder & decoder;
+	unique_ptr<const WellRectangle<unsigned> > wellRectangle;
+	unique_ptr<const Dib> wellImage;
+	BoundingBox<unsigned> boundingBox;
+	Rect<unsigned> decodedRect;
+	string message;
 
-   friend std::ostream & operator<<(std::ostream & os, WellDecoder & m);
+	friend std::ostream & operator<<(std::ostream & os, WellDecoder & m);
 };
 
 #endif /* __INC_PALLET_CELL_H */

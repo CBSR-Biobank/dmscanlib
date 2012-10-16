@@ -51,6 +51,14 @@ public:
     	return *filteredImage;
     }
 
+    const unsigned getDecodedWellCount() {
+    	return decodedWellCount;
+    }
+
+    const vector<WellDecoder *> & getDecodedWells() const {
+    	return decodedWells;
+    }
+
 private:
     void applyFilters();
     static DmtxImage * createDmtxImageFromDib(const Dib & dib);
@@ -66,6 +74,8 @@ private:
     const DecodeOptions & decodeOptions;
     const vector<unique_ptr<WellRectangle<double>  > > & wellRects;
 	vector<unique_ptr<WellDecoder> > wellDecoders;
+    vector<WellDecoder *> decodedWells;
+	unsigned decodedWellCount;
 };
 
 #endif /* DECODER_H_ */

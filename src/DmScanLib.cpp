@@ -36,6 +36,7 @@
 #include "decoder/DecodeOptions.h"
 #include "decoder/WellDecoder.h"
 #include "dib/Dib.h"
+#include "dib/RgbQuad.h"
 
 #include <glog/logging.h>
 #include <stdio.h>
@@ -221,38 +222,38 @@ int DmScanLib::decodeImageWells(const char * filename,
 	}
 
 	int result = decodeCommon(image, decodeOptions, "decode.bmp", wellRects);
+
+	// save an image with the decoded rectangles
+
 	return result;
 }
 
 int DmScanLib::decodeCommon(const Dib & image, const DecodeOptions & decodeOptions,
-		const string &markedDibFilename,
+		const string &decodedDibFilename,
 	    vector<unique_ptr<WellRectangle<double>  > > & wellRects) {
 
 	Decoder decoder(image, decodeOptions, wellRects);
 	decoder.decodeWellRects();
+	const unsigned decodedWellCount = decoder.getDecodedWellCount();
 
-//	if (decodeCount == 0) {
-//		return SC_INVALID_IMAGE;
-//	}
-//
-//	// only get here if some cells were decoded
-//	if (stdoutOutputEnable || textFileOutputEnable) {
-//		string msg;
-//		palletGrid->formatCellMessages(msg);
-//
-//		if (textFileOutputEnable) {
-//			saveResults(msg);
-//		}
-//
-//		if (stdoutOutputEnable) {
-//			cout << msg;
-//		}
-//	}
+	if (decodedWellCount == 0) {
+		return SC_INVALID_NOTHING_DECODED;
+	}
+
+    const vector<WellDecoder *> & decodedWells = decoder.getDecodedWells();
+
+    RgbQuad colorRed(255, 0, 0);
+    RgbQuad colorGreen(0, 255, 0);
+	Dib decodedDib(image);
+	for (unsigned i = 0, n = decodedWells.size(); i < n; ++i) {
+		WellDecoder & decodedWell = *decodedWells[i];
+		decodedDib.drawRectangle(decodedWell.getDecodedRectangle(), colorRed);
+		decodedDib.drawRectangle(decodedWell.getWellRectangle(), colorGreen);
+	}
+	decodedDib.writeToFile(decodedDibFilename);
+
 	return SC_SUCCESS;
 }
 
-//std::vector<unique_ptr<WellDecoder> > & DmScanLib::getDecodedCells() {
-	//return palletGrid->getDecodedCells();
-//}
 
 
