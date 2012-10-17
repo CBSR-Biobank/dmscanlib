@@ -410,13 +410,12 @@ unique_ptr<Dib> Dib::crop(const BoundingBox<unsigned> & bbox) const {
    CHECK(bbox.points[1].x > bbox.points[0].x);
    CHECK(bbox.points[1].y > bbox.points[0].y);
 
-   BoundingBox<unsigned> boundBbox(bbox);
 
-   boundBbox.points[0].x =  min(bbox.points[0].x, width-1);
-   boundBbox.points[1].x =  min(bbox.points[1].x, width-1);
-
-   boundBbox.points[0].y =  min(bbox.points[0].y, height-1);
-   boundBbox.points[1].y =  min(bbox.points[1].y, height-1);
+   BoundingBox<unsigned> boundBbox(
+		   min(bbox.points[0].x, width-1),
+		   min(bbox.points[1].x, width-1),
+		   min(bbox.points[0].y, height-1),
+		   min(bbox.points[1].y, height-1));
 
    unsigned cWidth = boundBbox.points[1].x - boundBbox.points[0].x;
    unsigned cHeight = boundBbox.points[1].y - boundBbox.points[0].y;
