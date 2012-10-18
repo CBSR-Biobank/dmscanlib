@@ -20,8 +20,8 @@ REQUIRED PACKAGES ON UBUNTU
 
   - libdmtx-dev
   - libopenthreads-dev
-  - libcv-dev
   - libgoogle-glog-dev
+  - libgtest-dev
 
 
 
@@ -34,6 +34,14 @@ JNI
    - javah -jni edu.ualberta.med.scannerconfig.dmscanlib.ScanLib
    - mv edu_ualberta_med_scannerconfig_dmscanlib_ScanLib.h
      <dmscanlib_proj/src.
+     
+GTEST
+    sudo apt-get install cmake 
+    cd /usr/src/gtest
+    sudo cmake .
+    sudo make
+    # copy or symlink libgtest.a and libgtest_main.a to your /usr/lib folder
+    sudo mv libg* /usr/lib/
 
 
 VALGRIND
