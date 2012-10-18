@@ -51,9 +51,7 @@ public:
     	return *filteredImage;
     }
 
-    const unsigned getDecodedWellCount() {
-    	return decodedWellCount;
-    }
+    const unsigned getDecodedWellCount();
 
     const std::vector<WellDecoder *> & getDecodedWells() const {
     	return decodedWells;
@@ -75,7 +73,6 @@ private:
     const std::vector<std::unique_ptr<WellRectangle<double>  > > & wellRects;
     std::vector<std::unique_ptr<WellDecoder> > wellDecoders;
     std::vector<WellDecoder *> decodedWells;
-	unsigned decodedWellCount;
 };
 
 } /* namespace */

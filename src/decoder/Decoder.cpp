@@ -91,11 +91,14 @@ int Decoder::decodeWellRects() {
 		WellDecoder & wellDecoder = *wellDecoders[i];
 		VLOG(2) << wellDecoder;
 		if (!wellDecoder.getMessage().empty()) {
-			++decodedWellCount;
 			decodedWells.push_back(&wellDecoder);
 		}
 	}
 	return SC_SUCCESS;
+}
+
+const unsigned Decoder::getDecodedWellCount() {
+	return decodedWells.size();
 }
 
 void Decoder::applyFilters() {
