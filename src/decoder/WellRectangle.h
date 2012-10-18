@@ -20,7 +20,7 @@ class WellRectangle;
 
 template<typename T>
 ostream & operator<<(ostream &os, const WellRectangle<T> & m) {
-	os << "WellRect: "<< m.getLabel() << " - " << m.getRectangle();
+	os << m.getLabel() << " - " << m.getRectangle();
 	return os;
 }
 
