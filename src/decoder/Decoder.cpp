@@ -64,18 +64,18 @@ int Decoder::decodeWellRects() {
 	for(unsigned i = 0, n = wellRects.size(); i < n; ++i) {
 		const WellRectangle<double> & wellRect = *wellRects[i];
 
-		Rect<double> factoredRect(wellRect.getRectangle());
-		factoredRect.scale(static_cast<double>(dpi));
+		unique_ptr<Rect<double> > factoredRect = std::move(
+				wellRect.getRectangle().scale(static_cast<double>(dpi)));
 
 		Rect<unsigned> convertedRect(
-				static_cast<unsigned>(factoredRect.corners[0].x),
-				static_cast<unsigned>(factoredRect.corners[0].y),
-				static_cast<unsigned>(factoredRect.corners[1].x),
-				static_cast<unsigned>(factoredRect.corners[1].y),
-				static_cast<unsigned>(factoredRect.corners[2].x),
-				static_cast<unsigned>(factoredRect.corners[2].y),
-				static_cast<unsigned>(factoredRect.corners[3].x),
-				static_cast<unsigned>(factoredRect.corners[3].y)
+				static_cast<unsigned>(factoredRect->corners[0].x),
+				static_cast<unsigned>(factoredRect->corners[0].y),
+				static_cast<unsigned>(factoredRect->corners[1].x),
+				static_cast<unsigned>(factoredRect->corners[1].y),
+				static_cast<unsigned>(factoredRect->corners[2].x),
+				static_cast<unsigned>(factoredRect->corners[2].y),
+				static_cast<unsigned>(factoredRect->corners[3].x),
+				static_cast<unsigned>(factoredRect->corners[3].y)
 				);
 
 		wellDecoders[i] = unique_ptr<WellDecoder>(

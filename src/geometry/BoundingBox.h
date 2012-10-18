@@ -9,12 +9,12 @@
  * Defines the bounding box for the image to be retrieved from the flatbed
  * scanner.
  */
-class ScanRegion {
+class BoundingBox {
 public:
-    ScanRegion(JNIEnv *env, jobject scanRegionObj);
-    virtual ~ScanRegion() { };
+    BoundingBox(JNIEnv *env, jobject scanRegionObj);
+    virtual ~BoundingBox() { };
 
-    BoundingBox<double> boundingBox;
+    const vector<const Point<T>> points;
 
 private:
 };

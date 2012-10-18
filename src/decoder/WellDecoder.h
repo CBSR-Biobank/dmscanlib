@@ -60,7 +60,7 @@ private:
 	const Decoder & decoder;
 	unique_ptr<const WellRectangle<unsigned> > wellRectangle;
 	unique_ptr<const Dib> wellImage;
-	BoundingBox<unsigned> boundingBox;
+	unique_ptr<BoundingBox<unsigned> > boundingBox;
 	Rect<unsigned> decodedRect;
 	string message;
 

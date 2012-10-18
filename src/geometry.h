@@ -13,18 +13,18 @@ struct Point {
    const T x;
    const T y;
 
-   Point(const T _x, const T _y) :
-         x(_x), y(_y) {
+   Point(const T _x, const T _y) : x(_x), y(_y) {
    }
 
-   Point(Point<T> & point) :
-	   x(point.x), y(point.y)
-   {
-
+   Point(const Point<T> & point) : x(point.x), y(point.y) {
    }
 
-   unique_ptr<Point<T> > scale(T factor) {
+   unique_ptr<Point<T> > scale(const T factor) const {
 	   return new Point<T>(x * factor, y * factor);
+   }
+
+   unique_ptr<Point<T> > translate(const T distance) const {
+	   return new Point<T>(x + distance, y + distance);
    }
 };
 
@@ -80,9 +80,10 @@ struct Rect {
 	{
 
 	}
+
 	Rect(const Point<T> & pt1, const Point<T> & pt2, const Point<T> & pt3,
 			const Point<T> & pt4) :
-		corners({ pt1, pt2, pt3 pt4 })
+		corners({ pt1, pt2, pt3, pt4 })
 	{
 
 	}
@@ -103,23 +104,26 @@ struct Rect {
 
 	}
 
-	unique_ptr<Rect<T> > scale(const T factor) {
-		vector<Point<T> > cornerVector;
-		for (unsigned i = 0; i < 4; ++i) {
-			cornerVector.push_back(corners[i].scale(factor));
-		}
-		return new Rect<T>()
+	unique_ptr<Rect<T> > scale(T factor) const {
+		return new Rect<T>(
+				std::move(corners[0].scale(factor)),
+				std::move(corners[1].scale(factor)),
+				std::move(corners[2].scale(factor)),
+				std::move(corners[3].scale(factor))
+				);
 	}
 
-	void translate(const Point<T> & distance) {
-		for (unsigned i = 0; i < 4; ++i) {
-			corners[i].x += distance.x;
-			corners[i].y += distance.y;
-		}
+	unique_ptr<Rect<T> > translate(const Point<T> & distance) const {
+		return new Rect<T>(
+				std::move(corners[0].translate(distance)),
+				std::move(corners[1].translate(distance)),
+				std::move(corners[2].translate(distance)),
+				std::move(corners[3].translate(distance))
+				);
 	}
 
 	const Point<T> corners[4];
-   friend ostream & operator<<<>(std::ostream & os, const Rect<T> & m);
+	friend ostream & operator<<<>(std::ostream & os, const Rect<T> & m);
 };
 
 #endif /* __INC_STRUCTS_H */

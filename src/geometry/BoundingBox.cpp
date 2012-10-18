@@ -2,10 +2,10 @@
  * Used in JNI interface.
  */
 
-#include "ScanRegion.h"
+#include "BoundingBox.h"
 #include <stddef.h>
 
-ScanRegion::ScanRegion(JNIEnv *env, jobject scanRegionObj) {
+BoundingBox::BoundingBox(JNIEnv *env, jobject scanRegionObj) {
     jclass scanSettingsJavaClass = env->GetObjectClass(scanRegionObj);
 
     // run the following command to obtain method signatures from a class.
@@ -22,9 +22,9 @@ ScanRegion::ScanRegion(JNIEnv *env, jobject scanRegionObj) {
     	return;
     }
 
-    boundingBox.points[0].x = env->CallDoubleMethod(scanRegionObj, getMethodGetPointX, 0);
-    boundingBox.points[0].y = env->CallDoubleMethod(scanRegionObj, getMethodGetPointY, 0);
-
-    boundingBox.points[1].x = env->CallDoubleMethod(scanRegionObj, getMethodGetPointX, 1);
-    boundingBox.points[1].y = env->CallDoubleMethod(scanRegionObj, getMethodGetPointY, 1);
+    boundingBox = new BoundingBox(
+    		env->CallDoubleMethod(scanRegionObj, getMethodGetPointX, 0),
+    		env->CallDoubleMethod(scanRegionObj, getMethodGetPointY, 0),
+    		env->CallDoubleMethod(scanRegionObj, getMethodGetPointX, 1),
+    		env->CallDoubleMethod(scanRegionObj, getMethodGetPointY, 1));
 }

@@ -13,25 +13,25 @@ OSTYPE := $(shell uname -s | tr [:upper:] [:lower:])
 MTYPE := $(shell uname -m)
 LANG := en_US                # for gcc error messages
 
+# filenames only - no paths required
 SRC := \
-	DecodedWell.cpp \
 	DecodeOptions.cpp \
-	WellRectangle.cpp \
-	WellDecoder.cpp \
-	Dib.cpp \
-	RgbQuad.cpp \
-	PalletThreadMgr.cpp \
-	DmScanLib.cpp \
+	DecodeThreadMgr.cpp \
 	Decoder.cpp \
-	TestApp.cpp \
+	Dib.cpp \
+	DmScanLib.cpp \
+	DmScanLibJniCommon.cpp \
+	DmScanLibJniLinux.cpp \
 	ImgScanner.cpp \
-	edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_common.cpp \
-	edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_linux.cpp \
+	ImgScannerSimulator.cpp \
+	RgbQuad.cpp \
+	TestApp.cpp \
 	TimeUtilLinux.cpp \
-	ImgScannerSimulator.cpp
+	WellDecoder.cpp \
+	WellRectangle.cpp
 
 
-INCLUDE_PATH := . src src/utils third_party/libdmtx third_party/glog/src \
+INCLUDE_PATH := . src src/decoder src/dib src/imgscanner src/jni src/utils third_party/libdmtx third_party/glog/src \
 	/usr/lib/jvm/jdk1.6.0_32/include /usr/lib/jvm/jdk1.6.0_32/include/linux
 LIBS := -lglog -ldmtx -lOpenThreads
 LIB_PATH :=
