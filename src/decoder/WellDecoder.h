@@ -46,11 +46,9 @@ public:
 		return wellRectangle->getRectangle();
 	}
 
-	const Rect<unsigned> & getDecodedRectangle() const {
-		return decodedRect;
-	}
+	const Rect<unsigned> & getDecodedRectangle() const;
 
-	void setDecodeRectangle(Rect<unsigned> & rect);
+	void setDecodeRectangle(const Rect<unsigned> & rect);
 
 	const bool getDecodeValid() {
 		return message.empty();
@@ -60,8 +58,8 @@ private:
 	const Decoder & decoder;
 	unique_ptr<const WellRectangle<unsigned> > wellRectangle;
 	unique_ptr<const Dib> wellImage;
-	unique_ptr<BoundingBox<unsigned> > boundingBox;
-	Rect<unsigned> decodedRect;
+	unique_ptr<const BoundingBox<unsigned> > boundingBox;
+	unique_ptr<const Rect<unsigned> > decodedRect;
 	string message;
 
 	friend std::ostream & operator<<(std::ostream & os, WellDecoder & m);

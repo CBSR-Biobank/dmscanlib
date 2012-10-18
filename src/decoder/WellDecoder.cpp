@@ -16,51 +16,50 @@
 
 #ifdef _VISUALC_
 #   include <functional>
-#else
-//#   include <tr1/functional>
 #endif
 
 WellDecoder::WellDecoder(const Decoder & _decoder,
 		unique_ptr<const WellRectangle<unsigned>> _wellRectangle) :
 		decoder(_decoder), wellRectangle(std::move(_wellRectangle)),
-		boundingBox(wellRectangle->getRectangle()),
-		decodedRect(0, 0, 0, 0, 0, 0, 0, 0)
+		boundingBox(std::move(wellRectangle->getRectangle().getBoundingBox()))
 {
+	VLOG(3) << "bounding box: " << *boundingBox << std::endl
+			<< "rect: " << wellRectangle->getRectangle();
 }
 
 WellDecoder::~WellDecoder() {
 }
 
-/**
- * Invoked in its own thread.
+/*
+ * This method runs in its own thread.
  */
 void WellDecoder::run() {
-    ostringstream id;
-    id << wellRectangle->getLabel();
-
-    wellImage = std::move(decoder.getWorkingImage().crop(boundingBox));
+    wellImage = std::move(decoder.getWorkingImage().crop(*boundingBox));
     decoder.decodeWellRect(*wellImage, *this);
     if (!message.empty()) {
-    	RAW_LOG(INFO, "run: (%s) - %s", wellRectangle->getLabel().c_str(),
-    			message.c_str());
+    	VLOG(3) << *this;
+    } else {
+    	VLOG(3) << wellRectangle->getLabel() << " - could not be decoded";
     }
-
-    // translate decodedRect to image coordinates
 }
 
 void WellDecoder::setMessage(const char * message, int messageLength) {
    this->message.assign(message, messageLength);
 }
 
+const Rect<unsigned> & WellDecoder::getDecodedRectangle() const {
+	CHECK_NOTNULL(decodedRect.get());
+	return *decodedRect;
+}
+
 // the rectangle passed in is in coordinates of the cropped image,
 // the rectangle has to be translated into the coordinates of the overall
 // image
-void WellDecoder::setDecodeRectangle(Rect<unsigned> & rect) {
-	decodedRect = rect;
-	decodedRect.translate(boundingBox.points[0]);
+void WellDecoder::setDecodeRectangle(const Rect<unsigned> & rect) {
+	decodedRect = std::move(rect.translate(boundingBox->points[0]));
 }
 
 ostream & operator<<(ostream &os, WellDecoder & m) {
-    os << m.getLabel() << ": \"" << m.getMessage() << "\" "<< m.decodedRect;
+    os << m.getLabel() << ": \"" << m.getMessage() << "\" "<< *m.boundingBox;
     return os;
 }

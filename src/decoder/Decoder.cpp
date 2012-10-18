@@ -55,7 +55,7 @@ Decoder::~Decoder() {
 int Decoder::decodeWellRects() {
 	const unsigned dpi = image.getDpi();
 
-	VLOG(2) << "DecodeCommon: dpi/" << dpi << " numWellRects/" << wellRects.size();
+	VLOG(3) << "DecodeCommon: dpi/" << dpi << " numWellRects/" << wellRects.size();
 
 	if ((dpi != 300) && (dpi != 400) && (dpi != 600)) {
 		return SC_INCORRECT_DPI_SCANNED;
@@ -64,24 +64,22 @@ int Decoder::decodeWellRects() {
 	for(unsigned i = 0, n = wellRects.size(); i < n; ++i) {
 		const WellRectangle<double> & wellRect = *wellRects[i];
 
-		unique_ptr<Rect<double> > factoredRect = std::move(
+		unique_ptr<const Rect<double> > factoredRect = std::move(
 				wellRect.getRectangle().scale(static_cast<double>(dpi)));
 
-		Rect<unsigned> convertedRect(
-				static_cast<unsigned>(factoredRect->corners[0].x),
-				static_cast<unsigned>(factoredRect->corners[0].y),
-				static_cast<unsigned>(factoredRect->corners[1].x),
-				static_cast<unsigned>(factoredRect->corners[1].y),
-				static_cast<unsigned>(factoredRect->corners[2].x),
-				static_cast<unsigned>(factoredRect->corners[2].y),
-				static_cast<unsigned>(factoredRect->corners[3].x),
-				static_cast<unsigned>(factoredRect->corners[3].y)
-				);
+		unique_ptr<WellRectangle<unsigned> > convertedWellTect(
+				new WellRectangle<unsigned>(wellRect.getLabel().c_str(),
+						static_cast<unsigned>(factoredRect->corners[0].x),
+						static_cast<unsigned>(factoredRect->corners[0].y),
+						static_cast<unsigned>(factoredRect->corners[1].x),
+						static_cast<unsigned>(factoredRect->corners[1].y),
+						static_cast<unsigned>(factoredRect->corners[2].x),
+						static_cast<unsigned>(factoredRect->corners[2].y),
+						static_cast<unsigned>(factoredRect->corners[3].x),
+						static_cast<unsigned>(factoredRect->corners[3].y)));
 
 		wellDecoders[i] = unique_ptr<WellDecoder>(
-				new WellDecoder(*this, unique_ptr<WellRectangle<unsigned> >(
-						new WellRectangle<unsigned>(wellRect.getLabel().c_str(),
-								convertedRect))));
+				new WellDecoder(*this, std::move(convertedWellTect)));
 	}
 
 	DecodeThreadMgr threadMgr;
@@ -109,6 +107,9 @@ void Decoder::applyFilters() {
 	}
 }
 
+/*
+ * Called by multiple threads.
+ */
 void Decoder::decodeWellRect(const Dib & wellRectImage, WellDecoder & wellDecoder) const {
 	const unsigned dpi = wellRectImage.getDpi();
 	CHECK((dpi == 300) || (dpi == 400) || (dpi == 600));

@@ -28,7 +28,7 @@
 					<folderInfo id="cdt.managedbuild.config.gnu.mingw.so.debug.409171940.946229780." name="/" resourcePath="">
 						<toolChain errorParsers="" id="cdt.managedbuild.toolchain.gnu.base.850948635" name="Linux GCC" nonInternalBuilderId="cdt.managedbuild.target.gnu.builder.base" resourceTypeBasedDiscovery="true" superClass="cdt.managedbuild.toolchain.gnu.base">
 							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.PE;org.eclipse.cdt.core.GNU_ELF;org.eclipse.cdt.core.ELF" id="cdt.managedbuild.target.gnu.platform.base.1362333954" name="Debug Platform" osList="linux,hpux,aix,qnx" superClass="cdt.managedbuild.target.gnu.platform.base"/>
-							<builder buildPath="${workspace_loc:/scanlib/Linux-Debug}" command="make" id="cdt.managedbuild.target.gnu.builder.base.115732586" keepEnvironmentInBuildfile="false" name="Gnu Make Builder" parallelBuildOn="true" parallelizationNumber="4" superClass="cdt.managedbuild.target.gnu.builder.base"/>
+							<builder buildPath="${workspace_loc:/dmscanlib/Linux-Debug}" command="make" id="cdt.managedbuild.target.gnu.builder.base.115732586" keepEnvironmentInBuildfile="false" name="Gnu Make Builder" parallelBuildOn="true" parallelizationNumber="4" superClass="cdt.managedbuild.target.gnu.builder.base"/>
 							<tool id="cdt.managedbuild.tool.gnu.archiver.base.542067461" name="GCC Archiver" superClass="cdt.managedbuild.tool.gnu.archiver.base"/>
 							<tool command="g++" commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG}${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}" errorParsers="org.eclipse.cdt.core.GCCErrorParser" id="cdt.managedbuild.tool.gnu.cpp.compiler.base.497654374" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base">
 								<option id="gnu.cpp.compiler.option.include.paths.539315512" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
@@ -99,7 +99,7 @@
 									<listOptionValue builtIn="false" value="/usr/include/c++/4.6/backward"/>
 									<listOptionValue builtIn="false" value="/usr/include/c++/4.6/tr1"/>
 									<listOptionValue builtIn="false" value="/usr/local/include"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/dmscanlib/src}&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.348497199" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
 							</tool>
@@ -154,7 +154,7 @@
 									<listOptionValue builtIn="false" value="/usr/include/c++/4.6/x86_64-linux-gnu"/>
 									<listOptionValue builtIn="false" value="/usr/include/linux"/>
 									<listOptionValue builtIn="false" value="/usr/local/include"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/dmscanlib/src}&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.139898474" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
 							</tool>
@@ -172,14 +172,14 @@
 								<option id="gnu.cpp.compiler.option.include.paths.984466343" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;C:\Java\jdk1.6.0_23\include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;C:\Java\jdk1.6.0_23\include\win32&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/src/nvwa}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/src/libdmtx}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/src}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/src/loki}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/src/utils}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/src/cvblob}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/src/opencv/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/src/openthreads}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/dmscanlib/src/nvwa}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/dmscanlib/src/libdmtx}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/dmscanlib/src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/dmscanlib/src/loki}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/dmscanlib/src/utils}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/dmscanlib/src/cvblob}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/dmscanlib/src/opencv/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/dmscanlib/src/openthreads}&quot;"/>
 									<listOptionValue builtIn="false" value="/usr/include"/>
 									<listOptionValue builtIn="false" value="/usr/include/c++/4.6"/>
 									<listOptionValue builtIn="false" value="/usr/include/c++/4.6/backward"/>
@@ -223,7 +223,7 @@
 							<tool commandLinePattern="${COMMAND} ${FLAGS}  ${INPUTS} ${OUTPUT_FLAG}${OUTPUT_PREFIX}${OUTPUT}" id="cdt.managedbuild.tool.gnu.cpp.linker.mingw.so.debug.400428622" name="MinGW C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.mingw.so.debug">
 								<option id="gnu.cpp.link.mingw.so.debug.option.shared.925176249" name="Shared (-shared)" superClass="gnu.cpp.link.mingw.so.debug.option.shared"/>
 								<option id="gnu.cpp.link.option.paths.1358448275" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/lib/win32}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/dmscanlib/lib/win32}&quot;"/>
 								</option>
 								<option id="gnu.cpp.link.option.libs.360692839" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
 									<listOptionValue builtIn="false" value="cxcore210"/>
@@ -287,7 +287,7 @@
 									<listOptionValue builtIn="false" value="/usr/include/c++/4.6/x86_64-linux-gnu"/>
 									<listOptionValue builtIn="false" value="/usr/include/linux"/>
 									<listOptionValue builtIn="false" value="/usr/local/include"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/dmscanlib/src}&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.1662471923" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
 							</tool>
@@ -388,7 +388,7 @@
 					<folderInfo id="cdt.managedbuild.config.gnu.mingw.so.debug.409171940.946229780.1547197143." name="/" resourcePath="">
 						<toolChain errorParsers="" id="cdt.managedbuild.toolchain.gnu.base.1376953531" name="Linux GCC" nonInternalBuilderId="cdt.managedbuild.target.gnu.builder.base" resourceTypeBasedDiscovery="true" superClass="cdt.managedbuild.toolchain.gnu.base">
 							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.PE;org.eclipse.cdt.core.GNU_ELF;org.eclipse.cdt.core.ELF" id="cdt.managedbuild.target.gnu.platform.base.135953657" name="Debug Platform" osList="linux,hpux,aix,qnx" superClass="cdt.managedbuild.target.gnu.platform.base"/>
-							<builder buildPath="${workspace_loc:/scanlib/Linux-sharedlib}" command="make" id="cdt.managedbuild.target.gnu.builder.base.2086157056" keepEnvironmentInBuildfile="false" name="Gnu Make Builder" parallelBuildOn="true" parallelizationNumber="4" superClass="cdt.managedbuild.target.gnu.builder.base"/>
+							<builder buildPath="${workspace_loc:/dmscanlib/Linux-sharedlib}" command="make" id="cdt.managedbuild.target.gnu.builder.base.2086157056" keepEnvironmentInBuildfile="false" name="Gnu Make Builder" parallelBuildOn="true" parallelizationNumber="4" superClass="cdt.managedbuild.target.gnu.builder.base"/>
 							<tool id="cdt.managedbuild.tool.gnu.archiver.base.1561181004" name="GCC Archiver" superClass="cdt.managedbuild.tool.gnu.archiver.base"/>
 							<tool command="g++" commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG}${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}" errorParsers="org.eclipse.cdt.core.GCCErrorParser" id="cdt.managedbuild.tool.gnu.cpp.compiler.base.237478601" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base">
 								<option id="gnu.cpp.compiler.option.include.paths.1346759414" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
@@ -442,7 +442,7 @@
 							</tool>
 							<tool command="as" commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}" errorParsers="org.eclipse.cdt.core.GASErrorParser" id="cdt.managedbuild.tool.gnu.assembler.base.1169517716" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.base">
 								<option id="gnu.both.asm.option.include.paths.184101271" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/scanlib/src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/dmscanlib/src}&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.1890788096" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
 							</tool>
@@ -467,7 +467,7 @@
 		<project id="dmscanlib.cdt.managedbuild.target.gnu.mingw.so.1268701306" name="Shared Library" projectType="cdt.managedbuild.target.gnu.mingw.so"/>
 	</storageModule>
 	<storageModule moduleId="refreshScope" versionNumber="1">
-		<resource resourceType="PROJECT" workspacePath="/scanlib"/>
+		<resource resourceType="PROJECT" workspacePath="/dmscanlib"/>
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets">

@@ -5,7 +5,7 @@
 #include "DmScanLibJni.h"
 #include "DmScanLibJniInternal.h"
 #include "DmScanLib.h"
-#include "ScanRegion.h"
+#include "geometry.h"
 
 #include <iostream>
 

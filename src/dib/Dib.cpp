@@ -35,6 +35,7 @@
 #include "Dib.h"
 #include "RgbQuad.h"
 #include "DmScanLib.h"
+#include "geometry.h"
 
 #include <glog/logging.h>
 #include <stdio.h>
@@ -413,12 +414,14 @@ unique_ptr<Dib> Dib::crop(const BoundingBox<unsigned> & bbox) const {
 
    BoundingBox<unsigned> boundBbox(
 		   min(bbox.points[0].x, width-1),
-		   min(bbox.points[1].x, width-1),
 		   min(bbox.points[0].y, height-1),
+		   min(bbox.points[1].x, width-1),
 		   min(bbox.points[1].y, height-1));
 
    unsigned cWidth = boundBbox.points[1].x - boundBbox.points[0].x;
    unsigned cHeight = boundBbox.points[1].y - boundBbox.points[0].y;
+
+	VLOG(2) << "Dib:crop: width/" << cWidth << " height/" << cHeight;
 
    unique_ptr<Dib> croppedImg(
       new Dib(cWidth, cHeight, colorBits, pixelsPerMeter));

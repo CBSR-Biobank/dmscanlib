@@ -41,5 +41,4 @@ VALGRIND
   Use the following commands to check for memory leaks:
 
   valgrind --track-origins=yes --tool=memcheck --leak-check=yes -v \
-    --show-reachable=yes --num-callers=10 Linux-Debug/dmscanlib -d -p 1 \
-    -i <bmp_file> 
+    --show-reachable=yes --num-callers=10 Linux-Debug/dmscanlib 
