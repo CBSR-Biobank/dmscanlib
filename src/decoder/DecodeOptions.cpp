@@ -9,6 +9,8 @@
 #include <stddef.h>
 #include <jni.h>
 
+namespace dmscanlib {
+
 DecodeOptions::DecodeOptions(double scanGap, long squareDev,
 		long edgeThresh, long corrections, double cellDistance) {
 
@@ -60,7 +62,7 @@ DecodeOptions::DecodeOptions(JNIEnv *env, jobject decodeOptionsObj) {
 DecodeOptions::~DecodeOptions() {
 }
 
-ostream & operator<<(ostream &os, const DecodeOptions & m) {
+std::ostream & operator<<(std::ostream &os, const DecodeOptions & m) {
 	os << " scanGap/" << m.scanGap
 			<< " squareDev/" << m.squareDev
 			<< " edgeThresh/" << m.edgeThresh
@@ -68,3 +70,6 @@ ostream & operator<<(ostream &os, const DecodeOptions & m) {
 			<< " cellDistance/" << m.cellDistance;;
 	return os;
 }
+
+} /* namespace */
+

@@ -29,7 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 typedef void* HANDLE;
 #endif
 
-using namespace std;
+namespace dmscanlib {
 
 /**
  * This class interfaces with the TWAIN driver to acquire images from the
@@ -41,7 +41,7 @@ public:
 
 	virtual ~ImgScanner();
 
-	static unique_ptr<ImgScanner> create();
+	static std::unique_ptr<ImgScanner> create();
 
 	virtual bool twainAvailable() = 0;
 
@@ -60,6 +60,8 @@ public:
 
 protected:
 };
+
+} /* namespace */
 
 #endif /* __INCLUDE_IMAGE_SCANNER_H */
 

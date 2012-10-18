@@ -9,10 +9,10 @@
 
 #include <iostream>
 
-using namespace std;
+using namespace dmscanlib;
 
 
-void getResultCodeMsg(int resultCode, string & message) {
+void getResultCodeMsg(int resultCode, std::string & message) {
     switch (resultCode) {
     case SC_SUCCESS:
         message = "";

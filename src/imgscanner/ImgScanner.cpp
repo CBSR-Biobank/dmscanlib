@@ -4,6 +4,8 @@
 
 #include <memory>
 
+namespace dmscanlib {
+
 ImgScanner::ImgScanner() {
 
 }
@@ -12,11 +14,12 @@ ImgScanner::~ImgScanner() {
 
 }
 
-
-unique_ptr<ImgScanner> ImgScanner::create() {
+std::unique_ptr<ImgScanner> ImgScanner::create() {
 #ifdef WIN32
 	return unique_ptr<ImgScanner>(new ImgScannerImpl());
 #else
-	return unique_ptr<ImgScanner>(new ImgScannerSimulator());
+	return std::unique_ptr<ImgScanner>(new imgscanner::ImgScannerSimulator());
 #endif
 }
+
+} /* namespace */

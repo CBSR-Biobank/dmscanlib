@@ -1,6 +1,8 @@
 #ifndef __INCLUDE_RGB_QUAD_H
 #define __INCLUDE_RGB_QUAD_H
 
+namespace dmscanlib {
+
 /* Colour palette
  */
 class RgbQuad {
@@ -22,6 +24,8 @@ private:
    unsigned char rgbBlue;
    unsigned char rgbReserved;
 };
+
+} /* namespace */
 
 
 #endif /*  __INCLUDE_RGB_QUAD_H */

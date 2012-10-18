@@ -28,7 +28,7 @@
 #include "DecodeOptions.h"
 #include "dib/Dib.h"
 #include "WellDecoder.h"
-#include "decoder/DecodeThreadMgr.h"
+#include "decoder/ThreadMgr.h"
 
 #include <glog/logging.h>
 #include <stdio.h>
@@ -39,10 +39,10 @@
 #   include "debug_new.h"
 #endif
 
-using namespace std;
+namespace dmscanlib {
 
 Decoder::Decoder(const Dib & _image, const DecodeOptions & _decodeOptions,
-		vector<unique_ptr<WellRectangle<double>  > > & _wellRects) :
+		std::vector<std::unique_ptr<WellRectangle<double>  > > & _wellRects) :
 		image(_image), decodeOptions(_decodeOptions), wellRects(_wellRects)
 {
 	wellDecoders.resize(wellRects.size());
@@ -66,10 +66,10 @@ int Decoder::decodeWellRects() {
 
 		VLOG(3) << "well rect: " << wellRect;
 
-		unique_ptr<const Rect<double> > factoredRect = std::move(
+		std::unique_ptr<const Rect<double> > factoredRect = std::move(
 				wellRect.getRectangle().scale(static_cast<double>(dpi)));
 
-		unique_ptr<WellRectangle<unsigned> > convertedWellTect(
+		std::unique_ptr<WellRectangle<unsigned> > convertedWellTect(
 				new WellRectangle<unsigned>(wellRect.getLabel().c_str(),
 						static_cast<unsigned>(factoredRect->corners[0].x),
 						static_cast<unsigned>(factoredRect->corners[0].y),
@@ -80,11 +80,11 @@ int Decoder::decodeWellRects() {
 						static_cast<unsigned>(factoredRect->corners[3].x),
 						static_cast<unsigned>(factoredRect->corners[3].y)));
 
-		wellDecoders[i] = unique_ptr<WellDecoder>(
+		wellDecoders[i] = std::unique_ptr<WellDecoder>(
 				new WellDecoder(*this, std::move(convertedWellTect)));
 	}
 
-	DecodeThreadMgr threadMgr;
+	decoder::ThreadMgr threadMgr;
 	threadMgr.decodeWells(wellDecoders);
 
 	for(unsigned i = 0, n = wellDecoders.size(); i < n; ++i) {
@@ -101,7 +101,7 @@ int Decoder::decodeWellRects() {
 void Decoder::applyFilters() {
 	filteredImage = (image.getBitsPerPixel() != 8)
 			? std::move(image.convertGrayscale())
-			: unique_ptr<Dib>(new Dib(image));
+			: std::unique_ptr<Dib>(new Dib(image));
 
 	filteredImage->tpPresetFilter();
 	if (VLOG_IS_ON(2)) {
@@ -251,7 +251,7 @@ void Decoder::writeDiagnosticImage(DmtxDecode *dec, const std::string & id) cons
 	unsigned char *pnm;
 	FILE *fp;
 
-	ostringstream fname;
+	std::ostringstream fname;
 	fname << "diagnostic-" << id << ".pnm";
 
 	fp = fopen(fname.str().c_str(), "wb");
@@ -267,3 +267,4 @@ void Decoder::writeDiagnosticImage(DmtxDecode *dec, const std::string & id) cons
 	fclose(fp);
 }
 
+} /* namespace */

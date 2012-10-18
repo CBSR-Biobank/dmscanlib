@@ -30,7 +30,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <twain.h>     // Standard TWAIN header.
 #include <windows.h>
 
-using namespace std;
+namespace dmscanlib {
+
+namespace imgscanner {
 
 /**
  * This class interfaces with the TWAIN driver to acquire images from the
@@ -117,6 +119,10 @@ private:
     int contrast;
     int errorCode;
 };
+
+} /* namespace */
+
+} /* namespace */
 
 #endif /* defined (WIN32) && ! defined(__MINGW32__) */
 

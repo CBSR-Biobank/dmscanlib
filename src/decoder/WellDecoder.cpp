@@ -18,8 +18,10 @@
 #   include <functional>
 #endif
 
+namespace dmscanlib {
+
 WellDecoder::WellDecoder(const Decoder & _decoder,
-		unique_ptr<const WellRectangle<unsigned>> _wellRectangle) :
+		std::unique_ptr<const WellRectangle<unsigned>> _wellRectangle) :
 		decoder(_decoder), wellRectangle(std::move(_wellRectangle)),
 		boundingBox(std::move(wellRectangle->getRectangle().getBoundingBox()))
 {
@@ -59,7 +61,10 @@ void WellDecoder::setDecodeRectangle(const Rect<unsigned> & rect) {
 	decodedRect = std::move(rect.translate(boundingBox->points[0]));
 }
 
-ostream & operator<<(ostream &os, WellDecoder & m) {
+std::ostream & operator<<(std::ostream &os, WellDecoder & m) {
     os << m.getLabel() << ": \"" << m.getMessage() << "\" "<< *m.boundingBox;
     return os;
 }
+
+
+} /* namespace */

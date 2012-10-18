@@ -9,6 +9,8 @@
 
 #include <glog/logging.h>
 
+namespace dmscanlib {
+
 template<typename T>
 WellRectangle<T>::WellRectangle(const char * _label, T x1, T y1,
 		T x2, T y2,	T x3, T y3, T x4, T y4) :
@@ -50,3 +52,5 @@ const Point<T> & WellRectangle<T>::getCorner(unsigned cornerId) const {
 
 template class WellRectangle<unsigned>;
 template class WellRectangle<double>;
+
+} /* namespace */

@@ -35,6 +35,10 @@
 #   include "debug_new.h"
 #endif
 
+namespace dmscanlib {
+
+namespace imgscanner {
+
 ImgScannerSimulator::ImgScannerSimulator() {
 }
 
@@ -70,3 +74,7 @@ HANDLE ImgScannerSimulator::acquireFlatbed(unsigned dpi, int brightness, int con
 void ImgScannerSimulator::freeImage(HANDLE handle) {
 	 VLOG(2) << "freeImage";
 }
+
+} /* namespace */
+
+} /* namespace */

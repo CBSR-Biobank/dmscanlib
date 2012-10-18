@@ -22,11 +22,13 @@
  */
 
 #include "decoder/WellRectangle.h"
-#include "utils/TimeUtil.h"
+#include "utils/Time.h"
 
 #include <string>
 #include <memory>
 #include <vector>
+
+namespace dmscanlib {
 
 /**
  * Return codes used by the DLL API.
@@ -53,8 +55,6 @@ class ImgScanner;
 class WellDecoder;
 class DecodeOptions;
 
-using namespace std;
-
 class DmScanLib {
 public:
 	DmScanLib(unsigned loggingLevel, bool logToFile = true);
@@ -72,10 +72,10 @@ public:
 	int scanAndDecode(unsigned dpi, int brightness, int contrast,
 			double left, double top, double right, double bottom,
 			const DecodeOptions & decodeOptions,
-			vector<unique_ptr<WellRectangle<double>  > > & wellRects);
+			std::vector<std::unique_ptr<WellRectangle<double>  > > & wellRects);
 	int decodeImageWells(const char * filename,
 			const DecodeOptions & decodeOptions,
-			vector<unique_ptr<WellRectangle<double>  > > & wellRects);
+			std::vector<std::unique_ptr<WellRectangle<double>  > > & wellRects);
 
 	static void configLogging(unsigned level, bool useFile = true);
 
@@ -87,26 +87,24 @@ public:
 		stdoutOutputEnable = enable;
 	}
 
-    const vector<WellDecoder *> & getDecodedWells() const;
+    const std::vector<WellDecoder *> & getDecodedWells() const;
 
 protected:
-    void saveResults(string & msg);
-
-    void formatCellMessages(unsigned plateNum, string & msg);
+    void saveResults(std::string & msg);
 
     int isValidDpi(int dpi);
 
     int decodeCommon(const Dib & image, const DecodeOptions & decodeOptions,
-    		const string &decodedDibFilename,
-    	    vector<unique_ptr<WellRectangle<double>  > > & wellRects);
+    		const std::string &decodedDibFilename,
+    		std::vector<std::unique_ptr<WellRectangle<double>  > > & wellRects);
 
-    void writeDecodedImage(const Dib & image, const string & decodedDibFilename);
+    void writeDecodedImage(const Dib & image, const std::string & decodedDibFilename);
 
-    static const string LIBRARY_NAME;
+    static const std::string LIBRARY_NAME;
 
-    slTime starttime; // for debugging
-    slTime endtime;
-    slTime timediff;
+    util::slTime starttime; // for debugging
+    util::slTime endtime;
+    util::slTime timediff;
 
     std::unique_ptr<ImgScanner> imgScanner;
 
@@ -119,5 +117,7 @@ protected:
     static bool loggingInitialized;
 
 };
+
+} /* namespace */
 
 #endif /* __INC_SCANLIB_INTERNAL_H */

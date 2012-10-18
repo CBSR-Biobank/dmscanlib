@@ -8,12 +8,12 @@
  *      Author: nelson
  */
 
-class Decoder;
-
 #include <jni.h>
 #include <ostream>
 
-using namespace std;
+namespace dmscanlib {
+
+class Decoder;
 
 class DecodeOptions {
 public:
@@ -25,7 +25,7 @@ public:
 private:
 
 	friend class Decoder;
-	friend ostream & operator<<(std::ostream & os, const DecodeOptions & m);
+	friend std::ostream & operator<<(std::ostream & os, const DecodeOptions & m);
 
     double scanGap;
     long squareDev;
@@ -33,5 +33,10 @@ private:
     long corrections;
     double cellDistance;
 };
+
+
+std::ostream & operator<<(std::ostream & os, const DecodeOptions & m);
+
+} /* namespace */
 
 #endif /* DECODEOPTIONS_H_ */

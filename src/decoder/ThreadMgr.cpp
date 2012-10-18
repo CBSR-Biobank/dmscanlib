@@ -18,11 +18,12 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "ThreadMgr.h"
 #include "DmScanLib.h"
-#include "DecodeThreadMgr.h"
 #include "WellDecoder.h"
 
 #include <algorithm>
+#include <vector>
 #include <memory>
 #include <glog/logging.h>
 
@@ -31,17 +32,19 @@
 #   undef ERROR
 #endif
 
-using namespace std;
+namespace dmscanlib {
 
-const unsigned DecodeThreadMgr::THREAD_NUM = 8;
+namespace decoder {
 
-DecodeThreadMgr::DecodeThreadMgr() {
+const unsigned ThreadMgr::THREAD_NUM = 8;
+
+ThreadMgr::ThreadMgr() {
 }
 
-DecodeThreadMgr::~DecodeThreadMgr() {
+ThreadMgr::~ThreadMgr() {
 }
 
-void DecodeThreadMgr::decodeWells(vector<unique_ptr<WellDecoder> > & wellDecoders) {
+   void ThreadMgr::decodeWells(std::vector<std::unique_ptr<WellDecoder> > & wellDecoders) {
 	numThreads = wellDecoders.size();
 	allThreads.resize(numThreads);
 
@@ -52,21 +55,21 @@ void DecodeThreadMgr::decodeWells(vector<unique_ptr<WellDecoder> > & wellDecoder
 	threadHandler();
 }
 
-void DecodeThreadMgr::threadHandler() {
+void ThreadMgr::threadHandler() {
 	unsigned first = 0;
-	unsigned last = min(numThreads, THREAD_NUM);
+	unsigned last = std::min(numThreads, THREAD_NUM);
 
 	do {
 		threadProcessRange(first, last);
 		VLOG(2) << "Threads for cells finished: " << first << "/" << last - 1;
 
 		first = last;
-		last = min(last + THREAD_NUM, numThreads);
+		last = std::min(last + THREAD_NUM, numThreads);
 	} while (first < numThreads);
 }
 
 //first is inclusive , last is exclusive
-void DecodeThreadMgr::threadProcessRange(unsigned first, unsigned last) {
+void ThreadMgr::threadProcessRange(unsigned first, unsigned last) {
 	for (unsigned int i = first; i < last; i++) {
 		allThreads[i]->start();
 	}
@@ -76,3 +79,6 @@ void DecodeThreadMgr::threadProcessRange(unsigned first, unsigned last) {
 	}
 }
 
+} /* namespace */
+
+}/* namespace */

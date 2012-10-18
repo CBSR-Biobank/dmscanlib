@@ -43,7 +43,6 @@
 #include "decoder/WellRectangle.h"
 #include "dib/Dib.h"
 #include "imgscanner/ImgScanner.h"
-#include "utils/SimpleOpt.h"
 
 #include <iostream>
 #include <vector>
@@ -60,13 +59,13 @@
 #   define DIR_SEP_CHR '/'
 #endif
 
-using namespace std;
+using namespace dmscanlib;
 
 namespace {
 class TestApp : public ::testing::Test {
 protected:
     TestApp() {
-        DmScanLib::configLogging(3, false);
+    	DmScanLib::configLogging(3, false);
     }
 
     ~TestApp() {
@@ -84,19 +83,19 @@ private:
 
 TEST_F(TestApp, ScanImage) {
 
-    vector<unique_ptr<WellRectangle<double>  > > wellRects;
+    std::vector<std::unique_ptr<WellRectangle<double>  > > wellRects;
 
-	wellRects.push_back(unique_ptr<WellRectangle<double> >(
+	wellRects.push_back(std::unique_ptr<WellRectangle<double> >(
 			new WellRectangle<double>("A12", 10.0 / 400.0, 24.0 / 400.0,
 	                130.0 / 400.0, 120.0 / 400.0)));
 
-	wellRects.push_back(unique_ptr<WellRectangle<double> >(
+	wellRects.push_back(std::unique_ptr<WellRectangle<double> >(
 			new WellRectangle<double>("A11", 150.0 / 400.0, 24.0 / 400.0,
             250.0 / 400.0, 120.0 / 400.0)));
 
     DecodeOptions decodeOptions(0.085, 15, 5, 10, 0.345);
 
-    string fname(getenv("HOME"));
+    std::string fname(getenv("HOME"));
     fname.append("/Dropbox/CBSR/scanlib/testImages/96tubes_cropped.bmp");
 
     DmScanLib dmScanLib(3);

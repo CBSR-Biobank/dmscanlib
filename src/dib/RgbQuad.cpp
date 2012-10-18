@@ -10,6 +10,8 @@
 #include "RgbQuad.h"
 
 
+namespace dmscanlib {
+
 RgbQuad::RgbQuad() {
    set(0, 0, 0);
 }
@@ -41,3 +43,6 @@ void RgbQuad::scale(double factor) {
    rgbGreen *= factor;
    rgbBlue  *= factor;
 }
+
+
+} /* namespace */

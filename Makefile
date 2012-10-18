@@ -16,7 +16,7 @@ LANG := en_US                # for gcc error messages
 # filenames only - no paths required
 SRC := \
 	DecodeOptions.cpp \
-	DecodeThreadMgr.cpp \
+	ThreadMgr.cpp \
 	Decoder.cpp \
 	Dib.cpp \
 	DmScanLib.cpp \
@@ -26,14 +26,14 @@ SRC := \
 	ImgScannerSimulator.cpp \
 	RgbQuad.cpp \
 	TestApp.cpp \
-	TimeUtilLinux.cpp \
+	TimeLinux.cpp \
 	WellDecoder.cpp \
 	WellRectangle.cpp
 
 
 INCLUDE_PATH := . src src/decoder src/dib src/imgscanner src/jni src/utils third_party/libdmtx third_party/glog/src \
 	/usr/lib/jvm/jdk1.6.0_32/include /usr/lib/jvm/jdk1.6.0_32/include/linux
-LIBS := -lglog -ldmtx -lOpenThreads
+LIBS := -lglog -ldmtx -lOpenThreads -lgtest
 LIB_PATH :=
 
 BUILD_DIR := obj

@@ -14,7 +14,7 @@
 #include <memory>
 #include <glog/logging.h>
 
-using namespace std;
+using namespace dmscanlib;
 
 jobject createScanResultObject(JNIEnv * env, int resultCode, int value) {
     jclass scanLibResultClass = env->FindClass(
@@ -25,7 +25,7 @@ jobject createScanResultObject(JNIEnv * env, int resultCode, int value) {
     jmethodID cons = env->GetMethodID(scanLibResultClass, "<init>",
                                       "(IILjava/lang/String;)V");
 
-    string msg;
+    std::string msg;
     getResultCodeMsg(resultCode, msg);
 
     jvalue data[3];
@@ -37,7 +37,7 @@ jobject createScanResultObject(JNIEnv * env, int resultCode, int value) {
 }
 
 jobject createDecodeResultObject(JNIEnv * env, int resultCode,
-                const std::vector<WellDecoder *> & wellDecoders) {
+                const std::vector<dmscanlib::WellDecoder *> & wellDecoders) {
     jclass resultClass = env->FindClass(
                     "edu/ualberta/med/scannerconfig/dmscanlib/DecodeResult");
 
@@ -46,7 +46,7 @@ jobject createDecodeResultObject(JNIEnv * env, int resultCode,
     jmethodID cons = env->GetMethodID(resultClass, "<init>",
                                       "(IILjava/lang/String;)V");
 
-    string msg;
+    std::string msg;
     getResultCodeMsg(resultCode, msg);
 
     jvalue data[3];
@@ -61,7 +61,7 @@ jobject createDecodeResultObject(JNIEnv * env, int resultCode,
         		"(Ljava/lang/String;Ljava/lang/String;)V");
 
         for (unsigned i = 0, n = wellDecoders.size(); i < n; ++i) {
-        	WellDecoder & wellDecoder = *wellDecoders[i];
+        	dmscanlib::WellDecoder & wellDecoder = *wellDecoders[i];
             jvalue data[3];
 
             data[0].l = env->NewStringUTF(wellDecoder.getLabel().c_str());
@@ -83,12 +83,13 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
 		JNIEnv * env, jobject obj, jlong _verbose, jstring _filename,
 		jobject _decodeOptions, jobjectArray _wellRects) {
 
-    unsigned verbose = static_cast<unsigned>(_verbose);
+    DmScanLib::configLogging(static_cast<unsigned>(_verbose), false);
+
     const char *filename = env->GetStringUTFChars(_filename, 0);
 
     DecodeOptions decodeOptions(env, _decodeOptions);
 
-    vector<unique_ptr<WellRectangle<double>  > > wellRects;
+    std::vector<std::unique_ptr<WellRectangle<double>  > > wellRects;
 
     jobject wellRectJavaObj;
     jclass wellRectJavaClass = NULL;
@@ -99,9 +100,6 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
     jsize numWells = env->GetArrayLength(_wellRects);
 
 	// TODO check for max well rectangle objects
-
-    DmScanLib::configLogging(3, false);
-
     for (int i = 0; i < static_cast<int>(numWells); ++i) {
     	wellRectJavaObj = env->GetObjectArrayElement(_wellRects, i);
 
@@ -142,7 +140,7 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
     	double x4 = env->CallDoubleMethod(wellRectJavaObj, wellRectGetCornerXMethodID, 3);
     	double y4 = env->CallDoubleMethod(wellRectJavaObj, wellRectGetCornerYMethodID, 3);
 
-    	unique_ptr<WellRectangle<double> > wellRect(
+    	std::unique_ptr<WellRectangle<double> > wellRect(
     			new WellRectangle<double>(label, x1, y1, x2, y2, x3, y3, x4, y4));
 
     	VLOG(3) << *wellRect;
@@ -153,7 +151,7 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
     	env->DeleteLocalRef(wellRectJavaObj);
     }
 
-    DmScanLib dmScanLib(verbose);
+    dmscanlib::DmScanLib dmScanLib(1);
     int result = dmScanLib.decodeImageWells(filename, decodeOptions, wellRects);
     env->ReleaseStringUTFChars(_filename, filename);
 

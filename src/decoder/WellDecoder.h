@@ -12,17 +12,17 @@
 #include <OpenThreads/ScopedLock>
 #include <OpenThreads/Thread>
 
-using namespace std;
+namespace dmscanlib {
 
 class Decoder;
 class Dib;
 struct RgbQuad;
 class PalletGrid;
 
-class WellDecoder : public OpenThreads::Thread {
+class WellDecoder : public ::OpenThreads::Thread {
 public:
 	WellDecoder(const Decoder & decoder,
-			unique_ptr<const WellRectangle<unsigned> > _wellRectangle);
+			std::unique_ptr<const WellRectangle<unsigned> > _wellRectangle);
 
 	virtual ~WellDecoder();
 
@@ -32,11 +32,11 @@ public:
 
 	void decodeCallback(std::string & decodedMsg, Point<unsigned>(&corners)[4]);
 
-	const string & getLabel() const {
+	const std::string & getLabel() const {
 		return wellRectangle->getLabel();
 	}
 
-	const string & getMessage() const {
+	const std::string & getMessage() const {
 		return message;
 	}
 
@@ -56,13 +56,15 @@ public:
 
 private:
 	const Decoder & decoder;
-	unique_ptr<const WellRectangle<unsigned> > wellRectangle;
-	unique_ptr<const Dib> wellImage;
-	unique_ptr<const BoundingBox<unsigned> > boundingBox;
-	unique_ptr<const Rect<unsigned> > decodedRect;
-	string message;
+	std::unique_ptr<const WellRectangle<unsigned> > wellRectangle;
+	std::unique_ptr<const Dib> wellImage;
+	std::unique_ptr<const BoundingBox<unsigned> > boundingBox;
+	std::unique_ptr<const Rect<unsigned> > decodedRect;
+	std::string message;
 
 	friend std::ostream & operator<<(std::ostream & os, WellDecoder & m);
 };
+
+} /* namespace */
 
 #endif /* __INC_PALLET_CELL_H */

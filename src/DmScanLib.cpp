@@ -48,9 +48,9 @@
 #   include "debug_new.h"
 #endif
 
-using namespace std;
+namespace dmscanlib {
 
-const string DmScanLib::LIBRARY_NAME("dmscanlib");
+const std::string DmScanLib::LIBRARY_NAME("dmscanlib");
 
 bool DmScanLib::loggingInitialized = false;
 
@@ -60,14 +60,14 @@ DmScanLib::DmScanLib(unsigned loggingLevel, bool logToFile) :
 {
 	configLogging(loggingLevel, logToFile);
 	if (VLOG_IS_ON(2)) {
-		Util::getTime(starttime);
+		util::Time::getTime(starttime);
 	}
 }
 
 DmScanLib::~DmScanLib() {
 	if (VLOG_IS_ON(2)) {
-		Util::getTime(endtime);
-		Util::difftime(starttime, endtime, timediff);
+		util::Time::getTime(endtime);
+		util::Time::difftime(starttime, endtime, timediff);
 		VLOG(2) << "time taken: " << timediff;
 	}
 }
@@ -109,7 +109,7 @@ void DmScanLib::configLogging(unsigned level, bool useFile) {
 	loggingInitialized = true;
 }
 
-void DmScanLib::saveResults(string & msg) {
+void DmScanLib::saveResults(std::string & msg) {
 #ifdef DEBUG1
 	// FIXME:: is this required for VISUAL STUDIO?
 	/*
@@ -120,7 +120,7 @@ void DmScanLib::saveResults(string & msg) {
 	fprintf(fh, "%s", msg.c_str());
 	fclose(fh);
 #else
-	ofstream myfile;
+	std::ofstream myfile;
 	myfile.open("dmscanlib.txt");
 	myfile << msg;
 	myfile.close();
@@ -177,7 +177,7 @@ int DmScanLib::scanFlatbed(unsigned dpi, int brightness, int contrast,
 int DmScanLib::scanAndDecode(unsigned dpi, int brightness, int contrast,
 		double left, double top, double right, double bottom,
 		const DecodeOptions & decodeOptions,
-		vector<unique_ptr<WellRectangle<double>  > > & wellRects) {
+		std::vector<std::unique_ptr<WellRectangle<double>  > > & wellRects) {
 	VLOG(2) << "decodePlate: dpi/" << dpi << " brightness/" << brightness
 			<< " contrast/" << contrast
 			<< " left/" << left << " top/" << top << " right/" << right
@@ -209,7 +209,7 @@ int DmScanLib::scanAndDecode(unsigned dpi, int brightness, int contrast,
 
 int DmScanLib::decodeImageWells(const char * filename,
 		const DecodeOptions & decodeOptions,
-		vector<unique_ptr<WellRectangle<double>  > > & wellRects) {
+		std::vector<std::unique_ptr<WellRectangle<double>  > > & wellRects) {
 
 	VLOG(2) << "decodeImage: filename/" << filename
 			<< " numWellRects/" << wellRects.size()
@@ -224,11 +224,12 @@ int DmScanLib::decodeImageWells(const char * filename,
 	return decodeCommon(image, decodeOptions, "decode.bmp", wellRects);
 }
 
-int DmScanLib::decodeCommon(const Dib & image, const DecodeOptions & decodeOptions,
-		const string &decodedDibFilename,
-	    vector<unique_ptr<WellRectangle<double>  > > & wellRects) {
+int DmScanLib::decodeCommon(const Dib & image,
+		const DecodeOptions & decodeOptions,
+		const std::string &decodedDibFilename,
+		std::vector<std::unique_ptr<WellRectangle<double>  > > & wellRects) {
 
-	decoder = unique_ptr<Decoder>(new Decoder(image, decodeOptions, wellRects));
+	decoder = std::unique_ptr<Decoder>(new Decoder(image, decodeOptions, wellRects));
 	int result = decoder->decodeWellRects();
 
 	if (result != SC_SUCCESS) {
@@ -246,10 +247,11 @@ int DmScanLib::decodeCommon(const Dib & image, const DecodeOptions & decodeOptio
 	return SC_SUCCESS;
 }
 
-void DmScanLib::writeDecodedImage(const Dib & image, const string & decodedDibFilename) {
+void DmScanLib::writeDecodedImage(const Dib & image,
+		const std::string & decodedDibFilename) {
 	CHECK_NOTNULL(decoder.get());
 
-    const vector<WellDecoder *> & decodedWells = decoder->getDecodedWells();
+    const std::vector<WellDecoder *> & decodedWells = decoder->getDecodedWells();
     CHECK(decodedWells.size() > 0);
 
     RgbQuad colorRed(255, 0, 0);
@@ -265,7 +267,10 @@ void DmScanLib::writeDecodedImage(const Dib & image, const string & decodedDibFi
 
 
 
-const vector<WellDecoder *> & DmScanLib::getDecodedWells() const {
+const std::vector<WellDecoder *> & DmScanLib::getDecodedWells() const {
 	CHECK_NOTNULL(decoder.get());
 	return decoder->getDecodedWells();
 }
+
+
+} /* namespace */

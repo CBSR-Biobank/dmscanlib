@@ -24,23 +24,24 @@
 #include <dmtx.h>
 #include <string>
 #include <memory>
+#include <vector>
 
 #ifdef _VISUALC_
 #   include <functional>
-#else
-#   include <tr1/functional>
 #endif
 
-using namespace std;
+namespace dmscanlib {
 
 class WellDecoder;
 
-class DecodeThreadMgr {
-public:
-	DecodeThreadMgr();
-	~DecodeThreadMgr();
+namespace decoder {
 
-	void decodeWells(vector<unique_ptr<WellDecoder> > & wellDecoders);
+class ThreadMgr {
+public:
+	ThreadMgr();
+	~ThreadMgr();
+
+	void decodeWells(std::vector<std::unique_ptr<dmscanlib::WellDecoder> > & wellDecoders);
 
 private:
 	static const unsigned THREAD_NUM;
@@ -48,9 +49,13 @@ private:
 	void threadHandler();
 	void threadProcessRange(unsigned int first, unsigned int last);
 
-	vector<WellDecoder *> allThreads;
+	std::vector<dmscanlib::WellDecoder *> allThreads;
 	unsigned numThreads;
 };
+
+} /* namespace */
+
+} /* namespace */
 
 #endif /* __INC_PROCESS_IMAGE_MANAGER_H */
 

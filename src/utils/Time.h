@@ -1,3 +1,6 @@
+#ifndef __INC_TIME_UTIL_H_
+#define __INC_TIME_UTIL_H_
+
 /*
 Dmscanlib is a software library and standalone application that scans 
 and decodes libdmtx compatible test-tubes. It is currently designed 
@@ -18,42 +21,42 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "TimeUtil.h"
+#include <string>
+#include <sstream>
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <iostream>
+namespace dmscanlib {
 
+namespace util {
+
+#if defined (WIN32) && ! defined(__MINGW32__)
+typedef time_t slTime;
+#else
 #include <sys/time.h>
+typedef struct timeval slTime;
+#endif
 
-void Util::getTime(slTime & tm) {
-	gettimeofday(&tm, NULL);
+class Time {
+public:
+	static void getTime(slTime & tm);
+	static void getTimestamp(std::string & str_r);
+	static void difftime(slTime & start, slTime & end, slTime & diff);
+
+private:
+};
+
+template <typename T>
+std::string to_string(T const& value) {
+	std::stringstream sstr;
+    sstr << value;
+    return sstr.str();
 }
 
-void Util::getTimestamp(std::string & str_r) {
-    char buf_a[100];
+} /* namespace */
 
-    // Fetch the current time
-    char time_a[100];
-    struct timeval thistime;
+} /* namespace */
 
-    gettimeofday(&thistime, NULL);
-    strftime(time_a, sizeof(time_a), "%X", localtime(&thistime.tv_sec));
-    snprintf(buf_a, sizeof (buf_a), "%s:%03ld ", time_a,
-             thistime.tv_usec / 1000);
+#ifndef WIN32
+std::ostream & operator<<(std::ostream &os, dmscanlib::util::slTime & tm);
+#endif
 
-    str_r = buf_a;
-}
-
-void Util::difftime(slTime & start, slTime & end, slTime & diff) {
-	diff.tv_sec = end.tv_sec - start.tv_sec;
-	diff.tv_usec = end.tv_usec - start.tv_usec;
-	if (diff.tv_usec < 0) {
-		diff.tv_usec += 1000000;
-	}
-}
-
-ostream & operator<<(ostream &os, slTime & tm) {
-	os << "sec/" << tm.tv_sec << " msec/" << tm.tv_usec/1000;
-	return os;
-}
+#endif /* __INC_TIME_UTIL_H_ */

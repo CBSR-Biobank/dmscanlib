@@ -13,13 +13,13 @@
 #include <ostream>
 #include <string>
 
-using namespace std;
+namespace dmscanlib {
 
 template<typename T>
 class WellRectangle;
 
 template<typename T>
-ostream & operator<<(ostream &os, const WellRectangle<T> & m) {
+std::ostream & operator<<(std::ostream &os, const WellRectangle<T> & m) {
 	os << m.getLabel() << " - " << m.getRectangle();
 	return os;
 }
@@ -38,7 +38,7 @@ public:
 	virtual ~WellRectangle() {
 	}
 
-	const string & getLabel() const {
+	const std::string & getLabel() const {
 		return label;
 	}
 
@@ -53,10 +53,12 @@ public:
 	const T getCornerY(unsigned cornerId) const;
 
 private:
-	const string label;
+	const std::string label;
 	const Rect<T> rect;
 
-	friend ostream & operator<< <> (std::ostream & os, const WellRectangle<T> & m);
+	friend std::ostream & operator<< <> (std::ostream & os, const WellRectangle<T> & m);
 };
+
+} /* namespace */
 
 #endif /* WELLCOORDINATES_H_ */

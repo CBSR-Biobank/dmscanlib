@@ -33,7 +33,7 @@
 #include <windows.h>
 #endif
 
-using namespace std;
+namespace dmscanlib {
 
 class Dib;
 class DecodeOptions;
@@ -42,7 +42,7 @@ class WellDecoder;
 class Decoder {
 public:
     Decoder(const Dib & image, const DecodeOptions & decodeOptions,
-    		vector<unique_ptr<WellRectangle<double>  > > & wellRects);
+    		std::vector<std::unique_ptr<WellRectangle<double>  > > & wellRects);
     virtual ~Decoder();
     int decodeWellRects();
     void decodeWellRect(const Dib & wellRectImage, WellDecoder & wellDecoder) const;
@@ -55,7 +55,7 @@ public:
     	return decodedWellCount;
     }
 
-    const vector<WellDecoder *> & getDecodedWells() const {
+    const std::vector<WellDecoder *> & getDecodedWells() const {
     	return decodedWells;
     }
 
@@ -65,17 +65,19 @@ private:
     void getDecodeInfo(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg,
     		WellDecoder & wellDecoder) const;
 
-    void writeDiagnosticImage(DmtxDecode *dec, const string & id) const;
+    void writeDiagnosticImage(DmtxDecode *dec, const std::string & id) const;
 
     void showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg) const;
 
     const Dib & image;
-    unique_ptr<Dib> filteredImage;
+    std::unique_ptr<Dib> filteredImage;
     const DecodeOptions & decodeOptions;
-    const vector<unique_ptr<WellRectangle<double>  > > & wellRects;
-	vector<unique_ptr<WellDecoder> > wellDecoders;
-    vector<WellDecoder *> decodedWells;
+    const std::vector<std::unique_ptr<WellRectangle<double>  > > & wellRects;
+    std::vector<std::unique_ptr<WellDecoder> > wellDecoders;
+    std::vector<WellDecoder *> decodedWells;
 	unsigned decodedWellCount;
 };
+
+} /* namespace */
 
 #endif /* DECODER_H_ */

@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <memory>
 
-using namespace std;
+namespace dmscanlib {
 
 template<typename T>
 struct Point {
@@ -23,12 +23,12 @@ struct Point {
 
       }
 
-   unique_ptr<const Point<T> > scale(const T factor) const {
-      return unique_ptr<const Point<T> >(new Point<T>(x * factor, y * factor));
+   std::unique_ptr<const Point<T> > scale(const T factor) const {
+      return std::unique_ptr<const Point<T> >(new Point<T>(x * factor, y * factor));
    }
 
-   unique_ptr<const Point<T> > translate(const Point<T> distance) const {
-      return unique_ptr<const Point<T> >(new Point<T>(x + distance.x, y + distance.y));
+   std::unique_ptr<const Point<T> > translate(const Point<T> distance) const {
+      return std::unique_ptr<const Point<T> >(new Point<T>(x + distance.x, y + distance.y));
    }
 };
 
@@ -54,14 +54,14 @@ struct BoundingBox {
 };
 
 template<typename T>
-ostream & operator<<(ostream &os, const BoundingBox<T> & m) {
+std::ostream & operator<<(std::ostream &os, const BoundingBox<T> & m) {
    os << "(" << m.points[0].x << ", " << m.points[0].y << "), " << "("
       << m.points[1].x << ", " << m.points[1].y << ")";
    return os;
 }
 
 template<typename T>
-ostream & operator<<(ostream &os, const Rect<T> & m) {
+std::ostream & operator<<(std::ostream &os, const Rect<T> & m) {
    os << "(" << m.corners[0].x << ", " << m.corners[0].y << "), " << "("
       << m.corners[1].x << ", " << m.corners[1].y << "), " << "("
       << m.corners[2].x << ", " << m.corners[2].y << "), " << "("
@@ -99,44 +99,46 @@ struct Rect {
 
       }
 
-   unique_ptr<const Rect<T> > scale(const T factor) const {
-      unique_ptr<const Point<T> > pt1 = std::move(corners[0].scale(factor));
-      unique_ptr<const Point<T> > pt2 = std::move(corners[1].scale(factor));
-      unique_ptr<const Point<T> > pt3 = std::move(corners[2].scale(factor));
-      unique_ptr<const Point<T> > pt4 = std::move(corners[3].scale(factor));
-      return unique_ptr<const Rect<T> >(new Rect<T>(*pt1, *pt2, *pt3, *pt4));
+   std::unique_ptr<const Rect<T> > scale(const T factor) const {
+      std::unique_ptr<const Point<T> > pt1 = std::move(corners[0].scale(factor));
+      std::unique_ptr<const Point<T> > pt2 = std::move(corners[1].scale(factor));
+      std::unique_ptr<const Point<T> > pt3 = std::move(corners[2].scale(factor));
+      std::unique_ptr<const Point<T> > pt4 = std::move(corners[3].scale(factor));
+      return std::unique_ptr<const Rect<T> >(new Rect<T>(*pt1, *pt2, *pt3, *pt4));
    }
 
-   unique_ptr<const Rect<T> > translate(const Point<T> & distance) const {
-      unique_ptr<const Point<T> > pt1 = std::move(corners[0].translate(distance));
-      unique_ptr<const Point<T> > pt2 = std::move(corners[1].translate(distance));
-      unique_ptr<const Point<T> > pt3 = std::move(corners[2].translate(distance));
-      unique_ptr<const Point<T> > pt4 = std::move(corners[3].translate(distance));
-      return unique_ptr<const Rect<T> >(new Rect<T>(*pt1, *pt2, *pt3, *pt4));
+   std::unique_ptr<const Rect<T> > translate(const Point<T> & distance) const {
+      std::unique_ptr<const Point<T> > pt1 = std::move(corners[0].translate(distance));
+      std::unique_ptr<const Point<T> > pt2 = std::move(corners[1].translate(distance));
+      std::unique_ptr<const Point<T> > pt3 = std::move(corners[2].translate(distance));
+      std::unique_ptr<const Point<T> > pt4 = std::move(corners[3].translate(distance));
+      return std::unique_ptr<const Rect<T> >(new Rect<T>(*pt1, *pt2, *pt3, *pt4));
    }
 
 
-   unique_ptr<const BoundingBox<T> > getBoundingBox() const {
-      T maxX = numeric_limits<T>::min();
-      T maxY = numeric_limits<T>::min();
+   std::unique_ptr<const BoundingBox<T> > getBoundingBox() const {
+      T maxX = std::numeric_limits<T>::min();
+      T maxY = std::numeric_limits<T>::min();
 
-      T minX = numeric_limits<T>::max();
-      T minY = numeric_limits<T>::max();
+      T minX = std::numeric_limits<T>::max();
+      T minY = std::numeric_limits<T>::max();
 
       for (unsigned i = 0; i < 4; ++i) {
-         minX = min(minX, corners[i].x);
-         minY = min(minY, corners[i].y);
+         minX = std::min(minX, corners[i].x);
+         minY = std::min(minY, corners[i].y);
 
-         maxX = max(maxX, corners[i].x);
-         maxY = max(maxY, corners[i].y);
+         maxX = std::max(maxX, corners[i].x);
+         maxY = std::max(maxY, corners[i].y);
       }
-      return unique_ptr<const BoundingBox<T> >(
+      return std::unique_ptr<const BoundingBox<T> >(
          new BoundingBox<T>(minX, minY, maxX, maxY));
    }
 
    const Point<T> corners[4];
-   friend ostream & operator<<<>(std::ostream & os, const Rect<T> & m);
+   friend std::ostream & operator<<<>(std::ostream & os, const Rect<T> & m);
 };
+
+} /* namespace */
 
 #endif /* __INC_STRUCTS_H */
 

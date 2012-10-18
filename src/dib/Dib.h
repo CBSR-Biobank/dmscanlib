@@ -25,6 +25,7 @@
 
 #include <dmtx.h>
 #include <string>
+#include <memory>
 
 #ifdef WIN32
 #   include <windows.h>
@@ -33,13 +34,7 @@
 typedef void* HANDLE;
 #endif
 
-#include <memory>
-
-#ifndef _VISUALC_
-#   include <tr1/memory>
-#endif
-
-using namespace std;
+namespace dmscanlib {
 
 class RgbQuad;
 
@@ -54,11 +49,11 @@ public:
 	~Dib();
 
 	bool readFromFile(const std::string & filename);
-	bool writeToFile(const string & filename) const;
+	bool writeToFile(const std::string & filename) const;
 
-	unique_ptr<Dib> convertGrayscale() const;
+	std::unique_ptr<Dib> convertGrayscale() const;
 
-	unique_ptr<Dib> crop(const BoundingBox<unsigned> & bbox) const;
+	std::unique_ptr<Dib> crop(const BoundingBox<unsigned> & bbox) const;
 
 	void tpPresetFilter();
 
@@ -125,5 +120,7 @@ private:
 	void convolveFast3x3(const float(&kernel)[9]);
 
 };
+
+} /* namespace */
 
 #endif /* __INCLUDE_DIB_H */

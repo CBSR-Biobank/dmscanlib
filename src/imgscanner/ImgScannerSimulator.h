@@ -23,7 +23,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "ImgScanner.h"
 
-using namespace std;
+namespace dmscanlib {
+
+namespace imgscanner {
 
 /**
  * This class interfaces with the TWAIN driver to acquire images from the
@@ -51,5 +53,9 @@ public:
 
 private:
 };
+
+} /* namespace */
+
+} /* namespace */
 
 #endif /* __INCLUDE_IMG_SCANNER_SIMULATOR_H */

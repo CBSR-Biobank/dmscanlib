@@ -48,6 +48,8 @@ using namespace std;
 #   include "debug_new.h"
 #endif
 
+namespace dmscanlib {
+
 
 /* File information header
  * provides general information about the file
@@ -264,7 +266,7 @@ bool Dib::readFromFile(const string & filename) {
    return true;
 }
 
-bool Dib::writeToFile(const string & filename) const {
+bool Dib::writeToFile(const std::string & filename) const {
    CHECK_NOTNULL(pixels);
 
    unsigned char fileHeaderRaw[0xE];
@@ -660,3 +662,5 @@ DmtxImage * Dib::getDmtxImage() const {
    dmtxImageSetProp(image, DmtxPropImageFlip, DmtxFlipY); // DIBs are flipped in Y
    return image;
 }
+
+} /* namespace */
