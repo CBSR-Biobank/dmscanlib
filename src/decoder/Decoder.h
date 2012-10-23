@@ -66,6 +66,8 @@ private:
     void writeDiagnosticImage(DmtxDecode *dec, const std::string & id) const;
 
     void showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg) const;
+    int decodeSingleThreaded();
+    int decodeMultiThreaded();
 
     const Dib & image;
     std::unique_ptr<Dib> filteredImage;

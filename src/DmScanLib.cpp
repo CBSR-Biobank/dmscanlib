@@ -249,6 +249,7 @@ int DmScanLib::decodeCommon(const Dib & image,
 
 void DmScanLib::writeDecodedImage(const Dib & image,
 		const std::string & decodedDibFilename) {
+
 	CHECK_NOTNULL(decoder.get());
 
     const std::vector<WellDecoder *> & decodedWells = decoder->getDecodedWells();
@@ -264,8 +265,6 @@ void DmScanLib::writeDecodedImage(const Dib & image,
 	}
 	decodedDib.writeToFile(decodedDibFilename);
 }
-
-
 
 const std::vector<WellDecoder *> & DmScanLib::getDecodedWells() const {
 	CHECK_NOTNULL(decoder.get());

@@ -40,6 +40,7 @@ const int SC_INVALID_DPI = -3;
 const int SC_INVALID_NOTHING_DECODED = -4;
 const int SC_INVALID_VALUE = -5;
 const int SC_INVALID_IMAGE = -6;
+const int SC_INVALID_NOTHING_TO_DECODE = -7;
 const int SC_INCORRECT_DPI_SCANNED = -9;
 
 const unsigned CAP_IS_WIA = 0x01;

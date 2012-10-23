@@ -36,8 +36,7 @@ jobject createScanResultObject(JNIEnv * env, int resultCode, int value) {
     return env->NewObjectA(scanLibResultClass, cons, data);
 }
 
-jobject createDecodeResultObject(JNIEnv * env, int resultCode,
-                const std::vector<dmscanlib::WellDecoder *> & wellDecoders) {
+jobject createDecodeResultObject(JNIEnv * env, int resultCode) {
     jclass resultClass = env->FindClass(
                     "edu/ualberta/med/scannerconfig/dmscanlib/DecodeResult");
 
@@ -54,7 +53,15 @@ jobject createDecodeResultObject(JNIEnv * env, int resultCode,
     data[1].i = 0;
     data[2].l = env->NewStringUTF(msg.c_str());
 
-    jobject resultObj = env->NewObjectA(resultClass, cons, data);
+    return env->NewObjectA(resultClass, cons, data);
+}
+
+jobject createDecodeResultObject(JNIEnv * env, int resultCode,
+                const std::vector<dmscanlib::WellDecoder *> & wellDecoders) {
+    jobject resultObj = createDecodeResultObject(env, resultCode);
+
+    jclass resultClass = env->FindClass(
+                    "edu/ualberta/med/scannerconfig/dmscanlib/DecodeResult");
 
     if (wellDecoders.size() > 0) {
         jmethodID setCellMethod = env->GetMethodID(resultClass, "addWell",
@@ -83,6 +90,11 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
 		JNIEnv * env, jobject obj, jlong _verbose, jstring _filename,
 		jobject _decodeOptions, jobjectArray _wellRects) {
 
+	if ((_verbose == 0) || (_filename == 0) || (_decodeOptions == 0)
+			|| (_wellRects == 0)) {
+		return createDecodeResultObject(env, SC_FAIL);
+	}
+
     DmScanLib::configLogging(static_cast<unsigned>(_verbose), false);
 
     const char *filename = env->GetStringUTFChars(_filename, 0);
@@ -99,9 +111,19 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
 
     jsize numWells = env->GetArrayLength(_wellRects);
 
+    bool invalidWellRectFound = false;
+
+	VLOG(3) << "decodeImage: numWells/" << numWells;
+
 	// TODO check for max well rectangle objects
     for (int i = 0; i < static_cast<int>(numWells); ++i) {
     	wellRectJavaObj = env->GetObjectArrayElement(_wellRects, i);
+
+    	// if java object pointer is null, skip this array element
+    	if (wellRectJavaObj == NULL) {
+    		invalidWellRectFound = true;
+        	break;
+    	}
 
     	if (wellRectJavaClass == NULL) {
     		wellRectJavaClass = env->GetObjectClass(wellRectJavaObj);
@@ -151,10 +173,24 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
     	env->DeleteLocalRef(wellRectJavaObj);
     }
 
-    dmscanlib::DmScanLib dmScanLib(1);
-    int result = dmScanLib.decodeImageWells(filename, decodeOptions, wellRects);
+    jobject resultObj = 0;
+
+    if (invalidWellRectFound || (wellRects.size() == 0)) {
+    	// invalid rects or zero rects passed from java
+    	resultObj = createDecodeResultObject(env, SC_INVALID_NOTHING_TO_DECODE);
+    } else {
+        dmscanlib::DmScanLib dmScanLib(1);
+        int result = dmScanLib.decodeImageWells(filename, decodeOptions, wellRects);
+
+        if (result == SC_SUCCESS) {
+        	resultObj = createDecodeResultObject(env,result, dmScanLib.getDecodedWells());
+        } else {
+        	resultObj = createDecodeResultObject(env, result);
+        }
+    }
+
     env->ReleaseStringUTFChars(_filename, filename);
 
-    return createDecodeResultObject(env,result, dmScanLib.getDecodedWells());
+    return resultObj;
 }
 

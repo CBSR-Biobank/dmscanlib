@@ -83,7 +83,18 @@ int Decoder::decodeWellRects() {
 		wellDecoders[i] = std::unique_ptr<WellDecoder>(
 				new WellDecoder(*this, std::move(convertedWellTect)));
 	}
+	//return decodeMultiThreaded();
+	return decodeSingleThreaded();
+}
 
+int Decoder::decodeSingleThreaded() {
+	for(unsigned i = 0, n = wellDecoders.size(); i < n; ++i) {
+		wellDecoders[i]->run();
+	}
+	return SC_SUCCESS;
+}
+
+int Decoder::decodeMultiThreaded() {
 	decoder::ThreadMgr threadMgr;
 	threadMgr.decodeWells(wellDecoders);
 
@@ -118,6 +129,8 @@ void Decoder::applyFilters() {
 void Decoder::decodeWellRect(const Dib & wellRectImage, WellDecoder & wellDecoder) const {
 	const unsigned dpi = wellRectImage.getDpi();
 	CHECK((dpi == 300) || (dpi == 400) || (dpi == 600));
+
+	VLOG(2) << "decodeWellRect: " << wellDecoder;
 
 	DmtxImage * dmtxImage = wellRectImage.getDmtxImage();
 	DmtxDecode *dec = dmtxDecodeCreate(dmtxImage, 1);
