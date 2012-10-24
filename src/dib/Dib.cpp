@@ -522,10 +522,11 @@ void Dib::drawLine(unsigned x0, unsigned y0, unsigned x1, unsigned y1,
 }
 
 void Dib::drawRectangle(const Rect<unsigned> & rect, const RgbQuad & quad) {
-   drawLine(rect.corners[0], rect.corners[1], quad);
-   drawLine(rect.corners[1], rect.corners[2], quad);
-   drawLine(rect.corners[2], rect.corners[3], quad);
-   drawLine(rect.corners[3], rect.corners[0], quad);
+	VLOG(5) << "drawRectangle: "<< rect;
+	drawLine(rect.corners[0], rect.corners[1], quad);
+	drawLine(rect.corners[1], rect.corners[2], quad);
+	drawLine(rect.corners[2], rect.corners[3], quad);
+	drawLine(rect.corners[3], rect.corners[0], quad);
 }
 
 void Dib::drawRectangle(unsigned x, unsigned y, unsigned width, unsigned height,

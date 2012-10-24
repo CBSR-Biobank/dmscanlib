@@ -5,6 +5,7 @@
 #include <limits>
 #include <algorithm>
 #include <memory>
+#include <glog/logging.h>
 
 namespace dmscanlib {
 
@@ -96,7 +97,6 @@ struct Rect {
                   Point<T>(bbox.points[1].x, bbox.points[1].y),
                   Point<T>(bbox.points[1].x, bbox.points[0].y) })
       {
-
       }
 
    std::unique_ptr<const Rect<T> > scale(const T factor) const {

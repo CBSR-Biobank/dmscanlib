@@ -26,7 +26,7 @@ WellRectangle<T>::WellRectangle(const char * _label, const Rect<T> & _rect) :
 
 template<typename T>
 WellRectangle<T>::WellRectangle(const char * _label, T x1, T y1, T x2, T y2)  :
-	label(_label), rect(x1, y1, x1, y2, x2, y1, x2, y2)
+	label(_label), rect(x1, y1, x2, y1, x2, y2, x1, y2)
 {
 }
 

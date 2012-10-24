@@ -64,7 +64,7 @@ int Decoder::decodeWellRects() {
 	for(unsigned i = 0, n = wellRects.size(); i < n; ++i) {
 		const WellRectangle<double> & wellRect = *wellRects[i];
 
-		VLOG(3) << "well rect: " << wellRect;
+		VLOG(5) << "well rect: " << wellRect;
 
 		std::unique_ptr<const Rect<double> > factoredRect = std::move(
 				wellRect.getRectangle().scale(static_cast<double>(dpi)));
@@ -90,6 +90,9 @@ int Decoder::decodeWellRects() {
 int Decoder::decodeSingleThreaded() {
 	for(unsigned i = 0, n = wellDecoders.size(); i < n; ++i) {
 		wellDecoders[i]->run();
+		if (!wellDecoders[i]->getMessage().empty()) {
+			decodedWells.push_back(wellDecoders[i].get());
+		}
 	}
 	return SC_SUCCESS;
 }
