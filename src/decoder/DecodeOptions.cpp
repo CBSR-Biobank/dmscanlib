@@ -12,12 +12,13 @@
 namespace dmscanlib {
 
 DecodeOptions::DecodeOptions(double scanGap, long squareDev,
-		long edgeThresh, long corrections, double cellDistance) {
+		long edgeThresh, long corrections, long shrink, double cellDistance) {
 
     this->scanGap       = scanGap;
     this->squareDev     = squareDev;
     this->edgeThresh    = edgeThresh;
     this->corrections   = corrections;
+    this->shrink        = shrink;
     this->cellDistance  = cellDistance;
 }
 
@@ -43,13 +44,19 @@ DecodeOptions::DecodeOptions(JNIEnv *env, jobject decodeOptionsObj) {
     if(env->ExceptionOccurred()) {
     	return;
     }
-    squareDev= env->CallLongMethod(decodeOptionsObj, getMethod, NULL);
+    edgeThresh= env->CallLongMethod(decodeOptionsObj, getMethod, NULL);
 
-    getMethod = env->GetMethodID(decodeOptionsJavaClass, "getEdgeThresh", "()J");
+    getMethod = env->GetMethodID(decodeOptionsJavaClass, "getCorrections", "()J");
     if(env->ExceptionOccurred()) {
     	return;
     }
-    squareDev= env->CallLongMethod(decodeOptionsObj, getMethod, NULL);
+    corrections= env->CallLongMethod(decodeOptionsObj, getMethod, NULL);
+
+    getMethod = env->GetMethodID(decodeOptionsJavaClass, "getShrink", "()J");
+    if(env->ExceptionOccurred()) {
+    	return;
+    }
+    shrink = env->CallLongMethod(decodeOptionsObj, getMethod, NULL);
 
     getMethod = env->GetMethodID(decodeOptionsJavaClass, "getCellDistance", "()D");
     if(env->ExceptionOccurred()) {
@@ -67,7 +74,8 @@ std::ostream & operator<<(std::ostream &os, const DecodeOptions & m) {
 			<< " squareDev/" << m.squareDev
 			<< " edgeThresh/" << m.edgeThresh
 			<< " corrections/"	<< m.corrections
-			<< " cellDistance/" << m.cellDistance;;
+			<< " shrink/" << m.shrink
+			<< " cellDistance/" << m.cellDistance;
 	return os;
 }
 

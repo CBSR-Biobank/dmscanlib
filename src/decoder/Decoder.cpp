@@ -43,8 +43,11 @@ namespace dmscanlib {
 
 Decoder::Decoder(const Dib & _image, const DecodeOptions & _decodeOptions,
 		std::vector<std::unique_ptr<WellRectangle<double>  > > & _wellRects) :
-		image(_image), decodeOptions(_decodeOptions), wellRects(_wellRects)
+		image(_image), dpi(image.getDpi()), decodeOptions(_decodeOptions),
+		wellRects(_wellRects)
 {
+	CHECK((dpi == 300) || (dpi == 400) || (dpi == 600));
+
 	wellDecoders.resize(wellRects.size());
 	applyFilters();
 }
@@ -83,8 +86,8 @@ int Decoder::decodeWellRects() {
 		wellDecoders[i] = std::unique_ptr<WellDecoder>(
 				new WellDecoder(*this, std::move(convertedWellTect)));
 	}
-	//return decodeMultiThreaded();
-	return decodeSingleThreaded();
+	return decodeMultiThreaded();
+	//return decodeSingleThreaded();
 }
 
 int Decoder::decodeSingleThreaded() {
@@ -130,16 +133,25 @@ void Decoder::applyFilters() {
  * Called by multiple threads.
  */
 void Decoder::decodeWellRect(const Dib & wellRectImage, WellDecoder & wellDecoder) const {
-	const unsigned dpi = wellRectImage.getDpi();
-	CHECK((dpi == 300) || (dpi == 400) || (dpi == 600));
-
 	VLOG(2) << "decodeWellRect: " << wellDecoder;
 
-	DmtxImage * dmtxImage = wellRectImage.getDmtxImage();
-	DmtxDecode *dec = dmtxDecodeCreate(dmtxImage, 1);
+	DmtxImage * dmtxImage = image.getDmtxImage();
+	DmtxDecode *dec = dmtxDecodeCreate(dmtxImage, decodeOptions.shrink);
 
 	CHECK_NOTNULL(dmtxImage);
 	CHECK_NOTNULL(dec);
+
+	unsigned height = image.getHeight();
+
+	std::unique_ptr<const BoundingBox<unsigned> > bbox = std::move(
+			wellDecoder.getWellRectangle().getBoundingBox());
+
+	dmtxDecodeSetProp(dec, DmtxPropXmin, bbox->points[0].x);
+	dmtxDecodeSetProp(dec, DmtxPropXmax, bbox->points[1].x);
+
+	dmtxDecodeSetProp(dec, DmtxPropYmax, height - bbox->points[0].y);
+	dmtxDecodeSetProp(dec, DmtxPropYmin, height - bbox->points[1].y);
+
 
 	// slightly smaller than the new tube edge
 	dmtxDecodeSetProp(dec, DmtxPropEdgeMin, static_cast<int>(0.08 * dpi));

@@ -70,6 +70,7 @@ private:
     int decodeMultiThreaded();
 
     const Dib & image;
+    const unsigned dpi;
     std::unique_ptr<Dib> filteredImage;
     const DecodeOptions & decodeOptions;
     const std::vector<std::unique_ptr<WellRectangle<double>  > > & wellRects;

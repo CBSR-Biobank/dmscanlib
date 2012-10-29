@@ -36,7 +36,7 @@ WellDecoder::~WellDecoder() {
  * This method runs in its own thread.
  */
 void WellDecoder::run() {
-    wellImage = std::move(decoder.getWorkingImage().crop(*boundingBox));
+    //wellImage = std::move(decoder.getWorkingImage().crop(*boundingBox));
     decoder.decodeWellRect(*wellImage, *this);
     if (!message.empty()) {
     	VLOG(3) << "run: " << *this;
@@ -54,11 +54,8 @@ const Rect<unsigned> & WellDecoder::getDecodedRectangle() const {
 	return *decodedRect;
 }
 
-// the rectangle passed in is in coordinates of the cropped image,
-// the rectangle has to be translated into the coordinates of the overall
-// image
 void WellDecoder::setDecodeRectangle(const Rect<unsigned> & rect) {
-	decodedRect = std::move(rect.translate(boundingBox->points[0]));
+	decodedRect = std::unique_ptr<Rect<unsigned> >(new Rect<unsigned>(rect));
 }
 
 std::ostream & operator<<(std::ostream &os, WellDecoder & m) {
