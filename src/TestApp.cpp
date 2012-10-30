@@ -93,7 +93,7 @@ TEST_F(TestApp, ScanImage) {
 			new WellRectangle<double>("A11", 150.0 / 400.0, 24.0 / 400.0,
             250.0 / 400.0, 120.0 / 400.0)));
 
-    DecodeOptions decodeOptions(0.085, 10, 5, 10, 1, 0.345);
+    DecodeOptions decodeOptions(0.085, 10, 5, 10, 2, 0.345);
 
     std::string fname(getenv("HOME"));
     fname.append("/Dropbox/CBSR/scanlib/testImages/96tubes_cropped.bmp");

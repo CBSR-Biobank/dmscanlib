@@ -60,6 +60,7 @@ public:
 private:
     void applyFilters();
     static DmtxImage * createDmtxImageFromDib(const Dib & dib);
+
     void getDecodeInfo(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg,
     		WellDecoder & wellDecoder) const;
 
@@ -70,8 +71,9 @@ private:
     int decodeMultiThreaded();
 
     const Dib & image;
-    const unsigned dpi;
     std::unique_ptr<Dib> filteredImage;
+    DmtxImage * dmtxImage;
+    const unsigned dpi;
     const DecodeOptions & decodeOptions;
     const std::vector<std::unique_ptr<WellRectangle<double>  > > & wellRects;
     std::vector<std::unique_ptr<WellDecoder> > wellDecoders;

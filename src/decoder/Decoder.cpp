@@ -43,34 +43,53 @@ namespace dmscanlib {
 
 Decoder::Decoder(const Dib & _image, const DecodeOptions & _decodeOptions,
 		std::vector<std::unique_ptr<WellRectangle<double>  > > & _wellRects) :
-		image(_image), dpi(image.getDpi()), decodeOptions(_decodeOptions),
+		image(_image), dmtxImage(NULL), dpi(image.getDpi()), decodeOptions(_decodeOptions),
 		wellRects(_wellRects)
 {
 	CHECK((dpi == 300) || (dpi == 400) || (dpi == 600));
 
 	wellDecoders.resize(wellRects.size());
 	applyFilters();
+
+	CHECK_NOTNULL(filteredImage.get());
+
+	dmtxImage = filteredImage->getDmtxImage();
 }
 
 Decoder::~Decoder() {
+	dmtxImageDestroy(&dmtxImage);
+}
+
+void Decoder::applyFilters() {
+	CHECK(dmtxImage == NULL);
+
+	filteredImage = (image.getBitsPerPixel() != 8)
+			? std::move(image.convertGrayscale())
+			: std::unique_ptr<Dib>(new Dib(image));
+
+	filteredImage->tpPresetFilter();
+	if (VLOG_IS_ON(2)) {
+		filteredImage->writeToFile("filtered.bmp");
+	}
 }
 
 int Decoder::decodeWellRects() {
-	const unsigned dpi = image.getDpi();
-
-	VLOG(3) << "DecodeCommon: dpi/" << dpi << " numWellRects/" << wellRects.size();
-
 	if ((dpi != 300) && (dpi != 400) && (dpi != 600)) {
 		return SC_INCORRECT_DPI_SCANNED;
 	}
+
+	VLOG(3) << "decodeWellRects: dpi/" << dpi << " numWellRects/" << wellRects.size();
 
 	for(unsigned i = 0, n = wellRects.size(); i < n; ++i) {
 		const WellRectangle<double> & wellRect = *wellRects[i];
 
 		VLOG(5) << "well rect: " << wellRect;
 
+//		std::unique_ptr<const Rect<double> > factoredRect = std::move(
+//				wellRect.getRectangle().scale(static_cast<double>(dpi)));
+
 		std::unique_ptr<const Rect<double> > factoredRect = std::move(
-				wellRect.getRectangle().scale(static_cast<double>(dpi)));
+						wellRect.getRectangle().scale(1));
 
 		std::unique_ptr<WellRectangle<unsigned> > convertedWellTect(
 				new WellRectangle<unsigned>(wellRect.getLabel().c_str(),
@@ -118,27 +137,15 @@ const unsigned Decoder::getDecodedWellCount() {
 	return decodedWells.size();
 }
 
-void Decoder::applyFilters() {
-	filteredImage = (image.getBitsPerPixel() != 8)
-			? std::move(image.convertGrayscale())
-			: std::unique_ptr<Dib>(new Dib(image));
-
-	filteredImage->tpPresetFilter();
-	if (VLOG_IS_ON(2)) {
-		filteredImage->writeToFile("filtered.bmp");
-	}
-}
-
 /*
  * Called by multiple threads.
  */
 void Decoder::decodeWellRect(const Dib & wellRectImage, WellDecoder & wellDecoder) const {
+	CHECK_NOTNULL(dmtxImage);
+
 	VLOG(2) << "decodeWellRect: " << wellDecoder;
 
-	DmtxImage * dmtxImage = image.getDmtxImage();
 	DmtxDecode *dec = dmtxDecodeCreate(dmtxImage, decodeOptions.shrink);
-
-	CHECK_NOTNULL(dmtxImage);
 	CHECK_NOTNULL(dec);
 
 	unsigned height = image.getHeight();
@@ -189,7 +196,6 @@ void Decoder::decodeWellRect(const Dib & wellRectImage, WellDecoder & wellDecode
 	}
 
 	dmtxDecodeDestroy(&dec);
-	dmtxImageDestroy(&dmtxImage);
 }
 
 void Decoder::getDecodeInfo(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg,
