@@ -234,7 +234,7 @@ bool Dib::readFromFile(const string & filename) {
    r = fread(infoHeaderRaw, sizeof(unsigned char), sizeof(infoHeaderRaw), fh);
    CHECK(r = sizeof(infoHeaderRaw));
 
-   //unsigned size = *(unsigned *) &infoHeaderRaw[0];
+   unsigned size = *(unsigned *) &infoHeaderRaw[0];
    unsigned width = *(unsigned *) &infoHeaderRaw[0x12 - 0xE];
    unsigned height = *(unsigned *) &infoHeaderRaw[0x16 - 0xE];
    unsigned colorBits = *(unsigned short *) &infoHeaderRaw[0x1C - 0xE];
@@ -245,9 +245,7 @@ bool Dib::readFromFile(const string & filename) {
    unsigned compression = *(unsigned *) &infoHeaderRaw[0x1E - 0xE];
    unsigned numColorsImp = *(unsigned *) &infoHeaderRaw[0x32 - 0xE];
 
-   //FIXME this is required for gimp-based cropped images.
-   // if these conditions are not met the Dib cannot be processed
-   //CHECK(size == 40);
+   CHECK((size == 40) || (size == 108));
 
    CHECK(planes == 1);
    CHECK(compression == 0);
@@ -255,6 +253,12 @@ bool Dib::readFromFile(const string & filename) {
    CHECK(numColorsImp == 0);
 
    init(width, height, colorBits, hPixelsPerMeter);
+
+   if (size == 108) {
+	   // read remainder of version 4.x bitmat header
+	   // - it is not used by this code
+	   fseek(fh, 108 - 40, SEEK_CUR);
+   }
 
    r = fread(pixels, sizeof(unsigned char), imageSize, fh);
    CHECK(r = imageSize);

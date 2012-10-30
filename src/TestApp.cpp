@@ -48,6 +48,8 @@
 #include <vector>
 #include <gtest/gtest.h>
 #include <stdexcept>
+#include <dirent.h>
+#include <stddef.h>
 
 #ifdef USE_NVWA
 #   include <limits>
@@ -66,7 +68,6 @@ namespace {
 class TestApp : public ::testing::Test {
 protected:
     TestApp() {
-    	DmScanLib::configLogging(3, false);
     }
 
     ~TestApp() {
@@ -81,6 +82,34 @@ protected:
 
 private:
 };
+
+/*
+ * Gets file names for all the test images in the Dropbox folder. Only MS
+ * Windows bitmap files are included.
+ */
+bool getTestImageFileNames(std::string dir, std::vector<std::string> & filenames) {
+	DIR * dp;
+	dirent * dirp;
+
+	dp = opendir(dir.c_str());
+	if (dp == NULL) return false;
+
+	VLOG(3) << "getting files from directory: " << dir;
+
+	while ((dirp = readdir(dp)) != NULL) {
+		if (((dirp->d_type == DT_DIR) && (dirp->d_name[0] != '.'))) {
+			getTestImageFileNames(dir.append("/").append(dirp->d_name), filenames);
+		} else if (dirp->d_type == DT_REG) {
+			std::string basename(dirp->d_name);
+
+			if (basename.find(".bmp") != std::string::npos) {
+				filenames.push_back(std::string(dir).append("/").append(dirp->d_name));
+			}
+		}
+	}
+	closedir(dp);
+	return true;
+}
 
 /*
  * Assumes image has 96 well plates in 8 rows by 12 columns
@@ -123,30 +152,32 @@ void getWellRectsForSbsPalletImage(std::string & fname,
 /*
  * Test for invalid rect
  */
-TEST_F(TestApp, ScanImageInvalidRect) {
+TEST_F(TestApp, DecodeImageInvalidRect) {
     ASSERT_THROW(new WellRectangle<double>("A12", 0, 0, 0, 0),
 	std::invalid_argument);
 }
 
-TEST_F(TestApp, ScanImage) {
-
-    std::string fname(getenv("HOME"));
-    fname.append("/Dropbox/CBSR/scanlib/testImages/ohs_pallet.bmp");
-
+int decodeImage(std::string fname, DmScanLib & dmScanLib) {
     std::vector<std::unique_ptr<WellRectangle<unsigned> > > wellRects;
 
     getWellRectsForSbsPalletImage(fname, wellRects);
+    DecodeOptions decodeOptions(0.085, 10, 5, 10, 1, 0.345);
+    return dmScanLib.decodeImageWells(fname.c_str(), decodeOptions, wellRects);
+}
+
+TEST_F(TestApp, DecodeImage) {
+
+    std::string fname(getenv("HOME"));
+    //fname.append("/Dropbox/CBSR/scanlib/uncroppedImages/hardscan.bmp");
+    fname.append("/Dropbox/CBSR/scanlib/testImages/fuzzy_image/scanned_fuzzy.bmp");
 
 //	wellRects.push_back(std::unique_ptr<WellRectangle<unsigned> >(
 //			new WellRectangle<unsigned>("A12", 10, 24, 130, 120)));
 //
 //	wellRects.push_back(std::unique_ptr<WellRectangle<unsigned> >(
 //			new WellRectangle<unsigned>("A11", 150, 24, 250, 120)));
-
-    DecodeOptions decodeOptions(0.085, 10, 5, 10, 1, 0.345);
-
     DmScanLib dmScanLib(1);
-    int result = dmScanLib.decodeImageWells(fname.c_str(), decodeOptions, wellRects);
+    int result = decodeImage(fname, dmScanLib);
 
     EXPECT_EQ(SC_SUCCESS, result);
     EXPECT_TRUE(dmScanLib.getDecodedWells().size() > 0);
@@ -154,9 +185,31 @@ TEST_F(TestApp, ScanImage) {
     VLOG(1) << "number of wells decoded: " << dmScanLib.getDecodedWells().size();
 }
 
+TEST_F(TestApp, DISABLED_DecodeAllImages) {
+    std::string dirname(getenv("HOME"));
+    dirname.append("/Dropbox/CBSR/scanlib/testImages");
+    std::vector<std::string> filenames;
+	bool result = getTestImageFileNames(dirname, filenames);
+    EXPECT_EQ(true, result);
+
+    int decodeResult;
+
+    for (unsigned i = 0, n = filenames.size(); i < n; ++i) {
+    	VLOG(1) << "test image: " << filenames[i];
+
+        DmScanLib dmScanLib(1);
+    	decodeResult = decodeImage(filenames[i], dmScanLib);
+        EXPECT_EQ(SC_SUCCESS, decodeResult);
+        EXPECT_TRUE(dmScanLib.getDecodedWells().size() > 0);
+    	VLOG(1) << "test image: " << filenames[i] << ", wells decoded: "
+    			<< dmScanLib.getDecodedWells().size();
+    }
+}
+
 }  // namespace
 
 int main(int argc, char **argv) {
 	::testing::InitGoogleTest(&argc, argv);
+	DmScanLib::configLogging(3, false);
 	return RUN_ALL_TESTS();
 }
