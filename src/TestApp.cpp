@@ -98,7 +98,9 @@ bool getTestImageFileNames(std::string dir, std::vector<std::string> & filenames
 
 	while ((dirp = readdir(dp)) != NULL) {
 		if (((dirp->d_type == DT_DIR) && (dirp->d_name[0] != '.'))) {
-			getTestImageFileNames(dir.append("/").append(dirp->d_name), filenames);
+			std::string subdirname;
+			subdirname.append(dir).append("/").append(dirp->d_name);
+			getTestImageFileNames(subdirname, filenames);
 		} else if (dirp->d_type == DT_REG) {
 			std::string basename(dirp->d_name);
 
@@ -129,7 +131,9 @@ void getWellRectsForSbsPalletImage(std::string & fname,
     double wellHeight = height / 8.0;
     Point<unsigned> horTranslation(wellWidth, 0);
     Point<unsigned> verTranslation(0, wellHeight);
-    BoundingBox<unsigned> bbox(0, 0, wellWidth, wellHeight);
+
+    // round off the bounding box so image dimensions are not exceeded
+    BoundingBox<unsigned> bbox(0, 0, wellWidth - 0.5, wellHeight - 0.5);
 
     for (int row = 0; row < 8; ++row) {
     	std::unique_ptr<const Point<unsigned>> scaledVertTranslation = verTranslation.scale(row);
@@ -185,7 +189,8 @@ TEST_F(TestApp, DecodeImage) {
     VLOG(1) << "number of wells decoded: " << dmScanLib.getDecodedWells().size();
 }
 
-TEST_F(TestApp, DISABLED_DecodeAllImages) {
+//TEST_F(TestApp, DISABLED_DecodeAllImages) {
+TEST_F(TestApp, DecodeAllImages) {
     std::string dirname(getenv("HOME"));
     dirname.append("/Dropbox/CBSR/scanlib/testImages");
     std::vector<std::string> filenames;
@@ -210,6 +215,6 @@ TEST_F(TestApp, DISABLED_DecodeAllImages) {
 
 int main(int argc, char **argv) {
 	::testing::InitGoogleTest(&argc, argv);
-	DmScanLib::configLogging(3, false);
+	DmScanLib::configLogging(1, false);
 	return RUN_ALL_TESTS();
 }

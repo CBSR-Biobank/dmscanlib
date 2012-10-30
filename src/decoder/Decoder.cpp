@@ -51,11 +51,29 @@ Decoder::Decoder(const Dib & _image, const DecodeOptions & _decodeOptions,
 {
 	CHECK((dpi == 300) || (dpi == 400) || (dpi == 600));
 
+	unsigned width = image.getWidth();
+	unsigned height = image.getHeight();
+
+	for(unsigned i = 0, n = wellRects.size(); i < n; ++i) {
+		// ensure well rectangles are within the image's region
+		const WellRectangle<unsigned> & wellRect = *wellRects[i];
+
+		std::unique_ptr<const BoundingBox<unsigned> > wellBbox =
+				wellRect.getRectangle().getBoundingBox();
+
+		if ((wellBbox->points[0].x >= width)
+				|| (wellBbox->points[0].y >= height)
+				|| (wellBbox->points[1].x >= width)
+				|| (wellBbox->points[1].y >= height)) {
+			throw std::invalid_argument("well rectangle exeeds image dimensions: "
+					+ wellRect.getLabel());
+		}
+	}
+
 	wellDecoders.resize(wellRects.size());
 	applyFilters();
 
 	CHECK_NOTNULL(filteredImage.get());
-
 	dmtxImage = filteredImage->getDmtxImage();
 }
 
