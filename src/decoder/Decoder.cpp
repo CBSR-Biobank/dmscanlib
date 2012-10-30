@@ -29,6 +29,7 @@
 #include "dib/Dib.h"
 #include "WellDecoder.h"
 #include "decoder/ThreadMgr.h"
+#include "decoder/DmtxDecodeHelper.h"
 
 #include <glog/logging.h>
 #include <stdio.h>
@@ -41,8 +42,10 @@
 
 namespace dmscanlib {
 
+using namespace decoder;
+
 Decoder::Decoder(const Dib & _image, const DecodeOptions & _decodeOptions,
-		std::vector<std::unique_ptr<WellRectangle<double>  > > & _wellRects) :
+		std::vector<std::unique_ptr<WellRectangle<unsigned>  > > & _wellRects) :
 		image(_image), dmtxImage(NULL), dpi(image.getDpi()), decodeOptions(_decodeOptions),
 		wellRects(_wellRects)
 {
@@ -81,29 +84,12 @@ int Decoder::decodeWellRects() {
 	VLOG(3) << "decodeWellRects: dpi/" << dpi << " numWellRects/" << wellRects.size();
 
 	for(unsigned i = 0, n = wellRects.size(); i < n; ++i) {
-		const WellRectangle<double> & wellRect = *wellRects[i];
+		const WellRectangle<unsigned> & wellRect = *wellRects[i];
 
 		VLOG(5) << "well rect: " << wellRect;
 
-//		std::unique_ptr<const Rect<double> > factoredRect = std::move(
-//				wellRect.getRectangle().scale(static_cast<double>(dpi)));
-
-		std::unique_ptr<const Rect<double> > factoredRect = std::move(
-						wellRect.getRectangle().scale(1));
-
-		std::unique_ptr<WellRectangle<unsigned> > convertedWellTect(
-				new WellRectangle<unsigned>(wellRect.getLabel().c_str(),
-						static_cast<unsigned>(factoredRect->corners[0].x),
-						static_cast<unsigned>(factoredRect->corners[0].y),
-						static_cast<unsigned>(factoredRect->corners[1].x),
-						static_cast<unsigned>(factoredRect->corners[1].y),
-						static_cast<unsigned>(factoredRect->corners[2].x),
-						static_cast<unsigned>(factoredRect->corners[2].y),
-						static_cast<unsigned>(factoredRect->corners[3].x),
-						static_cast<unsigned>(factoredRect->corners[3].y)));
-
 		wellDecoders[i] = std::unique_ptr<WellDecoder>(
-				new WellDecoder(*this, std::move(convertedWellTect)));
+				new WellDecoder(*this, wellRect));
 	}
 	return decodeMultiThreaded();
 	//return decodeSingleThreaded();
@@ -140,38 +126,56 @@ const unsigned Decoder::getDecodedWellCount() {
 /*
  * Called by multiple threads.
  */
-void Decoder::decodeWellRect(const Dib & wellRectImage, WellDecoder & wellDecoder) const {
+void Decoder::decodeWellRect(WellDecoder & wellDecoder) const {
 	CHECK_NOTNULL(dmtxImage);
 
 	VLOG(2) << "decodeWellRect: " << wellDecoder;
 
-	DmtxDecode *dec = dmtxDecodeCreate(dmtxImage, decodeOptions.shrink);
-	CHECK_NOTNULL(dec);
+	std::unique_ptr<DmtxDecodeHelper> dec = createDmtxDecode(wellDecoder, decodeOptions.shrink);
+	decodeWellRect(wellDecoder, dec->getDecode());
+
+	if (wellDecoder.getMessage().empty()) {
+		VLOG(2) << "decodeWellRect: second attempt " << wellDecoder;
+		dec = std::move(createDmtxDecode(wellDecoder, decodeOptions.shrink + 1));
+		decodeWellRect(wellDecoder, dec->getDecode());
+	}
+}
+
+std::unique_ptr<DmtxDecodeHelper> Decoder::createDmtxDecode(
+		WellDecoder & wellDecoder, int scale) const {
+	std::unique_ptr<DmtxDecodeHelper> dec(new DmtxDecodeHelper(dmtxImage, scale));
 
 	unsigned height = image.getHeight();
 
 	std::unique_ptr<const BoundingBox<unsigned> > bbox = std::move(
 			wellDecoder.getWellRectangle().getBoundingBox());
 
-	dmtxDecodeSetProp(dec, DmtxPropXmin, bbox->points[0].x);
-	dmtxDecodeSetProp(dec, DmtxPropXmax, bbox->points[1].x);
+	dec->setProperty(DmtxPropXmin, bbox->points[0].x);
+	dec->setProperty(DmtxPropXmax, bbox->points[1].x);
 
-	dmtxDecodeSetProp(dec, DmtxPropYmax, height - bbox->points[0].y);
-	dmtxDecodeSetProp(dec, DmtxPropYmin, height - bbox->points[1].y);
+	dec->setProperty(DmtxPropYmax, height - bbox->points[0].y);
+	dec->setProperty(DmtxPropYmin, height - bbox->points[1].y);
 
 
 	// slightly smaller than the new tube edge
-	dmtxDecodeSetProp(dec, DmtxPropEdgeMin, static_cast<int>(0.08 * dpi));
+	dec->setProperty(DmtxPropEdgeMin, static_cast<int>(0.08 * dpi));
 
 	// slightly bigger than the Nunc edge
-	dmtxDecodeSetProp(dec, DmtxPropEdgeMax, static_cast<int>(0.18 * dpi));
+	dec->setProperty(DmtxPropEdgeMax, static_cast<int>(0.18 * dpi));
 
-	dmtxDecodeSetProp(dec, DmtxPropSymbolSize, DmtxSymbolSquareAuto);
-	dmtxDecodeSetProp(dec, DmtxPropScanGap,
+	dec->setProperty(DmtxPropSymbolSize, DmtxSymbolSquareAuto);
+	dec->setProperty(DmtxPropScanGap,
 			static_cast<unsigned>(decodeOptions.scanGap * dpi));
-	dmtxDecodeSetProp(dec, DmtxPropSquareDevn, decodeOptions.squareDev);
-	dmtxDecodeSetProp(dec, DmtxPropEdgeThresh, decodeOptions.edgeThresh);
+	dec->setProperty(DmtxPropSquareDevn, decodeOptions.squareDev);
+	dec->setProperty(DmtxPropEdgeThresh, decodeOptions.edgeThresh);
 
+	return dec;
+}
+
+
+
+
+void Decoder::decodeWellRect(WellDecoder & wellDecoder, DmtxDecode *dec) const {
 	DmtxRegion * reg;
 	while (1) {
 		reg = dmtxRegionFindNext(dec, NULL);
@@ -195,7 +199,6 @@ void Decoder::decodeWellRect(const Dib & wellRectImage, WellDecoder & wellDecode
 		writeDiagnosticImage(dec, wellDecoder.getLabel());
 	}
 
-	dmtxDecodeDestroy(&dec);
 }
 
 void Decoder::getDecodeInfo(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg,
@@ -221,8 +224,8 @@ void Decoder::getDecodeInfo(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg,
 	p11.Y = height - 1 - p11.Y;
 	p01.Y = height - 1 - p01.Y;
 
-	Rect<unsigned> decodeRect(p00.X, p00.Y, p10.X, p10.Y, p11.X, p11.Y, p01.X, p01.Y);
-	wellDecoder.setDecodeRectangle(decodeRect);
+	Rect<double> decodeRect(p00.X, p00.Y, p10.X, p10.Y, p11.X, p11.Y, p01.X, p01.Y);
+	wellDecoder.setDecodeRectangle(decodeRect, dec->scale);
 }
 
 void Decoder::showStats(DmtxDecode * dec, DmtxRegion * reg, DmtxMessage * msg) const {

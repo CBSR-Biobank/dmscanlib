@@ -101,7 +101,7 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
 
     DecodeOptions decodeOptions(env, _decodeOptions);
 
-    std::vector<std::unique_ptr<WellRectangle<double>  > > wellRects;
+    std::vector<std::unique_ptr<WellRectangle<unsigned>  > > wellRects;
 
     jobject wellRectJavaObj;
     jclass wellRectJavaClass = NULL;
@@ -135,13 +135,13 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
     	    }
 
     	    wellRectGetCornerXMethodID = env->GetMethodID(wellRectJavaClass,
-    	    		"getCornerX", "(I)D");
+    	    		"getCornerX", "(I)I");
     	    if(env->ExceptionOccurred()) {
     	    	return NULL;
     	    }
 
     	    wellRectGetCornerYMethodID = env->GetMethodID(wellRectJavaClass,
-    	    		"getCornerY", "(I)D");
+    	    		"getCornerY", "(I)I");
     	    if(env->ExceptionOccurred()) {
     	    	return NULL;
     	    }
@@ -150,20 +150,20 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
     	jobject labelJobj = env->CallObjectMethod(wellRectJavaObj, wellRectGetLabelMethodID);
     	const char * label = env->GetStringUTFChars((jstring) labelJobj, NULL);
 
-    	double x1 = env->CallDoubleMethod(wellRectJavaObj, wellRectGetCornerXMethodID, 0);
-    	double y1 = env->CallDoubleMethod(wellRectJavaObj, wellRectGetCornerYMethodID, 0);
+    	int x1 = env->CallIntMethod(wellRectJavaObj, wellRectGetCornerXMethodID, 0);
+    	int y1 = env->CallIntMethod(wellRectJavaObj, wellRectGetCornerYMethodID, 0);
 
-    	double x2 = env->CallDoubleMethod(wellRectJavaObj, wellRectGetCornerXMethodID, 1);
-    	double y2 = env->CallDoubleMethod(wellRectJavaObj, wellRectGetCornerYMethodID, 1);
+    	int x2 = env->CallIntMethod(wellRectJavaObj, wellRectGetCornerXMethodID, 1);
+    	int y2 = env->CallIntMethod(wellRectJavaObj, wellRectGetCornerYMethodID, 1);
 
-    	double x3 = env->CallDoubleMethod(wellRectJavaObj, wellRectGetCornerXMethodID, 2);
-    	double y3 = env->CallDoubleMethod(wellRectJavaObj, wellRectGetCornerYMethodID, 2);
+    	int x3 = env->CallIntMethod(wellRectJavaObj, wellRectGetCornerXMethodID, 2);
+    	int y3 = env->CallIntMethod(wellRectJavaObj, wellRectGetCornerYMethodID, 2);
 
-    	double x4 = env->CallDoubleMethod(wellRectJavaObj, wellRectGetCornerXMethodID, 3);
-    	double y4 = env->CallDoubleMethod(wellRectJavaObj, wellRectGetCornerYMethodID, 3);
+    	int x4 = env->CallIntMethod(wellRectJavaObj, wellRectGetCornerXMethodID, 3);
+    	int y4 = env->CallIntMethod(wellRectJavaObj, wellRectGetCornerYMethodID, 3);
 
-    	std::unique_ptr<WellRectangle<double> > wellRect(
-    			new WellRectangle<double>(label, x1, y1, x2, y2, x3, y3, x4, y4));
+    	std::unique_ptr<WellRectangle<unsigned> > wellRect(
+    			new WellRectangle<unsigned>(label, x1, y1, x2, y2, x3, y3, x4, y4));
 
     	VLOG(3) << *wellRect;
 

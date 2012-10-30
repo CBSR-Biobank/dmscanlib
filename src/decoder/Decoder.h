@@ -39,13 +39,17 @@ class Dib;
 class DecodeOptions;
 class WellDecoder;
 
+namespace decoder {
+class DmtxDecodeHelper;
+}
+
 class Decoder {
 public:
     Decoder(const Dib & image, const DecodeOptions & decodeOptions,
-    		std::vector<std::unique_ptr<WellRectangle<double>  > > & wellRects);
+    		std::vector<std::unique_ptr<WellRectangle<unsigned>  > > & wellRects);
     virtual ~Decoder();
     int decodeWellRects();
-    void decodeWellRect(const Dib & wellRectImage, WellDecoder & wellDecoder) const;
+    void decodeWellRect(WellDecoder & wellDecoder) const;
 
     const Dib & getWorkingImage() const {
     	return *filteredImage;
@@ -60,6 +64,9 @@ public:
 private:
     void applyFilters();
     static DmtxImage * createDmtxImageFromDib(const Dib & dib);
+    void decodeWellRect(WellDecoder & wellDecoder, DmtxDecode *dec) const;
+    std::unique_ptr<decoder::DmtxDecodeHelper> createDmtxDecode(
+    		WellDecoder & wellDecoder ,int scale) const;
 
     void getDecodeInfo(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg,
     		WellDecoder & wellDecoder) const;
@@ -75,7 +82,7 @@ private:
     DmtxImage * dmtxImage;
     const unsigned dpi;
     const DecodeOptions & decodeOptions;
-    const std::vector<std::unique_ptr<WellRectangle<double>  > > & wellRects;
+    const std::vector<std::unique_ptr<WellRectangle<unsigned> > > & wellRects;
     std::vector<std::unique_ptr<WellDecoder> > wellDecoders;
     std::vector<WellDecoder *> decodedWells;
 };

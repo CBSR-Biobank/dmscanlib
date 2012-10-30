@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <memory>
 #include <glog/logging.h>
+#include <stdexcept>
 
 namespace dmscanlib {
 
@@ -39,7 +40,19 @@ struct Rect;
 template<typename T>
 struct BoundingBox {
    BoundingBox(const T x1, const T y1, const T x2, const T y2) :
-         points( { Point<T>(x1, y1), Point<T>(x2, y2) }) {
+         points( { Point<T>(x1, y1), Point<T>(x2, y2) })
+   {
+	   if (!isValid()) {
+			throw std::invalid_argument("invalid bounding box");
+	   }
+   }
+
+   BoundingBox(const Point<T> & p1, const Point<T> & p2) :
+         points( { p1, p2 } )
+   {
+	   if (!isValid()) {
+			throw std::invalid_argument("invalid bounding box");
+	   }
 
    }
 
@@ -48,7 +61,25 @@ struct BoundingBox {
                Point<T>(r.points[0].x, r.points[0].y),
                   Point<T>(r.points[1].x, r.points[1].y)
                   }) {
+	   if (!isValid()) {
+			throw std::invalid_argument("invalid bounding box");
+	   }
 
+   }
+
+   bool isValid() {
+	   return (points[0].x < points[1].x)
+			   && (points[0].y < points[1].y);
+   }
+
+   T getArea() {
+	   return (points[1].x - points[0].x) * (points[1].y - points[0].y);
+   }
+
+   std::unique_ptr<const BoundingBox<T> > translate(const Point<T> & distance) const {
+      std::unique_ptr<const Point<T> > pt1 = std::move(points[0].translate(distance));
+      std::unique_ptr<const Point<T> > pt2 = std::move(points[1].translate(distance));
+      return std::unique_ptr<const BoundingBox<T> >(new BoundingBox<T>(*pt1, *pt2));
    }
 
    const Point<T> points[2];

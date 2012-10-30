@@ -47,6 +47,7 @@
 #include <iostream>
 #include <vector>
 #include <gtest/gtest.h>
+#include <stdexcept>
 
 #ifdef USE_NVWA
 #   include <limits>
@@ -81,25 +82,76 @@ protected:
 private:
 };
 
+/*
+ * Assumes image has 96 well plates in 8 rows by 12 columns
+ */
+void getWellRectsForSbsPalletImage(std::string & fname,
+		std::vector<std::unique_ptr<WellRectangle<unsigned> > > & wellRects) {
+
+	Dib image;
+	bool readResult = image.readFromFile(fname);
+	if (!readResult) {
+		throw std::invalid_argument("could not load image");
+	}
+
+    double width = image.getWidth();
+    double height = image.getHeight();
+    double wellWidth = width / 12.0;
+    double wellHeight = height / 8.0;
+    Point<unsigned> horTranslation(wellWidth, 0);
+    Point<unsigned> verTranslation(0, wellHeight);
+    BoundingBox<unsigned> bbox(0, 0, wellWidth, wellHeight);
+
+    for (int row = 0; row < 8; ++row) {
+    	std::unique_ptr<const Point<unsigned>> scaledVertTranslation = verTranslation.scale(row);
+        std::unique_ptr<const BoundingBox<unsigned> > bboxTranslated =
+        		bbox.translate(*scaledVertTranslation);
+
+        for (int col = 0; col < 12; ++col) {
+        	std::ostringstream label;
+        	label << (char) ('A' + row) << 12 - col;
+
+            std::unique_ptr<WellRectangle<unsigned> > wellRect(
+            		new WellRectangle<unsigned>(label.str().c_str(), *bboxTranslated));
+            VLOG(3) << *wellRect;
+            wellRects.push_back(std::move(wellRect));
+            bboxTranslated = bboxTranslated->translate(horTranslation);
+        }
+    }
+}
+
+/*
+ * Test for invalid rect
+ */
+TEST_F(TestApp, ScanImageInvalidRect) {
+    ASSERT_THROW(new WellRectangle<double>("A12", 0, 0, 0, 0),
+	std::invalid_argument);
+}
+
 TEST_F(TestApp, ScanImage) {
 
-    std::vector<std::unique_ptr<WellRectangle<double>  > > wellRects;
-
-	wellRects.push_back(std::unique_ptr<WellRectangle<double> >(
-			new WellRectangle<double>("A12", 10.0 / 400.0, 24.0 / 400.0,
-	                130.0 / 400.0, 120.0 / 400.0)));
-
-	wellRects.push_back(std::unique_ptr<WellRectangle<double> >(
-			new WellRectangle<double>("A11", 150.0 / 400.0, 24.0 / 400.0,
-            250.0 / 400.0, 120.0 / 400.0)));
-
-    DecodeOptions decodeOptions(0.085, 10, 5, 10, 2, 0.345);
-
     std::string fname(getenv("HOME"));
-    fname.append("/Dropbox/CBSR/scanlib/testImages/96tubes_cropped.bmp");
+    fname.append("/Dropbox/CBSR/scanlib/testImages/ohs_pallet.bmp");
+
+    std::vector<std::unique_ptr<WellRectangle<unsigned> > > wellRects;
+
+    getWellRectsForSbsPalletImage(fname, wellRects);
+
+//	wellRects.push_back(std::unique_ptr<WellRectangle<unsigned> >(
+//			new WellRectangle<unsigned>("A12", 10, 24, 130, 120)));
+//
+//	wellRects.push_back(std::unique_ptr<WellRectangle<unsigned> >(
+//			new WellRectangle<unsigned>("A11", 150, 24, 250, 120)));
+
+    DecodeOptions decodeOptions(0.085, 10, 5, 10, 1, 0.345);
 
     DmScanLib dmScanLib(1);
-    dmScanLib.decodeImageWells(fname.c_str(), decodeOptions, wellRects);
+    int result = dmScanLib.decodeImageWells(fname.c_str(), decodeOptions, wellRects);
+
+    EXPECT_EQ(SC_SUCCESS, result);
+    EXPECT_TRUE(dmScanLib.getDecodedWells().size() > 0);
+
+    VLOG(1) << "number of wells decoded: " << dmScanLib.getDecodedWells().size();
 }
 
 }  // namespace

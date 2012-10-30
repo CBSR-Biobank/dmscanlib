@@ -21,12 +21,12 @@
 namespace dmscanlib {
 
 WellDecoder::WellDecoder(const Decoder & _decoder,
-		std::unique_ptr<const WellRectangle<unsigned>> _wellRectangle) :
-		decoder(_decoder), wellRectangle(std::move(_wellRectangle)),
-		boundingBox(std::move(wellRectangle->getRectangle().getBoundingBox()))
+		const WellRectangle<unsigned> & _wellRectangle) :
+		decoder(_decoder), wellRectangle(_wellRectangle),
+		boundingBox(std::move(wellRectangle.getRectangle().getBoundingBox()))
 {
-	VLOG(3) << "constructor: bounding box: " << *boundingBox
-			<< ", rect: " << wellRectangle->getRectangle();
+	VLOG(9) << "constructor: bounding box: " << *boundingBox
+			<< ", rect: " << wellRectangle.getRectangle();
 }
 
 WellDecoder::~WellDecoder() {
@@ -36,12 +36,11 @@ WellDecoder::~WellDecoder() {
  * This method runs in its own thread.
  */
 void WellDecoder::run() {
-    //wellImage = std::move(decoder.getWorkingImage().crop(*boundingBox));
-    decoder.decodeWellRect(*wellImage, *this);
+    decoder.decodeWellRect(*this);
     if (!message.empty()) {
     	VLOG(3) << "run: " << *this;
     } else {
-    	VLOG(3) << "run: "<< wellRectangle->getLabel() << " - could not be decoded";
+    	VLOG(3) << "run: "<< wellRectangle.getLabel() << " - could not be decoded";
     }
 }
 
@@ -54,8 +53,18 @@ const Rect<unsigned> & WellDecoder::getDecodedRectangle() const {
 	return *decodedRect;
 }
 
-void WellDecoder::setDecodeRectangle(const Rect<unsigned> & rect) {
-	decodedRect = std::unique_ptr<Rect<unsigned> >(new Rect<unsigned>(rect));
+void WellDecoder::setDecodeRectangle(const Rect<double> & rect, int scale) {
+	std::unique_ptr<const Rect<double> > rectCopy;
+	if (scale == 1) {
+		rectCopy= std::unique_ptr<Rect<double> >(new Rect<double>(rect));
+	} else {
+		rectCopy = rect.scale(scale);
+	}
+	decodedRect = std::unique_ptr<Rect<unsigned> >(new Rect<unsigned>(
+			rectCopy->corners[0].x, rectCopy->corners[0].y,
+			rectCopy->corners[1].x, rectCopy->corners[1].y,
+			rectCopy->corners[2].x, rectCopy->corners[2].y,
+			rectCopy->corners[3].x, rectCopy->corners[3].y));
 }
 
 std::ostream & operator<<(std::ostream &os, WellDecoder & m) {

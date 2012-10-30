@@ -8,6 +8,7 @@
 #include "WellRectangle.h"
 
 #include <glog/logging.h>
+#include <stdexcept>
 
 namespace dmscanlib {
 
@@ -28,6 +29,8 @@ template<typename T>
 WellRectangle<T>::WellRectangle(const char * _label, T x1, T y1, T x2, T y2)  :
 	label(_label), rect(x1, y1, x2, y1, x2, y2, x1, y2)
 {
+	// make sure the bounding box is valid
+	BoundingBox<T> bbox(x1, y1, x2, y2);
 }
 
 
