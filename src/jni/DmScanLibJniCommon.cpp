@@ -10,7 +10,7 @@
 #include "decoder/WellDecoder.h"
 
 #include <iostream>
-#include <vector>
+#include <map>
 #include <memory>
 #include <glog/logging.h>
 
@@ -57,7 +57,7 @@ jobject createDecodeResultObject(JNIEnv * env, int resultCode) {
 }
 
 jobject createDecodeResultObject(JNIEnv * env, int resultCode,
-                const std::vector<dmscanlib::WellDecoder *> & wellDecoders) {
+                const std::map<std::string, const dmscanlib::WellDecoder *> & wellDecoders) {
     jobject resultObj = createDecodeResultObject(env, resultCode);
 
     jclass resultClass = env->FindClass(
@@ -67,8 +67,9 @@ jobject createDecodeResultObject(JNIEnv * env, int resultCode,
         jmethodID setCellMethod = env->GetMethodID(resultClass, "addWell",
         		"(Ljava/lang/String;Ljava/lang/String;)V");
 
-        for (unsigned i = 0, n = wellDecoders.size(); i < n; ++i) {
-        	dmscanlib::WellDecoder & wellDecoder = *wellDecoders[i];
+    	for (std::map<std::string, const dmscanlib::WellDecoder *>::const_iterator ii = wellDecoders.begin();
+    			ii != wellDecoders.end(); ++ii) {
+        	const dmscanlib::WellDecoder & wellDecoder = *(ii->second);
             jvalue data[3];
 
             data[0].l = env->NewStringUTF(wellDecoder.getLabel().c_str());

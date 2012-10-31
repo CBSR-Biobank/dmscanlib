@@ -27,6 +27,7 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include <map>
 
 namespace dmscanlib {
 
@@ -88,7 +89,9 @@ public:
 		stdoutOutputEnable = enable;
 	}
 
-    const std::vector<WellDecoder *> & getDecodedWells() const;
+    const unsigned getDecodedWellCount();
+
+    const std::map<std::string, const WellDecoder *> & getDecodedWells() const;
 
 protected:
     void saveResults(std::string & msg);
@@ -102,10 +105,6 @@ protected:
     void writeDecodedImage(const Dib & image, const std::string & decodedDibFilename);
 
     static const std::string LIBRARY_NAME;
-
-    util::slTime starttime; // for debugging
-    util::slTime endtime;
-    util::slTime timediff;
 
     std::unique_ptr<ImgScanner> imgScanner;
 

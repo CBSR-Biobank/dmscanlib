@@ -60,7 +60,7 @@ private:
 	std::unique_ptr<const Rect<unsigned> > decodedRect;
 	std::string message;
 
-	friend std::ostream & operator<<(std::ostream & os, WellDecoder & m);
+	friend std::ostream & operator<<(std::ostream & os, const WellDecoder & m);
 };
 
 } /* namespace */

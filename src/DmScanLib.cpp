@@ -44,6 +44,7 @@
 #include <fstream>
 #include <string>
 
+
 #if defined(USE_NVWA)
 #   include "debug_new.h"
 #endif
@@ -59,17 +60,9 @@ DmScanLib::DmScanLib(unsigned loggingLevel, bool logToFile) :
 		stdoutOutputEnable(false), textFileOutputEnable(false)
 {
 	configLogging(loggingLevel, logToFile);
-	if (VLOG_IS_ON(2)) {
-		util::Time::getTime(starttime);
-	}
 }
 
 DmScanLib::~DmScanLib() {
-	if (VLOG_IS_ON(2)) {
-		util::Time::getTime(endtime);
-		util::Time::difftime(starttime, endtime, timediff);
-		VLOG(2) << "time taken: " << timediff;
-	}
 }
 
 int DmScanLib::isTwainAvailable() {
@@ -252,21 +245,26 @@ void DmScanLib::writeDecodedImage(const Dib & image,
 
 	CHECK_NOTNULL(decoder.get());
 
-    const std::vector<WellDecoder *> & decodedWells = decoder->getDecodedWells();
+    const std::map<std::string, const WellDecoder *> & decodedWells = decoder->getDecodedWells();
     CHECK(decodedWells.size() > 0);
 
     RgbQuad colorRed(255, 0, 0);
     RgbQuad colorGreen(0, 255, 0);
 	Dib decodedDib(image);
-	for (unsigned i = 0, n = decodedWells.size(); i < n; ++i) {
-		WellDecoder & decodedWell = *decodedWells[i];
+	for (std::map<std::string, const WellDecoder *>::const_iterator ii = decodedWells.begin();
+			ii != decodedWells.end(); ++ii) {
+		const WellDecoder & decodedWell = *(ii->second);
 		decodedDib.drawRectangle(decodedWell.getDecodedRectangle(), colorRed);
 		decodedDib.drawRectangle(decodedWell.getWellRectangle(), colorGreen);
 	}
 	decodedDib.writeToFile(decodedDibFilename);
 }
 
-const std::vector<WellDecoder *> & DmScanLib::getDecodedWells() const {
+const unsigned DmScanLib::getDecodedWellCount() {
+	return decoder->getDecodedWellCount();
+}
+
+const std::map<std::string, const WellDecoder *> & DmScanLib::getDecodedWells() const {
 	CHECK_NOTNULL(decoder.get());
 	return decoder->getDecodedWells();
 }

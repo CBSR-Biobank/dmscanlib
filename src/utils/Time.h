@@ -22,7 +22,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include <string>
-#include <sstream>
+#include <ostream>
+#include <memory>
 
 namespace dmscanlib {
 
@@ -37,26 +38,19 @@ typedef struct timeval slTime;
 
 class Time {
 public:
-	static void getTime(slTime & tm);
-	static void getTimestamp(std::string & str_r);
-	static void difftime(slTime & start, slTime & end, slTime & diff);
+	Time();
+	Time(Time & that);
+	virtual ~Time() { }
+	std::unique_ptr<Time>  difftime(const Time & that);
 
 private:
+	slTime time;
+
+	friend std::ostream & operator<<(std::ostream &os, const Time & tm);
 };
 
-template <typename T>
-std::string to_string(T const& value) {
-	std::stringstream sstr;
-    sstr << value;
-    return sstr.str();
-}
-
 } /* namespace */
 
 } /* namespace */
-
-#ifndef WIN32
-std::ostream & operator<<(std::ostream &os, dmscanlib::util::slTime & tm);
-#endif
 
 #endif /* __INC_TIME_UTIL_H_ */

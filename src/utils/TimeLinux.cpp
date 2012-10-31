@@ -22,7 +22,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <iostream>
+#include <sstream>
+#include <iomanip>
 
 #include <sys/time.h>
 
@@ -30,38 +31,31 @@ namespace dmscanlib {
 
 namespace util {
 
-void Time::getTime(slTime & tm) {
-	gettimeofday(&tm, NULL);
+Time::Time() {
+	gettimeofday(&time, NULL);
 }
 
-void Time::getTimestamp(std::string & str_r) {
-    char buf_a[100];
-
-    // Fetch the current time
-    char time_a[100];
-    struct timeval thistime;
-
-    gettimeofday(&thistime, NULL);
-    strftime(time_a, sizeof(time_a), "%X", localtime(&thistime.tv_sec));
-    snprintf(buf_a, sizeof (buf_a), "%s:%03ld ", time_a,
-             thistime.tv_usec / 1000);
-
-    str_r = buf_a;
+Time::Time(Time & that) {
+	time = that.time;
 }
 
-void Time::difftime(slTime & start, slTime & end, slTime & diff) {
-	diff.tv_sec = end.tv_sec - start.tv_sec;
-	diff.tv_usec = end.tv_usec - start.tv_usec;
-	if (diff.tv_usec < 0) {
-		diff.tv_usec += 1000000;
+std::unique_ptr<Time> Time::difftime(const Time & that) {
+	std::unique_ptr<Time> result(new Time(*this));
+
+	result->time.tv_sec = time.tv_sec - that.time.tv_sec;
+	result->time.tv_usec = time.tv_usec - that.time.tv_usec;
+	if (result->time.tv_usec < 0) {
+		result->time.tv_usec += 1000000;
 	}
+
+	return result;
 }
 
-} /* namespace */
-
-} /* namespace */
-
-std::ostream & operator<<(std::ostream &os, dmscanlib::util::slTime & tm) {
-	os << "sec/" << tm.tv_sec << " msec/" << tm.tv_usec/1000;
+std::ostream & operator<<(std::ostream &os, const dmscanlib::util::Time & tm) {
+	os << std::setw(2) << tm.time.tv_sec << "." << std::setw(3) << tm.time.tv_usec/1000;
 	return os;
 }
+
+} /* namespace */
+
+} /* namespace */

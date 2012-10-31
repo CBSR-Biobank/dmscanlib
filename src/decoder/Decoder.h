@@ -28,6 +28,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <map>
 
 #ifdef WIN32
 #include <windows.h>
@@ -57,9 +58,7 @@ public:
 
     const unsigned getDecodedWellCount();
 
-    const std::vector<WellDecoder *> & getDecodedWells() const {
-    	return decodedWells;
-    }
+    const std::map<std::string, const WellDecoder *> & getDecodedWells() const;
 
 private:
     void applyFilters();
@@ -84,7 +83,8 @@ private:
     const DecodeOptions & decodeOptions;
     const std::vector<std::unique_ptr<WellRectangle<unsigned> > > & wellRects;
     std::vector<std::unique_ptr<WellDecoder> > wellDecoders;
-    std::vector<WellDecoder *> decodedWells;
+    bool decodeSuccessful;
+    std::map<std::string, const WellDecoder *> decodedWells;
 };
 
 } /* namespace */

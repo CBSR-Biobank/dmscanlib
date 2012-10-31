@@ -65,6 +65,7 @@
 using namespace dmscanlib;
 
 namespace {
+
 class TestApp : public ::testing::Test {
 protected:
     TestApp() {
@@ -173,7 +174,7 @@ TEST_F(TestApp, DecodeImage) {
 
     std::string fname(getenv("HOME"));
     //fname.append("/Dropbox/CBSR/scanlib/uncroppedImages/hardscan.bmp");
-    fname.append("/Dropbox/CBSR/scanlib/testImages/fuzzy_image/scanned_fuzzy.bmp");
+    fname.append("/Dropbox/CBSR/scanlib/testImages/decode_error/col_interval_error_2.bmp");
 
 //	wellRects.push_back(std::unique_ptr<WellRectangle<unsigned> >(
 //			new WellRectangle<unsigned>("A12", 10, 24, 130, 120)));
@@ -184,9 +185,11 @@ TEST_F(TestApp, DecodeImage) {
     int result = decodeImage(fname, dmScanLib);
 
     EXPECT_EQ(SC_SUCCESS, result);
-    EXPECT_TRUE(dmScanLib.getDecodedWells().size() > 0);
+    EXPECT_TRUE(dmScanLib.getDecodedWellCount() > 0);
 
-    VLOG(1) << "number of wells decoded: " << dmScanLib.getDecodedWells().size();
+    if (dmScanLib.getDecodedWellCount() > 0) {
+    	VLOG(1) << "number of wells decoded: " << dmScanLib.getDecodedWells().size();
+    }
 }
 
 //TEST_F(TestApp, DISABLED_DecodeAllImages) {
@@ -202,12 +205,19 @@ TEST_F(TestApp, DecodeAllImages) {
     for (unsigned i = 0, n = filenames.size(); i < n; ++i) {
     	VLOG(1) << "test image: " << filenames[i];
 
+		util::Time start;
         DmScanLib dmScanLib(1);
     	decodeResult = decodeImage(filenames[i], dmScanLib);
+		util::Time end;
+
+		std::unique_ptr<util::Time> difftime = end.difftime(start);
+
         EXPECT_EQ(SC_SUCCESS, decodeResult);
-        EXPECT_TRUE(dmScanLib.getDecodedWells().size() > 0);
-    	VLOG(1) << "test image: " << filenames[i] << ", wells decoded: "
-    			<< dmScanLib.getDecodedWells().size();
+        EXPECT_TRUE(dmScanLib.getDecodedWellCount() > 0);
+
+        VLOG(1) << "test image: " << filenames[i] << ", wells decoded: "
+        		<< dmScanLib.getDecodedWellCount()
+        		<< " time taken: " << *difftime;
     }
 }
 

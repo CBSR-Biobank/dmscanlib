@@ -67,7 +67,7 @@ void WellDecoder::setDecodeRectangle(const Rect<double> & rect, int scale) {
 			rectCopy->corners[3].x, rectCopy->corners[3].y));
 }
 
-std::ostream & operator<<(std::ostream &os, WellDecoder & m) {
+std::ostream & operator<<(std::ostream &os, const WellDecoder & m) {
     os << m.getLabel() << ": \"" << m.getMessage() << "\" "<< *m.boundingBox;
     return os;
 }

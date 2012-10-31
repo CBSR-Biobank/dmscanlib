@@ -35,6 +35,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
+#include <sstream>
 
 #if defined(USE_NVWA)
 #   include "debug_new.h"
@@ -47,7 +48,7 @@ using namespace decoder;
 Decoder::Decoder(const Dib & _image, const DecodeOptions & _decodeOptions,
 		std::vector<std::unique_ptr<WellRectangle<unsigned>  > > & _wellRects) :
 		image(_image), dmtxImage(NULL), dpi(image.getDpi()), decodeOptions(_decodeOptions),
-		wellRects(_wellRects)
+		wellRects(_wellRects), decodeSuccessful(false)
 {
 	CHECK((dpi == 300) || (dpi == 400) || (dpi == 600));
 
@@ -111,13 +112,14 @@ int Decoder::decodeWellRects() {
 	}
 	return decodeMultiThreaded();
 	//return decodeSingleThreaded();
+
 }
 
 int Decoder::decodeSingleThreaded() {
 	for(unsigned i = 0, n = wellDecoders.size(); i < n; ++i) {
 		wellDecoders[i]->run();
 		if (!wellDecoders[i]->getMessage().empty()) {
-			decodedWells.push_back(wellDecoders[i].get());
+			decodedWells[wellDecoders[i]->getMessage()] = wellDecoders[i].get();
 		}
 	}
 	return SC_SUCCESS;
@@ -131,14 +133,28 @@ int Decoder::decodeMultiThreaded() {
 		WellDecoder & wellDecoder = *wellDecoders[i];
 		VLOG(2) << wellDecoder;
 		if (!wellDecoder.getMessage().empty()) {
-			decodedWells.push_back(&wellDecoder);
+			if (decodedWells.find(wellDecoder.getMessage()) != decodedWells.end()) {
+				return SC_FAIL;
+			}
+
+			decodedWells[wellDecoder.getMessage()] = &wellDecoder;
 		}
 	}
+	decodeSuccessful = true;
 	return SC_SUCCESS;
 }
 
 const unsigned Decoder::getDecodedWellCount() {
+	if (!decodeSuccessful) return 0;
+
 	return decodedWells.size();
+}
+
+const std::map<std::string, const WellDecoder *> & Decoder::getDecodedWells() const {
+	if (!decodeSuccessful) {
+		throw std::logic_error("duplicate decoded messages found");
+	}
+	return decodedWells;
 }
 
 /*
@@ -189,9 +205,6 @@ std::unique_ptr<DmtxDecodeHelper> Decoder::createDmtxDecode(
 
 	return dec;
 }
-
-
-
 
 void Decoder::decodeWellRect(WellDecoder & wellDecoder, DmtxDecode *dec) const {
 	DmtxRegion * reg;
