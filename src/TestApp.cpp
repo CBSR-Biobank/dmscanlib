@@ -174,7 +174,7 @@ TEST_F(TestApp, DecodeImage) {
 
     std::string fname(getenv("HOME"));
     //fname.append("/Dropbox/CBSR/scanlib/uncroppedImages/hardscan.bmp");
-    fname.append("/Dropbox/CBSR/scanlib/testImages/decode_error/col_interval_error_2.bmp");
+    fname.append("/Dropbox/CBSR/scanlib/testImages/invalid_decode.bmp");
 
 //	wellRects.push_back(std::unique_ptr<WellRectangle<unsigned> >(
 //			new WellRectangle<unsigned>("A12", 10, 24, 130, 120)));
@@ -192,8 +192,8 @@ TEST_F(TestApp, DecodeImage) {
     }
 }
 
-//TEST_F(TestApp, DISABLED_DecodeAllImages) {
-TEST_F(TestApp, DecodeAllImages) {
+TEST_F(TestApp, DISABLED_DecodeAllImages) {
+//TEST_F(TestApp, DecodeAllImages) {
     std::string dirname(getenv("HOME"));
     dirname.append("/Dropbox/CBSR/scanlib/testImages");
     std::vector<std::string> filenames;
@@ -225,6 +225,6 @@ TEST_F(TestApp, DecodeAllImages) {
 
 int main(int argc, char **argv) {
 	::testing::InitGoogleTest(&argc, argv);
-	DmScanLib::configLogging(1, false);
+	DmScanLib::configLogging(5, false);
 	return RUN_ALL_TESTS();
 }
