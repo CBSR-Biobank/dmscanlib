@@ -47,11 +47,9 @@ using namespace decoder;
 
 Decoder::Decoder(const Dib & _image, const DecodeOptions & _decodeOptions,
 		std::vector<std::unique_ptr<WellRectangle<unsigned>  > > & _wellRects) :
-		image(_image), dmtxImage(NULL), dpi(image.getDpi()), decodeOptions(_decodeOptions),
+		image(_image), decodeOptions(_decodeOptions),
 		wellRects(_wellRects), decodeSuccessful(false)
 {
-	CHECK((dpi == 300) || (dpi == 400) || (dpi == 600));
-
 	unsigned width = image.getWidth();
 	unsigned height = image.getHeight();
 
@@ -74,28 +72,25 @@ Decoder::Decoder(const Dib & _image, const DecodeOptions & _decodeOptions,
 	wellDecoders.resize(wellRects.size());
 	applyFilters();
 
-	CHECK_NOTNULL(filteredImage.get());
-	dmtxImage = filteredImage->getDmtxImage();
+	CHECK_NOTNULL(workingImage.get());
 }
 
 Decoder::~Decoder() {
-	dmtxImageDestroy(&dmtxImage);
 }
 
 void Decoder::applyFilters() {
-	CHECK(dmtxImage == NULL);
-
-	filteredImage = (image.getBitsPerPixel() != 8)
+	workingImage = (image.getBitsPerPixel() != 8)
 			? std::move(image.convertGrayscale())
 			: std::unique_ptr<Dib>(new Dib(image));
 
-	filteredImage->tpPresetFilter();
+	workingImage->tpPresetFilter();
 	if (VLOG_IS_ON(2)) {
-		filteredImage->writeToFile("filtered.bmp");
+		workingImage->writeToFile("filtered.bmp");
 	}
 }
 
 int Decoder::decodeWellRects() {
+	const unsigned dpi = workingImage->getDpi();
 	if ((dpi != 300) && (dpi != 400) && (dpi != 600)) {
 		return SC_INCORRECT_DPI_SCANNED;
 	}
@@ -161,36 +156,34 @@ const std::map<std::string, const WellDecoder *> & Decoder::getDecodedWells() co
 /*
  * Called by multiple threads.
  */
-void Decoder::decodeWellRect(WellDecoder & wellDecoder) const {
+void Decoder::decodeWellRect(const Dib & wellRectImage, WellDecoder & wellDecoder) const {
+	const unsigned dpi = wellRectImage.getDpi();
+	CHECK((dpi == 300) || (dpi == 400) || (dpi == 600));
+
+	DmtxImage * dmtxImage = wellRectImage.getDmtxImage();
 	CHECK_NOTNULL(dmtxImage);
 
 	VLOG(2) << "decodeWellRect: " << wellDecoder;
 
-	std::unique_ptr<DmtxDecodeHelper> dec = createDmtxDecode(wellDecoder, decodeOptions.shrink);
+	std::unique_ptr<DmtxDecodeHelper> dec =
+			createDmtxDecode(dmtxImage, dpi, wellDecoder, decodeOptions.shrink);
 	decodeWellRect(wellDecoder, dec->getDecode());
 
 	if (wellDecoder.getMessage().empty()) {
 		VLOG(2) << "decodeWellRect: second attempt " << wellDecoder;
-		dec = std::move(createDmtxDecode(wellDecoder, decodeOptions.shrink + 1));
+		dec = std::move(createDmtxDecode(
+				dmtxImage, dpi, wellDecoder, decodeOptions.shrink + 1));
 		decodeWellRect(wellDecoder, dec->getDecode());
 	}
+	dmtxImageDestroy(&dmtxImage);
 }
 
-std::unique_ptr<DmtxDecodeHelper> Decoder::createDmtxDecode(
-		WellDecoder & wellDecoder, int scale) const {
+std::unique_ptr<DmtxDecodeHelper> Decoder::createDmtxDecode(DmtxImage * dmtxImage,
+		const unsigned dpi, WellDecoder & wellDecoder, int scale) const {
 	std::unique_ptr<DmtxDecodeHelper> dec(new DmtxDecodeHelper(dmtxImage, scale));
-
-	unsigned height = image.getHeight();
 
 	std::unique_ptr<const BoundingBox<unsigned> > bbox = std::move(
 			wellDecoder.getWellRectangle().getBoundingBox());
-
-	dec->setProperty(DmtxPropXmin, bbox->points[0].x);
-	dec->setProperty(DmtxPropXmax, bbox->points[1].x);
-
-	dec->setProperty(DmtxPropYmax, height - bbox->points[0].y);
-	dec->setProperty(DmtxPropYmin, height - bbox->points[1].y);
-
 
 	// slightly smaller than the new tube edge
 	dec->setProperty(DmtxPropEdgeMin, static_cast<int>(0.08 * dpi));

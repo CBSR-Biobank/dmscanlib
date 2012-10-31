@@ -50,10 +50,10 @@ public:
     		std::vector<std::unique_ptr<WellRectangle<unsigned>  > > & wellRects);
     virtual ~Decoder();
     int decodeWellRects();
-    void decodeWellRect(WellDecoder & wellDecoder) const;
+    void decodeWellRect(const Dib & wellRectImage, WellDecoder & wellDecoder) const;
 
     const Dib & getWorkingImage() const {
-    	return *filteredImage;
+    	return *workingImage;
     }
 
     const unsigned getDecodedWellCount();
@@ -65,7 +65,7 @@ private:
     static DmtxImage * createDmtxImageFromDib(const Dib & dib);
     void decodeWellRect(WellDecoder & wellDecoder, DmtxDecode *dec) const;
     std::unique_ptr<decoder::DmtxDecodeHelper> createDmtxDecode(
-    		WellDecoder & wellDecoder ,int scale) const;
+    		DmtxImage * dmtxImage, const unsigned dpi, WellDecoder & wellDecoder ,int scale) const;
 
     void getDecodeInfo(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg,
     		WellDecoder & wellDecoder) const;
@@ -77,9 +77,7 @@ private:
     int decodeMultiThreaded();
 
     const Dib & image;
-    std::unique_ptr<Dib> filteredImage;
-    DmtxImage * dmtxImage;
-    const unsigned dpi;
+    std::unique_ptr<Dib> workingImage;
     const DecodeOptions & decodeOptions;
     const std::vector<std::unique_ptr<WellRectangle<unsigned> > > & wellRects;
     std::vector<std::unique_ptr<WellDecoder> > wellDecoders;

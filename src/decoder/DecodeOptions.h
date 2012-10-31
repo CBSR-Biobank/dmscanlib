@@ -18,12 +18,11 @@ class Decoder;
 class DecodeOptions {
 public:
 	DecodeOptions(double scanGap, long squareDev, long edgeThresh,
-		    long corrections, long shrink, double cellDistance);
+		    long corrections, long shrink);
 	DecodeOptions(JNIEnv *env, jobject scanRegionObj);
 	virtual ~DecodeOptions();
 
 private:
-
 	friend class Decoder;
 	friend std::ostream & operator<<(std::ostream & os, const DecodeOptions & m);
 

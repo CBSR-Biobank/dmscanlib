@@ -42,8 +42,6 @@
 #include <algorithm>
 #include <math.h>
 
-using namespace std;
-
 #if defined(USE_NVWA)
 #   include "debug_new.h"
 #endif
@@ -215,7 +213,7 @@ void Dib::readFromHandle(HANDLE handle) {
 /**
  * All values in little-endian except for BitmapFileHeader.type.
  */
-bool Dib::readFromFile(const string & filename) {
+bool Dib::readFromFile(const std::string & filename) {
    deallocate();
 
    FILE *fh = fopen(filename.c_str(), "rb"); // C4996
@@ -364,7 +362,7 @@ void Dib::setPixel(unsigned x, unsigned y, const RgbQuad & quad) {
    ptr[0] = quad.getBlue();
 }
 
-unique_ptr<Dib> Dib::convertGrayscale() const {
+std::unique_ptr<Dib> Dib::convertGrayscale() const {
    CHECK(colorBits == 24 || colorBits == 8);
    CHECK(pixels != NULL);
 
@@ -404,7 +402,7 @@ unique_ptr<Dib> Dib::convertGrayscale() const {
    VLOG(2)
       << "convertGrayscale: Generated 8 bit grayscale image.";
 
-   return unique_ptr<Dib>(dest);
+   return std::unique_ptr<Dib>(dest);
 }
 
 /*
@@ -413,23 +411,23 @@ unique_ptr<Dib> Dib::convertGrayscale() const {
  * TODO At the moment crops are only done on the bounding box. In the future
  * any rectangle, at any angle, should be allowed.
  */
-unique_ptr<Dib> Dib::crop(const BoundingBox<unsigned> & bbox) const {
+std::unique_ptr<Dib> Dib::crop(const BoundingBox<unsigned> & bbox) const {
    CHECK(bbox.points[1].x > bbox.points[0].x);
    CHECK(bbox.points[1].y > bbox.points[0].y);
 
 
    BoundingBox<unsigned> boundBbox(
-		   min(bbox.points[0].x, width-1),
-		   min(bbox.points[0].y, height-1),
-		   min(bbox.points[1].x, width-1),
-		   min(bbox.points[1].y, height-1));
+		   std::min(bbox.points[0].x, width-1),
+		   std::min(bbox.points[0].y, height-1),
+		   std::min(bbox.points[1].x, width-1),
+		   std::min(bbox.points[1].y, height-1));
 
    unsigned cWidth = boundBbox.points[1].x - boundBbox.points[0].x;
    unsigned cHeight = boundBbox.points[1].y - boundBbox.points[0].y;
 
 	VLOG(2) << "crop: Bbox" << bbox << ", width/" << cWidth << " height/" << cHeight;
 
-   unique_ptr<Dib> croppedImg(
+   std::unique_ptr<Dib> croppedImg(
       new Dib(cWidth, cHeight, colorBits, pixelsPerMeter));
 
    unsigned char *srcRowPtr = pixels + (height - boundBbox.points[1].y) * rowBytes
@@ -582,7 +580,7 @@ void Dib::convolveFast3x3(const float(&k)[9]) {
    float *imageOut = new float[size];
    float *imageIn = new float[size];
 
-   fill(imageOut, imageOut + size, 0.0f);
+   std::fill(imageOut, imageOut + size, 0.0f);
 
    {
       unsigned char *srcRowPtr = pixels, *srcPtr;

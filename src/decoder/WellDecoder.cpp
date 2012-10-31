@@ -36,7 +36,8 @@ WellDecoder::~WellDecoder() {
  * This method runs in its own thread.
  */
 void WellDecoder::run() {
-    decoder.decodeWellRect(*this);
+    wellImage = decoder.getWorkingImage().crop(*boundingBox);
+    decoder.decodeWellRect(*wellImage, *this);
     if (!message.empty()) {
     	VLOG(3) << "run: " << *this;
     } else {
@@ -53,6 +54,9 @@ const Rect<unsigned> & WellDecoder::getDecodedRectangle() const {
 	return *decodedRect;
 }
 
+// the rectangle passed in is in coordinates of the cropped image,
+// the rectangle has to be translated into the coordinates of the overall
+// image
 void WellDecoder::setDecodeRectangle(const Rect<double> & rect, int scale) {
 	std::unique_ptr<const Rect<double> > rectCopy;
 	if (scale == 1) {
@@ -65,6 +69,7 @@ void WellDecoder::setDecodeRectangle(const Rect<double> & rect, int scale) {
 			rectCopy->corners[1].x, rectCopy->corners[1].y,
 			rectCopy->corners[2].x, rectCopy->corners[2].y,
 			rectCopy->corners[3].x, rectCopy->corners[3].y));
+	decodedRect = decodedRect->translate(boundingBox->points[0]);
 }
 
 std::ostream & operator<<(std::ostream &os, const WellDecoder & m) {

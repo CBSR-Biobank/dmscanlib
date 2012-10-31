@@ -52,7 +52,7 @@ std::unique_ptr<Time> Time::difftime(const Time & that) {
 }
 
 std::ostream & operator<<(std::ostream &os, const dmscanlib::util::Time & tm) {
-	os << std::setw(2) << tm.time.tv_sec << "." << std::setw(3) << tm.time.tv_usec/1000;
+	os << tm.time.tv_sec << "." << tm.time.tv_usec/1000;
 	return os;
 }
 

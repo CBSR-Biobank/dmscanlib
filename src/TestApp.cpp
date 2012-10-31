@@ -46,10 +46,11 @@
 
 #include <iostream>
 #include <vector>
-#include <gtest/gtest.h>
 #include <stdexcept>
 #include <dirent.h>
 #include <stddef.h>
+#include <glog/logging.h>
+#include <gtest/gtest.h>
 
 #ifdef USE_NVWA
 #   include <limits>
@@ -147,7 +148,7 @@ void getWellRectsForSbsPalletImage(std::string & fname,
 
             std::unique_ptr<WellRectangle<unsigned> > wellRect(
             		new WellRectangle<unsigned>(label.str().c_str(), *bboxTranslated));
-            VLOG(3) << *wellRect;
+            VLOG(9) << *wellRect;
             wellRects.push_back(std::move(wellRect));
             bboxTranslated = bboxTranslated->translate(horTranslation);
         }
@@ -166,21 +167,24 @@ int decodeImage(std::string fname, DmScanLib & dmScanLib) {
     std::vector<std::unique_ptr<WellRectangle<unsigned> > > wellRects;
 
     getWellRectsForSbsPalletImage(fname, wellRects);
-    DecodeOptions decodeOptions(0.085, 10, 5, 10, 1, 0.345);
+
+    double scanGap = 5;
+    long squareDev = 15;
+    long edgeThresh = 5;
+    long corrections = 10;
+    long shrink = 1;
+
+    DecodeOptions decodeOptions(scanGap, squareDev, edgeThresh, corrections,
+    	    shrink);
     return dmScanLib.decodeImageWells(fname.c_str(), decodeOptions, wellRects);
 }
 
 TEST_F(TestApp, DecodeImage) {
+	FLAGS_v = 3;
 
     std::string fname(getenv("HOME"));
-    //fname.append("/Dropbox/CBSR/scanlib/uncroppedImages/hardscan.bmp");
-    fname.append("/Dropbox/CBSR/scanlib/testImages/invalid_decode.bmp");
+    fname.append("/Dropbox/CBSR/scanlib/testImages/edge_tubes.bmp");
 
-//	wellRects.push_back(std::unique_ptr<WellRectangle<unsigned> >(
-//			new WellRectangle<unsigned>("A12", 10, 24, 130, 120)));
-//
-//	wellRects.push_back(std::unique_ptr<WellRectangle<unsigned> >(
-//			new WellRectangle<unsigned>("A11", 150, 24, 250, 120)));
     DmScanLib dmScanLib(1);
     int result = decodeImage(fname, dmScanLib);
 
@@ -192,8 +196,9 @@ TEST_F(TestApp, DecodeImage) {
     }
 }
 
-TEST_F(TestApp, DISABLED_DecodeAllImages) {
-//TEST_F(TestApp, DecodeAllImages) {
+TEST_F(TestApp, DecodeAllImages) {
+	FLAGS_v = 1;
+
     std::string dirname(getenv("HOME"));
     dirname.append("/Dropbox/CBSR/scanlib/testImages");
     std::vector<std::string> filenames;
@@ -225,6 +230,6 @@ TEST_F(TestApp, DISABLED_DecodeAllImages) {
 
 int main(int argc, char **argv) {
 	::testing::InitGoogleTest(&argc, argv);
-	DmScanLib::configLogging(5, false);
+	DmScanLib::configLogging(1, false);
 	return RUN_ALL_TESTS();
 }

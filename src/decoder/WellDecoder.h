@@ -56,6 +56,7 @@ public:
 private:
 	const Decoder & decoder;
 	const WellRectangle<unsigned> & wellRectangle;
+	std::unique_ptr<const Dib> wellImage;
 	std::unique_ptr<const BoundingBox<unsigned> > boundingBox;
 	std::unique_ptr<const Rect<unsigned> > decodedRect;
 	std::string message;
