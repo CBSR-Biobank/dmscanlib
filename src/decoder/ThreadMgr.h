@@ -53,9 +53,9 @@ private:
 	unsigned numThreads;
 };
 
-} /* namespace */
+}; /* namespace */
 
-} /* namespace */
+}; /* namespace */
 
 #endif /* __INC_PROCESS_IMAGE_MANAGER_H */
 

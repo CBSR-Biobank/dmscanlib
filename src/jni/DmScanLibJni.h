@@ -15,6 +15,12 @@ extern "C" {
 #define edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_SC_SUCCESS 0L
 #undef edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_SC_FAIL
 #define edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_SC_FAIL -1L
+#undef edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_SC_INVALID_NOTHING_DECODED
+#define edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_SC_INVALID_NOTHING_DECODED -4L
+#undef edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_SC_INVALID_IMAGE
+#define edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_SC_INVALID_IMAGE -6L
+#undef edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_SC_INVALID_NOTHING_TO_DECODE
+#define edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_SC_INVALID_NOTHING_TO_DECODE -7L
 #undef edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_CAP_IS_WIA
 #define edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_CAP_IS_WIA 1L
 #undef edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_CAP_DPI_300
@@ -52,7 +58,7 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
 /*
  * Class:     edu_ualberta_med_scannerconfig_dmscanlib_ScanLib
  * Method:    scanImage
- * Signature: (JJIILedu/ualberta/med/scannerconfig/dmscanlib/ScanRegion;Ljava/lang/String;)Ledu/ualberta/med/scannerconfig/dmscanlib/ScanLibResult;
+ * Signature: (JJIILedu/ualberta/med/scannerconfig/dmscanlib/BoundingBox;Ljava/lang/String;)Ledu/ualberta/med/scannerconfig/dmscanlib/ScanLibResult;
  */
 JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_scanImage
   (JNIEnv *, jobject, jlong, jlong, jint, jint, jobject, jstring);
@@ -67,16 +73,16 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
 
 /*
  * Class:     edu_ualberta_med_scannerconfig_dmscanlib_ScanLib
- * Method:    decodePlate
- * Signature: (JJIIJLedu/ualberta/med/scannerconfig/dmscanlib/ScanRegion;DJJJDDDJJJJ)Ledu/ualberta/med/scannerconfig/dmscanlib/DecodeResult;
+ * Method:    scanAndDecode
+ * Signature: (JJIILedu/ualberta/med/scannerconfig/dmscanlib/BoundingBox;Ledu/ualberta/med/scannerconfig/dmscanlib/DecodeOptions;[Ledu/ualberta/med/scannerconfig/dmscanlib/WellRectangle;)Ledu/ualberta/med/scannerconfig/dmscanlib/DecodeResult;
  */
-JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_decodePlate
-  (JNIEnv *, jobject, jlong, jlong, jint, jint, jlong, jobject, jdouble, jlong, jlong, jlong, jdouble, jdouble, jdouble, jlong, jlong, jlong, jlong);
+JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_scanAndDecode
+  (JNIEnv *, jobject, jlong, jlong, jint, jint, jobject, jobject, jobjectArray);
 
 /*
  * Class:     edu_ualberta_med_scannerconfig_dmscanlib_ScanLib
  * Method:    decodeImage
- * Signature: (JLjava/lang/String;Ledu/ualberta/med/scannerconfig/dmscanlib/DecodeOptions;[Ledu/ualberta/med/scannerconfig/dmscanlib/Well;)Ledu/ualberta/med/scannerconfig/dmscanlib/DecodeResult;
+ * Signature: (JLjava/lang/String;Ledu/ualberta/med/scannerconfig/dmscanlib/DecodeOptions;[Ledu/ualberta/med/scannerconfig/dmscanlib/WellRectangle;)Ledu/ualberta/med/scannerconfig/dmscanlib/DecodeResult;
  */
 JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_decodeImage
   (JNIEnv *, jobject, jlong, jstring, jobject, jobjectArray);

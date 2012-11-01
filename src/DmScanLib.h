@@ -22,7 +22,7 @@
  */
 
 #include "decoder/WellRectangle.h"
-#include "utils/Time.h"
+#include "utils/DmTime.h"
 
 #include <string>
 #include <memory>
@@ -67,13 +67,11 @@ public:
 	int selectSourceAsDefault();
 	int getScannerCapability();
 	int scanImage(unsigned dpi, int brightness, int contrast,
-			double left, double top, double right, double bottom,
-			const char * filename);
+			BoundingBox<unsigned> & bbox, const char * filename);
 	int scanFlatbed(unsigned dpi, int brightness, int contrast,
 			const char * filename);
 	int scanAndDecode(unsigned dpi, int brightness, int contrast,
-			double left, double top, double right, double bottom,
-			const DecodeOptions & decodeOptions,
+			BoundingBox<unsigned> region, const DecodeOptions & decodeOptions,
 			std::vector<std::unique_ptr<WellRectangle<unsigned>  > > & wellRects);
 	int decodeImageWells(const char * filename,
 			const DecodeOptions & decodeOptions,

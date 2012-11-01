@@ -18,38 +18,37 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "TimeUtil.h"
+#include "utils/DmTime.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <iostream>
 #include <time.h>
-#include <sys/timeb.h>
+//#include <sys/timeb.h>
 
-void Util::getTime(slTime & tm) {
-	time(&tm);
+namespace dmscanlib {
+
+namespace util {
+
+Time::Time() {
+	time(&timeVal);
 }
 
-void Util::getTimestamp(std::string & str_r) {
-    char buf_a[100];
-
-   time_t ltime;
-   struct _timeb tstruct;
-   char timebuf[26];
-   errno_t err;
-
-   time( &ltime );
-   err = ctime_s(timebuf, 26, &ltime);
-   if (err) {
-      cerr << "ctime_s failed due to an invalid argument.";
-      exit(1);
-   }
-   _ftime_s( &tstruct );
-   sprintf_s(buf_a, "%.8s:%03u ", timebuf + 11, tstruct.millitm);
-
-    str_r = buf_a;
+Time::Time(Time & that) {
+	this->timeVal = that.timeVal;
 }
 
-void Util::difftime(slTime & start, slTime & end, slTime & diff) {
-	diff = end - start;
+std::unique_ptr<Time> Time::difftime(const Time & that) {
+	std::unique_ptr<Time> result(new Time(*this));
+	result->timeVal = that.timeVal - this->timeVal;
+	return result;
 }
+
+std::ostream & operator<<(std::ostream &os, const dmscanlib::util::Time & tm) {
+	os << tm.timeVal;
+	return os;
+}
+
+} /* namespace */
+
+} /* namespace */

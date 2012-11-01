@@ -9,8 +9,7 @@
 
 #include <iostream>
 
-using namespace dmscanlib;
-
+namespace dmscanlib {
 
 void getResultCodeMsg(int resultCode, std::string & message) {
     switch (resultCode) {
@@ -35,6 +34,8 @@ void getResultCodeMsg(int resultCode, std::string & message) {
         break;
     }
 }
+
+}; /* namespace */
 
 /*
  * Class:     edu_ualberta_med_scannerconfig_dmscanlib_ScanLib
@@ -91,15 +92,10 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
 
 /*
  * Class:     edu_ualberta_med_scannerconfig_dmscanlib_ScanLib
- * Method:    slDecodePlate
- * Signature: (JJIIJDDDDDJJJDDDJJJJ)Ledu/ualberta/med/scannerconfig/dmscanlib/DecodedWell;
+ * Method:    scanAndDecode
+ * Signature: (JJIILedu/ualberta/med/scannerconfig/dmscanlib/BoundingBox;Ledu/ualberta/med/scannerconfig/dmscanlib/DecodeOptions;[Ledu/ualberta/med/scannerconfig/dmscanlib/WellRectangle;)Ledu/ualberta/med/scannerconfig/dmscanlib/DecodeResult;
  */
-JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_decodePlate(
-                JNIEnv * env, jobject obj, jlong _verbose, jlong _dpi,
-                jint brightness, jint contrast, jlong _plateNum,
-                jobject _region, jdouble scanGap, jlong _squareDev,
-                jlong _edgeThresh, jlong _corrections, jdouble cellDistance,
-                jdouble gapX, jdouble gapY, jlong _profileA, jlong _profileB,
-                jlong _profileC, jlong _orientation) {
+JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_scanAndDecode
+  (JNIEnv *, jobject, jlong, jlong, jint, jint, jobject, jobject, jobjectArray) {
     return createScanResultObject(env, SC_FAIL, SC_FAIL);
 }

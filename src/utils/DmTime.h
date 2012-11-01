@@ -44,7 +44,7 @@ public:
 	std::unique_ptr<Time>  difftime(const Time & that);
 
 private:
-	slTime time;
+	slTime timeVal;
 
 	friend std::ostream & operator<<(std::ostream &os, const Time & tm);
 };

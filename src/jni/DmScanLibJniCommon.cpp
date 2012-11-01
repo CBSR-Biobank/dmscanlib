@@ -14,7 +14,9 @@
 #include <memory>
 #include <glog/logging.h>
 
-using namespace dmscanlib;
+namespace dmscanlib {
+
+namespace jni {
 
 jobject createScanResultObject(JNIEnv * env, int resultCode, int value) {
     jclass scanLibResultClass = env->FindClass(
@@ -97,22 +99,40 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
 	}
 
     DmScanLib::configLogging(static_cast<unsigned>(_verbose), false);
-
-    const char *filename = env->GetStringUTFChars(_filename, 0);
-
     DecodeOptions decodeOptions(env, _decodeOptions);
-
     std::vector<std::unique_ptr<WellRectangle<unsigned>  > > wellRects;
 
+    jsize numWells = env->GetArrayLength(_wellRects);
+	int result = getWellRectangles(env, numWells, _wellRects, wellRects);
+
+	if (result == 0) {
+		return NULL;
+	} else if ((result != 1) || (wellRects.size() == 0)) {
+    	// invalid rects or zero rects passed from java
+    	return createDecodeResultObject(env, SC_INVALID_NOTHING_TO_DECODE);
+	}
+
+	jobject resultObj = 0;
+
+	dmscanlib::DmScanLib dmScanLib(1);
+
+	const char *filename = env->GetStringUTFChars(_filename, 0);
+	int result = dmScanLib.decodeImageWells(filename, decodeOptions, wellRects);
+	env->ReleaseStringUTFChars(_filename, filename);
+
+	if (result == SC_SUCCESS) {
+		return createDecodeResultObject(env,result, dmScanLib.getDecodedWells());
+	} 
+	return createDecodeResultObject(env, result);
+}
+
+int getWellRectangles(JNIEnv *env, jsize numWells, jobjectArray _wellRects,
+					   std::vector<std::unique_ptr<WellRectangle<unsigned> > > & wellRects) {
     jobject wellRectJavaObj;
     jclass wellRectJavaClass = NULL;
     jmethodID wellRectGetLabelMethodID = NULL;
     jmethodID wellRectGetCornerXMethodID = NULL;
     jmethodID wellRectGetCornerYMethodID = NULL;
-
-    jsize numWells = env->GetArrayLength(_wellRects);
-
-    bool invalidWellRectFound = false;
 
 	VLOG(3) << "decodeImage: numWells/" << numWells;
 
@@ -122,8 +142,7 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
 
     	// if java object pointer is null, skip this array element
     	if (wellRectJavaObj == NULL) {
-    		invalidWellRectFound = true;
-        	break;
+    		return 2;
     	}
 
     	if (wellRectJavaClass == NULL) {
@@ -132,19 +151,19 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
     		wellRectGetLabelMethodID = env->GetMethodID(wellRectJavaClass,
     	    		"getLabel", "()Ljava/lang/String;");
     	    if(env->ExceptionOccurred()) {
-    	    	return NULL;
+    	    	return 0;
     	    }
 
     	    wellRectGetCornerXMethodID = env->GetMethodID(wellRectJavaClass,
     	    		"getCornerX", "(I)I");
     	    if(env->ExceptionOccurred()) {
-    	    	return NULL;
+    	    	return 0;
     	    }
 
     	    wellRectGetCornerYMethodID = env->GetMethodID(wellRectJavaClass,
     	    		"getCornerY", "(I)I");
     	    if(env->ExceptionOccurred()) {
-    	    	return NULL;
+    	    	return 0;
     	    }
     	}
 
@@ -173,25 +192,35 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
     	env->ReleaseStringUTFChars((jstring) labelJobj, label);
     	env->DeleteLocalRef(wellRectJavaObj);
     }
+	return 1;
+}
 
-    jobject resultObj = 0;
+std::unique_ptr<BoundingBox<unsigned> > getBoundingBox(JNIEnv *env, jobject bboxJavaObj) {
+	CHECK_NOTNULL(bboxJavaObj);
+	jclass bboxJavaClass = env->GetObjectClass(bboxJavaObj);
 
-    if (invalidWellRectFound || (wellRects.size() == 0)) {
-    	// invalid rects or zero rects passed from java
-    	resultObj = createDecodeResultObject(env, SC_INVALID_NOTHING_TO_DECODE);
-    } else {
-        dmscanlib::DmScanLib dmScanLib(1);
-        int result = dmScanLib.decodeImageWells(filename, decodeOptions, wellRects);
-
-        if (result == SC_SUCCESS) {
-        	resultObj = createDecodeResultObject(env,result, dmScanLib.getDecodedWells());
-        } else {
-        	resultObj = createDecodeResultObject(env, result);
-        }
+	jmethodID getCornerXMethodID = env->GetMethodID(bboxJavaClass, "getCornerX", "(I)I");
+    if(env->ExceptionOccurred()) {
+      	return NULL;
     }
 
-    env->ReleaseStringUTFChars(_filename, filename);
+	jmethodID getCornerYMethodID = env->GetMethodID(bboxJavaClass, "getCornerY", "(I)I");
+    if(env->ExceptionOccurred()) {
+      	return NULL;
+    }
 
-    return resultObj;
+    int x0 = env->CallIntMethod(bboxJavaObj, getCornerXMethodID, 0);
+   	int y0 = env->CallIntMethod(bboxJavaObj, getCornerYMethodID, 0);
+
+	int x1 = env->CallIntMethod(bboxJavaObj, getCornerXMethodID, 1);
+   	int y1 = env->CallIntMethod(bboxJavaObj, getCornerYMethodID, 1);
+
+	return std::unique_ptr<BoundingBox<unsigned> >(new BoundingBox<unsigned>(
+		x0, y0, x1, y1));
 }
+
+} /* namespace */
+
+} /* namespace */
+
 

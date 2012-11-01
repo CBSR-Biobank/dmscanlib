@@ -3,14 +3,16 @@
  */
 
 #include "jni/DmScanLibJni.h"
+#include "jni/DmScanLibJniInternal.h"
+#include "geometry.h"
 #include "DmScanLib.h"
-#include "ScanRegion.h"
+#include "decoder/DecodeOptions.h"
 
 #include <iostream>
 
-using namespace std;
+namespace dmscanlib {
 
-void getResultCodeMsg(int resultCode, string & message) {
+void getResultCodeMsg(int resultCode, std::string & message) {
 	switch (resultCode) {
 	case SC_SUCCESS:
 		message = "";
@@ -41,6 +43,8 @@ void getResultCodeMsg(int resultCode, string & message) {
 	}
 }
 
+}; /* namespace */
+
 /*
  * Class:     edu_ualberta_med_scannerconfig_dmscanlib_ScanLib
  * Method:    slIsTwainAvailable
@@ -48,9 +52,9 @@ void getResultCodeMsg(int resultCode, string & message) {
  */
 JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_isTwainAvailable(
                 JNIEnv * env, jobject obj) {
-    DmScanLib dmScanLib(0);
+    dmscanlib::DmScanLib dmScanLib(0);
     int result = dmScanLib.isTwainAvailable();
-    return createScanResultObject(env, result, result);
+    return dmscanlib::jni::createScanResultObject(env, result, result);
 }
 
 /*
@@ -60,9 +64,9 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
  */
 JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_selectSourceAsDefault(
                 JNIEnv * env, jobject obj) {
-    DmScanLib dmScanLib(0);
+    dmscanlib::DmScanLib dmScanLib(0);
     int result = dmScanLib.selectSourceAsDefault();
-    return createScanResultObject(env, result, result);
+    return dmscanlib::jni::createScanResultObject(env, result, result);
 }
 
 /*
@@ -72,9 +76,9 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
  */
 JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_getScannerCapability(
                 JNIEnv * env, jobject obj) {
-    DmScanLib dmScanLib(0);
+    dmscanlib::DmScanLib dmScanLib(0);
     int result = dmScanLib.getScannerCapability();
-    return createScanResultObject(env, SC_SUCCESS, result);
+    return dmscanlib::jni::createScanResultObject(env, dmscanlib::SC_SUCCESS, result);
 }
 
 /*
@@ -92,13 +96,12 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
     unsigned brightness = static_cast<unsigned>(_brightness);
     unsigned contrast = static_cast<unsigned>(_contrast);
     const char *filename = env->GetStringUTFChars(_filename, 0);
-    ScanRegion region(env, _region);
+    std::unique_ptr<dmscanlib::BoundingBox<unsigned> > bbox = 
+		dmscanlib::jni::getBoundingBox(env, _region);
 
-    DmScanLib dmScanLib(verbose);
-    int result = dmScanLib.scanImage(dpi, brightness, contrast,
-    		region.point1.x, region.point1.y, region.point2.x, region.point2.y,
-    		filename);
-    jobject resultObj = createScanResultObject(env, result, result);
+    dmscanlib::DmScanLib dmScanLib(verbose);
+    int result = dmScanLib.scanImage(dpi, brightness, contrast, *bbox, filename);
+    jobject resultObj = dmscanlib::jni::createScanResultObject(env, result, result);
     env->ReleaseStringUTFChars(_filename, filename);
     return resultObj;
 }
@@ -118,9 +121,9 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
     unsigned contrast = static_cast<unsigned>(_contrast);
     const char *filename = env->GetStringUTFChars(_filename, 0);
 
-    DmScanLib dmScanLib(verbose);
+    dmscanlib::DmScanLib dmScanLib(verbose);
     int result = dmScanLib.scanFlatbed(dpi, brightness, contrast, filename);
-    jobject resultObj = createScanResultObject(env, result, result);
+    jobject resultObj = dmscanlib::jni::createScanResultObject(env, result, result);
     env->ReleaseStringUTFChars(_filename, filename);
     return resultObj;
 }
@@ -130,31 +133,38 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
  * Method:    slDecodePlate
  * Signature: (JJIIJDDDDDJJJDDDJJJJ)Ledu/ualberta/med/scannerconfig/dmscanlib/DecodeResult;
  */
-JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_decodePlate(
-                JNIEnv * env, jobject obj, jlong _verbose, jlong _dpi,
-                jint brightness, jint contrast, jlong _plateNum,
-                jobject _region, jdouble scanGap, jlong _squareDev,
-                jlong _edgeThresh, jlong _corrections, jdouble cellDistance,
-                jdouble gapX, jdouble gapY, jlong _profileA, jlong _profileB,
-                jlong _profileC, jlong _orientation) {
+JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_scanAndDecode
+  (JNIEnv * env, jobject obj, jlong _verbose, jlong _dpi, jint _brightness, jint _contrast, 
+  jobject _region, jobject _decodeOptions, jobjectArray _wellRects) {
 
-    unsigned verbose = static_cast<unsigned>(_verbose);
+    if ((_verbose == 0) || (_dpi == 0) || (_brightness == 0) || (_contrast == 0) 
+		|| (_region == 0) || (_decodeOptions == 0) || (_wellRects == 0)) {
+		return dmscanlib::jni::createDecodeResultObject(env, dmscanlib::SC_FAIL);
+	}
+
+    dmscanlib::DmScanLib::configLogging(static_cast<unsigned>(_verbose), false);
+
     unsigned dpi = static_cast<unsigned>(_dpi);
-    unsigned plateNum = static_cast<unsigned>(_plateNum);
-    unsigned squareDev = static_cast<unsigned>(_squareDev);
-    unsigned edgeThresh = static_cast<unsigned>(_edgeThresh);
-    unsigned corrections = static_cast<unsigned>(_corrections);
-    unsigned profileA = static_cast<unsigned>(_profileA);
-    unsigned profileB = static_cast<unsigned>(_profileB);
-    unsigned profileC = static_cast<unsigned>(_profileC);
-    unsigned orientation = static_cast<unsigned>(_orientation);
+    unsigned brightness = static_cast<unsigned>(_brightness);
+    unsigned contrast = static_cast<unsigned>(_contrast);
+    std::vector<std::unique_ptr<dmscanlib::WellRectangle<unsigned> > > wellRects;
 
-    ScanRegion region(env, _region);
+    dmscanlib::DecodeOptions decodeOptions(env, _decodeOptions);
+    std::unique_ptr<dmscanlib::BoundingBox<unsigned> > bbox = 
+		dmscanlib::jni::getBoundingBox(env, _region);
 
-    DmScanLib dmScanLib(verbose);
-    int result = dmScanLib.scanAndDecode(dpi, brightness, contrast,
-    		region.point1.x, region.point1.y, region.point2.x, region.point2.y,
-    		scanGap, squareDev, edgeThresh, corrections, cellDistance);
+	jsize numWells = env->GetArrayLength(_wellRects);
+	int result = dmscanlib::jni::getWellRectangles(env, numWells, _wellRects, wellRects);
+
+	if (result == 0) {
+		return NULL;
+	} else if ((result != 1) || (wellRects.size() == 0)) {
+    	// invalid rects or zero rects passed from java
+    	return dmscanlib::jni::createDecodeResultObject(env, dmscanlib::SC_INVALID_NOTHING_TO_DECODE);
+	}
+
+    dmscanlib::DmScanLib dmScanLib(0);
+    result = dmScanLib.scanAndDecode(dpi, brightness, contrast, *bbox, decodeOptions, wellRects);
 
     // TODO: needs implementation
     return NULL;
