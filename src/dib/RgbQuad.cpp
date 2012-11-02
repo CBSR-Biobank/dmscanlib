@@ -39,9 +39,9 @@ unsigned RgbQuad::toUnsignedInt() {
 }
 
 void RgbQuad::scale(double factor) {
-   rgbRed *= factor;
-   rgbGreen *= factor;
-   rgbBlue  *= factor;
+   rgbRed   = static_cast<unsigned>(rgbRed * factor);
+   rgbGreen = static_cast<unsigned>(rgbGreen * factor);
+   rgbBlue  = static_cast<unsigned>(rgbBlue * factor);
 }
 
 

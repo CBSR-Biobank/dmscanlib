@@ -33,7 +33,7 @@ jobject createDecodeResultObject(JNIEnv * env, int resultCode);
 jobject createDecodeResultObject(JNIEnv * env, int resultCode,
 		const std::vector<dmscanlib::WellDecoder *> & wellDecoders);
 
-std::unique_ptr<BoundingBox<unsigned> > getBoundingBox(
+std::unique_ptr<BoundingBox<double> > getBoundingBox(
 	JNIEnv *env, jobject bboxJavaObj);
 
 int getWellRectangles(JNIEnv *env, jsize numWells, jobjectArray _wellRects,

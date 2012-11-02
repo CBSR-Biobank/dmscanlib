@@ -37,25 +37,25 @@ DecodeOptions::DecodeOptions(JNIEnv *env, jobject decodeOptionsObj) {
     if(env->ExceptionOccurred()) {
     	return;
     }
-    squareDev= env->CallLongMethod(decodeOptionsObj, getMethod, NULL);
+    squareDev= static_cast<long>(env->CallLongMethod(decodeOptionsObj, getMethod, NULL));
 
     getMethod = env->GetMethodID(decodeOptionsJavaClass, "getEdgeThresh", "()J");
     if(env->ExceptionOccurred()) {
     	return;
     }
-    edgeThresh= env->CallLongMethod(decodeOptionsObj, getMethod, NULL);
+    edgeThresh= static_cast<long>(env->CallLongMethod(decodeOptionsObj, getMethod, NULL));
 
     getMethod = env->GetMethodID(decodeOptionsJavaClass, "getCorrections", "()J");
     if(env->ExceptionOccurred()) {
     	return;
     }
-    corrections= env->CallLongMethod(decodeOptionsObj, getMethod, NULL);
+    corrections= static_cast<long>(env->CallLongMethod(decodeOptionsObj, getMethod, NULL));
 
     getMethod = env->GetMethodID(decodeOptionsJavaClass, "getShrink", "()J");
     if(env->ExceptionOccurred()) {
     	return;
     }
-    shrink = env->CallLongMethod(decodeOptionsObj, getMethod, NULL);
+    shrink = static_cast<long>(env->CallLongMethod(decodeOptionsObj, getMethod, NULL));
 }
 
 DecodeOptions::~DecodeOptions() {

@@ -27,24 +27,30 @@
  * Some portions of the implementation borrowed from EZTWAIN.
  */
 
-#include "DmScanLibInternal.h"
 #include "ImgScannerImpl.h"
 
-#include <glog/logging.h>
 #include <math.h>
+
+#define GLOG_NO_ABBREVIATED_SEVERITIES
+#include <glog/logging.h>
 
 #if defined(USE_NVWA)
 #   include "debug_new.h"
 #endif
 
-using namespace std;
+namespace dmscanlib {
+
+namespace imgscanner {
 
 // Initialize g_AppID. This structure is passed to DSM_Entry() in each
 // function call.
-TW_IDENTITY ImgScannerImpl::g_AppID = { 0, { 1, 0, TWLG_ENGLISH_USA, TWCY_USA,
-                                             "dmscanlib 1.0" }, TWON_PROTOCOLMAJOR, TWON_PROTOCOLMINOR, DG_CONTROL
-                                        | DG_IMAGE, "Canadian Biosample Repository",
-                                        "Image acquisition library", "dmscanlib", };
+TW_IDENTITY ImgScannerImpl::g_AppID = { 
+	0, 
+	{ 1, 0, TWLG_ENGLISH_USA, TWCY_USA, "dmscanlib 1.0" }, 
+	TWON_PROTOCOLMAJOR, TWON_PROTOCOLMINOR, DG_CONTROL | DG_IMAGE, 
+	"Canadian Biosample Repository",
+	"Image acquisition library", "dmscanlib", 
+};
 
 const char * ImgScannerImpl::TWAIN_DLL_FILENAME = "TWAIN_32.DLL";
 
@@ -195,7 +201,7 @@ void ImgScannerImpl::setFloatToIntPair(const double f, short & whole,
  *	Grab an image from the twain source and convert it to the dmtxImage format
  */
 HANDLE ImgScannerImpl::acquireImage(unsigned dpi, int brightness, int contrast,
-                                    double left, double top, double right, double bottom) {
+                                    BoundingBox<double> & bbox) {
    CHECK_NOTNULL(g_hLib);
 
    TW_UINT16 rc;
@@ -227,8 +233,9 @@ HANDLE ImgScannerImpl::acquireImage(unsigned dpi, int brightness, int contrast,
    double physicalWidth = getPhysicalDimensions(srcID, ICAP_PHYSICALWIDTH);
    double physicalHeight = getPhysicalDimensions(srcID, ICAP_PHYSICALHEIGHT);
 
-   if ((left > physicalWidth) || (top > physicalHeight)
-       || (left + right > physicalWidth) || (top + bottom > physicalHeight)) {
+   if ((bbox.points[0].x > physicalWidth) || (bbox.points[0].y > physicalHeight)
+       || (bbox.points[0].x + bbox.points[1].x > physicalWidth) 
+	   || (bbox.points[0].y + bbox.points[1].y > physicalHeight)) {
       errorCode = SC_INVALID_VALUE;
       return NULL;
    }
@@ -255,17 +262,14 @@ HANDLE ImgScannerImpl::acquireImage(unsigned dpi, int brightness, int contrast,
    VLOG(3) << "acquireImage: source/\"" << srcID.ProductName << "\""
            << " brightness/" << brightness
            << " constrast/" << contrast
-           << " left/" << left
-           << " top/" << top
-           << " right/" << right
-           << " bottom/" << bottom;
+           << " " << bbox;
 
    setCapOneValue(&srcID, ICAP_UNITS, TWTY_UINT16, TWUN_INCHES);
    TW_IMAGELAYOUT layout;
-   setFloatToIntPair(left, layout.Frame.Left.Whole, layout.Frame.Left.Frac);
-   setFloatToIntPair(top, layout.Frame.Top.Whole, layout.Frame.Top.Frac);
-   setFloatToIntPair(right, layout.Frame.Right.Whole, layout.Frame.Right.Frac);
-   setFloatToIntPair(bottom, layout.Frame.Bottom.Whole,
+   setFloatToIntPair(bbox.points[0].x, layout.Frame.Left.Whole, layout.Frame.Left.Frac);
+   setFloatToIntPair(bbox.points[0].y, layout.Frame.Top.Whole, layout.Frame.Top.Frac);
+   setFloatToIntPair(bbox.points[1].x, layout.Frame.Right.Whole, layout.Frame.Right.Frac);
+   setFloatToIntPair(bbox.points[1].y, layout.Frame.Bottom.Whole,
                      layout.Frame.Bottom.Frac);
    layout.DocumentNumber = 1;
    layout.PageNumber = 1;
@@ -403,8 +407,9 @@ HANDLE ImgScannerImpl::acquireFlatbed(unsigned dpi, int brightness, int contrast
    double physicalHeight = getPhysicalDimensions(srcID, ICAP_PHYSICALHEIGHT);
 
    scannerSourceDeinit(hwnd, srcID);
+   BoundingBox<double> bbox(0, 0, physicalWidth, physicalHeight);
 
-   return acquireImage(dpi, brightness, contrast, 0, 0, physicalWidth, physicalHeight);
+   return acquireImage(dpi, brightness, contrast, bbox);
 }
 
 BOOL ImgScannerImpl::setCapOneValue(TW_IDENTITY * srcId, unsigned Cap,
@@ -477,9 +482,9 @@ int ImgScannerImpl::getScannerCapabilityInternal(TW_IDENTITY & srcID) {
       }
       buf[n] = 0;
 
-      string productnameStr = buf;
+      std::string productnameStr = buf;
 
-      if (productnameStr.find("wia") != string::npos) {
+      if (productnameStr.find("wia") != std::string::npos) {
          VLOG(7) << "Driver type is WIA: ProductName/" << productnameStr;
          capabilityCode |= CAP_IS_WIA;
       } else {
@@ -701,3 +706,7 @@ void ImgScannerImpl::unloadTwain() {
    FreeLibrary(g_hLib);
    g_hLib = NULL;
 }
+
+} /* namespace */
+
+} /* namespace */

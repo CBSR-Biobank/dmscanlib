@@ -57,14 +57,23 @@ ThreadMgr::~ThreadMgr() {
 
 void ThreadMgr::threadHandler() {
 	unsigned first = 0;
+
+#ifdef _VISUALC_
+	unsigned last = min(numThreads, THREAD_NUM);
+#else
 	unsigned last = std::min(numThreads, THREAD_NUM);
+#endif
 
 	do {
 		threadProcessRange(first, last);
 		VLOG(2) << "Threads for cells finished: " << first << "/" << last - 1;
 
 		first = last;
+#ifdef _VISUALC_
+		last = min(last + THREAD_NUM, numThreads);
+#else
 		last = std::min(last + THREAD_NUM, numThreads);
+#endif
 	} while (first < numThreads);
 }
 

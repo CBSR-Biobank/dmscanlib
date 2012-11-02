@@ -67,11 +67,11 @@ public:
 	int selectSourceAsDefault();
 	int getScannerCapability();
 	int scanImage(unsigned dpi, int brightness, int contrast,
-			BoundingBox<unsigned> & bbox, const char * filename);
+			BoundingBox<double> & bbox, const char * filename);
 	int scanFlatbed(unsigned dpi, int brightness, int contrast,
 			const char * filename);
 	int scanAndDecode(unsigned dpi, int brightness, int contrast,
-			BoundingBox<unsigned> region, const DecodeOptions & decodeOptions,
+			BoundingBox<double> & region, const DecodeOptions & decodeOptions,
 			std::vector<std::unique_ptr<WellRectangle<unsigned>  > > & wellRects);
 	int decodeImageWells(const char * filename,
 			const DecodeOptions & decodeOptions,

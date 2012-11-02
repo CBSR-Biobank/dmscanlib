@@ -64,11 +64,21 @@ void WellDecoder::setDecodeRectangle(const Rect<double> & rect, int scale) {
 	} else {
 		rectCopy = rect.scale(scale);
 	}
+
+	Point<unsigned> pt0(static_cast<unsigned>(rectCopy->corners[0].x), 
+		static_cast<unsigned>(rectCopy->corners[0].y));
+
+	Point<unsigned> pt1(static_cast<unsigned>(rectCopy->corners[1].x), 
+		static_cast<unsigned>(rectCopy->corners[1].y));
+
+	Point<unsigned> pt2(static_cast<unsigned>(rectCopy->corners[2].x), 
+		static_cast<unsigned>(rectCopy->corners[2].y));
+
+	Point<unsigned> pt3(static_cast<unsigned>(rectCopy->corners[3].x), 
+		static_cast<unsigned>(rectCopy->corners[3].y));
+
 	decodedRect = std::unique_ptr<Rect<unsigned> >(new Rect<unsigned>(
-			rectCopy->corners[0].x, rectCopy->corners[0].y,
-			rectCopy->corners[1].x, rectCopy->corners[1].y,
-			rectCopy->corners[2].x, rectCopy->corners[2].y,
-			rectCopy->corners[3].x, rectCopy->corners[3].y));
+		pt0, pt1, pt2, pt3));
 	decodedRect = decodedRect->translate(boundingBox->points[0]);
 }
 

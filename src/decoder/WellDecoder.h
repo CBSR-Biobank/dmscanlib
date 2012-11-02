@@ -16,7 +16,7 @@ namespace dmscanlib {
 
 class Decoder;
 class Dib;
-struct RgbQuad;
+class RgbQuad;
 class PalletGrid;
 
 class WellDecoder : public ::OpenThreads::Thread {

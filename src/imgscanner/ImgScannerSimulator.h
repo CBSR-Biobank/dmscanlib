@@ -21,7 +21,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "ImgScanner.h"
+#include "imgscanner/ImgScanner.h"
 
 namespace dmscanlib {
 
@@ -43,7 +43,7 @@ public:
 	int getScannerCapability();
 
 	HANDLE acquireImage(unsigned dpi, int brightness, int contrast,
-		double top, double left, double bottom, double right);
+		BoundingBox<double> & bbox);
 
 	HANDLE acquireFlatbed(unsigned dpi, int brightness, int contrast);
 

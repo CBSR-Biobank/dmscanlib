@@ -20,10 +20,12 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <dmtx.h>
+#include "geometry.h"
+
 #include <memory>
 
 #if defined (WIN32) && ! defined(__MINGW32__)
+#define NOMINMAX
 #include <Windows.h>
 #else
 typedef void* HANDLE;
@@ -50,7 +52,7 @@ public:
 	virtual int getScannerCapability() = 0;
 
 	virtual HANDLE acquireImage(unsigned dpi, int brightness, int contrast,
-		double top, double left, double bottom, double right) = 0;
+		BoundingBox<double> & bbox) = 0;
 
 	virtual HANDLE acquireFlatbed(unsigned dpi, int brightness, int contrast) = 0;
 

@@ -76,8 +76,8 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>.\src;.\third_party\include;$(JAVA_HOME)\include;$(JAVA_HOME)\include\win32;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_VISUALC_;WIN32;_DEBUG;_CONSOLE;UA_LOGGER;STANDALONE;THREADED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.\src;.\third_party\include;.\third_party\libdmtx;$(JAVA_HOME)\include;$(JAVA_HOME)\include\win32;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_VISUALC_;WIN32;_DEBUG;_CONSOLE;THREADED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -86,9 +86,9 @@
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>cv210.lib;cxcore210.lib;user32.lib;libcmtd.lib;OpenThreadsWin32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>user32.lib;libcmtd.lib;libglog.lib;OpenThreadsWin32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ShowProgress>NotSet</ShowProgress>
-      <AdditionalLibraryDirectories>lib\win32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>.\third_party\lib\win32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries> libcmt.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
@@ -133,7 +133,7 @@
       <FavorSizeOrSpeed>Neither</FavorSizeOrSpeed>
       <OmitFramePointers>false</OmitFramePointers>
       <WholeProgramOptimization>false</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>.\src\cvblob;.\src\openthreads;.\src\opencv\include;src;src/libdmtx;src/loki;src/utils;$(JAVA_HOME)\include;$(JAVA_HOME)\include\win32;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\src;.\third_party\include;.\third_party\libdmtx;$(JAVA_HOME)\include;$(JAVA_HOME)\include\win32;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_VISUALC_;_WIN32;__WIN32__;WIN32;_CONSOLE;UA_LOGGER;BUILD_DLL;THREADED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
@@ -147,9 +147,9 @@
       <LinkLibraryDependencies>true</LinkLibraryDependencies>
     </ProjectReference>
     <Link>
-      <AdditionalDependencies>cv210.lib;cxcore210.lib;user32.lib;OpenThreadsWin32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>user32.lib;libglog.lib;OpenThreadsWin32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ShowProgress>NotSet</ShowProgress>
-      <AdditionalLibraryDirectories>lib\win32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>.\third_party\lib\win32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>dmscanlib.def</ModuleDefinitionFile>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
@@ -177,7 +177,6 @@
     <ClCompile Include="src\imgscanner\ImgScannerImpl.cpp" />
     <ClCompile Include="src\jni\DmScanLibJniCommon.cpp" />
     <ClCompile Include="src\jni\DmScanLibJniWin32.cpp" />
-    <ClCompile Include="src\TestApp.cpp" />
     <ClCompile Include="src\utils\TimeUtilWin32.cpp" />
     <ClCompile Include="third_party\libdmtx\dmtx.c" />
   </ItemGroup>
@@ -192,6 +191,8 @@
     <ClInclude Include="src\dib\RgbQuad.h" />
     <ClInclude Include="src\DmScanLib.h" />
     <ClInclude Include="src\geometry.h" />
+    <ClInclude Include="src\geometryLinux.h" />
+    <ClInclude Include="src\geometryWindows.h" />
     <ClInclude Include="src\imgscanner\ImgScanner.h" />
     <ClInclude Include="src\imgscanner\ImgScannerImpl.h" />
     <ClInclude Include="src\imgscanner\ImgScannerSimulator.h" />
@@ -216,6 +217,7 @@
     <ClInclude Include="third_party\include\glog\stl_logging.h" />
     <ClInclude Include="third_party\include\glog\vlog_is_on.h" />
     <ClInclude Include="third_party\include\twain.h" />
+    <ClInclude Include="third_party\libdmtx\dmtx.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

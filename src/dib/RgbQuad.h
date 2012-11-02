@@ -3,7 +3,8 @@
 
 namespace dmscanlib {
 
-/* Colour palette
+/* 
+ * Colour palette
  */
 class RgbQuad {
 public:

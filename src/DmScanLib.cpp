@@ -95,7 +95,13 @@ void DmScanLib::configLogging(unsigned level, bool useFile) {
 
 	google::InitGoogleLogging(LIBRARY_NAME.c_str());
 	FLAGS_v = level;
+
+#ifdef _VISUALC_
+	FLAGS_stderrthreshold = (level > 0) ? google::GLOG_INFO : google::GLOG_ERROR;
+#else
 	FLAGS_stderrthreshold = (level > 0) ? google::INFO : google::ERROR;
+#endif
+
 	FLAGS_logtostderr = !useFile;
 	FLAGS_alsologtostderr = !useFile;
 
@@ -122,16 +128,12 @@ void DmScanLib::saveResults(std::string & msg) {
 }
 
 int DmScanLib::scanImage(unsigned dpi, int brightness, int contrast,
-		double left, double top, double right, double bottom,
-		const char * filename) {
-	VLOG(2)
-			<< "slScanImage: dpi/" << dpi << " brightness/" << brightness
-					<< " contrast/" << contrast << " left/" << left << " top/"
-					<< top << " right/" << right << " bottom/" << bottom
-					<< " filename/" << filename;
+		BoundingBox<double> & bbox, const char * filename) {
+			VLOG(2) << "scanImage: dpi/" << dpi << " brightness/" << brightness
+				<< " contrast/" << contrast << bbox
+				<< " filename/" << filename;
 
-	HANDLE h = imgScanner->acquireImage(dpi, brightness, contrast, left, top,
-			right, bottom);
+	HANDLE h = imgScanner->acquireImage(dpi, brightness, contrast, bbox);
 	if (h == NULL) {
 		VLOG(2) << "could not acquire image";
 		return imgScanner->getErrorCode();
@@ -168,19 +170,16 @@ int DmScanLib::scanFlatbed(unsigned dpi, int brightness, int contrast,
 }
 
 int DmScanLib::scanAndDecode(unsigned dpi, int brightness, int contrast,
-		double left, double top, double right, double bottom,
-		const DecodeOptions & decodeOptions,
+		BoundingBox<double> & region, const DecodeOptions & decodeOptions,
 		std::vector<std::unique_ptr<WellRectangle<unsigned>  > > & wellRects) {
 	VLOG(2) << "decodePlate: dpi/" << dpi << " brightness/" << brightness
 			<< " contrast/" << contrast
-			<< " left/" << left << " top/" << top << " right/" << right
-			<< " bottom/" << bottom << decodeOptions;
+			<< " " << region << " " << decodeOptions;
 
 	HANDLE h;
 	int result;
 
-	h = imgScanner->acquireImage(dpi, brightness, contrast, left, top, right,
-			bottom);
+	h = imgScanner->acquireImage(dpi, brightness, contrast, region);
 	if (h == NULL) {
 		VLOG(2) << "could not acquire image";
 		return imgScanner->getErrorCode();

@@ -1,6 +1,6 @@
-#include "ImgScanner.h"
-#include "ImgScannerImpl.h"
-#include "ImgScannerSimulator.h"
+#include "imgscanner/ImgScanner.h"
+#include "imgscanner/ImgScannerImpl.h"
+#include "imgscanner/ImgScannerSimulator.h"
 
 #include <memory>
 
@@ -16,7 +16,7 @@ ImgScanner::~ImgScanner() {
 
 std::unique_ptr<ImgScanner> ImgScanner::create() {
 #ifdef WIN32
-	return unique_ptr<ImgScanner>(new ImgScannerImpl());
+	return std::unique_ptr<ImgScanner>(new imgscanner::ImgScannerImpl());
 #else
 	return std::unique_ptr<ImgScanner>(new imgscanner::ImgScannerSimulator());
 #endif

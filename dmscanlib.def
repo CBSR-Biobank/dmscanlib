@@ -1,8 +1,1 @@
 LIBRARY dmscanlib.dll
-EXPORTS
-slDecodeImage
-slDecodePlate
-slIsTwainAvailable
-slGetScannerCapability
-slScanImage
-slSelectSourceAsDefault

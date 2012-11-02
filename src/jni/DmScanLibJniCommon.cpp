@@ -117,7 +117,7 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
 	dmscanlib::DmScanLib dmScanLib(1);
 
 	const char *filename = env->GetStringUTFChars(_filename, 0);
-	int result = dmScanLib.decodeImageWells(filename, decodeOptions, wellRects);
+	result = dmScanLib.decodeImageWells(filename, decodeOptions, wellRects);
 	env->ReleaseStringUTFChars(_filename, filename);
 
 	if (result == SC_SUCCESS) {
@@ -134,7 +134,7 @@ int getWellRectangles(JNIEnv *env, jsize numWells, jobjectArray _wellRects,
     jmethodID wellRectGetCornerXMethodID = NULL;
     jmethodID wellRectGetCornerYMethodID = NULL;
 
-	VLOG(3) << "decodeImage: numWells/" << numWells;
+	VLOG(3) << "decodeImage: numWells/" << static_cast<int>(numWells);
 
 	// TODO check for max well rectangle objects
     for (int i = 0; i < static_cast<int>(numWells); ++i) {
@@ -195,28 +195,30 @@ int getWellRectangles(JNIEnv *env, jsize numWells, jobjectArray _wellRects,
 	return 1;
 }
 
-std::unique_ptr<BoundingBox<unsigned> > getBoundingBox(JNIEnv *env, jobject bboxJavaObj) {
+std::unique_ptr<BoundingBox<double> > getBoundingBox(JNIEnv *env, jobject bboxJavaObj) {
 	CHECK_NOTNULL(bboxJavaObj);
 	jclass bboxJavaClass = env->GetObjectClass(bboxJavaObj);
 
-	jmethodID getCornerXMethodID = env->GetMethodID(bboxJavaClass, "getCornerX", "(I)I");
+	jmethodID getCornerXMethodID = env->GetMethodID(bboxJavaClass, "getCornerX", "(I)D");
     if(env->ExceptionOccurred()) {
       	return NULL;
     }
 
-	jmethodID getCornerYMethodID = env->GetMethodID(bboxJavaClass, "getCornerY", "(I)I");
+	jmethodID getCornerYMethodID = env->GetMethodID(bboxJavaClass, "getCornerY", "(I)D");
     if(env->ExceptionOccurred()) {
       	return NULL;
     }
 
-    int x0 = env->CallIntMethod(bboxJavaObj, getCornerXMethodID, 0);
-   	int y0 = env->CallIntMethod(bboxJavaObj, getCornerYMethodID, 0);
+	Point<double> pt0(
+		env->CallDoubleMethod(bboxJavaObj, getCornerXMethodID, 0),
+		env->CallDoubleMethod(bboxJavaObj, getCornerYMethodID, 0));
 
-	int x1 = env->CallIntMethod(bboxJavaObj, getCornerXMethodID, 1);
-   	int y1 = env->CallIntMethod(bboxJavaObj, getCornerYMethodID, 1);
+	Point<double> pt1(
+		env->CallDoubleMethod(bboxJavaObj, getCornerXMethodID, 1),
+		env->CallDoubleMethod(bboxJavaObj, getCornerYMethodID, 1));
 
-	return std::unique_ptr<BoundingBox<unsigned> >(new BoundingBox<unsigned>(
-		x0, y0, x1, y1));
+	return std::unique_ptr<BoundingBox<double> >(new BoundingBox<double>(
+		pt0, pt1));
 }
 
 } /* namespace */

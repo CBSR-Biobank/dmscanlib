@@ -12,6 +12,8 @@
 
 namespace dmscanlib {
 
+namespace jni {
+
 void getResultCodeMsg(int resultCode, std::string & message) {
 	switch (resultCode) {
 	case SC_SUCCESS:
@@ -44,6 +46,8 @@ void getResultCodeMsg(int resultCode, std::string & message) {
 }
 
 }; /* namespace */
+
+} /* namespace */
 
 /*
  * Class:     edu_ualberta_med_scannerconfig_dmscanlib_ScanLib
@@ -96,7 +100,7 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
     unsigned brightness = static_cast<unsigned>(_brightness);
     unsigned contrast = static_cast<unsigned>(_contrast);
     const char *filename = env->GetStringUTFChars(_filename, 0);
-    std::unique_ptr<dmscanlib::BoundingBox<unsigned> > bbox = 
+    std::unique_ptr<dmscanlib::BoundingBox<double> > bbox = 
 		dmscanlib::jni::getBoundingBox(env, _region);
 
     dmscanlib::DmScanLib dmScanLib(verbose);
@@ -150,7 +154,7 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
     std::vector<std::unique_ptr<dmscanlib::WellRectangle<unsigned> > > wellRects;
 
     dmscanlib::DecodeOptions decodeOptions(env, _decodeOptions);
-    std::unique_ptr<dmscanlib::BoundingBox<unsigned> > bbox = 
+    std::unique_ptr<dmscanlib::BoundingBox<double> > bbox = 
 		dmscanlib::jni::getBoundingBox(env, _region);
 
 	jsize numWells = env->GetArrayLength(_wellRects);

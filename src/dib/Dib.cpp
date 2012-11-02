@@ -416,11 +416,19 @@ std::unique_ptr<Dib> Dib::crop(const BoundingBox<unsigned> & bbox) const {
    CHECK(bbox.points[1].y > bbox.points[0].y);
 
 
+#ifdef _VISUALC_
+   BoundingBox<unsigned> boundBbox(
+		   min(bbox.points[0].x, width-1),
+		   min(bbox.points[0].y, height-1),
+		   min(bbox.points[1].x, width-1),
+		   min(bbox.points[1].y, height-1));
+#else
    BoundingBox<unsigned> boundBbox(
 		   std::min(bbox.points[0].x, width-1),
 		   std::min(bbox.points[0].y, height-1),
 		   std::min(bbox.points[1].x, width-1),
 		   std::min(bbox.points[1].y, height-1));
+#endif
 
    unsigned cWidth = boundBbox.points[1].x - boundBbox.points[0].x;
    unsigned cHeight = boundBbox.points[1].y - boundBbox.points[0].y;

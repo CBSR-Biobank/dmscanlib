@@ -22,12 +22,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #if defined (WIN32) && ! defined(__MINGW32__)
 
-#include "ImgScanner.h"
-#include "Dib.h"
+#include "imgscanner/ImgScanner.h"
+#include "dib/Dib.h"
 #include "DmScanLib.h"
 
 #include <dmtx.h>
 #include <twain.h>     // Standard TWAIN header.
+
+#define NOMINMAX
 #include <windows.h>
 
 namespace dmscanlib {
@@ -54,7 +56,7 @@ public:
 	int getScannerCapability();
 
 	HANDLE acquireImage(unsigned dpi, int brightness, int contrast,
-		double top, double left, double bottom, double right);
+		BoundingBox<double> & bbox);
 
 	HANDLE acquireFlatbed(unsigned dpi, int brightness, int contrast);
 
