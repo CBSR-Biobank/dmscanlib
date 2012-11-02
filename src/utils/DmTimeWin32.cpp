@@ -30,21 +30,21 @@ namespace dmscanlib {
 
 namespace util {
 
-Time::Time() {
+DmTime::DmTime() {
 	time(&timeVal);
 }
 
-Time::Time(Time & that) {
+DmTime::DmTime(DmTime & that) {
 	this->timeVal = that.timeVal;
 }
 
-std::unique_ptr<Time> Time::difftime(const Time & that) {
-	std::unique_ptr<Time> result(new Time(*this));
-	result->timeVal = that.timeVal - this->timeVal;
+std::unique_ptr<DmTime> DmTime::difftime(const DmTime & that) {
+	std::unique_ptr<DmTime> result(new DmTime(*this));
+	result->timeVal = this->timeVal - that.timeVal;
 	return result;
 }
 
-std::ostream & operator<<(std::ostream &os, const dmscanlib::util::Time & tm) {
+std::ostream & operator<<(std::ostream &os, const dmscanlib::util::DmTime & tm) {
 	os << tm.timeVal;
 	return os;
 }

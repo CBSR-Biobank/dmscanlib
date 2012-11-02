@@ -407,7 +407,9 @@ HANDLE ImgScannerImpl::acquireFlatbed(unsigned dpi, int brightness, int contrast
    double physicalHeight = getPhysicalDimensions(srcID, ICAP_PHYSICALHEIGHT);
 
    scannerSourceDeinit(hwnd, srcID);
-   BoundingBox<double> bbox(0, 0, physicalWidth, physicalHeight);
+   Point<double> topLeft(0, 0);
+   Point<double> bottomRight(physicalWidth, physicalHeight);
+   BoundingBox<double> bbox(topLeft, bottomRight);
 
    return acquireImage(dpi, brightness, contrast, bbox);
 }

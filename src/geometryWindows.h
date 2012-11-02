@@ -50,17 +50,6 @@ struct Rect;
 
 template<typename T>
 struct BoundingBox {
-   BoundingBox(const T x1, const T y1, const T x2, const T y2) {
-	   points[0].x = x1;
-	   points[0].y = y1;
-	   points[1].x = x1;
-	   points[1].y = y1;
-
-	   if (!isValid()) {
-			throw std::invalid_argument("invalid bounding box");
-	   }
-   }
-
    BoundingBox(const Point<T> & p1, const Point<T> & p2) {
 	   points[0] = p1;
 	   points[1] = p2;
@@ -188,8 +177,9 @@ struct Rect {
          maxX = std::max(maxX, corners[i].x);
          maxY = std::max(maxY, corners[i].y);
       }
-      return std::unique_ptr<const BoundingBox<T> >(
-         new BoundingBox<T>(minX, minY, maxX, maxY));
+	  Point<T> p1(minX, minY);
+	  Point<T> p2(maxX, maxY);
+      return std::unique_ptr<const BoundingBox<T> >(new BoundingBox<T>(p1, p2));
    }
 
    Point<T> corners[4];

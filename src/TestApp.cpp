@@ -27,7 +27,6 @@
  ******************************************************************************/
 
 #ifdef _VISUALC_
-//#   define _CRTDBG_MAP_ALLOC
 #   pragma warning(disable : 4996)
 //Scan for memory leaks in visual studio
 #   ifdef _DEBUG
@@ -50,11 +49,6 @@
 #include <stddef.h>
 #include <glog/logging.h>
 #include <gtest/gtest.h>
-
-#ifdef USE_NVWA
-#   include <limits>
-#   include "debug_new.h"
-#endif
 
 #ifdef WIN32
 #   define DIR_SEP_CHR '\\'
@@ -108,11 +102,54 @@ bool getTestImageFileNames(std::string dir, std::vector<std::string> & filenames
 			std::string basename(dirp->d_name);
 
 			if (basename.find(".bmp") != std::string::npos) {
-				filenames.push_back(std::string(dir).append("/").append(dirp->d_name));
+				filenames.push_back(std::string(dir).append("/").append(basename));
 			}
 		}
 	}
 	closedir(dp);
+#else	
+	WIN32_FIND_DATA fdFile;
+	HANDLE hFind = NULL;
+
+	//Specify a file mask. *.* = We want everything!
+    std::wstring dirw;
+	dirw.assign(dir.begin(), dir.end());
+
+	std::wstring searchstrw(dirw);
+    searchstrw.append(L"\\*.*");
+
+	if((hFind = FindFirstFile((LPCWSTR) searchstrw.c_str(), &fdFile)) == INVALID_HANDLE_VALUE) {
+		VLOG(1) << "error is: " << GetLastError();
+		return false;
+	}
+
+	do {
+		//Find first file will always return "."
+		//    and ".." as the first two directories.
+		if(fdFile.cFileName[0] != '.') {
+
+			//Is the entity a File or Folder?
+			if(fdFile.dwFileAttributes &FILE_ATTRIBUTE_DIRECTORY) {
+				std::wstring subdirnamew(dirw);
+				subdirnamew.append(L"\\").append((wchar_t *)fdFile.cFileName);
+
+				std::string subdirname;
+				subdirname.assign(subdirnamew.begin(), subdirnamew.end());
+				getTestImageFileNames(subdirname, filenames);
+			} else{
+				std::wstring basenamew((wchar_t *)fdFile.cFileName);
+				std::string basename;
+				basename.assign(basenamew.begin(), basenamew.end());
+
+				if (basename.find(".bmp") != std::string::npos) {
+					filenames.push_back(std::string(dir).append("\\").append(basename));
+				}
+			}
+		}
+	}
+	while(FindNextFile(hFind, &fdFile)); 
+
+	FindClose(hFind); 
 #endif
 	return true;
 }
@@ -137,8 +174,10 @@ void getWellRectsForSbsPalletImage(std::string & fname,
     Point<unsigned> verTranslation(0, static_cast<unsigned>(wellHeight));
 
     // round off the bounding box so image dimensions are not exceeded
-    BoundingBox<unsigned> bbox(0, 0, static_cast<unsigned>(wellWidth - 0.5), 
+	Point<unsigned> topLeft(0, 0);
+	Point<unsigned> bottomRight(static_cast<unsigned>(wellWidth - 0.5), 
 		static_cast<unsigned>(wellHeight - 0.5));
+	BoundingBox<unsigned> bbox(topLeft, bottomRight);
 
     for (int row = 0; row < 8; ++row) {
     	std::unique_ptr<const Point<unsigned>> scaledVertTranslation = verTranslation.scale(row);
@@ -183,10 +222,10 @@ int decodeImage(std::string fname, DmScanLib & dmScanLib) {
 }
 
 TEST_F(TestApp, DecodeImage) {
+	return;
 	FLAGS_v = 3;
 
-    std::string fname(getenv("HOME"));
-    fname.append("/Dropbox/CBSR/scanlib/testImages/edge_tubes.bmp");
+    std::string fname("testImages/edge_tubes.bmp");
 
     DmScanLib dmScanLib(1);
     int result = decodeImage(fname, dmScanLib);
@@ -202,8 +241,7 @@ TEST_F(TestApp, DecodeImage) {
 TEST_F(TestApp, DecodeAllImages) {
 	FLAGS_v = 1;
 
-    std::string dirname(getenv("HOME"));
-    dirname.append("/Dropbox/CBSR/scanlib/testImages");
+    std::string dirname("testImages");
     std::vector<std::string> filenames;
 	bool result = getTestImageFileNames(dirname, filenames);
     EXPECT_EQ(true, result);
@@ -213,12 +251,12 @@ TEST_F(TestApp, DecodeAllImages) {
     for (unsigned i = 0, n = filenames.size(); i < n; ++i) {
     	VLOG(1) << "test image: " << filenames[i];
 
-		util::Time start;
+		util::DmTime start;
         DmScanLib dmScanLib(1);
     	decodeResult = decodeImage(filenames[i], dmScanLib);
-		util::Time end;
+		util::DmTime end;
 
-		std::unique_ptr<util::Time> difftime = end.difftime(start);
+		std::unique_ptr<util::DmTime> difftime = end.difftime(start);
 
         EXPECT_EQ(SC_SUCCESS, decodeResult);
         EXPECT_TRUE(dmScanLib.getDecodedWellCount() > 0);
@@ -226,6 +264,8 @@ TEST_F(TestApp, DecodeAllImages) {
         VLOG(1) << "test image: " << filenames[i] << ", wells decoded: "
         		<< dmScanLib.getDecodedWellCount()
         		<< " time taken: " << *difftime;
+
+		return;
     }
 }
 

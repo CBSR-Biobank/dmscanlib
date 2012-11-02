@@ -36,17 +36,17 @@ typedef time_t slTime;
 typedef struct timeval slTime;
 #endif
 
-class Time {
+class DmTime {
 public:
-	Time();
-	Time(Time & that);
-	virtual ~Time() { }
-	std::unique_ptr<Time>  difftime(const Time & that);
+	DmTime();
+	DmTime(DmTime & that);
+	virtual ~DmTime() { }
+	std::unique_ptr<DmTime>  difftime(const DmTime & that);
 
 private:
 	slTime timeVal;
 
-	friend std::ostream & operator<<(std::ostream &os, const Time & tm);
+	friend std::ostream & operator<<(std::ostream &os, const DmTime & tm);
 };
 
 } /* namespace */

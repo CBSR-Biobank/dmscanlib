@@ -24,6 +24,7 @@ REQUIRED PACKAGES ON UBUNTU
   - libgtest-dev
 
 
+  libcmtd.lib
 
 JNI
 

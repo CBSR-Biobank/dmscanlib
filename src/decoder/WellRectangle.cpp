@@ -30,7 +30,9 @@ WellRectangle<T>::WellRectangle(const char * _label, T x1, T y1, T x2, T y2)  :
 	label(_label), rect(x1, y1, x2, y1, x2, y2, x1, y2)
 {
 	// make sure the bounding box is valid
-	BoundingBox<T> bbox(x1, y1, x2, y2);
+	Point<T> pt1(x1, y1);
+	Point<T> pt2(x2, y2);
+	BoundingBox<T> bbox(pt1, pt2);
 }
 
 
