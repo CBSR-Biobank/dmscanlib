@@ -158,7 +158,7 @@ bool getTestImageFileNames(std::string dir, std::vector<std::string> & filenames
  * Assumes image has 96 well plates in 8 rows by 12 columns
  */
 void getWellRectsForSbsPalletImage(std::string & fname,
-		std::vector<std::unique_ptr<WellRectangle<unsigned> > > & wellRects) {
+		std::vector<std::unique_ptr<WellRectangle<double> > > & wellRects) {
 
 	Dib image;
 	bool readResult = image.readFromFile(fname);
@@ -166,30 +166,31 @@ void getWellRectsForSbsPalletImage(std::string & fname,
 		throw std::invalid_argument("could not load image");
 	}
 
-    double width = image.getWidth();
-    double height = image.getHeight();
+	const double doubleDpi = static_cast<double>(image.getDpi());
+	double width = static_cast<double>(image.getWidth()) / doubleDpi;
+	double height = static_cast<double>(image.getHeight()) / doubleDpi;
     double wellWidth = width / 12.0;
     double wellHeight = height / 8.0;
-    Point<unsigned> horTranslation(static_cast<unsigned>(wellWidth), 0);
-    Point<unsigned> verTranslation(0, static_cast<unsigned>(wellHeight));
+
+    Point<double> horTranslation(static_cast<double>(wellWidth), 0);
+    Point<double> verTranslation(0, static_cast<double>(wellHeight));
 
     // round off the bounding box so image dimensions are not exceeded
-	Point<unsigned> topLeft(0, 0);
-	Point<unsigned> bottomRight(static_cast<unsigned>(wellWidth - 0.5), 
-		static_cast<unsigned>(wellHeight - 0.5));
-	BoundingBox<unsigned> bbox(topLeft, bottomRight);
+	Point<double> pt1(0, 0);
+	Point<double> pt2(wellWidth * 0.9999, wellHeight * 0.9999);
+	BoundingBox<double> bbox(pt1, pt2);
 
     for (int row = 0; row < 8; ++row) {
-    	std::unique_ptr<const Point<unsigned>> scaledVertTranslation = verTranslation.scale(row);
-        std::unique_ptr<const BoundingBox<unsigned> > bboxTranslated =
+    	std::unique_ptr<const Point<double>> scaledVertTranslation = verTranslation.scale(row);
+        std::unique_ptr<const BoundingBox<double> > bboxTranslated =
         		bbox.translate(*scaledVertTranslation);
 
         for (int col = 0; col < 12; ++col) {
         	std::ostringstream label;
         	label << (char) ('A' + row) << 12 - col;
 
-            std::unique_ptr<WellRectangle<unsigned> > wellRect(
-            		new WellRectangle<unsigned>(label.str().c_str(), *bboxTranslated));
+            std::unique_ptr<WellRectangle<double> > wellRect(
+            		new WellRectangle<double>(label.str().c_str(), *bboxTranslated));
             VLOG(9) << *wellRect;
             wellRects.push_back(std::move(wellRect));
             bboxTranslated = bboxTranslated->translate(horTranslation);
@@ -201,12 +202,12 @@ void getWellRectsForSbsPalletImage(std::string & fname,
  * Test for invalid rect
  */
 TEST_F(TestApp, DecodeImageInvalidRect) {
-    ASSERT_THROW(new WellRectangle<double>("A12", 0, 0, 0, 0),
-	std::invalid_argument);
+	Point<double> pt1(0,0);
+    ASSERT_THROW(BoundingBox<double> bbox(pt1, pt1), std::invalid_argument);
 }
 
 int decodeImage(std::string fname, DmScanLib & dmScanLib) {
-    std::vector<std::unique_ptr<WellRectangle<unsigned> > > wellRects;
+    std::vector<std::unique_ptr<WellRectangle<double> > > wellRects;
 
     getWellRectsForSbsPalletImage(fname, wellRects);
 
@@ -222,7 +223,6 @@ int decodeImage(std::string fname, DmScanLib & dmScanLib) {
 }
 
 TEST_F(TestApp, DecodeImage) {
-	return;
 	FLAGS_v = 3;
 
     std::string fname("testImages/edge_tubes.bmp");
@@ -264,8 +264,6 @@ TEST_F(TestApp, DecodeAllImages) {
         VLOG(1) << "test image: " << filenames[i] << ", wells decoded: "
         		<< dmScanLib.getDecodedWellCount()
         		<< " time taken: " << *difftime;
-
-		return;
     }
 }
 

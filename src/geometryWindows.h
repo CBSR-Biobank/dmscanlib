@@ -122,19 +122,6 @@ struct Rect {
 
       }
 
-   Rect(const T x1, const T y1, const T x2, const T y2, const T x3, const T y3, 
-	   const T x4, const T y4) {
-		   corners[0].x = x1;
-		   corners[0].y = y1;
-		   corners[1].x = x2;
-		   corners[1].y = y2;
-		   corners[2].x = x3;
-		   corners[2].y = y3;
-		   corners[3].x = x4;
-		   corners[3].y = y4;
-
-   }
-
    Rect(const BoundingBox<T> & bbox) {
 		   corners[0].x = bbox.points[0].x;
 		   corners[0].y = bbox.points[0].y;

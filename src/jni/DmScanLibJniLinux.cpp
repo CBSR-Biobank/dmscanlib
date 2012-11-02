@@ -11,6 +11,8 @@
 
 namespace dmscanlib {
 
+namespace jni {
+
 void getResultCodeMsg(int resultCode, std::string & message) {
     switch (resultCode) {
     case SC_SUCCESS:
@@ -35,7 +37,9 @@ void getResultCodeMsg(int resultCode, std::string & message) {
     }
 }
 
-}; /* namespace */
+} /* namespace */
+
+} /* namespace */
 
 /*
  * Class:     edu_ualberta_med_scannerconfig_dmscanlib_ScanLib
@@ -44,7 +48,7 @@ void getResultCodeMsg(int resultCode, std::string & message) {
  */
 JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_isTwainAvailable(
                 JNIEnv * env, jobject obj) {
-    return createScanResultObject(env, SC_FAIL, SC_FAIL);
+    return dmscanlib::jni::createScanResultObject(env, dmscanlib::SC_FAIL, dmscanlib::SC_FAIL);
 }
 
 /*
@@ -54,7 +58,7 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
  */
 JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_selectSourceAsDefault(
                 JNIEnv * env, jobject obj) {
-    return createScanResultObject(env, SC_FAIL, SC_FAIL);
+    return dmscanlib::jni::createScanResultObject(env, dmscanlib::SC_FAIL, dmscanlib::SC_FAIL);
 }
 
 /*
@@ -64,7 +68,7 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
  */
 JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_getScannerCapability(
                 JNIEnv * env, jobject obj) {
-    return createScanResultObject(env, SC_FAIL, SC_FAIL);
+    return dmscanlib::jni::createScanResultObject(env, dmscanlib::SC_FAIL, dmscanlib::SC_FAIL);
 }
 
 /*
@@ -76,7 +80,7 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
                 JNIEnv * env, jobject obj, jlong _verbose, jlong _dpi,
                 jint _brightness, jint _contrast, jobject _region,
                 jstring _filename) {
-    return createScanResultObject(env, SC_FAIL, SC_FAIL);
+    return dmscanlib::jni::createScanResultObject(env, dmscanlib::SC_FAIL, dmscanlib::SC_FAIL);
 }
 
 /*
@@ -87,7 +91,7 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
 JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_scanFlatbed(
                 JNIEnv * env, jobject obj, jlong _verbose, jlong _dpi,
                 jint _brightness, jint _contrast, jstring _filename) {
-    return createScanResultObject(env, SC_FAIL, SC_FAIL);
+    return dmscanlib::jni::createScanResultObject(env, dmscanlib::SC_FAIL, dmscanlib::SC_FAIL);
 }
 
 /*
@@ -96,6 +100,7 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
  * Signature: (JJIILedu/ualberta/med/scannerconfig/dmscanlib/BoundingBox;Ledu/ualberta/med/scannerconfig/dmscanlib/DecodeOptions;[Ledu/ualberta/med/scannerconfig/dmscanlib/WellRectangle;)Ledu/ualberta/med/scannerconfig/dmscanlib/DecodeResult;
  */
 JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_scanAndDecode
-  (JNIEnv *, jobject, jlong, jlong, jint, jint, jobject, jobject, jobjectArray) {
-    return createScanResultObject(env, SC_FAIL, SC_FAIL);
+	(JNIEnv * env, jobject obj, jlong _verbose, jlong _dpi, jint _brightness, jint _contrast,
+			jobject _region, jobject _decodeOptions, jobjectArray _wellRects) {
+    return dmscanlib::jni::createScanResultObject(env, dmscanlib::SC_FAIL, dmscanlib::SC_FAIL);
 }

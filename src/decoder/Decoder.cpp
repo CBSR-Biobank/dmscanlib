@@ -46,18 +46,19 @@ namespace dmscanlib {
 using namespace decoder;
 
 Decoder::Decoder(const Dib & _image, const DecodeOptions & _decodeOptions,
-		std::vector<std::unique_ptr<WellRectangle<unsigned>  > > & _wellRects) :
+		std::vector<std::unique_ptr<WellRectangle<double>  > > & _wellRects) :
 		image(_image), decodeOptions(_decodeOptions),
 		wellRects(_wellRects), decodeSuccessful(false)
 {
-	unsigned width = image.getWidth();
-	unsigned height = image.getHeight();
+	const double doubleDpi = static_cast<double>(image.getDpi());
+	double width = static_cast<double>(image.getWidth()) / doubleDpi;
+	double height = static_cast<double>(image.getHeight()) / doubleDpi;
 
 	for(unsigned i = 0, n = wellRects.size(); i < n; ++i) {
 		// ensure well rectangles are within the image's region
-		const WellRectangle<unsigned> & wellRect = *wellRects[i];
+		const WellRectangle<double> & wellRect = *wellRects[i];
 
-		std::unique_ptr<const BoundingBox<unsigned> > wellBbox =
+		std::unique_ptr<const BoundingBox<double> > wellBbox =
 				wellRect.getRectangle().getBoundingBox();
 
 		if ((wellBbox->points[0].x >= width)
@@ -98,12 +99,32 @@ int Decoder::decodeWellRects() {
 	VLOG(3) << "decodeWellRects: dpi/" << dpi << " numWellRects/" << wellRects.size();
 
 	for(unsigned i = 0, n = wellRects.size(); i < n; ++i) {
-		const WellRectangle<unsigned> & wellRect = *wellRects[i];
+		const WellRectangle<double> & wellRect = *wellRects[i];
 
 		VLOG(5) << "well rect: " << wellRect;
 
+		std::unique_ptr<const Rect<double> > factoredRect =
+				wellRect.getRectangle().scale(static_cast<double>(dpi));
+
+		Point<unsigned> pt1(
+				static_cast<unsigned>(factoredRect->corners[0].x),
+				static_cast<unsigned>(factoredRect->corners[0].y));
+		Point<unsigned> pt2(
+				static_cast<unsigned>(factoredRect->corners[1].x),
+				static_cast<unsigned>(factoredRect->corners[1].y));
+		Point<unsigned> pt3(
+				static_cast<unsigned>(factoredRect->corners[2].x),
+				static_cast<unsigned>(factoredRect->corners[2].y));
+		Point<unsigned> pt4(
+				static_cast<unsigned>(factoredRect->corners[3].x),
+				static_cast<unsigned>(factoredRect->corners[3].y));
+
+		std::unique_ptr<WellRectangle<unsigned> > convertedWellTect(
+				new WellRectangle<unsigned>(
+						wellRect.getLabel().c_str(), pt1, pt2, pt3, pt4));
+
 		wellDecoders[i] = std::unique_ptr<WellDecoder>(
-				new WellDecoder(*this, wellRect));
+				new WellDecoder(*this, std::move(convertedWellTect)));
 	}
 	return decodeMultiThreaded();
 	//return decodeSingleThreaded();
@@ -249,7 +270,12 @@ void Decoder::getDecodeInfo(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg,
 	p11.Y = height - 1 - p11.Y;
 	p01.Y = height - 1 - p01.Y;
 
-	Rect<double> decodeRect(p00.X, p00.Y, p10.X, p10.Y, p11.X, p11.Y, p01.X, p01.Y);
+	Point<double> pt1(p00.X, p00.Y);
+	Point<double> pt2(p10.X, p10.Y);
+	Point<double> pt3(p11.X, p11.Y);
+	Point<double> pt4(p01.X, p01.Y);
+	Rect<double> decodeRect(pt1, pt2, pt3, pt4);
+
 	wellDecoder.setDecodeRectangle(decodeRect, dec->scale);
 }
 

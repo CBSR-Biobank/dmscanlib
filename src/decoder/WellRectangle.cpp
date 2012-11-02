@@ -13,9 +13,9 @@
 namespace dmscanlib {
 
 template<typename T>
-WellRectangle<T>::WellRectangle(const char * _label, T x1, T y1,
-		T x2, T y2,	T x3, T y3, T x4, T y4) :
-		label(_label), rect(x1, y1, x2, y2, x3, y3, x4, y4)
+WellRectangle<T>::WellRectangle(const char * _label,
+		Point<T> & pt1, Point<T> & pt2, Point<T> & pt3, Point<T> & pt4) :
+		label(_label), rect(pt1, pt2, pt3, pt4)
 {
 }
 
@@ -26,13 +26,9 @@ WellRectangle<T>::WellRectangle(const char * _label, const Rect<T> & _rect) :
 }
 
 template<typename T>
-WellRectangle<T>::WellRectangle(const char * _label, T x1, T y1, T x2, T y2)  :
-	label(_label), rect(x1, y1, x2, y1, x2, y2, x1, y2)
+WellRectangle<T>::WellRectangle(const char * _label, BoundingBox<T> & bbox)  :
+	label(_label), rect(bbox)
 {
-	// make sure the bounding box is valid
-	Point<T> pt1(x1, y1);
-	Point<T> pt2(x2, y2);
-	BoundingBox<T> bbox(pt1, pt2);
 }
 
 

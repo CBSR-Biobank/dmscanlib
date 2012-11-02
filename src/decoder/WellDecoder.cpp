@@ -21,12 +21,12 @@
 namespace dmscanlib {
 
 WellDecoder::WellDecoder(const Decoder & _decoder,
-		const WellRectangle<unsigned> & _wellRectangle) :
-		decoder(_decoder), wellRectangle(_wellRectangle),
-		boundingBox(std::move(wellRectangle.getRectangle().getBoundingBox()))
+		std::unique_ptr<const WellRectangle<unsigned> > _wellRectangle) :
+		decoder(_decoder), wellRectangle(std::move(_wellRectangle)),
+		boundingBox(std::move(wellRectangle->getRectangle().getBoundingBox()))
 {
 	VLOG(9) << "constructor: bounding box: " << *boundingBox
-			<< ", rect: " << wellRectangle.getRectangle();
+			<< ", rect: " << wellRectangle->getRectangle();
 }
 
 WellDecoder::~WellDecoder() {
@@ -41,7 +41,7 @@ void WellDecoder::run() {
     if (!message.empty()) {
     	VLOG(3) << "run: " << *this;
     } else {
-    	VLOG(3) << "run: "<< wellRectangle.getLabel() << " - could not be decoded";
+    	VLOG(3) << "run: "<< wellRectangle->getLabel() << " - could not be decoded";
     }
 }
 

@@ -11,17 +11,18 @@
 
 namespace dmscanlib {
 
-DecodeOptions::DecodeOptions(double scanGap, long squareDev,
-		long edgeThresh, long corrections, long shrink) {
-
-    this->scanGap       = scanGap;
-    this->squareDev     = squareDev;
-    this->edgeThresh    = edgeThresh;
-    this->corrections   = corrections;
-    this->shrink        = shrink;
+DecodeOptions::DecodeOptions(double _scanGap, long _squareDev,
+		long _edgeThresh, long _corrections, long _shrink) :
+    scanGap(_scanGap),squareDev(_squareDev), edgeThresh(_edgeThresh),
+    corrections(_corrections),shrink(_shrink)
+{
 }
 
-DecodeOptions::DecodeOptions(JNIEnv *env, jobject decodeOptionsObj) {
+DecodeOptions::~DecodeOptions() {
+}
+
+std::unique_ptr<DecodeOptions> DecodeOptions::getDecodeOptionsViaJni(
+		JNIEnv *env, jobject decodeOptionsObj) {
     jclass decodeOptionsJavaClass = env->GetObjectClass(decodeOptionsObj);
 
     // run the following command to obtain method signatures from a class.
@@ -29,36 +30,36 @@ DecodeOptions::DecodeOptions(JNIEnv *env, jobject decodeOptionsObj) {
     jmethodID getMethod = env->GetMethodID(
     		decodeOptionsJavaClass, "getScanGap", "()D");
     if(env->ExceptionOccurred()) {
-    	return;
+    	return NULL;
     }
-    scanGap= env->CallDoubleMethod(decodeOptionsObj, getMethod, NULL);
+    double scanGap= env->CallDoubleMethod(decodeOptionsObj, getMethod, NULL);
 
     getMethod = env->GetMethodID(decodeOptionsJavaClass, "getSquareDev", "()J");
     if(env->ExceptionOccurred()) {
-    	return;
+    	return NULL;
     }
-    squareDev= static_cast<long>(env->CallLongMethod(decodeOptionsObj, getMethod, NULL));
+    long squareDev= static_cast<long>(env->CallLongMethod(decodeOptionsObj, getMethod, NULL));
 
     getMethod = env->GetMethodID(decodeOptionsJavaClass, "getEdgeThresh", "()J");
     if(env->ExceptionOccurred()) {
-    	return;
+    	return NULL;
     }
-    edgeThresh= static_cast<long>(env->CallLongMethod(decodeOptionsObj, getMethod, NULL));
+    long edgeThresh= static_cast<long>(env->CallLongMethod(decodeOptionsObj, getMethod, NULL));
 
     getMethod = env->GetMethodID(decodeOptionsJavaClass, "getCorrections", "()J");
     if(env->ExceptionOccurred()) {
-    	return;
+    	return NULL;
     }
-    corrections= static_cast<long>(env->CallLongMethod(decodeOptionsObj, getMethod, NULL));
+    long corrections= static_cast<long>(env->CallLongMethod(decodeOptionsObj, getMethod, NULL));
 
     getMethod = env->GetMethodID(decodeOptionsJavaClass, "getShrink", "()J");
     if(env->ExceptionOccurred()) {
-    	return;
+    	return NULL;
     }
-    shrink = static_cast<long>(env->CallLongMethod(decodeOptionsObj, getMethod, NULL));
-}
+    long shrink = static_cast<long>(env->CallLongMethod(decodeOptionsObj, getMethod, NULL));
 
-DecodeOptions::~DecodeOptions() {
+    return std::unique_ptr<DecodeOptions>(new DecodeOptions(
+    	    scanGap, squareDev, edgeThresh, corrections, shrink));
 }
 
 std::ostream & operator<<(std::ostream &os, const DecodeOptions & m) {

@@ -72,10 +72,10 @@ public:
 			const char * filename);
 	int scanAndDecode(unsigned dpi, int brightness, int contrast,
 			BoundingBox<double> & region, const DecodeOptions & decodeOptions,
-			std::vector<std::unique_ptr<WellRectangle<unsigned>  > > & wellRects);
+			std::vector<std::unique_ptr<WellRectangle<double>  > > & wellRects);
 	int decodeImageWells(const char * filename,
 			const DecodeOptions & decodeOptions,
-			std::vector<std::unique_ptr<WellRectangle<unsigned>  > > & wellRects);
+			std::vector<std::unique_ptr<WellRectangle<double>  > > & wellRects);
 
 	static void configLogging(unsigned level, bool useFile = true);
 
@@ -98,7 +98,7 @@ protected:
 
     int decodeCommon(const Dib & image, const DecodeOptions & decodeOptions,
     		const std::string &decodedDibFilename,
-    		std::vector<std::unique_ptr<WellRectangle<unsigned>  > > & wellRects);
+    		std::vector<std::unique_ptr<WellRectangle<double>  > > & wellRects);
 
     void writeDecodedImage(const Dib & image, const std::string & decodedDibFilename);
 

@@ -37,7 +37,7 @@ std::unique_ptr<BoundingBox<double> > getBoundingBox(
 	JNIEnv *env, jobject bboxJavaObj);
 
 int getWellRectangles(JNIEnv *env, jsize numWells, jobjectArray _wellRects,
-					   std::vector<std::unique_ptr<WellRectangle<unsigned>  > > & wellRects);
+					   std::vector<std::unique_ptr<WellRectangle<double>  > > & wellRects);
 
 } /* namespace */
 

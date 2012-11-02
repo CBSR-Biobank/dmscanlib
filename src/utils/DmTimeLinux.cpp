@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "Time.h"
+#include "DmTime.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -31,28 +31,28 @@ namespace dmscanlib {
 
 namespace util {
 
-Time::Time() {
-	gettimeofday(&time, NULL);
+DmTime::DmTime() {
+	gettimeofday(&timeVal, NULL);
 }
 
-Time::Time(Time & that) {
-	time = that.time;
+DmTime::DmTime(DmTime & that) {
+	timeVal = that.timeVal;
 }
 
-std::unique_ptr<Time> Time::difftime(const Time & that) {
-	std::unique_ptr<Time> result(new Time(*this));
+std::unique_ptr<DmTime> DmTime::difftime(const DmTime & that) {
+	std::unique_ptr<DmTime> result(new DmTime(*this));
 
-	result->time.tv_sec = time.tv_sec - that.time.tv_sec;
-	result->time.tv_usec = time.tv_usec - that.time.tv_usec;
-	if (result->time.tv_usec < 0) {
-		result->time.tv_usec += 1000000;
+	result->timeVal.tv_sec = timeVal.tv_sec - that.timeVal.tv_sec;
+	result->timeVal.tv_usec = timeVal.tv_usec - that.timeVal.tv_usec;
+	if (result->timeVal.tv_usec < 0) {
+		result->timeVal.tv_usec += 1000000;
 	}
 
 	return result;
 }
 
-std::ostream & operator<<(std::ostream &os, const dmscanlib::util::Time & tm) {
-	os << tm.time.tv_sec << "." << tm.time.tv_usec/1000;
+std::ostream & operator<<(std::ostream &os, const dmscanlib::util::DmTime & tm) {
+	os << tm.timeVal.tv_sec << "." << tm.timeVal.tv_usec/1000;
 	return os;
 }
 

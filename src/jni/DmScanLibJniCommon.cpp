@@ -84,50 +84,8 @@ jobject createDecodeResultObject(JNIEnv * env, int resultCode,
     return resultObj;
 }
 
-/*
- * Class:     edu_ualberta_med_scannerconfig_dmscanlib_ScanLib
- * Method:    decodeImage
- * Signature: (JLjava/lang/String;Ledu/ualberta/med/scannerconfig/dmscanlib/DecodeOptions;[Ledu/ualberta/med/scannerconfig/dmscanlib/Well;)Ledu/ualberta/med/scannerconfig/dmscanlib/DecodeResult;
- */
-JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_decodeImage(
-		JNIEnv * env, jobject obj, jlong _verbose, jstring _filename,
-		jobject _decodeOptions, jobjectArray _wellRects) {
-
-	if ((_verbose == 0) || (_filename == 0) || (_decodeOptions == 0)
-			|| (_wellRects == 0)) {
-		return createDecodeResultObject(env, SC_FAIL);
-	}
-
-    DmScanLib::configLogging(static_cast<unsigned>(_verbose), false);
-    DecodeOptions decodeOptions(env, _decodeOptions);
-    std::vector<std::unique_ptr<WellRectangle<unsigned>  > > wellRects;
-
-    jsize numWells = env->GetArrayLength(_wellRects);
-	int result = getWellRectangles(env, numWells, _wellRects, wellRects);
-
-	if (result == 0) {
-		return NULL;
-	} else if ((result != 1) || (wellRects.size() == 0)) {
-    	// invalid rects or zero rects passed from java
-    	return createDecodeResultObject(env, SC_INVALID_NOTHING_TO_DECODE);
-	}
-
-	jobject resultObj = 0;
-
-	dmscanlib::DmScanLib dmScanLib(1);
-
-	const char *filename = env->GetStringUTFChars(_filename, 0);
-	result = dmScanLib.decodeImageWells(filename, decodeOptions, wellRects);
-	env->ReleaseStringUTFChars(_filename, filename);
-
-	if (result == SC_SUCCESS) {
-		return createDecodeResultObject(env,result, dmScanLib.getDecodedWells());
-	} 
-	return createDecodeResultObject(env, result);
-}
-
 int getWellRectangles(JNIEnv *env, jsize numWells, jobjectArray _wellRects,
-					   std::vector<std::unique_ptr<WellRectangle<unsigned> > > & wellRects) {
+					   std::vector<std::unique_ptr<WellRectangle<double> > > & wellRects) {
     jobject wellRectJavaObj;
     jclass wellRectJavaClass = NULL;
     jmethodID wellRectGetLabelMethodID = NULL;
@@ -155,13 +113,13 @@ int getWellRectangles(JNIEnv *env, jsize numWells, jobjectArray _wellRects,
     	    }
 
     	    wellRectGetCornerXMethodID = env->GetMethodID(wellRectJavaClass,
-    	    		"getCornerX", "(I)I");
+    	    		"getCornerX", "(I)D");
     	    if(env->ExceptionOccurred()) {
     	    	return 0;
     	    }
 
     	    wellRectGetCornerYMethodID = env->GetMethodID(wellRectJavaClass,
-    	    		"getCornerY", "(I)I");
+    	    		"getCornerY", "(I)D");
     	    if(env->ExceptionOccurred()) {
     	    	return 0;
     	    }
@@ -170,20 +128,25 @@ int getWellRectangles(JNIEnv *env, jsize numWells, jobjectArray _wellRects,
     	jobject labelJobj = env->CallObjectMethod(wellRectJavaObj, wellRectGetLabelMethodID);
     	const char * label = env->GetStringUTFChars((jstring) labelJobj, NULL);
 
-    	int x1 = env->CallIntMethod(wellRectJavaObj, wellRectGetCornerXMethodID, 0);
-    	int y1 = env->CallIntMethod(wellRectJavaObj, wellRectGetCornerYMethodID, 0);
+    	double x1 = env->CallDoubleMethod(wellRectJavaObj, wellRectGetCornerXMethodID, 0);
+    	double y1 = env->CallDoubleMethod(wellRectJavaObj, wellRectGetCornerYMethodID, 0);
 
-    	int x2 = env->CallIntMethod(wellRectJavaObj, wellRectGetCornerXMethodID, 1);
-    	int y2 = env->CallIntMethod(wellRectJavaObj, wellRectGetCornerYMethodID, 1);
+    	double x2 = env->CallDoubleMethod(wellRectJavaObj, wellRectGetCornerXMethodID, 1);
+    	double y2 = env->CallDoubleMethod(wellRectJavaObj, wellRectGetCornerYMethodID, 1);
 
-    	int x3 = env->CallIntMethod(wellRectJavaObj, wellRectGetCornerXMethodID, 2);
-    	int y3 = env->CallIntMethod(wellRectJavaObj, wellRectGetCornerYMethodID, 2);
+    	double x3 = env->CallDoubleMethod(wellRectJavaObj, wellRectGetCornerXMethodID, 2);
+    	double y3 = env->CallDoubleMethod(wellRectJavaObj, wellRectGetCornerYMethodID, 2);
 
-    	int x4 = env->CallIntMethod(wellRectJavaObj, wellRectGetCornerXMethodID, 3);
-    	int y4 = env->CallIntMethod(wellRectJavaObj, wellRectGetCornerYMethodID, 3);
+    	double x4 = env->CallDoubleMethod(wellRectJavaObj, wellRectGetCornerXMethodID, 3);
+    	double y4 = env->CallDoubleMethod(wellRectJavaObj, wellRectGetCornerYMethodID, 3);
 
-    	std::unique_ptr<WellRectangle<unsigned> > wellRect(
-    			new WellRectangle<unsigned>(label, x1, y1, x2, y2, x3, y3, x4, y4));
+    	Point<double> pt1(x1, y1);
+    	Point<double> pt2(x2, y2);
+    	Point<double> pt3(x3, y3);
+    	Point<double> pt4(x4, y4);
+
+    	std::unique_ptr<WellRectangle<double> > wellRect(
+    			new WellRectangle<double>(label, pt1, pt2, pt3, pt4));
 
     	VLOG(3) << *wellRect;
 
@@ -225,4 +188,45 @@ std::unique_ptr<BoundingBox<double> > getBoundingBox(JNIEnv *env, jobject bboxJa
 
 } /* namespace */
 
+
+/*
+ * Class:     edu_ualberta_med_scannerconfig_dmscanlib_ScanLib
+ * Method:    decodeImage
+ * Signature: (JLjava/lang/String;Ledu/ualberta/med/scannerconfig/dmscanlib/DecodeOptions;[Ledu/ualberta/med/scannerconfig/dmscanlib/Well;)Ledu/ualberta/med/scannerconfig/dmscanlib/DecodeResult;
+ */
+JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_decodeImage(
+		JNIEnv * env, jobject obj, jlong _verbose, jstring _filename,
+		jobject _decodeOptions, jobjectArray _wellRects) {
+
+	if ((_verbose == 0) || (_filename == 0) || (_decodeOptions == 0)
+			|| (_wellRects == 0)) {
+		return dmscanlib::jni::createDecodeResultObject(env, dmscanlib::SC_FAIL);
+	}
+
+	dmscanlib::DmScanLib::configLogging(static_cast<unsigned>(_verbose), false);
+    std::unique_ptr<dmscanlib::DecodeOptions> decodeOptions =
+    		dmscanlib::DecodeOptions::getDecodeOptionsViaJni(env, _decodeOptions);
+    std::vector<std::unique_ptr<dmscanlib::WellRectangle<double>  > > wellRects;
+
+    jsize numWells = env->GetArrayLength(_wellRects);
+	int result = dmscanlib::jni::getWellRectangles(env, numWells, _wellRects, wellRects);
+
+	if (result == 0) {
+		return NULL;
+	} else if ((result != 1) || (wellRects.size() == 0)) {
+    	// invalid rects or zero rects passed from java
+    	return dmscanlib::jni::createDecodeResultObject(env, dmscanlib::SC_INVALID_NOTHING_TO_DECODE);
+	}
+
+	dmscanlib::DmScanLib dmScanLib(1);
+
+	const char *filename = env->GetStringUTFChars(_filename, 0);
+	result = dmScanLib.decodeImageWells(filename, *decodeOptions, wellRects);
+	env->ReleaseStringUTFChars(_filename, filename);
+
+	if (result == dmscanlib::SC_SUCCESS) {
+		return dmscanlib::jni::createDecodeResultObject(env,result, dmScanLib.getDecodedWells());
+	}
+	return dmscanlib::jni::createDecodeResultObject(env, result);
+}
 

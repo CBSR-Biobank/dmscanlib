@@ -10,6 +10,7 @@
 
 #include <jni.h>
 #include <ostream>
+#include <memory>
 
 namespace dmscanlib {
 
@@ -19,19 +20,19 @@ class DecodeOptions {
 public:
 	DecodeOptions(double scanGap, long squareDev, long edgeThresh,
 		    long corrections, long shrink);
-	DecodeOptions(JNIEnv *env, jobject scanRegionObj);
 	virtual ~DecodeOptions();
+
+	static std::unique_ptr<DecodeOptions> getDecodeOptionsViaJni(JNIEnv *env, jobject decodeOptionsObj);
 
 private:
 	friend class Decoder;
 	friend std::ostream & operator<<(std::ostream & os, const DecodeOptions & m);
 
-    double scanGap;
-    long squareDev;
-    long edgeThresh;
-    long corrections;
-    long shrink;
-    double cellDistance;
+    const double scanGap;
+    const long squareDev;
+    const long edgeThresh;
+    const long corrections;
+    const long shrink;
 };
 
 
