@@ -27,7 +27,7 @@
  ******************************************************************************/
 
 #ifdef _VISUALC_
-#   define _CRTDBG_MAP_ALLOC
+//#   define _CRTDBG_MAP_ALLOC
 #   pragma warning(disable : 4996)
 //Scan for memory leaks in visual studio
 #   ifdef _DEBUG
@@ -47,7 +47,6 @@
 #include <iostream>
 #include <vector>
 #include <stdexcept>
-#include <dirent.h>
 #include <stddef.h>
 #include <glog/logging.h>
 #include <gtest/gtest.h>
@@ -61,6 +60,7 @@
 #   define DIR_SEP_CHR '\\'
 #else
 #   define DIR_SEP_CHR '/'
+#    include <dirent.h>
 #endif
 
 using namespace dmscanlib;
@@ -90,6 +90,7 @@ private:
  * Windows bitmap files are included.
  */
 bool getTestImageFileNames(std::string dir, std::vector<std::string> & filenames) {
+#ifndef _VISUALC_
 	DIR * dp;
 	dirent * dirp;
 
@@ -112,6 +113,7 @@ bool getTestImageFileNames(std::string dir, std::vector<std::string> & filenames
 		}
 	}
 	closedir(dp);
+#endif
 	return true;
 }
 
@@ -131,11 +133,12 @@ void getWellRectsForSbsPalletImage(std::string & fname,
     double height = image.getHeight();
     double wellWidth = width / 12.0;
     double wellHeight = height / 8.0;
-    Point<unsigned> horTranslation(wellWidth, 0);
-    Point<unsigned> verTranslation(0, wellHeight);
+    Point<unsigned> horTranslation(static_cast<unsigned>(wellWidth), 0);
+    Point<unsigned> verTranslation(0, static_cast<unsigned>(wellHeight));
 
     // round off the bounding box so image dimensions are not exceeded
-    BoundingBox<unsigned> bbox(0, 0, wellWidth - 0.5, wellHeight - 0.5);
+    BoundingBox<unsigned> bbox(0, 0, static_cast<unsigned>(wellWidth - 0.5), 
+		static_cast<unsigned>(wellHeight - 0.5));
 
     for (int row = 0; row < 8; ++row) {
     	std::unique_ptr<const Point<unsigned>> scaledVertTranslation = verTranslation.scale(row);

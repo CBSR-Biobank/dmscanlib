@@ -77,16 +77,16 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>.\src;.\third_party\include;.\third_party\libdmtx;$(JAVA_HOME)\include;$(JAVA_HOME)\include\win32;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_VISUALC_;WIN32;_DEBUG;_CONSOLE;THREADED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_VARIADIC_MAX=10;_VISUALC_;WIN32;_DEBUG;_CONSOLE;THREADED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <PrecompiledHeader />
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>user32.lib;libcmtd.lib;libglog.lib;OpenThreadsWin32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>user32.lib;gtest.lib;libcmtd.lib;libglog.lib;OpenThreadsWin32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ShowProgress>NotSet</ShowProgress>
       <AdditionalLibraryDirectories>.\third_party\lib\win32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries> libcmt.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
@@ -177,6 +177,7 @@
     <ClCompile Include="src\imgscanner\ImgScannerImpl.cpp" />
     <ClCompile Include="src\jni\DmScanLibJniCommon.cpp" />
     <ClCompile Include="src\jni\DmScanLibJniWin32.cpp" />
+    <ClCompile Include="src\TestApp.cpp" />
     <ClCompile Include="src\utils\TimeUtilWin32.cpp" />
     <ClCompile Include="third_party\libdmtx\dmtx.c" />
   </ItemGroup>
