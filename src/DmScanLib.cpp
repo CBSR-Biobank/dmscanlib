@@ -129,13 +129,13 @@ void DmScanLib::saveResults(std::string & msg) {
 
 int DmScanLib::scanImage(unsigned dpi, int brightness, int contrast,
 		BoundingBox<double> & bbox, const char * filename) {
-			VLOG(2) << "scanImage: dpi/" << dpi << " brightness/" << brightness
+			VLOG(3) << "scanImage: dpi/" << dpi << " brightness/" << brightness
 				<< " contrast/" << contrast << bbox
 				<< " filename/" << filename;
 
 	HANDLE h = imgScanner->acquireImage(dpi, brightness, contrast, bbox);
 	if (h == NULL) {
-		VLOG(2) << "could not acquire image";
+		VLOG(1) << "could not acquire image";
 		return imgScanner->getErrorCode();
 	}
 	Dib dib;
@@ -150,13 +150,12 @@ int DmScanLib::scanImage(unsigned dpi, int brightness, int contrast,
 
 int DmScanLib::scanFlatbed(unsigned dpi, int brightness, int contrast,
 		const char * filename) {
-	VLOG(2)
-			<< "slScanFlatbed: dpi/" << dpi << " brightness/" << brightness
+	VLOG(3) << "slScanFlatbed: dpi/" << dpi << " brightness/" << brightness
 					<< " contrast/" << contrast << " filename/" << filename;
 
 	HANDLE h = imgScanner->acquireFlatbed(dpi, brightness, contrast);
 	if (h == NULL) {
-		VLOG(2) << "could not acquire image";
+		VLOG(1) << "could not acquire image";
 		return imgScanner->getErrorCode();
 	}
 	Dib dib;
@@ -172,7 +171,7 @@ int DmScanLib::scanFlatbed(unsigned dpi, int brightness, int contrast,
 int DmScanLib::scanAndDecode(unsigned dpi, int brightness, int contrast,
 		BoundingBox<double> & region, const DecodeOptions & decodeOptions,
 		std::vector<std::unique_ptr<WellRectangle<double>  > > & wellRects) {
-	VLOG(2) << "decodePlate: dpi/" << dpi << " brightness/" << brightness
+	VLOG(3) << "decodePlate: dpi/" << dpi << " brightness/" << brightness
 			<< " contrast/" << contrast
 			<< " " << region << " " << decodeOptions;
 
@@ -181,7 +180,7 @@ int DmScanLib::scanAndDecode(unsigned dpi, int brightness, int contrast,
 
 	h = imgScanner->acquireImage(dpi, brightness, contrast, region);
 	if (h == NULL) {
-		VLOG(2) << "could not acquire image";
+		VLOG(1) << "could not acquire image";
 		return imgScanner->getErrorCode();
 	}
 
@@ -203,7 +202,7 @@ int DmScanLib::decodeImageWells(const char * filename,
 		const DecodeOptions & decodeOptions,
 		std::vector<std::unique_ptr<WellRectangle<double>  > > & wellRects) {
 
-	VLOG(2) << "decodeImage: filename/" << filename
+	VLOG(3) << "decodeImage: filename/" << filename
 			<< " numWellRects/" << wellRects.size()
 			<< decodeOptions;
 

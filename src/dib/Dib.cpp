@@ -199,7 +199,7 @@ void Dib::readFromHandle(HANDLE handle) {
    pixels = reinterpret_cast <unsigned char *>(dibHeaderPtr)
       + sizeof(BITMAPINFOHEADER) + paletteSize * sizeof(RgbQuad);
 
-   VLOG(2) << "readFromHandle: "
+   VLOG(3) << "readFromHandle: "
                    << " size/" << size
                    << " width/" << width
                    << " height/" << height
@@ -262,8 +262,7 @@ bool Dib::readFromFile(const std::string & filename) {
    CHECK(r = imageSize);
    fclose(fh);
 
-   VLOG(2)
-      << "readFromFile: rowBytes/" << rowBytes << " paddingBytes/"
+   VLOG(3) << "readFromFile: rowBytes/" << rowBytes << " paddingBytes/"
       << rowPaddingBytes;
    return true;
 }
@@ -370,13 +369,12 @@ std::unique_ptr<Dib> Dib::convertGrayscale() const {
       CHECK(false) << "already grayscale image.";
    }
 
-   VLOG(2) << "convertGrayscale: Converting from 24 bit to 8 bit.";
+   VLOG(5) << "convertGrayscale: Converting from 24 bit to 8 bit.";
 
    // 24bpp -> 8bpp
    Dib * dest = new Dib(width, height, 8, pixelsPerMeter);
 
-   VLOG(2)
-      << "convertGrayscale: Made dib";
+   VLOG(5) << "convertGrayscale: Made dib";
 
    unsigned char *srcRowPtr = pixels;
    unsigned char *destRowPtr = dest->pixels;
@@ -399,8 +397,7 @@ std::unique_ptr<Dib> Dib::convertGrayscale() const {
       destRowPtr += dest->rowBytes;
    }
 
-   VLOG(2)
-      << "convertGrayscale: Generated 8 bit grayscale image.";
+   VLOG(5) << "convertGrayscale: Generated 8 bit grayscale image.";
 
    return std::unique_ptr<Dib>(dest);
 }
@@ -429,7 +426,7 @@ std::unique_ptr<Dib> Dib::crop(const BoundingBox<unsigned> & bbox) const {
    unsigned cWidth = boundBbox.points[1].x - boundBbox.points[0].x;
    unsigned cHeight = boundBbox.points[1].y - boundBbox.points[0].y;
 
-	VLOG(2) << "crop: Bbox" << bbox << ", width/" << cWidth << " height/" << cHeight;
+	VLOG(3) << "crop: Bbox" << bbox << ", width/" << cWidth << " height/" << cHeight;
 
    std::unique_ptr<Dib> croppedImg(
       new Dib(cWidth, cHeight, colorBits, pixelsPerMeter));
@@ -547,29 +544,24 @@ void Dib::tpPresetFilter() {
    switch (getDpi()) {
 
       case 400:
-         VLOG(2)
-            << "tpPresetFilter: Applying DPI_400_KERNEL";
+         VLOG(5) << "tpPresetFilter: Applying DPI_400_KERNEL";
          convolveFast3x3(Dib::DPI_400_KERNEL);
          break;
 
       case 600:
-         VLOG(2)
-            << "tpPresetFilter: Applying BLANK_KERNEL";
+         VLOG(5) << "tpPresetFilter: Applying BLANK_KERNEL";
          convolveFast3x3(Dib::BLANK_KERNEL);
 
-         VLOG(2)
-            << "tpPresetFilter: Applying BLUR_KERNEL";
+         VLOG(5) << "tpPresetFilter: Applying BLUR_KERNEL";
          convolveFast3x3(Dib::BLUR_KERNEL);
          break;
 
       case 300:
-         VLOG(2)
-            << "tpPresetFilter: No filter applied (300 dpi)";
+         VLOG(5) << "tpPresetFilter: No filter applied (300 dpi)";
          break;
 
       default:
-         VLOG(2)
-            << "tpPresetFilter: No filter applied (default) dpi/" << getDpi();
+         VLOG(5) << "tpPresetFilter: No filter applied (default) dpi/" << getDpi();
          break;
    }
 }

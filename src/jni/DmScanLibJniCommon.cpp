@@ -92,7 +92,7 @@ int getWellRectangles(JNIEnv *env, jsize numWells, jobjectArray _wellRects,
     jmethodID wellRectGetCornerXMethodID = NULL;
     jmethodID wellRectGetCornerYMethodID = NULL;
 
-	VLOG(3) << "decodeImage: numWells/" << static_cast<int>(numWells);
+	VLOG(3) << "decodeImage: numWells/" << numWells;
 
 	// TODO check for max well rectangle objects
     for (int i = 0; i < static_cast<int>(numWells); ++i) {

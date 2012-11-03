@@ -151,9 +151,10 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
     unsigned dpi = static_cast<unsigned>(_dpi);
     unsigned brightness = static_cast<unsigned>(_brightness);
     unsigned contrast = static_cast<unsigned>(_contrast);
-    std::vector<std::unique_ptr<dmscanlib::WellRectangle<unsigned> > > wellRects;
+    std::vector<std::unique_ptr<dmscanlib::WellRectangle<double> > > wellRects;
 
-    dmscanlib::DecodeOptions decodeOptions(env, _decodeOptions);
+    std::unique_ptr<dmscanlib::DecodeOptions> decodeOptions = 
+		dmscanlib::DecodeOptions::getDecodeOptionsViaJni(env, _decodeOptions);
     std::unique_ptr<dmscanlib::BoundingBox<double> > bbox = 
 		dmscanlib::jni::getBoundingBox(env, _region);
 
@@ -168,7 +169,7 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
 	}
 
     dmscanlib::DmScanLib dmScanLib(0);
-    result = dmScanLib.scanAndDecode(dpi, brightness, contrast, *bbox, decodeOptions, wellRects);
+    result = dmScanLib.scanAndDecode(dpi, brightness, contrast, *bbox, *decodeOptions, wellRects);
 
     // TODO: needs implementation
     return NULL;

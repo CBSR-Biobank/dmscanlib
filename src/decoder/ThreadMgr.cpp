@@ -66,7 +66,7 @@ void ThreadMgr::threadHandler() {
 
 	do {
 		threadProcessRange(first, last);
-		VLOG(2) << "Threads for cells finished: " << first << "/" << last - 1;
+		VLOG(5) << "Threads for cells finished: " << first << "/" << last - 1;
 
 		first = last;
 #ifdef _VISUALC_
