@@ -23,13 +23,13 @@
 #pragma warning(disable : 4996)
 #endif
 
-#include "Decoder.h"
-#include "DmScanLib.h"
-#include "DecodeOptions.h"
-#include "dib/Dib.h"
-#include "WellDecoder.h"
+#include "decoder/Decoder.h"
+#include "decoder/DecodeOptions.h"
+#include "decoder/WellDecoder.h"
 #include "decoder/ThreadMgr.h"
 #include "decoder/DmtxDecodeHelper.h"
+#include "dib/Dib.h"
+#include "DmScanLib.h"
 
 #include <glog/logging.h>
 #include <stdio.h>
@@ -119,9 +119,11 @@ int Decoder::decodeWellRects() {
 				static_cast<unsigned>(factoredRect->corners[3].x),
 				static_cast<unsigned>(factoredRect->corners[3].y));
 
+		Rect<unsigned> rect(pt1, pt2, pt3, pt4);
+
 		std::unique_ptr<WellRectangle<unsigned> > convertedWellTect(
 				new WellRectangle<unsigned>(
-						wellRect.getLabel().c_str(), pt1, pt2, pt3, pt4));
+						wellRect.getLabel().c_str(), rect));
 
 		wellDecoders[i] = std::unique_ptr<WellDecoder>(
 				new WellDecoder(*this, std::move(convertedWellTect)));

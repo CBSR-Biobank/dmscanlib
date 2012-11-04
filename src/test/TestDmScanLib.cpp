@@ -1,87 +1,38 @@
-/*******************************************************************************
- * Canadian Biosample Repository
+/*
+ * TestDmScanLib.cpp
  *
- * DmScanLib project
- *
- * Multi-platform application for scanning and decoding datamatrix 2D barcodes.
- *
- * ---------------------------------------------------------------------------
- * Dmscanlib is a software library and standalone application that scans
- * and decodes libdmtx compatible test-tubes. It is currently designed
- * to decode 12x8 pallets that use 2D data-matrix laser etched test-tubes.
- * Copyright (C) 2010 Canadian Biosample Repository
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
- ******************************************************************************/
-
-#ifdef _VISUALC_
-#   pragma warning(disable : 4996)
-//Scan for memory leaks in visual studio
-#   ifdef _DEBUG
-#      define _CRTDBG_MAP_ALLOC
-#      include <stdlib.h>
-#      include <crtdbg.h>
-#   endif
-#endif
+ *  Created on: 2012-11-04
+ *      Author: nelson
+ */
 
 #include "DmScanLib.h"
 #include "decoder/Decoder.h"
 #include "decoder/DecodeOptions.h"
 #include "decoder/WellRectangle.h"
 #include "dib/Dib.h"
-#include "imgscanner/ImgScanner.h"
 
-#include <iostream>
-#include <vector>
 #include <stdexcept>
 #include <stddef.h>
+#include <dirent.h>
+#include <sys/types.h>
+
+#ifdef _VISUALC_
+#   pragma warning(disable : 4996)
+#endif
+
 #include <glog/logging.h>
 #include <gtest/gtest.h>
-
-#ifdef WIN32
-#   define DIR_SEP_CHR '\\'
-#else
-#   define DIR_SEP_CHR '/'
-#    include <dirent.h>
-#endif
 
 using namespace dmscanlib;
 
 namespace {
 
-class TestApp : public ::testing::Test {
-protected:
-    TestApp() {
-    }
-
-    ~TestApp() {
-
-    }
-
-    virtual void SetUp() {
-    }
-
-    virtual void TearDown() {
-    }
-
-private:
-};
-
 /*
- * Gets file names for all the test images in the Dropbox folder. Only MS
+ * Gets file names for all the test images in the "testImages" folder. Only MS
  * Windows bitmap files are included.
+ *
+ * These test images can be downloaded from
+ * http://aicml-med.cs.ualberta.ca/CBSR/scanlib/testImages.tar.bz2
  */
 bool getTestImageFileNames(std::string dir, std::vector<std::string> & filenames) {
 #ifndef _VISUALC_
@@ -107,7 +58,7 @@ bool getTestImageFileNames(std::string dir, std::vector<std::string> & filenames
 		}
 	}
 	closedir(dp);
-#else	
+#else
 	WIN32_FIND_DATA fdFile;
 	HANDLE hFind = NULL;
 
@@ -119,7 +70,7 @@ bool getTestImageFileNames(std::string dir, std::vector<std::string> & filenames
     searchstrw.append(L"\\*.*");
 
 	if((hFind = FindFirstFile((LPCWSTR) searchstrw.c_str(), &fdFile)) == INVALID_HANDLE_VALUE) {
-		VLOG(1) << "error is: " << GetLastError();
+		//VLOG(1) << "error is: " << GetLastError();
 		return false;
 	}
 
@@ -147,9 +98,9 @@ bool getTestImageFileNames(std::string dir, std::vector<std::string> & filenames
 			}
 		}
 	}
-	while(FindNextFile(hFind, &fdFile)); 
+	while(FindNextFile(hFind, &fdFile));
 
-	FindClose(hFind); 
+	FindClose(hFind);
 #endif
 	return true;
 }
@@ -167,6 +118,7 @@ void getWellRectsForSbsPalletImage(std::string & fname,
 	}
 
 	const double doubleDpi = static_cast<double>(image.getDpi());
+	const double dotWidth = 1 / doubleDpi;
 	double width = static_cast<double>(image.getWidth()) / doubleDpi;
 	double height = static_cast<double>(image.getHeight()) / doubleDpi;
     double wellWidth = width / 12.0;
@@ -177,33 +129,25 @@ void getWellRectsForSbsPalletImage(std::string & fname,
 
     // round off the bounding box so image dimensions are not exceeded
 	Point<double> pt1(0, 0);
-	Point<double> pt2(wellWidth * 0.9999, wellHeight * 0.9999);
+	Point<double> pt2(wellWidth - dotWidth, wellHeight - dotWidth);
 	BoundingBox<double> bbox(pt1, pt2);
 
     for (int row = 0; row < 8; ++row) {
-    	std::unique_ptr<const Point<double>> scaledVertTranslation = verTranslation.scale(row);
+	std::unique_ptr<const Point<double>> scaledVertTranslation = verTranslation.scale(row);
         std::unique_ptr<const BoundingBox<double> > bboxTranslated =
-        		bbox.translate(*scaledVertTranslation);
+			bbox.translate(*scaledVertTranslation);
 
         for (int col = 0; col < 12; ++col) {
-        	std::ostringstream label;
-        	label << (char) ('A' + row) << 12 - col;
+		std::ostringstream label;
+		label << (char) ('A' + row) << 12 - col;
 
             std::unique_ptr<WellRectangle<double> > wellRect(
-            		new WellRectangle<double>(label.str().c_str(), *bboxTranslated));
+			new WellRectangle<double>(label.str().c_str(), *bboxTranslated));
             VLOG(9) << *wellRect;
             wellRects.push_back(std::move(wellRect));
             bboxTranslated = bboxTranslated->translate(horTranslation);
         }
     }
-}
-
-/*
- * Test for invalid rect
- */
-TEST_F(TestApp, DecodeImageInvalidRect) {
-	Point<double> pt1(0,0);
-    ASSERT_THROW(BoundingBox<double> bbox(pt1, pt1), std::invalid_argument);
 }
 
 int decodeImage(std::string fname, DmScanLib & dmScanLib) {
@@ -218,14 +162,14 @@ int decodeImage(std::string fname, DmScanLib & dmScanLib) {
     long shrink = 1;
 
     DecodeOptions decodeOptions(scanGap, squareDev, edgeThresh, corrections,
-    	    shrink);
+	    shrink);
     return dmScanLib.decodeImageWells(fname.c_str(), decodeOptions, wellRects);
 }
 
-TEST_F(TestApp, DecodeImage) {
+TEST(TestApp, DecodeImage) {
 	FLAGS_v = 3;
 
-    std::string fname("testImages/edge_tubes.bmp");
+    std::string fname("testImages/96tubes.bmp");
 
     DmScanLib dmScanLib(1);
     int result = decodeImage(fname, dmScanLib);
@@ -234,11 +178,11 @@ TEST_F(TestApp, DecodeImage) {
     EXPECT_TRUE(dmScanLib.getDecodedWellCount() > 0);
 
     if (dmScanLib.getDecodedWellCount() > 0) {
-    	VLOG(1) << "number of wells decoded: " << dmScanLib.getDecodedWells().size();
+	VLOG(1) << "number of wells decoded: " << dmScanLib.getDecodedWells().size();
     }
 }
 
-TEST_F(TestApp, DecodeAllImages) {
+TEST(TestApp, DecodeAllImages) {
 	FLAGS_v = 1;
 
     std::string dirname("testImages");
@@ -249,11 +193,11 @@ TEST_F(TestApp, DecodeAllImages) {
     int decodeResult;
 
     for (unsigned i = 0, n = filenames.size(); i < n; ++i) {
-    	VLOG(1) << "test image: " << filenames[i];
+	VLOG(1) << "test image: " << filenames[i];
 
 		util::DmTime start;
         DmScanLib dmScanLib(1);
-    	decodeResult = decodeImage(filenames[i], dmScanLib);
+	decodeResult = decodeImage(filenames[i], dmScanLib);
 		util::DmTime end;
 
 		std::unique_ptr<util::DmTime> difftime = end.difftime(start);
@@ -262,15 +206,9 @@ TEST_F(TestApp, DecodeAllImages) {
         EXPECT_TRUE(dmScanLib.getDecodedWellCount() > 0);
 
         VLOG(1) << "test image: " << filenames[i] << ", wells decoded: "
-        		<< dmScanLib.getDecodedWellCount()
-        		<< " time taken: " << *difftime;
+			<< dmScanLib.getDecodedWellCount()
+			<< " time taken: " << *difftime << " sec";
     }
 }
 
-}  // namespace
-
-int main(int argc, char **argv) {
-	::testing::InitGoogleTest(&argc, argv);
-	DmScanLib::configLogging(1, false);
-	return RUN_ALL_TESTS();
-}
+} /* namespace */

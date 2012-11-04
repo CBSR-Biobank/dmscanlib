@@ -13,13 +13,6 @@
 namespace dmscanlib {
 
 template<typename T>
-WellRectangle<T>::WellRectangle(const char * _label,
-		Point<T> & pt1, Point<T> & pt2, Point<T> & pt3, Point<T> & pt4) :
-		label(_label), rect(pt1, pt2, pt3, pt4)
-{
-}
-
-template<typename T>
 WellRectangle<T>::WellRectangle(const char * _label, const Rect<T> & _rect) :
 	label(_label), rect(_rect)
 {

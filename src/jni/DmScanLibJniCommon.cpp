@@ -144,9 +144,9 @@ int getWellRectangles(JNIEnv *env, jsize numWells, jobjectArray _wellRects,
     	Point<double> pt2(x2, y2);
     	Point<double> pt3(x3, y3);
     	Point<double> pt4(x4, y4);
+	Rect<double> rect(pt1, pt2, pt3, pt4);
 
-    	std::unique_ptr<WellRectangle<double> > wellRect(
-    			new WellRectangle<double>(label, pt1, pt2, pt3, pt4));
+	std::unique_ptr<WellRectangle<double> > wellRect(new WellRectangle<double>(label, rect));
 
     	VLOG(3) << *wellRect;
 

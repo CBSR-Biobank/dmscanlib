@@ -44,6 +44,8 @@ GTEST
     # copy or symlink libgtest.a and libgtest_main.a to your /usr/lib folder
     sudo mv libg* /usr/lib/
 
+    use --gtest_filter=* to run a single test
+
 
 VALGRIND
 

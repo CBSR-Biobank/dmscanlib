@@ -15,7 +15,7 @@ scanLibTimeout = 30
 
 
 class Barcode(object):
-	position = None
+        position = None
 	value = "" # immutable
 
 	def __init__(self,message=None,position=None,value=None):
@@ -31,7 +31,7 @@ class Barcode(object):
 		matches = re.match(r"\d,([A-H]),(\d{1,2}),([A-Z0-9]+)",message.strip())
 
 		if matches == None or matches.group(1) == None or \
-		   matches.group(2) == None or matches.group(3) == None:
+                            matches.group(2) == None or matches.group(3) == None:
 			return None
 
 		row = matches.group(1)
@@ -104,7 +104,7 @@ class ScanResultContainer(object):
 	scanResults = None
 
 	def __init__(self,scanResults):
-		 self.scanResults = scanResults
+                self.scanResults = scanResults
 
 	def getScanResultFromFilename(self,filename):
 		for sc in self.scanResults:
@@ -280,14 +280,14 @@ def compareTest(resultsFile1,resultsFile2):
 
 	seperator("Barcodes Only Found in Results1")
 	for sf in intersectedFiles:
-	
+
 		sr1 = src1.getScanResultFromFilename(sf)
 		sr2 = src2.getScanResultFromFilename(sf)
-	
+
 		barcodes1 = sr1.getBarcodes()
 		barcodes2 = sr2.getBarcodes()
 
-		
+
 		for b in barcodes1:
 			if b not in barcodes2:
 				print str(b)
@@ -298,7 +298,7 @@ def compareTest(resultsFile1,resultsFile2):
 	for sf in intersectedFiles:
 		sr1 = src1.getScanResultFromFilename(sf)
 		sr2 = src2.getScanResultFromFilename(sf)
-	
+
 		barcodes1 = sr1.getBarcodes()
 		barcodes2 = sr2.getBarcodes()
 
@@ -353,7 +353,7 @@ def compareTest(resultsFile1,resultsFile2):
 
 	table.append(["","","",""])
 	table.append(["total:","","%03.2f%%(%d/%d)" %(ptotal_bc,total_bc_2,total_bc_1),
-				  "%03.2f%%(%d/%d)" %(ptotal_t,total_t_2,total_t_1)])
+                      "%03.2f%%(%d/%d)" %(ptotal_t,total_t_2,total_t_1)])
 
 	padnums.pprint_table(sys.stdout, table)
 	print ""
