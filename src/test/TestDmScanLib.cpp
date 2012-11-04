@@ -169,7 +169,7 @@ int decodeImage(std::string fname, DmScanLib & dmScanLib) {
 TEST(TestApp, DecodeImage) {
 	FLAGS_v = 3;
 
-    std::string fname("testImages/96tubes.bmp");
+    std::string fname("testImages/edge_tubes.bmp");
 
     DmScanLib dmScanLib(1);
     int result = decodeImage(fname, dmScanLib);

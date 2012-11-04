@@ -128,9 +128,8 @@ int Decoder::decodeWellRects() {
 		wellDecoders[i] = std::unique_ptr<WellDecoder>(
 				new WellDecoder(*this, std::move(convertedWellTect)));
 	}
-	return decodeMultiThreaded();
-	//return decodeSingleThreaded();
-
+	//return decodeMultiThreaded();
+	return decodeSingleThreaded();
 }
 
 int Decoder::decodeSingleThreaded() {

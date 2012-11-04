@@ -245,6 +245,8 @@ bool Dib::readFromFile(const std::string & filename) {
 
    CHECK((size == 40) || (size == 108));
 
+   VLOG(3) << "width/" << width << " height/" << height;
+
    CHECK(planes == 1);
    CHECK(compression == 0);
    CHECK(hPixelsPerMeter == vPixelsPerMeter);
@@ -409,43 +411,43 @@ std::unique_ptr<Dib> Dib::convertGrayscale() const {
  * any rectangle, at any angle, should be allowed.
  */
 std::unique_ptr<Dib> Dib::crop(const BoundingBox<unsigned> & bbox) const {
-   CHECK(bbox.points[1].x > bbox.points[0].x);
-   CHECK(bbox.points[1].y > bbox.points[0].y);
+	CHECK(bbox.points[1].x > bbox.points[0].x);
+	CHECK(bbox.points[1].y > bbox.points[0].y);
 
 
 #ifdef _VISUALC_
-   Point<unsigned> pt1(min(bbox.points[0].x, width-1), min(bbox.points[0].y, height-1));
-   Point<unsigned> pt2(min(bbox.points[1].x, width-1), min(bbox.points[1].y, height-1));
+	Point<unsigned> pt1(min(bbox.points[0].x, width-1), min(bbox.points[0].y, height-1));
+	Point<unsigned> pt2(min(bbox.points[1].x, width-1), min(bbox.points[1].y, height-1));
 #else
-   Point<unsigned> pt1(std::min(bbox.points[0].x, width-1), std::min(bbox.points[0].y, height-1));
-   Point<unsigned> pt2(std::min(bbox.points[1].x, width-1), std::min(bbox.points[1].y, height-1));
+	Point<unsigned> pt1(std::min(bbox.points[0].x, width-1), std::min(bbox.points[0].y, height-1));
+	Point<unsigned> pt2(std::min(bbox.points[1].x, width-1), std::min(bbox.points[1].y, height-1));
 #endif
 
-   BoundingBox<unsigned> boundBbox(pt1, pt2);
+	BoundingBox<unsigned> boundBbox(pt1, pt2);
 
-   unsigned cWidth = boundBbox.points[1].x - boundBbox.points[0].x;
-   unsigned cHeight = boundBbox.points[1].y - boundBbox.points[0].y;
+	unsigned cWidth = boundBbox.points[1].x - boundBbox.points[0].x;
+	unsigned cHeight = boundBbox.points[1].y - boundBbox.points[0].y;
 
 	VLOG(3) << "crop: Bbox" << bbox << ", width/" << cWidth << " height/" << cHeight;
 
-   std::unique_ptr<Dib> croppedImg(
-      new Dib(cWidth, cHeight, colorBits, pixelsPerMeter));
+	std::unique_ptr<Dib> croppedImg(
+			new Dib(cWidth, cHeight, colorBits, pixelsPerMeter));
 
-   unsigned char *srcRowPtr = pixels + (height - boundBbox.points[1].y) * rowBytes
-      + boundBbox.points[0].x * croppedImg->bytesPerPixel;
-   unsigned char *destRowPtr = croppedImg->pixels;
-   unsigned row = 0;
+	unsigned char *srcRowPtr = pixels + (height - boundBbox.points[1].y) * rowBytes
+			+ boundBbox.points[0].x * croppedImg->bytesPerPixel;
+	unsigned char *destRowPtr = croppedImg->pixels;
+	unsigned row = 0;
+	unsigned srcRowBytes = croppedImg->rowBytes - croppedImg->rowPaddingBytes;
 
-   while (row < cHeight) {
-      memcpy(destRowPtr, srcRowPtr, croppedImg->rowBytes);
-      memset(destRowPtr + croppedImg->rowBytes - croppedImg->rowPaddingBytes,
-             0, croppedImg->rowPaddingBytes);
+	while (row < cHeight) {
+		memcpy(destRowPtr, srcRowPtr, srcRowBytes);
+		memset(destRowPtr + srcRowBytes, 0, croppedImg->rowPaddingBytes);
 
-      ++row;
-      srcRowPtr += rowBytes;
-      destRowPtr += croppedImg->rowBytes;
-   }
-   return croppedImg;
+		++row;
+		srcRowPtr += rowBytes;
+		destRowPtr += croppedImg->rowBytes;
+	}
+	return croppedImg;
 }
 
 /*
