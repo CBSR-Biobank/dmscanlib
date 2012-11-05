@@ -234,10 +234,9 @@ HANDLE ImgScannerImpl::acquireImage(unsigned dpi, int brightness, int contrast,
    double physicalHeight = getPhysicalDimensions(srcID, ICAP_PHYSICALHEIGHT);
 
    if ((bbox.points[0].x > physicalWidth) || (bbox.points[0].y > physicalHeight)
-       || (bbox.points[0].x + bbox.points[1].x > physicalWidth) 
+	   || (bbox.points[0].x + bbox.points[1].x > physicalWidth) 
 	   || (bbox.points[0].y + bbox.points[1].y > physicalHeight)) {
-      errorCode = SC_INVALID_VALUE;
-      return NULL;
+		   throw std::invalid_argument("bounding box exeeds image dimensions");
    }
 
    errorCode = SC_SUCCESS;

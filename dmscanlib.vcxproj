@@ -93,6 +93,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|Win32'">
@@ -176,6 +177,14 @@
     <ClCompile Include="src\imgscanner\ImgScannerImpl.cpp" />
     <ClCompile Include="src\jni\DmScanLibJniCommon.cpp" />
     <ClCompile Include="src\jni\DmScanLibJniWin32.cpp" />
+    <ClCompile Include="src\test\TestBoundingBox.cpp" />
+    <ClCompile Include="src\test\TestCommon.cpp" />
+    <ClCompile Include="src\test\TestDmScanLib.cpp" />
+    <ClCompile Include="src\test\TestDmScanLibWin32.cpp" />
+    <ClCompile Include="src\test\TestPoint.cpp" />
+    <ClCompile Include="src\test\TestRect.cpp" />
+    <ClCompile Include="src\test\Tests.cpp" />
+    <ClCompile Include="src\test\TestWellRectangle.cpp" />
     <ClCompile Include="src\utils\DmTimeWin32.cpp" />
     <ClCompile Include="third_party\libdmtx\dmtx.c" />
   </ItemGroup>
@@ -209,7 +218,9 @@
     <ClInclude Include="src\nvwa\set_assign.h" />
     <ClInclude Include="src\nvwa\static_assert.h" />
     <ClInclude Include="src\nvwa\static_mem_pool.h" />
+    <ClInclude Include="src\test\TestCommon.h" />
     <ClInclude Include="src\utils\DmTime.h" />
+    <ClInclude Include="TestCommon.h" />
     <ClInclude Include="third_party\include\glog\logging.h" />
     <ClInclude Include="third_party\include\glog\log_severity.h" />
     <ClInclude Include="third_party\include\glog\raw_logging.h" />

@@ -28,14 +28,15 @@ void getResultCodeMsg(int resultCode, std::string & message) {
 	case SC_INVALID_DPI:
 		message = "invalid DPI specified";
 		break;
-	case SC_INVALID_VALUE:
-		message = "invalid value specified";
+    case SC_INVALID_NOTHING_DECODED:
+        message = "no datamatrix barcodes could be decoded from the image";
 		break;
 	case SC_INVALID_IMAGE:
 		message = "invalid image scanned";
 		break;
-    case SC_INVALID_NOTHING_DECODED:
-        message = "no datamatrix barcodes could be decoded from the image";
+    case SC_INVALID_NOTHING_TO_DECODE:
+        message = "no wells to decode";
+		break;
 	case SC_INCORRECT_DPI_SCANNED:
 		message = "incorrect DPI on scanned image";
 		break;

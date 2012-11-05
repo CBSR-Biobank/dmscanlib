@@ -75,8 +75,12 @@ struct BoundingBox {
 			   && (points[0].y < points[1].y);
    }
 
-   T getArea() {
-	   return (points[1].x - points[0].x) * (points[1].y - points[0].y);
+   T getWidth() const {
+	   return points[1].x - points[0].x;
+   }
+
+   T getHeight() const {
+	   return points[1].y - points[0].y;
    }
 
    std::unique_ptr<const BoundingBox<T> > translate(const Point<T> & distance) const {

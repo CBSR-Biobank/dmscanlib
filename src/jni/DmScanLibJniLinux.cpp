@@ -28,6 +28,9 @@ void getResultCodeMsg(int resultCode, std::string & message) {
     case SC_INVALID_NOTHING_DECODED:
         message = "no datamatrix barcodes could be decoded from the image";
         break;
+    case SC_INVALID_NOTHING_TO_DECODE:
+        message = "no wells to decode";
+		break;
     default:
         message = "undefined error";
         break;
