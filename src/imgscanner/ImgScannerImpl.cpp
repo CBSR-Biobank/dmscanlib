@@ -138,7 +138,6 @@ bool ImgScannerImpl::selectSourceAsDefault() {
  * Opens the default data source.
  */
 bool ImgScannerImpl::scannerSourceInit(HWND & hwnd, TW_IDENTITY & srcID) {
-
    TW_UINT16 rc;
 
    hwnd = CreateWindowA("STATIC", "", WS_POPUPWINDOW, CW_USEDEFAULT,
@@ -201,7 +200,7 @@ void ImgScannerImpl::setFloatToIntPair(const double f, short & whole,
  *	Grab an image from the twain source and convert it to the dmtxImage format
  */
 HANDLE ImgScannerImpl::acquireImage(unsigned dpi, int brightness, int contrast,
-                                    BoundingBox<double> & bbox) {
+                                    const BoundingBox<double> & bbox) {
    CHECK_NOTNULL(g_hLib);
 
    TW_UINT16 rc;
@@ -220,12 +219,14 @@ HANDLE ImgScannerImpl::acquireImage(unsigned dpi, int brightness, int contrast,
    int scannerCapability = getScannerCapabilityInternal(srcID);
 
    if (!(scannerCapability & CAP_IS_SCANNER)) {
+	  scannerSourceDeinit(hwnd, srcID);
       errorCode = SC_FAIL;
       return NULL;
    }
    if (!(((scannerCapability & CAP_DPI_300) && dpi == 300)
          || ((scannerCapability & CAP_DPI_400) && dpi == 400)
          || ((scannerCapability & CAP_DPI_600) && dpi == 600))) {
+	  scannerSourceDeinit(hwnd, srcID);
       errorCode = SC_INVALID_DPI;
       return NULL;
    }

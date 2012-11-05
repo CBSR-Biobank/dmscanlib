@@ -53,7 +53,7 @@ TEST(TestDmScanLib, invalidImage) {
 TEST(TestDmScanLib, decodeImage) {
 	FLAGS_v = 3;
 
-	std::string fname("testImages/edge_tubes.bmp");
+	std::string fname("testImages/96tubes.bmp");
 
 	DmScanLib dmScanLib(1);
 	int result = test::decodeImage(fname, dmScanLib);

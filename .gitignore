@@ -2,14 +2,12 @@ obj
 Linux-Debug
 Linux-sharedlib
 ReleaseDLL
-Release
-DebugDLL
+Debug-DLL
 Debug
-Debug-standalone
-Release-Standalone
 TWAIN_2_1_Spec.pdf
 filtered.bmp
 decode.bmp
+scanned.bmp
 testImages
 .settings
 UpgradeLog.XML

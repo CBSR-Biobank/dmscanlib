@@ -106,30 +106,30 @@ void getWellRectsForBoundingBox(const unsigned dpi, const unsigned rows,
 	const unsigned cols, const BoundingBox<double> & bbox,
 	std::vector<std::unique_ptr<WellRectangle<double> > > & wellRects) {
 
-	double wellWidth = bbox.getWidth() / 12.0;
-	double wellHeight = bbox.getHeight() / 8.0;
+	double wellWidth = bbox.getWidth() / static_cast<double>(cols);
+	double wellHeight = bbox.getHeight() / static_cast<double>(rows);
 
     Point<double> horTranslation(static_cast<double>(wellWidth), 0);
     Point<double> verTranslation(0, static_cast<double>(wellHeight));
 
     // round off the bounding box so image dimensions are not exceeded
-	const double dotWidth = 1 / static_cast<double>(dpi);
+	const double dotWidth = 2 / static_cast<double>(dpi);
 	Point<double> pt2(wellWidth - dotWidth, wellHeight - dotWidth);
 	BoundingBox<double> startingWellBbox(bbox.points[0], 
 		*pt2.translate(bbox.points[0]));
 
-    for (unsigned row = 0; row < row; ++row) {
+    for (unsigned row = 0; row < rows; ++row) {
 	std::unique_ptr<const Point<double>> scaledVertTranslation = verTranslation.scale(row);
         std::unique_ptr<const BoundingBox<double> > bboxTranslated =
 			startingWellBbox.translate(*scaledVertTranslation);
 
         for (unsigned col = 0; col < cols; ++col) {
 		std::ostringstream label;
-		label << (char) ('A' + row) << 12 - col;
+		label << (char) ('A' + row) << cols - col;
 
             std::unique_ptr<WellRectangle<double> > wellRect(
 			new WellRectangle<double>(label.str().c_str(), *bboxTranslated));
-            VLOG(9) << *wellRect;
+            VLOG(3) << *wellRect;
             wellRects.push_back(std::move(wellRect));
             bboxTranslated = bboxTranslated->translate(horTranslation);
         }
@@ -177,6 +177,8 @@ int decodeImage(std::string fname, DmScanLib & dmScanLib) {
     std::unique_ptr<DecodeOptions> decodeOptions = getDefaultDecodeOptions();
     return dmScanLib.decodeImageWells(fname.c_str(), *decodeOptions, wellRects);
 }
+
+
 
 } /* namespace */
 

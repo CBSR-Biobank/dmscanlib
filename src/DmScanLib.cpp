@@ -56,8 +56,7 @@ const std::string DmScanLib::LIBRARY_NAME("dmscanlib");
 bool DmScanLib::loggingInitialized = false;
 
 DmScanLib::DmScanLib(unsigned loggingLevel, bool logToFile) :
-		imgScanner(std::move(ImgScanner::create())),
-		stdoutOutputEnable(false), textFileOutputEnable(false)
+		imgScanner(std::move(ImgScanner::create()))
 {
 	configLogging(loggingLevel, logToFile);
 }
@@ -108,30 +107,11 @@ void DmScanLib::configLogging(unsigned level, bool useFile) {
 	loggingInitialized = true;
 }
 
-void DmScanLib::saveResults(std::string & msg) {
-#ifdef DEBUG1
-	// FIXME:: is this required for VISUAL STUDIO?
-	/*
-	 * Could not use C++ streams for Release version of DLL.
-	 */
-	FILE *fh = fopen("dmscanlib.txt", "w");
-	CHECK_NOTNULL(fh);
-	fprintf(fh, "%s", msg.c_str());
-	fclose(fh);
-#else
-	std::ofstream myfile;
-	myfile.open("dmscanlib.txt");
-	myfile << msg;
-	myfile.close();
-
-#endif
-}
-
 int DmScanLib::scanImage(unsigned dpi, int brightness, int contrast,
-		BoundingBox<double> & bbox, const char * filename) {
-			VLOG(3) << "scanImage: dpi/" << dpi << " brightness/" << brightness
-				<< " contrast/" << contrast << bbox
-				<< " filename/" << filename;
+		const BoundingBox<double> & bbox, const char * filename) {
+   VLOG(3) << "scanImage: dpi/" << dpi << " brightness/" << brightness
+	   << " contrast/" << contrast << bbox
+	   << " filename/" << filename;
 
 	HANDLE h = imgScanner->acquireImage(dpi, brightness, contrast, bbox);
 	if (h == NULL) {
@@ -169,7 +149,7 @@ int DmScanLib::scanFlatbed(unsigned dpi, int brightness, int contrast,
 }
 
 int DmScanLib::scanAndDecode(unsigned dpi, int brightness, int contrast,
-		BoundingBox<double> & region, const DecodeOptions & decodeOptions,
+		const BoundingBox<double> & region, const DecodeOptions & decodeOptions,
 		std::vector<std::unique_ptr<WellRectangle<double>  > > & wellRects) {
 	VLOG(3) << "decodePlate: dpi/" << dpi << " brightness/" << brightness
 			<< " contrast/" << contrast
@@ -243,12 +223,22 @@ void DmScanLib::writeDecodedImage(const Dib & image,
 
 	CHECK_NOTNULL(decoder.get());
 
+    std::vector<std::unique_ptr<WellDecoder> > & wellDecoders = 
+		decoder->getWellDecoders();
+    CHECK(wellDecoders.size() > 0);
+
     const std::map<std::string, const WellDecoder *> & decodedWells = decoder->getDecodedWells();
     CHECK(decodedWells.size() > 0);
 
+	Dib decodedDib(image);
+	RgbQuad colorBlue(0, 0, 255);
+	
+	for (unsigned i = 0, n = wellDecoders.size(); i < n; ++i) {
+		decodedDib.drawRectangle(wellDecoders[i]->getWellRectangle(), colorBlue);
+	}
+
     RgbQuad colorRed(255, 0, 0);
     RgbQuad colorGreen(0, 255, 0);
-	Dib decodedDib(image);
 	for (std::map<std::string, const WellDecoder *>::const_iterator ii = decodedWells.begin();
 			ii != decodedWells.end(); ++ii) {
 		const WellDecoder & decodedWell = *(ii->second);

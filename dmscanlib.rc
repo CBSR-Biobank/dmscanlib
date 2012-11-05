@@ -51,8 +51,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,1,4,0
- PRODUCTVERSION 1,1,43,0
+ FILEVERSION 2,0,0,0
+ PRODUCTVERSION 2,0,0,0
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -69,12 +69,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "Canadian Biosample Repository"
             VALUE "FileDescription", "Scan data matrix based pallets and decode them."
-            VALUE "FileVersion", "1.1.4.0"
+            VALUE "FileVersion", "2.0.0.0"
             VALUE "InternalName", "dmscanlib"
             VALUE "LegalCopyright", "Copyright (C) 2011, GPL v3"
             VALUE "OriginalFilename", "dmscanlib.dll"
             VALUE "ProductName", "Data Matrix Pallet Scanning Library"
-            VALUE "ProductVersion", "1.1.43.0"
+            VALUE "ProductVersion", "2.0.0.0"
         END
     END
     BLOCK "VarFileInfo"

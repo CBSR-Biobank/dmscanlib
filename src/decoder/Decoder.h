@@ -57,6 +57,10 @@ public:
     }
 
     const unsigned getDecodedWellCount();
+	
+    std::vector<std::unique_ptr<WellDecoder> > & getWellDecoders() {
+		return wellDecoders;
+	}
 
     const std::map<std::string, const WellDecoder *> & getDecodedWells() const;
 

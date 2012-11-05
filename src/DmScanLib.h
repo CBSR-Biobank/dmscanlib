@@ -66,11 +66,11 @@ public:
 	int selectSourceAsDefault();
 	int getScannerCapability();
 	int scanImage(unsigned dpi, int brightness, int contrast,
-			BoundingBox<double> & bbox, const char * filename);
+			const BoundingBox<double> & bbox, const char * filename);
 	int scanFlatbed(unsigned dpi, int brightness, int contrast,
 			const char * filename);
 	int scanAndDecode(unsigned dpi, int brightness, int contrast,
-			BoundingBox<double> & region, const DecodeOptions & decodeOptions,
+			const BoundingBox<double> & region, const DecodeOptions & decodeOptions,
 			std::vector<std::unique_ptr<WellRectangle<double>  > > & wellRects);
 	int decodeImageWells(const char * filename,
 			const DecodeOptions & decodeOptions,
@@ -78,21 +78,11 @@ public:
 
 	static void configLogging(unsigned level, bool useFile = true);
 
-	void setTextFileOutputEnable(bool enable) {
-		textFileOutputEnable = enable;
-	}
-
-	void setStdoutOutputEnable(bool enable) {
-		stdoutOutputEnable = enable;
-	}
-
     const unsigned getDecodedWellCount();
 
     const std::map<std::string, const WellDecoder *> & getDecodedWells() const;
 
 protected:
-    void saveResults(std::string & msg);
-
     int isValidDpi(int dpi);
 
     int decodeCommon(const Dib & image, const DecodeOptions & decodeOptions,
@@ -106,10 +96,6 @@ protected:
     std::unique_ptr<ImgScanner> imgScanner;
 
     std::unique_ptr<Decoder> decoder;
-
-    bool stdoutOutputEnable;
-
-    bool textFileOutputEnable;
 
     static bool loggingInitialized;
 
