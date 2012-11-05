@@ -128,8 +128,8 @@ int Decoder::decodeWellRects() {
 		wellDecoders[i] = std::unique_ptr<WellDecoder>(
 				new WellDecoder(*this, std::move(convertedWellTect)));
 	}
-	//return decodeMultiThreaded();
-	return decodeSingleThreaded();
+	return decodeMultiThreaded();
+	//return decodeSingleThreaded();
 }
 
 int Decoder::decodeSingleThreaded() {
@@ -185,14 +185,14 @@ void Decoder::decodeWellRect(const Dib & wellRectImage, WellDecoder & wellDecode
 	DmtxImage * dmtxImage = wellRectImage.getDmtxImage();
 	CHECK_NOTNULL(dmtxImage);
 
-	//VLOG(2) << "decodeWellRect: " << wellDecoder;
+	VLOG(3) << "decodeWellRect: " << wellDecoder;
 
 	std::unique_ptr<DmtxDecodeHelper> dec =
 			createDmtxDecode(dmtxImage, dpi, wellDecoder, decodeOptions.shrink);
 	decodeWellRect(wellDecoder, dec->getDecode());
 
 	if (wellDecoder.getMessage().empty()) {
-		//VLOG(2) << "decodeWellRect: second attempt " << wellDecoder;
+		VLOG(3) << "decodeWellRect: second attempt " << wellDecoder;
 		dec = std::move(createDmtxDecode(
 				dmtxImage, dpi, wellDecoder, decodeOptions.shrink + 1));
 		decodeWellRect(wellDecoder, dec->getDecode());

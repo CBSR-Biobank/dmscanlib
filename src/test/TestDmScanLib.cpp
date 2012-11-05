@@ -169,17 +169,17 @@ int decodeImage(std::string fname, DmScanLib & dmScanLib) {
 TEST(TestApp, DecodeImage) {
 	FLAGS_v = 3;
 
-    std::string fname("testImages/edge_tubes.bmp");
+	std::string fname("testImages/edge_tubes.bmp");
 
-    DmScanLib dmScanLib(1);
-    int result = decodeImage(fname, dmScanLib);
+	DmScanLib dmScanLib(1);
+	int result = decodeImage(fname, dmScanLib);
 
-    EXPECT_EQ(SC_SUCCESS, result);
-    EXPECT_TRUE(dmScanLib.getDecodedWellCount() > 0);
+	EXPECT_EQ(SC_SUCCESS, result);
+	EXPECT_TRUE(dmScanLib.getDecodedWellCount() > 0);
 
-    if (dmScanLib.getDecodedWellCount() > 0) {
-	VLOG(1) << "number of wells decoded: " << dmScanLib.getDecodedWells().size();
-    }
+	if (dmScanLib.getDecodedWellCount() > 0) {
+		VLOG(1) << "number of wells decoded: " << dmScanLib.getDecodedWells().size();
+	}
 }
 
 TEST(TestApp, DecodeAllImages) {
@@ -188,27 +188,27 @@ TEST(TestApp, DecodeAllImages) {
     std::string dirname("testImages");
     std::vector<std::string> filenames;
 	bool result = getTestImageFileNames(dirname, filenames);
-    EXPECT_EQ(true, result);
+	EXPECT_EQ(true, result);
 
-    int decodeResult;
+	int decodeResult;
 
-    for (unsigned i = 0, n = filenames.size(); i < n; ++i) {
-	VLOG(1) << "test image: " << filenames[i];
+	for (unsigned i = 0, n = filenames.size(); i < n; ++i) {
+		VLOG(1) << "test image: " << filenames[i];
 
 		util::DmTime start;
-        DmScanLib dmScanLib(1);
-	decodeResult = decodeImage(filenames[i], dmScanLib);
+		DmScanLib dmScanLib(1);
+		decodeResult = decodeImage(filenames[i], dmScanLib);
 		util::DmTime end;
 
 		std::unique_ptr<util::DmTime> difftime = end.difftime(start);
 
-        EXPECT_EQ(SC_SUCCESS, decodeResult);
-        EXPECT_TRUE(dmScanLib.getDecodedWellCount() > 0);
+		EXPECT_EQ(SC_SUCCESS, decodeResult);
+		EXPECT_TRUE(dmScanLib.getDecodedWellCount() > 0);
 
-        VLOG(1) << "test image: " << filenames[i] << ", wells decoded: "
-			<< dmScanLib.getDecodedWellCount()
-			<< " time taken: " << *difftime << " sec";
-    }
+		VLOG(1) << "test image: " << filenames[i] << ", wells decoded: "
+				<< dmScanLib.getDecodedWellCount()
+				<< " time taken: " << *difftime << " sec";
+	}
 }
 
 } /* namespace */

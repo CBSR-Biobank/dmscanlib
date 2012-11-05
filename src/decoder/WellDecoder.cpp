@@ -39,9 +39,9 @@ void WellDecoder::run() {
     wellImage = decoder.getWorkingImage().crop(*boundingBox);
     decoder.decodeWellRect(*wellImage, *this);
     if (!message.empty()) {
-    	//VLOG(3) << "run: " << *this;
+    	VLOG(3) << "run: " << *this;
     } else {
-    	//VLOG(3) << "run: "<< wellRectangle->getLabel() << " - could not be decoded";
+    	VLOG(3) << "run: "<< wellRectangle->getLabel() << " - could not be decoded";
     }
 }
 
