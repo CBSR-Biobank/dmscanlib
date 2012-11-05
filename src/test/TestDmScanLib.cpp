@@ -150,23 +150,54 @@ void getWellRectsForSbsPalletImage(std::string & fname,
     }
 }
 
+std::unique_ptr<DecodeOptions> getDefaultDecodeOptions() {
+    const double scanGap = 5;
+    const long squareDev = 15;
+    const long edgeThresh = 5;
+    const long corrections = 10;
+    const long shrink = 1;
+
+	return std::unique_ptr<DecodeOptions>(new DecodeOptions (scanGap, squareDev, edgeThresh,
+			corrections, shrink));
+}
+
 int decodeImage(std::string fname, DmScanLib & dmScanLib) {
     std::vector<std::unique_ptr<WellRectangle<double> > > wellRects;
 
     getWellRectsForSbsPalletImage(fname, wellRects);
 
-    double scanGap = 5;
-    long squareDev = 15;
-    long edgeThresh = 5;
-    long corrections = 10;
-    long shrink = 1;
-
-    DecodeOptions decodeOptions(scanGap, squareDev, edgeThresh, corrections,
-	    shrink);
-    return dmScanLib.decodeImageWells(fname.c_str(), decodeOptions, wellRects);
+    std::unique_ptr<DecodeOptions> decodeOptions = getDefaultDecodeOptions();
+    return dmScanLib.decodeImageWells(fname.c_str(), *decodeOptions, wellRects);
 }
 
-TEST(TestApp, DecodeImage) {
+TEST(TestApp, invalidRects) {
+	FLAGS_v = 0;
+
+    std::unique_ptr<DecodeOptions> decodeOptions = getDefaultDecodeOptions();
+    std::vector<std::unique_ptr<WellRectangle<double> > > wellRects;
+	DmScanLib dmScanLib(1);
+	int result = dmScanLib.decodeImageWells("testImages/96tubes.bmp", *decodeOptions, wellRects);
+	EXPECT_EQ(SC_INVALID_NOTHING_DECODED, result);
+}
+
+TEST(TestApp, invalidImage) {
+	FLAGS_v = 0;
+
+	Point<double> pt1(0,0);
+	Point<double> pt2(10,10);
+	BoundingBox<double> bbox(pt1, pt2);
+	std::unique_ptr<WellRectangle<double> > wrect(new WellRectangle<double>("label", bbox));
+
+	std::vector<std::unique_ptr<WellRectangle<double> > > wellRects;
+    wellRects.push_back(std::move(wrect));
+
+    std::unique_ptr<DecodeOptions> decodeOptions = getDefaultDecodeOptions();
+	DmScanLib dmScanLib(1);
+	int result = dmScanLib.decodeImageWells("xyz.bmp", *decodeOptions, wellRects);
+	EXPECT_EQ(SC_INVALID_IMAGE, result);
+}
+
+TEST(TestApp, decodeImage) {
 	FLAGS_v = 3;
 
 	std::string fname("testImages/edge_tubes.bmp");
@@ -182,7 +213,7 @@ TEST(TestApp, DecodeImage) {
 	}
 }
 
-TEST(TestApp, DecodeAllImages) {
+TEST(TestApp, decodeAllImages) {
 	FLAGS_v = 1;
 
     std::string dirname("testImages");

@@ -93,7 +93,7 @@ void Decoder::applyFilters() {
 int Decoder::decodeWellRects() {
 	const unsigned dpi = workingImage->getDpi();
 	if ((dpi != 300) && (dpi != 400) && (dpi != 600)) {
-		return SC_INCORRECT_DPI_SCANNED;
+		return SC_INVALID_DPI;
 	}
 
 	VLOG(3) << "decodeWellRects: dpi/" << dpi << " numWellRects/" << wellRects.size();
