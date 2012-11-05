@@ -64,6 +64,14 @@ struct BoundingBox {
 				&& (points[0].y < points[1].y);
 	}
 
+	T getWidth() const {
+		return points[1].x - points[0].x;
+	}
+
+	T getHeight() const {
+		return points[1].y - points[0].y;
+	}
+
 	std::unique_ptr<const BoundingBox<T> > translate(const Point<T> & distance) const {
 		std::unique_ptr<const Point<T> > pt1 = std::move(points[0].translate(distance));
 		std::unique_ptr<const Point<T> > pt2 = std::move(points[1].translate(distance));
