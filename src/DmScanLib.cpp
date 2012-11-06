@@ -38,12 +38,13 @@
 #include "dib/Dib.h"
 #include "dib/RgbQuad.h"
 
-#include <glog/logging.h>
 #include <stdio.h>
 #include <iostream>
 #include <fstream>
 #include <string>
 
+#define GLOG_NO_ABBREVIATED_SEVERITIES
+#include <glog/logging.h>
 
 #if defined(USE_NVWA)
 #   include "debug_new.h"

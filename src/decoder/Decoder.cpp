@@ -148,7 +148,7 @@ int Decoder::decodeMultiThreaded() {
 
 	for(unsigned i = 0, n = wellDecoders.size(); i < n; ++i) {
 		WellDecoder & wellDecoder = *wellDecoders[i];
-		VLOG(2) << wellDecoder;
+		VLOG(5) << wellDecoder;
 		if (!wellDecoder.getMessage().empty()) {
 			if (decodedWells.find(wellDecoder.getMessage()) != decodedWells.end()) {
 				VLOG(1) << "duplicate decode message found: " << wellDecoder.getMessage();

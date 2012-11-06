@@ -39,9 +39,9 @@ const int SC_FAIL = -1;
 const int SC_TWAIN_UNAVAIL = -2;
 const int SC_INVALID_DPI = -3;
 const int SC_INVALID_NOTHING_DECODED = -4;
-const int SC_INVALID_IMAGE = -6;
-const int SC_INVALID_NOTHING_TO_DECODE = -7;
-const int SC_INCORRECT_DPI_SCANNED = -9;
+const int SC_INVALID_IMAGE = -5;
+const int SC_INVALID_NOTHING_TO_DECODE = -6;
+const int SC_INCORRECT_DPI_SCANNED = -7;
 
 const unsigned CAP_IS_WIA = 0x01;
 const unsigned CAP_DPI_300 = 0x02;
