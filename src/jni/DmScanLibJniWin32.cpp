@@ -7,6 +7,7 @@
 #include "geometry.h"
 #include "DmScanLib.h"
 #include "decoder/DecodeOptions.h"
+#include "decoder/WellDecoder.h"
 
 #include <iostream>
 
@@ -142,8 +143,7 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
   (JNIEnv * env, jobject obj, jlong _verbose, jlong _dpi, jint _brightness, jint _contrast, 
   jobject _region, jobject _decodeOptions, jobjectArray _wellRects) {
 
-    if ((_verbose == 0) || (_dpi == 0) || (_brightness == 0) || (_contrast == 0) 
-		|| (_region == 0) || (_decodeOptions == 0) || (_wellRects == 0)) {
+    if ((_dpi == 0)	|| (_region == 0) || (_decodeOptions == 0) || (_wellRects == 0)) {
 		return dmscanlib::jni::createDecodeResultObject(env, dmscanlib::SC_FAIL);
 	}
 
@@ -163,6 +163,7 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
 	int result = dmscanlib::jni::getWellRectangles(env, numWells, _wellRects, wellRects);
 
 	if (result == 0) {
+		// got an exception when converting from JNI
 		return NULL;
 	} else if ((result != 1) || (wellRects.size() == 0)) {
     	// invalid rects or zero rects passed from java
@@ -172,8 +173,10 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
     dmscanlib::DmScanLib dmScanLib(0);
     result = dmScanLib.scanAndDecode(dpi, brightness, contrast, *bbox, *decodeOptions, wellRects);
 
-    // TODO: needs implementation
-    return NULL;
+	if (result == dmscanlib::SC_SUCCESS) {
+		return dmscanlib::jni::createDecodeResultObject(env,result, dmScanLib.getDecodedWells());
+	}
+	return dmscanlib::jni::createDecodeResultObject(env, result);
 }
 
 

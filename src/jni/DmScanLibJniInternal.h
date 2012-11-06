@@ -15,6 +15,7 @@
 
 #include <jni.h>
 #include <vector>
+#include <map>
 #include <string>
 #include <memory>
 
@@ -31,7 +32,8 @@ jobject createScanResultObject(JNIEnv * env, int resultCode, int value);
 jobject createDecodeResultObject(JNIEnv * env, int resultCode);
 
 jobject createDecodeResultObject(JNIEnv * env, int resultCode,
-		const std::vector<dmscanlib::WellDecoder *> & wellDecoders);
+        const std::map<std::string, const WellDecoder *> & wellDecoders);
+
 
 std::unique_ptr<BoundingBox<double> > getBoundingBox(
 	JNIEnv *env, jobject bboxJavaObj);

@@ -148,7 +148,7 @@ int getWellRectangles(JNIEnv *env, jsize numWells, jobjectArray _wellRects,
 
 	std::unique_ptr<WellRectangle<double> > wellRect(new WellRectangle<double>(label, rect));
 
-    	VLOG(3) << *wellRect;
+    	VLOG(5) << *wellRect;
 
     	wellRects.push_back(std::move(wellRect));
 
@@ -212,6 +212,7 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
 	int result = dmscanlib::jni::getWellRectangles(env, numWells, _wellRects, wellRects);
 
 	if (result == 0) {
+		// got an exception when converting from JNI
 		return NULL;
 	} else if ((result != 1) || (wellRects.size() == 0)) {
     	// invalid rects or zero rects passed from java
