@@ -74,13 +74,15 @@ jobject createDecodeResultObject(JNIEnv * env, int resultCode,
         	const dmscanlib::WellDecoder & wellDecoder = *(ii->second);
             jvalue data[3];
 
+			VLOG(2) << wellDecoder;
+
             data[0].l = env->NewStringUTF(wellDecoder.getLabel().c_str());
             data[1].l = env->NewStringUTF(wellDecoder.getMessage().c_str());
 
             env->CallObjectMethodA(resultObj, setCellMethod, data);
         }
     }
-
+	
     return resultObj;
 }
 

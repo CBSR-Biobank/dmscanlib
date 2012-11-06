@@ -103,7 +103,7 @@ void DmScanLib::configLogging(unsigned level, bool useFile) {
 #endif
 
 	FLAGS_logtostderr = !useFile;
-	FLAGS_alsologtostderr = !useFile;
+	FLAGS_alsologtostderr = false;
 
 	loggingInitialized = true;
 }
