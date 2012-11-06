@@ -33,5 +33,7 @@
 int main(int argc, char **argv) {
 	::testing::InitGoogleTest(&argc, argv);
 	dmscanlib::DmScanLib::configLogging(1, false);
-	return RUN_ALL_TESTS();
+	RUN_ALL_TESTS();
+	//std::getchar();
+	return 0;
 }

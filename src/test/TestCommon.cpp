@@ -178,6 +178,23 @@ int decodeImage(std::string fname, DmScanLib & dmScanLib) {
     return dmScanLib.decodeImageWells(fname.c_str(), *decodeOptions, wellRects);
 }
 
+// bbox here has to start at (0,0)
+std::unique_ptr<const BoundingBox<double>> getWellsBoundingBox(
+	const BoundingBox<double> & bbox) {
+	const Point<double> origin(0, 0);
+	std::unique_ptr<const Point<double> > bboxPt1Neg(bbox.points[0].scale(-1));
+
+	return std::unique_ptr<const BoundingBox<double>>(new BoundingBox<double>(
+		origin, *bbox.points[1].translate(*bboxPt1Neg)));
+}
+
+std::unique_ptr<const BoundingBox<double>> getWiaBoundingBox(
+	const BoundingBox<double> & bbox) {
+	std::unique_ptr<const Point<double> > bboxPt1Neg(bbox.points[0].scale(-1));
+
+	return std::unique_ptr<const BoundingBox<double>>(new BoundingBox<double>(
+		bbox.points[0], *bbox.points[1].translate(*bboxPt1Neg)));
+}
 
 
 } /* namespace */

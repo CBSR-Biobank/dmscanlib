@@ -10,6 +10,7 @@
 #include "decoder/Decoder.h"
 #include "decoder/DecodeOptions.h"
 #include "decoder/WellRectangle.h"
+#include "decoder/WellDecoder.h"
 #include "dib/Dib.h"
 
 #include <stdexcept>
@@ -116,17 +117,21 @@ TEST(TestDmScanLibWin32, scanFlatbed) {
 TEST(TestDmScanLibWin32, scanAndDecodeInvalidDpi) {
 	FLAGS_v = 3;
 
-	Point<double> pt1(0.396, 0.240);
-	Point<double> pt2(4.566 - pt1.x, 3.089 - pt1.y); // WIA mode
-	BoundingBox<double> bbox(pt1, pt2);
+	const Point<double> pt1(0.396, 0.240);
+	const Point<double> pt2(4.566, 3.089);
+	const BoundingBox<double> scanRegion(pt1, pt2);
+	std::unique_ptr<const BoundingBox<double> > wellsBbox(
+		test::getWellsBoundingBox(scanRegion));
+	std::unique_ptr<const BoundingBox<double> > scanBbox(
+		test::getWiaBoundingBox(scanRegion));
 	std::unique_ptr<DecodeOptions> decodeOptions = 
 		test::getDefaultDecodeOptions();
 
 	std::vector<std::unique_ptr<WellRectangle<double> > > wellRects;
-    test::getWellRectsForBoundingBox(200, 8, 12, bbox, wellRects);
+    test::getWellRectsForBoundingBox(200, 8, 12, *wellsBbox, wellRects);
 
 	DmScanLib dmScanLib(1);
-	int result = dmScanLib.scanAndDecode(200, 0, 0, bbox, *decodeOptions, wellRects);
+	int result = dmScanLib.scanAndDecode(200, 0, 0, *scanBbox, *decodeOptions, wellRects);
 
 	EXPECT_EQ(SC_INVALID_DPI, result);
 }
@@ -134,31 +139,81 @@ TEST(TestDmScanLibWin32, scanAndDecodeInvalidDpi) {
 TEST(TestDmScanLibWin32, scanAndDecodeValidDpi) {
 	FLAGS_v = 3;
 
-	const Point<double> originPt(0, 0);
 	const Point<double> pt1(0.400, 0.265);
-	std::unique_ptr<const Point<double> > pt1Neg = pt1.scale(-1);
 	const Point<double> pt2(4.566, 3.020); 
-	// convert to WIA coordinates
-	std::unique_ptr<const Point<double> > pt2Wia = pt2.translate(*pt1Neg);
-
+	const BoundingBox<double> scanRegion(pt1, pt2);
+	std::unique_ptr<const BoundingBox<double> > wellsBbox(
+		test::getWellsBoundingBox(scanRegion));
+	std::unique_ptr<const BoundingBox<double> > scanBbox(
+		test::getWiaBoundingBox(scanRegion));
 	std::unique_ptr<DecodeOptions> decodeOptions = 
 		test::getDefaultDecodeOptions();
 
 	std::vector<std::unique_ptr<WellRectangle<double> > > wellRects;
 
-	// bbox here has to start at (0,0)
-	BoundingBox<double> wellsBbox(originPt, *pt2.translate(*pt1Neg));
-    test::getWellRectsForBoundingBox(600, 8, 12, wellsBbox, wellRects);
-
+    test::getWellRectsForBoundingBox(600, 8, 12, *wellsBbox, wellRects);
 	DmScanLib dmScanLib(1);
-	BoundingBox<double> scanBbox(pt1, *pt2Wia);
-	int result = dmScanLib.scanAndDecode(600, 0, 0, scanBbox, *decodeOptions, wellRects);
+	int result = dmScanLib.scanAndDecode(600, 0, 0, *scanBbox, *decodeOptions, wellRects);
 
 	EXPECT_EQ(SC_SUCCESS, result);
 	EXPECT_TRUE(dmScanLib.getDecodedWellCount() > 0);
 
+	const std::map<std::string, const WellDecoder *> & decodedWells =
+		dmScanLib.getDecodedWells();
+
+   	for (std::map<std::string, const WellDecoder *>::const_iterator ii = decodedWells.begin();
+  			ii != decodedWells.end(); ++ii) {
+      	const dmscanlib::WellDecoder & wellDecoder = *(ii->second);
+		VLOG(1) << wellDecoder.getLabel() << ": " << wellDecoder.getMessage();
+	}
+
 	if (dmScanLib.getDecodedWellCount() > 0) {
 		VLOG(1) << "number of wells decoded: " << dmScanLib.getDecodedWells().size();
+	}
+}
+
+TEST(TestDmScanLibWin32, scanAndDecodeMultiple) {
+	FLAGS_v = 1;
+
+	const Point<double> pt1(0.400, 0.265);
+	const Point<double> pt2(4.566, 3.020); 
+	const BoundingBox<double> scanRegion(pt1, pt2);
+	std::unique_ptr<const BoundingBox<double> > wellsBbox(
+		test::getWellsBoundingBox(scanRegion));
+	std::unique_ptr<const BoundingBox<double> > scanBbox(
+		test::getWiaBoundingBox(scanRegion));
+	std::unique_ptr<DecodeOptions> decodeOptions = 
+		test::getDefaultDecodeOptions();
+
+	std::vector<std::unique_ptr<WellRectangle<double> > > wellRects;
+
+    test::getWellRectsForBoundingBox(600, 8, 12, *wellsBbox, wellRects);
+	DmScanLib dmScanLib(1);
+	int result = dmScanLib.scanAndDecode(600, 0, 0, *scanBbox, *decodeOptions, wellRects);
+
+	EXPECT_EQ(SC_SUCCESS, result);
+	EXPECT_TRUE(dmScanLib.getDecodedWellCount() > 0);
+
+	std::map<const std::string, std::string> lastResults;
+	const std::map<std::string, const WellDecoder *> & decodedWells =
+		dmScanLib.getDecodedWells();
+
+   	for (std::map<std::string, const WellDecoder *>::const_iterator ii = decodedWells.begin();
+  			ii != decodedWells.end(); ++ii) {
+      	const dmscanlib::WellDecoder & wellDecoder = *(ii->second);
+		lastResults[wellDecoder.getLabel()] = wellDecoder.getMessage();
+	}
+
+	result = dmScanLib.scanAndDecode(600, 0, 0, *scanBbox, *decodeOptions, wellRects);
+	const std::map<std::string, const WellDecoder *> & decodedWells2 =
+		dmScanLib.getDecodedWells();
+   	for (std::map<std::string, const WellDecoder *>::const_iterator ii = decodedWells2.begin();
+  			ii != decodedWells2.end(); ++ii) {
+      	const dmscanlib::WellDecoder & wellDecoder = *(ii->second);
+
+		if (lastResults.find(wellDecoder.getLabel()) != lastResults.end()) {
+			EXPECT_EQ(lastResults[wellDecoder.getLabel()], wellDecoder.getMessage());
+		}
 	}
 }
 
