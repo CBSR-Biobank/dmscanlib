@@ -200,8 +200,7 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
 		JNIEnv * env, jobject obj, jlong _verbose, jstring _filename,
 		jobject _decodeOptions, jobjectArray _wellRects) {
 
-	if ((_verbose == 0) || (_filename == 0) || (_decodeOptions == 0)
-			|| (_wellRects == 0)) {
+	if ((_filename == 0) || (_decodeOptions == 0) || (_wellRects == 0)) {
 		return dmscanlib::jni::createDecodeResultObject(env, dmscanlib::SC_FAIL);
 	}
 
