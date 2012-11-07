@@ -110,6 +110,10 @@ void DmScanLib::configLogging(unsigned level, bool useFile) {
 
 int DmScanLib::scanImage(unsigned dpi, int brightness, int contrast,
 		const BoundingBox<double> & bbox, const char * filename) {
+   if (filename == NULL) {
+	   throw std::invalid_argument("filename is null");
+   }
+
    VLOG(3) << "scanImage: dpi/" << dpi << " brightness/" << brightness
 	   << " contrast/" << contrast << bbox
 	   << " filename/" << filename;
@@ -131,6 +135,10 @@ int DmScanLib::scanImage(unsigned dpi, int brightness, int contrast,
 
 int DmScanLib::scanFlatbed(unsigned dpi, int brightness, int contrast,
 		const char * filename) {
+   if (filename == NULL) {
+	   throw std::invalid_argument("filename is null");
+   }
+
 	VLOG(3) << "slScanFlatbed: dpi/" << dpi << " brightness/" << brightness
 					<< " contrast/" << contrast << " filename/" << filename;
 

@@ -53,21 +53,23 @@ TEST(TestDmScanLibWin32, getScannerCapability) {
 TEST(TestDmScanLibWin32, scanImage) {
 	FLAGS_v = 3;
 
-	const Point<double> originPt(0, 0);
 	const Point<double> pt1(0.400, 0.265);
-	std::unique_ptr<const Point<double> > pt1Neg = pt1.scale(-1);
 	const Point<double> pt2(4.566, 3.020); 
-	// convert to WIA coordinates
-	std::unique_ptr<const Point<double> > pt2Wia = pt2.translate(*pt1Neg);
+	const BoundingBox<double> scanRegion(pt1, pt2);
+	std::unique_ptr<const BoundingBox<double> > wellsBbox(
+		test::getWellsBoundingBox(scanRegion));
+	std::unique_ptr<const BoundingBox<double> > scanBbox(
+		test::getWiaBoundingBox(scanRegion));
+	std::unique_ptr<DecodeOptions> decodeOptions = 
+		test::getDefaultDecodeOptions();
 
 	std::string fname("tmpscan.bmp");
 	std::wstring fnamew(fname.begin(), fname.end());
 	DeleteFile(fnamew.c_str());
 
 	DmScanLib dmScanLib(1);
-	BoundingBox<double> scanBbox(pt1, *pt2Wia);
 	const unsigned dpi = 300;
-	int result = dmScanLib.scanImage(dpi, 0, 0, scanBbox, fname.c_str());
+	int result = dmScanLib.scanImage(dpi, 0, 0, *scanBbox, fname.c_str());
 
 	EXPECT_EQ(SC_SUCCESS, result);
 	Dib dib;
@@ -80,6 +82,30 @@ TEST(TestDmScanLibWin32, scanImage) {
 		dib.getWidth());
 	EXPECT_EQ(static_cast<unsigned>(expectedImageSize.getHeight() * dpi), 
 		dib.getHeight());
+}
+
+TEST(TestDmScanLibWin32, scanImageBadParams) {
+	FLAGS_v = 3;	
+
+	const Point<double> pt1(0.400, 0.265);
+	const Point<double> pt2(4.566, 3.020); 
+	const BoundingBox<double> scanRegion(pt1, pt2);
+	std::unique_ptr<const BoundingBox<double> > wellsBbox(
+		test::getWellsBoundingBox(scanRegion));
+	std::unique_ptr<const BoundingBox<double> > scanBbox(
+		test::getWiaBoundingBox(scanRegion));
+	std::unique_ptr<DecodeOptions> decodeOptions = 
+		test::getDefaultDecodeOptions();
+
+	std::string fname("tmpscan.bmp");
+	std::wstring fnamew(fname.begin(), fname.end());
+	DeleteFile(fnamew.c_str());
+
+	DmScanLib dmScanLib(1);
+    ASSERT_THROW(dmScanLib.scanImage(300, 0, 0, *scanBbox, NULL), std::invalid_argument);
+
+	int result = dmScanLib.scanImage(0, 0, 0, *scanBbox, fname.c_str());
+	EXPECT_EQ(SC_FAIL, result);
 }
 
 TEST(TestDmScanLibWin32, scanImageInvalidDpi) {
@@ -97,6 +123,7 @@ TEST(TestDmScanLibWin32, scanImageInvalidDpi) {
 	result = dmScanLib.scanImage(200, 0, 0, scanBbox, "tmpscan.bmp");
 	EXPECT_EQ(SC_INVALID_DPI, result);
 }
+
 TEST(TestDmScanLibWin32, scanFlatbed) {
 	FLAGS_v = 3;
 
@@ -112,6 +139,20 @@ TEST(TestDmScanLibWin32, scanFlatbed) {
 	Dib dib;
 	dib.readFromFile(fname);
 	EXPECT_EQ(dpi, dib.getDpi());
+}
+
+TEST(TestDmScanLibWin32, scanFlatbedBadParams) {
+	FLAGS_v = 3;
+
+	std::string fname("flatbed.bmp");
+	std::wstring fnamew(fname.begin(), fname.end());
+	DeleteFile(fnamew.c_str());
+
+	DmScanLib dmScanLib(1);
+    ASSERT_THROW(dmScanLib.scanFlatbed(300, 0, 0, NULL), std::invalid_argument);
+
+	int result = dmScanLib.scanFlatbed(0, 0, 0, fname.c_str());
+	EXPECT_EQ(SC_FAIL, result);
 }
 
 TEST(TestDmScanLibWin32, scanAndDecodeInvalidDpi) {
