@@ -47,7 +47,7 @@ void getResultCodeMsg(int resultCode, std::string & message) {
 	}
 }
 
-}; /* namespace */
+} /* namespace */
 
 } /* namespace */
 
@@ -97,6 +97,10 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
                 jint _brightness, jint _contrast, jobject _region,
                 jstring _filename) {
 
+    if ((_dpi == 0)	|| (_region == 0) || (_filename == 0)) {
+		return dmscanlib::jni::createDecodeResultObject(env, dmscanlib::SC_FAIL);
+	}
+
     unsigned verbose = static_cast<unsigned>(_verbose);
     unsigned dpi = static_cast<unsigned>(_dpi);
     unsigned brightness = static_cast<unsigned>(_brightness);
@@ -120,6 +124,10 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
 JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_scanFlatbed(
                 JNIEnv * env, jobject obj, jlong _verbose, jlong _dpi,
                 jint _brightness, jint _contrast, jstring _filename) {
+
+    if ((_dpi == 0)	|| (_filename == 0)) {
+		return dmscanlib::jni::createDecodeResultObject(env, dmscanlib::SC_FAIL);
+	}
 
     unsigned verbose = static_cast<unsigned>(_verbose);
     unsigned dpi = static_cast<unsigned>(_dpi);
