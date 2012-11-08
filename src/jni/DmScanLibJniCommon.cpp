@@ -74,13 +74,15 @@ jobject createDecodeResultObject(JNIEnv * env, int resultCode,
         	const dmscanlib::WellDecoder & wellDecoder = *(ii->second);
             jvalue data[3];
 
-			VLOG(2) << wellDecoder;
+			VLOG(5) << wellDecoder;
 
             data[0].l = env->NewStringUTF(wellDecoder.getLabel().c_str());
             data[1].l = env->NewStringUTF(wellDecoder.getMessage().c_str());
 
             env->CallObjectMethodA(resultObj, setCellMethod, data);
         }
+
+		VLOG(1) << "wells decoded: " << wellDecoders.size();
     }
 	
     return resultObj;
@@ -94,7 +96,7 @@ int getWellRectangles(JNIEnv *env, jsize numWells, jobjectArray _wellRects,
     jmethodID wellRectGetCornerXMethodID = NULL;
     jmethodID wellRectGetCornerYMethodID = NULL;
 
-	VLOG(3) << "decodeImage: numWells/" << numWells;
+	VLOG(5) << "decodeImage: numWells/" << numWells;
 
 	// TODO check for max well rectangle objects
     for (int i = 0; i < static_cast<int>(numWells); ++i) {

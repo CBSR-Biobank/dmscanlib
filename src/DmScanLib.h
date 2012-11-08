@@ -58,6 +58,7 @@ class DecodeOptions;
 
 class DmScanLib {
 public:
+	DmScanLib();
 	DmScanLib(unsigned loggingLevel, bool logToFile = true);
 	virtual ~DmScanLib();
 

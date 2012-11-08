@@ -428,7 +428,7 @@ std::unique_ptr<Dib> Dib::crop(const BoundingBox<unsigned> & bbox) const {
 	unsigned cWidth = boundBbox.points[1].x - boundBbox.points[0].x;
 	unsigned cHeight = boundBbox.points[1].y - boundBbox.points[0].y;
 
-	VLOG(3) << "crop: Bbox" << bbox << ", width/" << cWidth << " height/" << cHeight;
+	VLOG(5) << "crop: Bbox" << bbox << ", width/" << cWidth << " height/" << cHeight;
 
 	std::unique_ptr<Dib> croppedImg(
 			new Dib(cWidth, cHeight, colorBits, pixelsPerMeter));

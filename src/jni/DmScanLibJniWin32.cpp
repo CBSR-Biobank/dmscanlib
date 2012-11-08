@@ -58,7 +58,7 @@ void getResultCodeMsg(int resultCode, std::string & message) {
  */
 JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_isTwainAvailable(
                 JNIEnv * env, jobject obj) {
-    dmscanlib::DmScanLib dmScanLib(0);
+    dmscanlib::DmScanLib dmScanLib;
     int result = dmScanLib.isTwainAvailable();
     return dmscanlib::jni::createScanResultObject(env, result, result);
 }
@@ -70,7 +70,7 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
  */
 JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_selectSourceAsDefault(
                 JNIEnv * env, jobject obj) {
-    dmscanlib::DmScanLib dmScanLib(0);
+    dmscanlib::DmScanLib dmScanLib;
     int result = dmScanLib.selectSourceAsDefault();
     return dmscanlib::jni::createScanResultObject(env, result, result);
 }
@@ -82,7 +82,7 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
  */
 JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_getScannerCapability(
                 JNIEnv * env, jobject obj) {
-    dmscanlib::DmScanLib dmScanLib(0);
+    dmscanlib::DmScanLib dmScanLib;
     int result = dmScanLib.getScannerCapability();
     return dmscanlib::jni::createScanResultObject(env, dmscanlib::SC_SUCCESS, result);
 }

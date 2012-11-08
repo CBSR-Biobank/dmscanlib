@@ -259,10 +259,11 @@ HANDLE ImgScannerImpl::acquireImage(unsigned dpi, int brightness, int contrast,
    value.Whole = contrast;
    setCapOneValue(&srcID, ICAP_CONTRAST, TWTY_FIX32, *(unsigned long*) &value);
 
-   VLOG(3) << "acquireImage: source/\"" << srcID.ProductName << "\""
-           << " brightness/" << brightness
-           << " constrast/" << contrast
-           << " " << bbox;
+   VLOG(2) << "acquireImage: source/\"" << srcID.ProductName << "\""
+	   << " dpi/" << dpi
+	   << " brightness/" << brightness
+	   << " constrast/" << contrast
+	   << " " << bbox;
 
    setCapOneValue(&srcID, ICAP_UNITS, TWTY_UINT16, TWUN_INCHES);
    TW_IMAGELAYOUT layout;
@@ -388,6 +389,8 @@ HANDLE ImgScannerImpl::acquireImage(unsigned dpi, int brightness, int contrast,
          }
       }
    }
+
+   VLOG(2) << "image acquired successfully"; 
 
    scannerSourceDeinit(hwnd, srcID);
    return (HANDLE) handle;
