@@ -45,10 +45,8 @@ public:
 	static PalletSize getPalletSizeFromString(std::string & palletSizeStr);
 
 private:
-
-	void decodeImage(std::vector<std::unique_ptr<WellRectangle<double> > > & wells,
-			std::map<std::string, std::string> & decodedMessages);
-	void generateWells(std::vector<std::unique_ptr<WellRectangle<double> > > & wells,
+	void generateWells();
+	void decodeImage(std::vector<std::unique_ptr<const WellRectangle<double> > > & wells,
 			std::map<std::string, std::string> & decodedMessages);
 
 	static const std::pair<const unsigned, const unsigned> RowColsForPalletSize[PSIZE_MAX];
@@ -76,20 +74,7 @@ ImageInfo::ImageInfo(const std::string & _filename, const PalletSize _palletSize
 		const bool _decode) :
 		filename(_filename), palletSize(_palletSize), decode(_decode)
 {
-    std::vector<std::unique_ptr<WellRectangle<double> > > wellRects;
-
-    test::getWellRectsForPalletImage(filename,
-    		RowColsForPalletSize[palletSize].first,
-    		RowColsForPalletSize[palletSize].second,
-    		wellRects);
-
-	std::map<std::string, std::string> decodedMessages;
-
-	if (decode) {
-		decodeImage(wellRects, decodedMessages);
-	}
-
-	generateWells(wellRects, decodedMessages);
+	generateWells();
 }
 
 PalletSize ImageInfo::getPalletSizeFromString(std::string & palletSizeStr) {
@@ -106,29 +91,18 @@ PalletSize ImageInfo::getPalletSizeFromString(std::string & palletSizeStr) {
 	return palletSize;
 }
 
-void ImageInfo::decodeImage(std::vector<std::unique_ptr<WellRectangle<double> > > & wellRects,
-		std::map<std::string, std::string> & decodedMessages) {
-	DmScanLib dmScanLib(0);
+void ImageInfo::generateWells() {
+    std::vector<std::unique_ptr<const WellRectangle<double> > > wells;
 
-    std::unique_ptr<DecodeOptions> decodeOptions = test::getDefaultDecodeOptions();
-    int result = dmScanLib.decodeImageWells(filename.c_str(), *decodeOptions, wellRects);
+    test::getWellRectsForPalletImage(filename,
+    		RowColsForPalletSize[palletSize].first,
+    		RowColsForPalletSize[palletSize].second,
+    		wells);
 
-    if (result != SC_SUCCESS) {
-    	std::cerr << "could not decode image: " << filename << std::endl;
-    }
-
-	if (dmScanLib.getDecodedWellCount() > 0) {
-	    const std::map<std::string, const WellDecoder *> & decodedWells = dmScanLib.getDecodedWells();
-		for (std::map<std::string, const WellDecoder *>::const_iterator ii = decodedWells.begin();
-				ii != decodedWells.end(); ++ii) {
-			const WellDecoder & decodedWell = *(ii->second);
-			decodedMessages[decodedWell.getLabel()] = decodedWell.getMessage();
-		}
+	std::map<std::string, std::string> decodedMessages;
+	if (decode) {
+		decodeImage(wells, decodedMessages);
 	}
-}
-
-void ImageInfo::generateWells(std::vector<std::unique_ptr<WellRectangle<double> > > & wells,
-		std::map<std::string, std::string> & decodedMessages) {
 
 	Dib dib;
 	dib.readFromFile(filename);
@@ -152,6 +126,28 @@ void ImageInfo::generateWells(std::vector<std::unique_ptr<WellRectangle<double> 
 			std::cout << "," << decodedMessages[wellRect.getLabel()];
 		}
 		std::cout << std::endl;
+	}
+}
+
+void ImageInfo::decodeImage(
+		std::vector<std::unique_ptr<const WellRectangle<double> > > & wellRects,
+		std::map<std::string, std::string> & decodedMessages) {
+	DmScanLib dmScanLib(0);
+
+    std::unique_ptr<DecodeOptions> decodeOptions = test::getDefaultDecodeOptions();
+    int result = dmScanLib.decodeImageWells(filename.c_str(), *decodeOptions, wellRects);
+
+    if (result != SC_SUCCESS) {
+    	std::cerr << "could not decode image: " << filename << std::endl;
+    }
+
+	if (dmScanLib.getDecodedWellCount() > 0) {
+	    const std::map<std::string, const WellDecoder *> & decodedWells = dmScanLib.getDecodedWells();
+		for (std::map<std::string, const WellDecoder *>::const_iterator ii = decodedWells.begin();
+				ii != decodedWells.end(); ++ii) {
+			const WellDecoder & decodedWell = *(ii->second);
+			decodedMessages[decodedWell.getLabel()] = decodedWell.getMessage();
+		}
 	}
 }
 

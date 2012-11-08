@@ -46,7 +46,7 @@ namespace dmscanlib {
 using namespace decoder;
 
 Decoder::Decoder(const Dib & _image, const DecodeOptions & _decodeOptions,
-		std::vector<std::unique_ptr<WellRectangle<double>  > > & _wellRects) :
+		std::vector<std::unique_ptr<const WellRectangle<double>  > > & _wellRects) :
 		image(_image), decodeOptions(_decodeOptions),
 		wellRects(_wellRects), decodeSuccessful(false)
 {

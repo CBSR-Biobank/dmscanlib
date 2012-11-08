@@ -104,7 +104,7 @@ bool getTestImageFileNames(std::string dir, std::vector<std::string> & filenames
 
 void getWellRectsForBoundingBox(const unsigned dpi, const unsigned rows,
 	const unsigned cols, const BoundingBox<double> & bbox,
-	std::vector<std::unique_ptr<WellRectangle<double> > > & wellRects) {
+	std::vector<std::unique_ptr<const WellRectangle<double> > > & wellRects) {
 
 	double wellWidth = bbox.getWidth() / static_cast<double>(cols);
 	double wellHeight = bbox.getHeight() / static_cast<double>(rows);
@@ -137,7 +137,7 @@ void getWellRectsForBoundingBox(const unsigned dpi, const unsigned rows,
 }
 
 void getWellRectsForPalletImage(const std::string & fname, const unsigned rows,
-	const unsigned cols, std::vector<std::unique_ptr<WellRectangle<double> > > & wellRects) {
+	const unsigned cols, std::vector<std::unique_ptr<const WellRectangle<double> > > & wellRects) {
 
 	Dib image;
 	bool readResult = image.readFromFile(fname);
@@ -167,7 +167,7 @@ std::unique_ptr<DecodeOptions> getDefaultDecodeOptions() {
 }
 
 int decodeImage(std::string fname, DmScanLib & dmScanLib) {
-    std::vector<std::unique_ptr<WellRectangle<double> > > wellRects;
+    std::vector<std::unique_ptr<const WellRectangle<double> > > wellRects;
 
     getWellRectsForPalletImage(fname, 8, 12, wellRects);
 

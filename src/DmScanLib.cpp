@@ -164,7 +164,7 @@ int DmScanLib::scanFlatbed(unsigned dpi, int brightness, int contrast,
 
 int DmScanLib::scanAndDecode(unsigned dpi, int brightness, int contrast,
 		const BoundingBox<double> & region, const DecodeOptions & decodeOptions,
-		std::vector<std::unique_ptr<WellRectangle<double>  > > & wellRects) {
+		std::vector<std::unique_ptr<const WellRectangle<double>  > > & wellRects) {
 	VLOG(1) << "scanAndDecode: dpi/" << dpi << " brightness/" << brightness
 			<< " contrast/" << contrast
 			<< " " << region << " " << decodeOptions;
@@ -194,7 +194,7 @@ int DmScanLib::scanAndDecode(unsigned dpi, int brightness, int contrast,
 
 int DmScanLib::decodeImageWells(const char * filename,
 		const DecodeOptions & decodeOptions,
-		std::vector<std::unique_ptr<WellRectangle<double>  > > & wellRects) {
+		std::vector<std::unique_ptr<const WellRectangle<double>  > > & wellRects) {
 
 	VLOG(1) << "decodeImageWells: filename/" << filename
 			<< " numWellRects/" << wellRects.size()
@@ -212,7 +212,7 @@ int DmScanLib::decodeImageWells(const char * filename,
 int DmScanLib::decodeCommon(const Dib & image,
 		const DecodeOptions & decodeOptions,
 		const std::string &decodedDibFilename,
-		std::vector<std::unique_ptr<WellRectangle<double>  > > & wellRects) {
+		std::vector<std::unique_ptr<const WellRectangle<double>  > > & wellRects) {
 
 	decoder = std::unique_ptr<Decoder>(new Decoder(image, decodeOptions, wellRects));
 	int result = decoder->decodeWellRects();

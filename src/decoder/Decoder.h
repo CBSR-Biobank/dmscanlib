@@ -47,7 +47,7 @@ class DmtxDecodeHelper;
 class Decoder {
 public:
     Decoder(const Dib & image, const DecodeOptions & decodeOptions,
-    		std::vector<std::unique_ptr<WellRectangle<double>  > > & wellRects);
+    		std::vector<std::unique_ptr<const WellRectangle<double>  > > & wellRects);
     virtual ~Decoder();
     int decodeWellRects();
     void decodeWellRect(const Dib & wellRectImage, WellDecoder & wellDecoder) const;
@@ -83,7 +83,7 @@ private:
     const Dib & image;
     std::unique_ptr<Dib> workingImage;
     const DecodeOptions & decodeOptions;
-    const std::vector<std::unique_ptr<WellRectangle<double> > > & wellRects;
+    const std::vector<std::unique_ptr<const WellRectangle<double> > > & wellRects;
     std::vector<std::unique_ptr<WellDecoder> > wellDecoders;
     bool decodeSuccessful;
     std::map<std::string, const WellDecoder *> decodedWells;

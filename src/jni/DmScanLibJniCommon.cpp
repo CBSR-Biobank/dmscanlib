@@ -89,7 +89,7 @@ jobject createDecodeResultObject(JNIEnv * env, int resultCode,
 }
 
 int getWellRectangles(JNIEnv *env, jsize numWells, jobjectArray _wellRects,
-					   std::vector<std::unique_ptr<WellRectangle<double> > > & wellRects) {
+					   std::vector<std::unique_ptr<const WellRectangle<double> > > & wellRects) {
     jobject wellRectJavaObj;
     jclass wellRectJavaClass = NULL;
     jmethodID wellRectGetLabelMethodID = NULL;
@@ -150,7 +150,7 @@ int getWellRectangles(JNIEnv *env, jsize numWells, jobjectArray _wellRects,
     	Point<double> pt4(x4, y4);
 	Rect<double> rect(pt1, pt2, pt3, pt4);
 
-	std::unique_ptr<WellRectangle<double> > wellRect(new WellRectangle<double>(label, rect));
+	std::unique_ptr<const WellRectangle<double> > wellRect(new WellRectangle<double>(label, rect));
 
     	VLOG(5) << *wellRect;
 
@@ -209,7 +209,7 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
 	dmscanlib::DmScanLib::configLogging(static_cast<unsigned>(_verbose), false);
     std::unique_ptr<dmscanlib::DecodeOptions> decodeOptions =
     		dmscanlib::DecodeOptions::getDecodeOptionsViaJni(env, _decodeOptions);
-    std::vector<std::unique_ptr<dmscanlib::WellRectangle<double>  > > wellRects;
+    std::vector<std::unique_ptr<const dmscanlib::WellRectangle<double>  > > wellRects;
 
     jsize numWells = env->GetArrayLength(_wellRects);
 	int result = dmscanlib::jni::getWellRectangles(env, numWells, _wellRects, wellRects);
