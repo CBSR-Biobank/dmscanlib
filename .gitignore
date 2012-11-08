@@ -1,6 +1,7 @@
 obj
 Linux-Debug
 Linux-sharedlib
+Linux-imageinfo
 ReleaseDLL
 Debug-DLL
 Debug

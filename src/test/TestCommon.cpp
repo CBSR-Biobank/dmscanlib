@@ -136,10 +136,7 @@ void getWellRectsForBoundingBox(const unsigned dpi, const unsigned rows,
     }
 }
 
-/*
- * Assumes image has 96 well plates in 8 rows by 12 columns
- */
-void getWellRectsForSbsPalletImage(std::string & fname, const unsigned rows,
+void getWellRectsForPalletImage(const std::string & fname, const unsigned rows,
 	const unsigned cols, std::vector<std::unique_ptr<WellRectangle<double> > > & wellRects) {
 
 	Dib image;
@@ -172,7 +169,7 @@ std::unique_ptr<DecodeOptions> getDefaultDecodeOptions() {
 int decodeImage(std::string fname, DmScanLib & dmScanLib) {
     std::vector<std::unique_ptr<WellRectangle<double> > > wellRects;
 
-    getWellRectsForSbsPalletImage(fname, 8, 12, wellRects);
+    getWellRectsForPalletImage(fname, 8, 12, wellRects);
 
     std::unique_ptr<DecodeOptions> decodeOptions = getDefaultDecodeOptions();
     return dmScanLib.decodeImageWells(fname.c_str(), *decodeOptions, wellRects);
