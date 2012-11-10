@@ -144,7 +144,7 @@ void getWellRectsForPalletImage(const std::string & fname, const unsigned rows,
 	if (!readResult) {
 		throw std::invalid_argument("could not load image");
 	}
-	
+
 	const double dpi = static_cast<double>(image.getDpi());
 	const Point<double> pt1(0, 0);
 	const Point<double> pt2(

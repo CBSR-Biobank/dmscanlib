@@ -16,7 +16,7 @@
 namespace dmscanlib {
 namespace test {
 
-ImageInfo::ImageInfo(const std::string & filename) {
+ImageInfo::ImageInfo(const std::string & filename) : decodedWellCount(0) {
 	std::ifstream file;
 	file.open(filename);
 
@@ -63,6 +63,7 @@ ImageInfo::ImageInfo(const std::string & filename) {
 
 				std::string decodedMsg;
 				if (tokens.size() == 10) {
+					++decodedWellCount;
 					decodedMsg = tokens[9];
 				}
 

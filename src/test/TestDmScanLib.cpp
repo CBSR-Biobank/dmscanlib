@@ -15,6 +15,9 @@
 #include <stdexcept>
 #include <stddef.h>
 #include <sys/types.h>
+#include <sstream>
+#include <iostream>
+#include <fstream>
 
 #include <glog/logging.h>
 #include <gtest/gtest.h>
@@ -55,7 +58,7 @@ TEST(TestDmScanLib, invalidImage) {
 TEST(TestDmScanLib, decodeImage) {
 	FLAGS_v = 3;
 
-	std::string fname("testImages/96tubes.bmp");
+	std::string fname("testImages/hardscan.bmp");
 
 	DmScanLib dmScanLib(1);
 	int result = test::decodeImage(fname, dmScanLib);
@@ -68,6 +71,15 @@ TEST(TestDmScanLib, decodeImage) {
 	}
 }
 
+void writeDecodeAllResults(std::vector<std::string>  & testResults) {
+	std::ofstream ofile("all_images_results.csv");
+
+	for (unsigned i = 0, n = testResults.size(); i < n; ++i) {
+		ofile <<  testResults[i] << std::endl;
+	}
+	ofile.close();
+}
+
 TEST(TestDmScanLib, decodeAllImages) {
 	FLAGS_v = 1;
 
@@ -78,6 +90,9 @@ TEST(TestDmScanLib, decodeAllImages) {
 
 	int decodeResult;
     std::unique_ptr<DecodeOptions> decodeOptions = test::getDefaultDecodeOptions();
+
+    std::vector<std::string> testResults;
+    testResults.push_back("#filename,decoded,total,ratio,time (sec)");
 
 	for (unsigned i = 0, n = filenames.size(); i < n; ++i) {
 		VLOG(1) << "test image: " << filenames[i];
@@ -114,12 +129,17 @@ TEST(TestDmScanLib, decodeAllImages) {
 			}
 		}
 
-		VLOG(1) << "test image: " << filenames[i]
-		        << ", wells decoded: " << dmScanLib.getDecodedWellCount()
-		        << ", total wells: " << imageInfo.getTotalWells()
-		        << ", decode ratio: " << dmScanLib.getDecodedWellCount() / static_cast<double>(imageInfo.getTotalWells())
-				<< ", time taken (sec): " << *difftime;
+	    std::stringstream ss;
+		ss << filenames[i]
+		   << "," << dmScanLib.getDecodedWellCount()
+		   << "," << imageInfo.getDecodedWellCount()
+		   << "," << dmScanLib.getDecodedWellCount()
+		        / static_cast<double>(imageInfo.getDecodedWellCount())
+		   << "," << *difftime;
+		testResults.push_back(ss.str());
 	}
+
+	writeDecodeAllResults(testResults);
 }
 
 } /* namespace */

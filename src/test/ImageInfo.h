@@ -29,8 +29,8 @@ public:
 	const Rect<double> & getWellRect(const std::string & label);
 	const std::string * getBarcodeMsg(const std::string & label);
 
-	const unsigned getTotalWells() const {
-		return wells.size();
+	const unsigned getDecodedWellCount() const {
+		return decodedWellCount;
 	}
 
 
@@ -43,6 +43,7 @@ private:
 	std::string imageFilename;
 	std::unique_ptr<const Point<double> > dimensions;
 	std::map<const std::string, std::pair<std::unique_ptr<const Rect<double> >, const std::string>> wells;
+	unsigned decodedWellCount;
 };
 
 } /* namespace test */
