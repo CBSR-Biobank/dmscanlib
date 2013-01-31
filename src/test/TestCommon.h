@@ -37,8 +37,8 @@ int decodeImage(std::string fname, DmScanLib & dmScanLib);
 std::unique_ptr<const BoundingBox<double>> getWellsBoundingBox(
 	const BoundingBox<double> & bbox);
 
-std::unique_ptr<const BoundingBox<double>> getWiaBoundingBox(
-	const BoundingBox<double> & bbox);
+std::unique_ptr<const ScanRegion<double>> getWiaBoundingBox(
+	const ScanRegion<double> & bbox);
 
 } /* namespace */
 

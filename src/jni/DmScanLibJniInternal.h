@@ -38,6 +38,9 @@ jobject createDecodeResultObject(JNIEnv * env, int resultCode,
 std::unique_ptr<BoundingBox<double> > getBoundingBox(
 	JNIEnv *env, jobject bboxJavaObj);
 
+std::unique_ptr<ScanRegion<double> > getScanRegion(
+	JNIEnv *env, jobject regionJavaObj);
+
 int getWellRectangles(JNIEnv *env, jsize numWells, jobjectArray _wellRects,
 					   std::vector<std::unique_ptr<WellRectangle<double>  > > & wellRects);
 

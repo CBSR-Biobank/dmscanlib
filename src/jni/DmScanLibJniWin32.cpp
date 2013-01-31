@@ -156,8 +156,8 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
 
     std::unique_ptr<dmscanlib::DecodeOptions> decodeOptions = 
 		dmscanlib::DecodeOptions::getDecodeOptionsViaJni(env, _decodeOptions);
-    std::unique_ptr<dmscanlib::BoundingBox<double> > bbox = 
-		dmscanlib::jni::getBoundingBox(env, _region);
+    std::unique_ptr<dmscanlib::ScanRegion<double> > scanRegion = 
+		dmscanlib::jni::getScanRegion(env, _region);
 
 	jsize numWells = env->GetArrayLength(_wellRects);
 	int result = dmscanlib::jni::getWellRectangles(env, numWells, _wellRects, wellRects);
@@ -171,7 +171,7 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
 	}
 
     dmscanlib::DmScanLib dmScanLib(0);
-    result = dmScanLib.scanAndDecode(dpi, brightness, contrast, *bbox, *decodeOptions, wellRects);
+    result = dmScanLib.scanAndDecode(dpi, brightness, contrast, *scanRegion, *decodeOptions, wellRects);
 
 	if (result == dmscanlib::SC_SUCCESS) {
 		return dmscanlib::jni::createDecodeResultObject(env,result, dmScanLib.getDecodedWells());

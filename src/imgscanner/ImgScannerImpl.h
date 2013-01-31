@@ -56,7 +56,7 @@ public:
 	int getScannerCapability();
 
 	HANDLE acquireImage(unsigned dpi, int brightness, int contrast,
-		const BoundingBox<double> & bbox);
+		const ScanRegion<double> & bbox);
 
 	HANDLE acquireFlatbed(unsigned dpi, int brightness, int contrast);
 

@@ -70,7 +70,7 @@ public:
 	int scanFlatbed(unsigned dpi, int brightness, int contrast,
 			const char * filename);
 	int scanAndDecode(unsigned dpi, int brightness, int contrast,
-			const BoundingBox<double> & region, const DecodeOptions & decodeOptions,
+			const ScanRegion<double> & region, const DecodeOptions & decodeOptions,
 			std::vector<std::unique_ptr<WellRectangle<double>  > > & wellRects);
 	int decodeImageWells(const char * filename,
 			const DecodeOptions & decodeOptions,

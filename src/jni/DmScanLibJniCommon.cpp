@@ -186,6 +186,32 @@ std::unique_ptr<BoundingBox<double> > getBoundingBox(JNIEnv *env, jobject bboxJa
 		pt0, pt1));
 }
 
+std::unique_ptr<ScanRegion<double> > getScanRegion(JNIEnv *env, jobject regionJavaObj) {
+	CHECK_NOTNULL(regionJavaObj);
+	jclass regionJavaClass = env->GetObjectClass(regionJavaObj);
+
+	jmethodID getCornerXMethodID = env->GetMethodID(regionJavaClass, "getCornerX", "(I)D");
+    if(env->ExceptionOccurred()) {
+      	return NULL;
+    }
+
+	jmethodID getCornerYMethodID = env->GetMethodID(regionJavaClass, "getCornerY", "(I)D");
+    if(env->ExceptionOccurred()) {
+      	return NULL;
+    }
+
+	Point<double> pt0(
+		env->CallDoubleMethod(regionJavaObj, getCornerXMethodID, 0),
+		env->CallDoubleMethod(regionJavaObj, getCornerYMethodID, 0));
+
+	Point<double> pt1(
+		env->CallDoubleMethod(regionJavaObj, getCornerXMethodID, 1),
+		env->CallDoubleMethod(regionJavaObj, getCornerYMethodID, 1));
+
+	return std::unique_ptr<ScanRegion<double> >(new ScanRegion<double>(
+		pt0, pt1));
+}
+
 } /* namespace */
 
 } /* namespace */

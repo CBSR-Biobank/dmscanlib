@@ -188,11 +188,11 @@ std::unique_ptr<const BoundingBox<double>> getWellsBoundingBox(
 		origin, *bbox.points[1].translate(*bboxPt1Neg)));
 }
 
-std::unique_ptr<const BoundingBox<double>> getWiaBoundingBox(
-	const BoundingBox<double> & bbox) {
+std::unique_ptr<const ScanRegion<double>> getWiaBoundingBox(
+	const ScanRegion<double> & bbox) {
 	std::unique_ptr<const Point<double> > bboxPt1Neg(bbox.points[0].scale(-1));
 
-	return std::unique_ptr<const BoundingBox<double>>(new BoundingBox<double>(
+	return std::unique_ptr<const ScanRegion<double>>(new ScanRegion<double>(
 		bbox.points[0], *bbox.points[1].translate(*bboxPt1Neg)));
 }
 

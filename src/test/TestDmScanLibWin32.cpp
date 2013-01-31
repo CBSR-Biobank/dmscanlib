@@ -65,9 +65,9 @@ TEST(TestDmScanLibWin32, scanImage) {
 	DeleteFile(fnamew.c_str());
 
 	DmScanLib dmScanLib(1);
-	BoundingBox<double> scanBbox(pt1, *pt2Wia);
+	BoundingBox<double> scanRegion(pt1, *pt2Wia);
 	const unsigned dpi = 300;
-	int result = dmScanLib.scanImage(dpi, 0, 0, scanBbox, fname.c_str());
+	int result = dmScanLib.scanImage(dpi, 0, 0, scanRegion, fname.c_str());
 
 	EXPECT_EQ(SC_SUCCESS, result);
 	Dib dib;
@@ -89,12 +89,12 @@ TEST(TestDmScanLibWin32, scanImageInvalidDpi) {
 	const Point<double> pt1(0.400, 0.265);
 
 	DmScanLib dmScanLib(1);
-	BoundingBox<double> scanBbox(originPt, pt1);
+	BoundingBox<double> scanRegion(originPt, pt1);
 
-	int result = dmScanLib.scanImage(100, 0, 0, scanBbox, "tmpscan.bmp");
+	int result = dmScanLib.scanImage(100, 0, 0, scanRegion, "tmpscan.bmp");
 	EXPECT_EQ(SC_INVALID_DPI, result);
 
-	result = dmScanLib.scanImage(200, 0, 0, scanBbox, "tmpscan.bmp");
+	result = dmScanLib.scanImage(200, 0, 0, scanRegion, "tmpscan.bmp");
 	EXPECT_EQ(SC_INVALID_DPI, result);
 }
 TEST(TestDmScanLibWin32, scanFlatbed) {
@@ -119,10 +119,11 @@ TEST(TestDmScanLibWin32, scanAndDecodeInvalidDpi) {
 
 	const Point<double> pt1(0.396, 0.240);
 	const Point<double> pt2(4.566, 3.089);
-	const BoundingBox<double> scanRegion(pt1, pt2);
+	const ScanRegion<double> scanRegion(pt1, pt2);
+
 	std::unique_ptr<const BoundingBox<double> > wellsBbox(
-		test::getWellsBoundingBox(scanRegion));
-	std::unique_ptr<const BoundingBox<double> > scanBbox(
+		test::getWellsBoundingBox(*scanRegion.toBoundingBox()));
+	std::unique_ptr<const ScanRegion<double> > scanRegionWia(
 		test::getWiaBoundingBox(scanRegion));
 	std::unique_ptr<DecodeOptions> decodeOptions = 
 		test::getDefaultDecodeOptions();
@@ -131,7 +132,7 @@ TEST(TestDmScanLibWin32, scanAndDecodeInvalidDpi) {
     test::getWellRectsForBoundingBox(200, 8, 12, *wellsBbox, wellRects);
 
 	DmScanLib dmScanLib(1);
-	int result = dmScanLib.scanAndDecode(200, 0, 0, *scanBbox, *decodeOptions, wellRects);
+	int result = dmScanLib.scanAndDecode(200, 0, 0, *scanRegionWia, *decodeOptions, wellRects);
 
 	EXPECT_EQ(SC_INVALID_DPI, result);
 }
@@ -141,10 +142,10 @@ TEST(TestDmScanLibWin32, scanAndDecodeValidDpi) {
 
 	const Point<double> pt1(0.400, 0.265);
 	const Point<double> pt2(4.566, 3.020); 
-	const BoundingBox<double> scanRegion(pt1, pt2);
+	const ScanRegion<double> scanRegion(pt1, pt2);
 	std::unique_ptr<const BoundingBox<double> > wellsBbox(
-		test::getWellsBoundingBox(scanRegion));
-	std::unique_ptr<const BoundingBox<double> > scanBbox(
+		test::getWellsBoundingBox(*scanRegion.toBoundingBox()));
+	std::unique_ptr<const ScanRegion<double> > scanRegionWia(
 		test::getWiaBoundingBox(scanRegion));
 	std::unique_ptr<DecodeOptions> decodeOptions = 
 		test::getDefaultDecodeOptions();
@@ -153,7 +154,7 @@ TEST(TestDmScanLibWin32, scanAndDecodeValidDpi) {
 
     test::getWellRectsForBoundingBox(600, 8, 12, *wellsBbox, wellRects);
 	DmScanLib dmScanLib(1);
-	int result = dmScanLib.scanAndDecode(600, 0, 0, *scanBbox, *decodeOptions, wellRects);
+	int result = dmScanLib.scanAndDecode(600, 0, 0, *scanRegionWia, *decodeOptions, wellRects);
 
 	EXPECT_EQ(SC_SUCCESS, result);
 	EXPECT_TRUE(dmScanLib.getDecodedWellCount() > 0);
@@ -177,10 +178,10 @@ TEST(TestDmScanLibWin32, scanAndDecodeMultiple) {
 
 	const Point<double> pt1(0.400, 0.265);
 	const Point<double> pt2(4.566, 3.020); 
-	const BoundingBox<double> scanRegion(pt1, pt2);
+	const ScanRegion<double> scanRegion(pt1, pt2);
 	std::unique_ptr<const BoundingBox<double> > wellsBbox(
-		test::getWellsBoundingBox(scanRegion));
-	std::unique_ptr<const BoundingBox<double> > scanBbox(
+		test::getWellsBoundingBox(*scanRegion.toBoundingBox()));
+	std::unique_ptr<const ScanRegion<double> > scanRegionWia(
 		test::getWiaBoundingBox(scanRegion));
 	std::unique_ptr<DecodeOptions> decodeOptions = 
 		test::getDefaultDecodeOptions();
@@ -189,7 +190,7 @@ TEST(TestDmScanLibWin32, scanAndDecodeMultiple) {
 
     test::getWellRectsForBoundingBox(600, 8, 12, *wellsBbox, wellRects);
 	DmScanLib dmScanLib(1);
-	int result = dmScanLib.scanAndDecode(600, 0, 0, *scanBbox, *decodeOptions, wellRects);
+	int result = dmScanLib.scanAndDecode(600, 0, 0, *scanRegionWia, *decodeOptions, wellRects);
 
 	EXPECT_EQ(SC_SUCCESS, result);
 	EXPECT_TRUE(dmScanLib.getDecodedWellCount() > 0);
@@ -204,7 +205,7 @@ TEST(TestDmScanLibWin32, scanAndDecodeMultiple) {
 		lastResults[wellDecoder.getLabel()] = wellDecoder.getMessage();
 	}
 
-	result = dmScanLib.scanAndDecode(600, 0, 0, *scanBbox, *decodeOptions, wellRects);
+	result = dmScanLib.scanAndDecode(600, 0, 0, *scanRegionWia, *decodeOptions, wellRects);
 	const std::map<std::string, const WellDecoder *> & decodedWells2 =
 		dmScanLib.getDecodedWells();
    	for (std::map<std::string, const WellDecoder *>::const_iterator ii = decodedWells2.begin();

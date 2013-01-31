@@ -200,7 +200,7 @@ void ImgScannerImpl::setFloatToIntPair(const double f, short & whole,
  *	Grab an image from the twain source and convert it to the dmtxImage format
  */
 HANDLE ImgScannerImpl::acquireImage(unsigned dpi, int brightness, int contrast,
-                                    const BoundingBox<double> & bbox) {
+                                    const ScanRegion<double> & scanRegion) {
    CHECK_NOTNULL(g_hLib);
 
    TW_UINT16 rc;
@@ -234,9 +234,9 @@ HANDLE ImgScannerImpl::acquireImage(unsigned dpi, int brightness, int contrast,
    double physicalWidth = getPhysicalDimensions(srcID, ICAP_PHYSICALWIDTH);
    double physicalHeight = getPhysicalDimensions(srcID, ICAP_PHYSICALHEIGHT);
 
-   if ((bbox.points[0].x > physicalWidth) || (bbox.points[0].y > physicalHeight)
-	   || (bbox.points[0].x + bbox.points[1].x > physicalWidth) 
-	   || (bbox.points[0].y + bbox.points[1].y > physicalHeight)) {
+   if ((scanRegion.points[0].x > physicalWidth) || (scanRegion.points[0].y > physicalHeight)
+	   || (scanRegion.points[0].x + scanRegion.points[1].x > physicalWidth) 
+	   || (scanRegion.points[0].y + scanRegion.points[1].y > physicalHeight)) {
 		   throw std::invalid_argument("bounding box exeeds image dimensions");
    }
 
@@ -262,14 +262,14 @@ HANDLE ImgScannerImpl::acquireImage(unsigned dpi, int brightness, int contrast,
    VLOG(3) << "acquireImage: source/\"" << srcID.ProductName << "\""
            << " brightness/" << brightness
            << " constrast/" << contrast
-           << " " << bbox;
+           << " " << scanRegion;
 
    setCapOneValue(&srcID, ICAP_UNITS, TWTY_UINT16, TWUN_INCHES);
    TW_IMAGELAYOUT layout;
-   setFloatToIntPair(bbox.points[0].x, layout.Frame.Left.Whole, layout.Frame.Left.Frac);
-   setFloatToIntPair(bbox.points[0].y, layout.Frame.Top.Whole, layout.Frame.Top.Frac);
-   setFloatToIntPair(bbox.points[1].x, layout.Frame.Right.Whole, layout.Frame.Right.Frac);
-   setFloatToIntPair(bbox.points[1].y, layout.Frame.Bottom.Whole,
+   setFloatToIntPair(scanRegion.points[0].x, layout.Frame.Left.Whole, layout.Frame.Left.Frac);
+   setFloatToIntPair(scanRegion.points[0].y, layout.Frame.Top.Whole, layout.Frame.Top.Frac);
+   setFloatToIntPair(scanRegion.points[1].x, layout.Frame.Right.Whole, layout.Frame.Right.Frac);
+   setFloatToIntPair(scanRegion.points[1].y, layout.Frame.Bottom.Whole,
                      layout.Frame.Bottom.Frac);
    layout.DocumentNumber = 1;
    layout.PageNumber = 1;
@@ -409,9 +409,9 @@ HANDLE ImgScannerImpl::acquireFlatbed(unsigned dpi, int brightness, int contrast
    scannerSourceDeinit(hwnd, srcID);
    Point<double> topLeft(0, 0);
    Point<double> bottomRight(physicalWidth, physicalHeight);
-   BoundingBox<double> bbox(topLeft, bottomRight);
+   ScanRegion<double> scanRegion(topLeft, bottomRight);
 
-   return acquireImage(dpi, brightness, contrast, bbox);
+   return acquireImage(dpi, brightness, contrast, scanRegion);
 }
 
 BOOL ImgScannerImpl::setCapOneValue(TW_IDENTITY * srcId, unsigned Cap,

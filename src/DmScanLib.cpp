@@ -150,7 +150,7 @@ int DmScanLib::scanFlatbed(unsigned dpi, int brightness, int contrast,
 }
 
 int DmScanLib::scanAndDecode(unsigned dpi, int brightness, int contrast,
-		const BoundingBox<double> & region, const DecodeOptions & decodeOptions,
+		const ScanRegion<double> & region, const DecodeOptions & decodeOptions,
 		std::vector<std::unique_ptr<WellRectangle<double>  > > & wellRects) {
 	VLOG(3) << "decodePlate: dpi/" << dpi << " brightness/" << brightness
 			<< " contrast/" << contrast
