@@ -56,6 +56,11 @@ const std::string DmScanLib::LIBRARY_NAME("dmscanlib");
 
 bool DmScanLib::loggingInitialized = false;
 
+DmScanLib::DmScanLib() :
+		imgScanner(std::move(ImgScanner::create()))
+{
+}
+
 DmScanLib::DmScanLib(unsigned loggingLevel, bool logToFile) :
 		imgScanner(std::move(ImgScanner::create()))
 {
@@ -110,7 +115,11 @@ void DmScanLib::configLogging(unsigned level, bool useFile) {
 
 int DmScanLib::scanImage(unsigned dpi, int brightness, int contrast,
 		const BoundingBox<double> & bbox, const char * filename) {
-   VLOG(3) << "scanImage: dpi/" << dpi << " brightness/" << brightness
+   if (filename == NULL) {
+	   throw std::invalid_argument("filename is null");
+   }
+
+   VLOG(1) << "scanImage: dpi/" << dpi << " brightness/" << brightness
 	   << " contrast/" << contrast << bbox
 	   << " filename/" << filename;
 
@@ -131,8 +140,12 @@ int DmScanLib::scanImage(unsigned dpi, int brightness, int contrast,
 
 int DmScanLib::scanFlatbed(unsigned dpi, int brightness, int contrast,
 		const char * filename) {
-	VLOG(3) << "slScanFlatbed: dpi/" << dpi << " brightness/" << brightness
-					<< " contrast/" << contrast << " filename/" << filename;
+   if (filename == NULL) {
+	   throw std::invalid_argument("filename is null");
+   }
+
+	VLOG(1) << "scanFlatbed: dpi/" << dpi << " brightness/" << brightness
+		<< " contrast/" << contrast << " filename/" << filename;
 
 	HANDLE h = imgScanner->acquireFlatbed(dpi, brightness, contrast);
 	if (h == NULL) {
@@ -150,7 +163,7 @@ int DmScanLib::scanFlatbed(unsigned dpi, int brightness, int contrast,
 }
 
 int DmScanLib::scanAndDecode(unsigned dpi, int brightness, int contrast,
-		const ScanRegion<double> & region, const DecodeOptions & decodeOptions,
+		const BoundingBox<double> & region, const DecodeOptions & decodeOptions,
 		std::vector<std::unique_ptr<WellRectangle<double>  > > & wellRects) {
 	VLOG(3) << "decodePlate: dpi/" << dpi << " brightness/" << brightness
 			<< " contrast/" << contrast
@@ -175,15 +188,15 @@ int DmScanLib::scanAndDecode(unsigned dpi, int brightness, int contrast,
 	result = decodeCommon(image, decodeOptions, "decode.bmp", wellRects);
 
 	imgScanner->freeImage(h);
-	VLOG(2) << "decodeCommon returned: " << result;
+	VLOG(1) << "decodeCommon returned: " << result;
 	return result;
 }
 
 int DmScanLib::decodeImageWells(const char * filename,
 		const DecodeOptions & decodeOptions,
-		std::vector<std::unique_ptr<WellRectangle<double>  > > & wellRects) {
+		std::vector<std::unique_ptr<const WellRectangle<double>  > > & wellRects) {
 
-	VLOG(3) << "decodeImage: filename/" << filename
+	VLOG(1) << "decodeImageWells: filename/" << filename
 			<< " numWellRects/" << wellRects.size()
 			<< decodeOptions;
 
@@ -199,7 +212,7 @@ int DmScanLib::decodeImageWells(const char * filename,
 int DmScanLib::decodeCommon(const Dib & image,
 		const DecodeOptions & decodeOptions,
 		const std::string &decodedDibFilename,
-		std::vector<std::unique_ptr<WellRectangle<double>  > > & wellRects) {
+		std::vector<std::unique_ptr<const WellRectangle<double>  > > & wellRects) {
 
 	decoder = std::unique_ptr<Decoder>(new Decoder(image, decodeOptions, wellRects));
 	int result = decoder->decodeWellRects();

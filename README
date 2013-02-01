@@ -23,8 +23,10 @@ REQUIRED PACKAGES ON UBUNTU
   - libgoogle-glog-dev
   - libgtest-dev
 
+  The image information generator tool requires the following package:
 
-  libcmtd.lib
+    - libgflags-dev
+
 
 JNI
 

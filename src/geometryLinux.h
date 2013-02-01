@@ -35,6 +35,12 @@ struct Point {
 };
 
 template<typename T>
+std::ostream & operator<<(std::ostream &os, const Point<T> & m) {
+	os << "(" << m.x << ", " << m.y << ")";
+	return os;
+}
+
+template<typename T>
 struct Rect;
 
 template<typename T>
@@ -83,17 +89,13 @@ struct BoundingBox {
 
 template<typename T>
 std::ostream & operator<<(std::ostream &os, const BoundingBox<T> & m) {
-	os << "(" << m.points[0].x << ", " << m.points[0].y << "), " << "("
-			<< m.points[1].x << ", " << m.points[1].y << ")";
+	os << m.points[0] << ", " << m.points[1];
 	return os;
 }
 
 template<typename T>
 std::ostream & operator<<(std::ostream &os, const Rect<T> & m) {
-	os << "(" << m.corners[0].x << ", " << m.corners[0].y << "), " << "("
-			<< m.corners[1].x << ", " << m.corners[1].y << "), " << "("
-			<< m.corners[2].x << ", " << m.corners[2].y << "), " << "("
-			<< m.corners[3].x << ", " << m.corners[3].y << ")";
+	os << m.corners[0] << ", " << m.corners[1]<< m.corners[2] << ", " << m.corners[3];
 	return os;
 }
 

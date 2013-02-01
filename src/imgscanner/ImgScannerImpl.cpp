@@ -389,6 +389,8 @@ HANDLE ImgScannerImpl::acquireImage(unsigned dpi, int brightness, int contrast,
       }
    }
 
+   VLOG(2) << "image acquired successfully"; 
+
    scannerSourceDeinit(hwnd, srcID);
    return (HANDLE) handle;
 }
