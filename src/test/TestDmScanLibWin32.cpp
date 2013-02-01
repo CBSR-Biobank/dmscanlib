@@ -55,10 +55,10 @@ TEST(TestDmScanLibWin32, scanImage) {
 
 	const Point<double> pt1(0.400, 0.265);
 	const Point<double> pt2(4.566, 3.020); 
-	const BoundingBox<double> scanRegion(pt1, pt2);
+	const ScanRegion<double> scanRegion(pt1, pt2);
 	std::unique_ptr<const BoundingBox<double> > wellsBbox(
-		test::getWellsBoundingBox(scanRegion));
-	std::unique_ptr<const BoundingBox<double> > scanBbox(
+		test::getWellsBoundingBox(*scanRegion.toBoundingBox()));
+	std::unique_ptr<const ScanRegion<double> > scanBbox(
 		test::getWiaBoundingBox(scanRegion));
 	std::unique_ptr<DecodeOptions> decodeOptions = 
 		test::getDefaultDecodeOptions();
@@ -68,9 +68,8 @@ TEST(TestDmScanLibWin32, scanImage) {
 	DeleteFile(fnamew.c_str());
 
 	DmScanLib dmScanLib(1);
-	BoundingBox<double> scanRegion(pt1, *pt2Wia);
 	const unsigned dpi = 300;
-	int result = dmScanLib.scanImage(dpi, 0, 0, scanBbox, fname.c_str());
+	int result = dmScanLib.scanImage(dpi, 0, 0, *scanBbox, fname.c_str());
 
 	EXPECT_EQ(SC_SUCCESS, result);
 	Dib dib;
@@ -90,10 +89,10 @@ TEST(TestDmScanLibWin32, scanImageBadParams) {
 
 	const Point<double> pt1(0.400, 0.265);
 	const Point<double> pt2(4.566, 3.020); 
-	const BoundingBox<double> scanRegion(pt1, pt2);
+	const ScanRegion<double> scanRegion(pt1, pt2);
 	std::unique_ptr<const BoundingBox<double> > wellsBbox(
-		test::getWellsBoundingBox(scanRegion));
-	std::unique_ptr<const BoundingBox<double> > scanBbox(
+		test::getWellsBoundingBox(*scanRegion.toBoundingBox()));
+	std::unique_ptr<const ScanRegion<double> > scanBbox(
 		test::getWiaBoundingBox(scanRegion));
 	std::unique_ptr<DecodeOptions> decodeOptions = 
 		test::getDefaultDecodeOptions();
@@ -106,7 +105,7 @@ TEST(TestDmScanLibWin32, scanImageBadParams) {
     ASSERT_THROW(dmScanLib.scanImage(300, 0, 0, *scanBbox, NULL), std::invalid_argument);
 
 	int result = dmScanLib.scanImage(0, 0, 0, *scanBbox, fname.c_str());
-	EXPECT_EQ(SC_FAIL, result);
+	EXPECT_EQ(SC_INVALID_DPI, result);
 }
 
 TEST(TestDmScanLibWin32, scanImageInvalidDpi) {
@@ -116,7 +115,7 @@ TEST(TestDmScanLibWin32, scanImageInvalidDpi) {
 	const Point<double> pt1(0.400, 0.265);
 
 	DmScanLib dmScanLib(1);
-	BoundingBox<double> scanRegion(originPt, pt1);
+	ScanRegion<double> scanRegion(originPt, pt1);
 
 	int result = dmScanLib.scanImage(100, 0, 0, scanRegion, "tmpscan.bmp");
 	EXPECT_EQ(SC_INVALID_DPI, result);
@@ -153,7 +152,7 @@ TEST(TestDmScanLibWin32, scanFlatbedBadParams) {
     ASSERT_THROW(dmScanLib.scanFlatbed(300, 0, 0, NULL), std::invalid_argument);
 
 	int result = dmScanLib.scanFlatbed(0, 0, 0, fname.c_str());
-	EXPECT_EQ(SC_FAIL, result);
+	EXPECT_EQ(SC_INVALID_DPI, result);
 }
 
 TEST(TestDmScanLibWin32, scanAndDecodeInvalidDpi) {
@@ -170,11 +169,12 @@ TEST(TestDmScanLibWin32, scanAndDecodeInvalidDpi) {
 	std::unique_ptr<DecodeOptions> decodeOptions = 
 		test::getDefaultDecodeOptions();
 
-	std::vector<std::unique_ptr<WellRectangle<double> > > wellRects;
+	std::vector<std::unique_ptr<const WellRectangle<double> > > wellRects;
     test::getWellRectsForBoundingBox(200, 8, 12, *wellsBbox, wellRects);
 
 	DmScanLib dmScanLib(1);
-	int result = dmScanLib.scanAndDecode(200, 0, 0, *scanRegionWia, *decodeOptions, wellRects);
+	int result = dmScanLib.scanAndDecode(200, 0, 0, *scanRegionWia, *decodeOptions, 
+		wellRects);
 
 	EXPECT_EQ(SC_INVALID_DPI, result);
 }
@@ -192,7 +192,7 @@ TEST(TestDmScanLibWin32, scanAndDecodeValidDpi) {
 	std::unique_ptr<DecodeOptions> decodeOptions = 
 		test::getDefaultDecodeOptions();
 
-	std::vector<std::unique_ptr<WellRectangle<double> > > wellRects;
+	std::vector<std::unique_ptr<const WellRectangle<double> > > wellRects;
 
     test::getWellRectsForBoundingBox(600, 8, 12, *wellsBbox, wellRects);
 	DmScanLib dmScanLib(1);
@@ -228,7 +228,7 @@ TEST(TestDmScanLibWin32, scanAndDecodeMultiple) {
 	std::unique_ptr<DecodeOptions> decodeOptions = 
 		test::getDefaultDecodeOptions();
 
-	std::vector<std::unique_ptr<WellRectangle<double> > > wellRects;
+	std::vector<std::unique_ptr<const WellRectangle<double> > > wellRects;
 
     test::getWellRectsForBoundingBox(600, 8, 12, *wellsBbox, wellRects);
 	DmScanLib dmScanLib(1);

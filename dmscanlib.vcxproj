@@ -178,6 +178,9 @@
     <ClCompile Include="src\imgscanner\ImgScannerImpl.cpp" />
     <ClCompile Include="src\jni\DmScanLibJniCommon.cpp" />
     <ClCompile Include="src\jni\DmScanLibJniWin32.cpp" />
+    <ClCompile Include="src\test\ImageInfo.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="src\test\TestBoundingBox.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug-DLL|Win32'">true</ExcludedFromBuild>
@@ -205,6 +208,9 @@
     <ClCompile Include="src\test\Tests.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug-DLL|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\test\TestScanRegion.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="src\test\TestWellRectangle.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|Win32'">true</ExcludedFromBuild>
@@ -248,6 +254,7 @@
     <ClInclude Include="src\nvwa\set_assign.h" />
     <ClInclude Include="src\nvwa\static_assert.h" />
     <ClInclude Include="src\nvwa\static_mem_pool.h" />
+    <ClInclude Include="src\test\ImageInfo.h" />
     <ClInclude Include="src\test\TestCommon.h" />
     <ClInclude Include="src\utils\DmTime.h" />
     <ClInclude Include="TestCommon.h" />

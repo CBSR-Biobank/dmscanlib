@@ -80,7 +80,7 @@ void writeDecodeAllResults(std::vector<std::string>  & testResults) {
 	ofile.close();
 }
 
-TEST(TestDmScanLib, decodeAllImages) {
+TEST(TestDmScanLib, DISABLED_decodeAllImages) {
 	FLAGS_v = 1;
 
     std::string dirname("testImages");

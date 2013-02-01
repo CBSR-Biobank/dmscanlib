@@ -106,8 +106,8 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
     unsigned brightness = static_cast<unsigned>(_brightness);
     unsigned contrast = static_cast<unsigned>(_contrast);
     const char *filename = env->GetStringUTFChars(_filename, 0);
-    std::unique_ptr<dmscanlib::BoundingBox<double> > bbox = 
-		dmscanlib::jni::getBoundingBox(env, _region);
+    std::unique_ptr<dmscanlib::ScanRegion<double> > bbox = 
+		dmscanlib::jni::getScanRegion(env, _region);
 
     dmscanlib::DmScanLib dmScanLib(verbose);
     int result = dmScanLib.scanImage(dpi, brightness, contrast, *bbox, filename);
@@ -160,7 +160,7 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
     unsigned dpi = static_cast<unsigned>(_dpi);
     unsigned brightness = static_cast<unsigned>(_brightness);
     unsigned contrast = static_cast<unsigned>(_contrast);
-    std::vector<std::unique_ptr<dmscanlib::WellRectangle<double> > > wellRects;
+    std::vector<std::unique_ptr<const dmscanlib::WellRectangle<double> > > wellRects;
 
     std::unique_ptr<dmscanlib::DecodeOptions> decodeOptions = 
 		dmscanlib::DecodeOptions::getDecodeOptionsViaJni(env, _decodeOptions);

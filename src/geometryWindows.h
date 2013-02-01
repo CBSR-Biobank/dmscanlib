@@ -46,6 +46,13 @@ struct Point {
 };
 
 template<typename T>
+std::ostream & operator<<(std::ostream &os, const Point<T> & m) {
+	os << "(" << m.x << ", " << m.y << ")";
+	return os;
+}
+
+
+template<typename T>
 struct Rect;
 
 template<typename T>
@@ -111,12 +118,20 @@ struct ScanRegion {
 	   if (!isValid()) {
 			throw std::invalid_argument("invalid bounding box");
 	   }
-
    }
 
+	ScanRegion(const BoundingBox<T> & bbox)	{
+		points[0] = bbox.points[0];
+		points[1] = bbox.points[1];
+
+		if (!isValid()) {
+			throw std::invalid_argument("invalid scan region");
+		}
+	}
+
    bool isValid() {
-	   return (points[0].x > 0) && (points[1].x > 0)
-			   && (points[0].y > 0) && (points[1].y > 0);
+	   return (points[0].x >= 0) && (points[1].x >= 0)
+			   && (points[0].y >= 0) && (points[1].y >= 0);
    }
 
    T getWidth() const {
@@ -130,7 +145,8 @@ struct ScanRegion {
    // WIA regions are not bounding boxes
    std::unique_ptr<const BoundingBox<T> > toBoundingBox() const {
 	  if ((points[1].x < points[0].x) || (points[1].y < points[0].y)) {
-		  return std::unique_ptr<const BoundingBox<T> >(new BoundingBox<T>(points[0], points[1].translate(points[0])));
+		  return std::unique_ptr<const BoundingBox<T> >(new BoundingBox<T>(
+			  points[0], *points[1].translate(points[0])));
 	  }
 
       return std::unique_ptr<const BoundingBox<T> >(new BoundingBox<T>(points[0], points[1]));

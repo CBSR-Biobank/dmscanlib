@@ -124,7 +124,7 @@ struct ScanRegion {
 	std::unique_ptr<const BoundingBox<T> > toBoundingBox() const {
 		if ((points[1].x < points[0].x) || (points[1].y < points[0].y)) {
 			return std::unique_ptr<const BoundingBox<T> >(new BoundingBox<T>(
-					points[0], points[1].translate(points[0])));
+					points[0], *points[1].translate(points[0])));
 		}
 
 		return std::unique_ptr<const BoundingBox<T> >(new BoundingBox<T>(
