@@ -106,17 +106,6 @@ double ImageInfo::stringToDouble(const std::string& s) {
 	return x;
 }
 
-void ImageInfo::getWellRects(std::vector<std::unique_ptr<const WellRectangle<double> > > & wellRects) const {
-	wellRects.resize(wells.size());
-	std::map<const std::string, std::pair<std::unique_ptr<const Rect<double> >, const std::string>>::const_iterator ii = wells.begin();
-
-
-	for (unsigned i = 0; ii != wells.end(); ++ii, ++i) {
-		const Rect<double> & rect = *ii->second.first;
-		wellRects[i] = std::unique_ptr<const WellRectangle<double> >(
-				new WellRectangle<double>(ii->first.c_str(), rect));
-	}
-}
 const Rect<double> & ImageInfo::getWellRect(const std::string & label) {
 	if (wells.find(label) == wells.end()) {
 		throw std::invalid_argument("label not present: " + label);

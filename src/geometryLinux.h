@@ -65,9 +65,10 @@ struct BoundingBox {
 
 	}
 
+	virtual ~BoundingBox() { }
+
 	bool isValid() {
-		return (points[0].x < points[1].x)
-				&& (points[0].y < points[1].y);
+		return (points[0].x < points[1].x) && (points[0].y < points[1].y);
 	}
 
 	T getWidth() const {
@@ -88,7 +89,65 @@ struct BoundingBox {
 };
 
 template<typename T>
+struct ScanRegion {
+	ScanRegion(const Point<T> & p1, const Point<T> & p2) : points( { p1, p2 } )
+	{
+		if (!isValid()) {
+			throw std::invalid_argument("invalid scan region");
+		}
+	}
+
+	ScanRegion(const ScanRegion<T> & that) : points( {
+		Point<T>(that.points[0].x, that.points[0].y),
+				Point<T>(that.points[1].x, that.points[1].y)
+	}) {
+		if (!isValid()) {
+			throw std::invalid_argument("invalid scan region");
+		}
+	}
+
+	ScanRegion(const BoundingBox<T> & bbox) : points( { bbox.points[0], bbox.points[1] } )
+	{
+		if (!isValid()) {
+			throw std::invalid_argument("invalid scan region");
+		}
+	}
+
+	virtual ~ScanRegion() {}
+
+	bool isValid() {
+		return (points[0].x >= 0) && (points[1].x >= 0)
+				&& (points[0].y >= 0) && (points[1].y >= 0);
+	}
+
+	// WIA regions are not bounding boxes
+	std::unique_ptr<const BoundingBox<T> > toBoundingBox() const {
+		if ((points[1].x < points[0].x) || (points[1].y < points[0].y)) {
+			return std::unique_ptr<const BoundingBox<T> >(new BoundingBox<T>(
+					points[0], points[1].translate(points[0])));
+		}
+
+		return std::unique_ptr<const BoundingBox<T> >(new BoundingBox<T>(
+				points[0], points[1]));
+	}
+
+	std::unique_ptr<const ScanRegion<T> > translate(const Point<T> & distance) const {
+		std::unique_ptr<const Point<T> > pt1 = std::move(points[0].translate(distance));
+		std::unique_ptr<const Point<T> > pt2 = std::move(points[1].translate(distance));
+		return std::unique_ptr<const ScanRegion<T> >(new ScanRegion<T>(*pt1, *pt2));
+	}
+
+	const Point<T> points[2];
+};
+
+template<typename T>
 std::ostream & operator<<(std::ostream &os, const BoundingBox<T> & m) {
+	os << m.points[0] << ", " << m.points[1];
+	return os;
+}
+
+template<typename T>
+std::ostream & operator<<(std::ostream &os, const ScanRegion<T> & m) {
 	os << m.points[0] << ", " << m.points[1];
 	return os;
 }

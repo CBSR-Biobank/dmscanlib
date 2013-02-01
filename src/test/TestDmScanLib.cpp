@@ -34,7 +34,7 @@ TEST(TestDmScanLib, invalidRects) {
     std::vector<std::unique_ptr<const WellRectangle<double> > > wellRects;
 	DmScanLib dmScanLib(1);
 	int result = dmScanLib.decodeImageWells("testImages/96tubes.bmp", *decodeOptions, wellRects);
-	EXPECT_EQ(SC_INVALID_NOTHING_TO_DECODE, result);
+	EXPECT_EQ(SC_INVALID_NOTHING_DECODED, result);
 }
 
 TEST(TestDmScanLib, invalidImage) {
@@ -104,7 +104,7 @@ TEST(TestDmScanLib, decodeAllImages) {
 
 		dmscanlib::test::ImageInfo imageInfo(infoFilename);
 	    std::vector<std::unique_ptr<const WellRectangle<double> > > wellRects;
-	    imageInfo.getWellRects(wellRects);
+	    test::getWellRectsForPalletImage(filename, 8, 12, wellRects);
 
 		util::DmTime start;
 		DmScanLib dmScanLib(0);

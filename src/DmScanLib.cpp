@@ -114,7 +114,7 @@ void DmScanLib::configLogging(unsigned level, bool useFile) {
 }
 
 int DmScanLib::scanImage(unsigned dpi, int brightness, int contrast,
-		const BoundingBox<double> & bbox, const char * filename) {
+		const ScanRegion<double> & bbox, const char * filename) {
    if (filename == NULL) {
 	   throw std::invalid_argument("filename is null");
    }
@@ -163,9 +163,9 @@ int DmScanLib::scanFlatbed(unsigned dpi, int brightness, int contrast,
 }
 
 int DmScanLib::scanAndDecode(unsigned dpi, int brightness, int contrast,
-		const BoundingBox<double> & region, const DecodeOptions & decodeOptions,
-		std::vector<std::unique_ptr<WellRectangle<double>  > > & wellRects) {
-	VLOG(3) << "decodePlate: dpi/" << dpi << " brightness/" << brightness
+		const ScanRegion<double> & region, const DecodeOptions & decodeOptions,
+		std::vector<std::unique_ptr<const WellRectangle<double>  > > & wellRects) {
+	VLOG(3) << "scanAndDecode: dpi/" << dpi << " brightness/" << brightness
 			<< " contrast/" << contrast
 			<< " " << region << " " << decodeOptions;
 

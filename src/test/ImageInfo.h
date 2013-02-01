@@ -25,7 +25,6 @@ public:
 	virtual ~ImageInfo() {}
 
 	const std::string getImageFilename() const { return imageFilename; }
-	void getWellRects(std::vector<std::unique_ptr<const WellRectangle<double> > > & wellRects) const;
 	const Rect<double> & getWellRect(const std::string & label);
 	const std::string * getBarcodeMsg(const std::string & label);
 

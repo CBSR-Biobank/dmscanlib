@@ -92,7 +92,6 @@ struct BoundingBox {
    Point<T> points[2];
 };
 
-
 template<typename T>
 struct ScanRegion {
    ScanRegion(const Point<T> & p1, const Point<T> & p2) {

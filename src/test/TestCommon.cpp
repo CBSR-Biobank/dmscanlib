@@ -152,7 +152,7 @@ void getWellRectsForPalletImage(const std::string & fname, const unsigned rows,
 	    static_cast<double>(image.getHeight()) / dpi);
 	const BoundingBox<double> bbox(pt1, pt2);
 
-	return getWellRectsForBoundingBox(image.getDpi(), rows, cols, bbox, wellRects);
+	getWellRectsForBoundingBox(image.getDpi(), rows, cols, bbox, wellRects);
 }
 
 std::unique_ptr<DecodeOptions> getDefaultDecodeOptions() {
