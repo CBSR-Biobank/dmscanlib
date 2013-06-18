@@ -120,8 +120,9 @@ doc: doxygen.cfg
 # This rule also creates the dependency files
 #
 $(BUILD_DIR)/%.o : %.cpp
-	$(CXX) $(CFLAGS) -MD -o $@ $<
-	@cp $(BUILD_DIR)/$*.d $(BUILD_DIR)/$*.P; \
+	@echo "compiling $<..."
+	$(SILENT)$(CXX) $(CFLAGS) -MD -o $@ $<
+	$(SILENT)cp $(BUILD_DIR)/$*.d $(BUILD_DIR)/$*.P; \
 	$(SED) -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
 		-e '/^$$/ d' -e 's/$$/ :/' < $(BUILD_DIR)/$*.d >> $(BUILD_DIR)/$*.P; \
 	rm -f $(BUILD_DIR)/$*.d
