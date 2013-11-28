@@ -162,32 +162,6 @@ int getWellRectangles(JNIEnv *env, jsize numWells, jobjectArray _wellRects,
 	return 1;
 }
 
-std::unique_ptr<BoundingBox<double> > getBoundingBox(JNIEnv *env, jobject bboxJavaObj) {
-	CHECK_NOTNULL(bboxJavaObj);
-	jclass bboxJavaClass = env->GetObjectClass(bboxJavaObj);
-
-	jmethodID getCornerXMethodID = env->GetMethodID(bboxJavaClass, "getCornerX", "(I)D");
-    if(env->ExceptionOccurred()) {
-      	return NULL;
-    }
-
-	jmethodID getCornerYMethodID = env->GetMethodID(bboxJavaClass, "getCornerY", "(I)D");
-    if(env->ExceptionOccurred()) {
-      	return NULL;
-    }
-
-	Point<double> pt0(
-		env->CallDoubleMethod(bboxJavaObj, getCornerXMethodID, 0),
-		env->CallDoubleMethod(bboxJavaObj, getCornerYMethodID, 0));
-
-	Point<double> pt1(
-		env->CallDoubleMethod(bboxJavaObj, getCornerXMethodID, 1),
-		env->CallDoubleMethod(bboxJavaObj, getCornerYMethodID, 1));
-
-	return std::unique_ptr<BoundingBox<double> >(new BoundingBox<double>(
-		pt0, pt1));
-}
-
 std::unique_ptr<ScanRegion<double> > getScanRegion(JNIEnv *env, jobject regionJavaObj) {
 	CHECK_NOTNULL(regionJavaObj);
 	jclass regionJavaClass = env->GetObjectClass(regionJavaObj);
