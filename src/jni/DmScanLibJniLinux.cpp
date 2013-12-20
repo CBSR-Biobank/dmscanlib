@@ -18,19 +18,23 @@ void getResultCodeMsg(int resultCode, std::string & message) {
     case SC_SUCCESS:
         message = "";
         break;
-    case SC_FAIL:
     case SC_TWAIN_UNAVAIL:
-    case SC_INVALID_DPI:
+        message = "Operation not supported on your operating system.";
+        break;
     case SC_INVALID_IMAGE:
+        message = "invalid image.";
+        break;
+    case SC_INVALID_DPI:
     case SC_INCORRECT_DPI_SCANNED:
-        message = "operation not supported on your operating system";
+        message = "invalid image DPI.";
         break;
     case SC_INVALID_NOTHING_DECODED:
-        message = "no datamatrix barcodes could be decoded from the image";
+        message = "No datamatrix barcodes detected in the image.";
         break;
     case SC_INVALID_NOTHING_TO_DECODE:
-        message = "no wells to decode";
+        message = "No wells to decode.";
 		break;
+    case SC_FAIL:
     default:
         message = "undefined error";
         break;
