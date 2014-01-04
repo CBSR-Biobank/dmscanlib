@@ -22,6 +22,7 @@ REQUIRED PACKAGES ON UBUNTU
   - libopenthreads-dev
   - libgoogle-glog-dev
   - libgtest-dev
+  - libgflags-dev
 
   The image information generator tool requires the following package:
 

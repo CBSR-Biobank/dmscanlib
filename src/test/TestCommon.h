@@ -23,12 +23,17 @@ namespace test {
 
 bool getTestImageFileNames(std::string dir, std::vector<std::string> & filenames);
 
-void getWellRectsForBoundingBox(const unsigned dpi, const unsigned rows,
-	const unsigned cols, const BoundingBox<double> & bbox,
-	std::vector<std::unique_ptr<const WellRectangle<double> > > & wellRects);
+void getWellRectsForBoundingBox(
+		const unsigned rows,
+		const unsigned cols,
+		const BoundingBox<double> & bbox,
+		std::vector<std::unique_ptr<const WellRectangle<double> > > & wellRects);
 
-void getWellRectsForPalletImage(const std::string & fname, const unsigned rows,
-	const unsigned cols, std::vector<std::unique_ptr<const WellRectangle<double> > > & wellRects);
+void getWellRectsForPalletImage(
+		const std::string & fname,
+		const unsigned rows,
+		const unsigned cols,
+		std::vector<std::unique_ptr<const WellRectangle<double> > > & wellRects);
 
 std::unique_ptr<DecodeOptions> getDefaultDecodeOptions();
 

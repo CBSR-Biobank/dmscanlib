@@ -69,7 +69,9 @@ private:
     static DmtxImage * createDmtxImageFromDib(const Dib & dib);
     void decodeWellRect(WellDecoder & wellDecoder, DmtxDecode *dec) const;
     std::unique_ptr<decoder::DmtxDecodeHelper> createDmtxDecode(
-    		DmtxImage * dmtxImage, const unsigned dpi, WellDecoder & wellDecoder ,int scale) const;
+    		DmtxImage * dmtxImage,
+    		WellDecoder & wellDecoder,
+    		int scale) const;
 
     void getDecodeInfo(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg,
     		WellDecoder & wellDecoder) const;

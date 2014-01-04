@@ -329,7 +329,6 @@ unsigned Dib::getDpi() const {
    // 1 inch = 0.0254 meters
    return static_cast<unsigned>(pixelsPerMeter * 0.0254 + 0.5);
 }
-
 unsigned Dib::getHeight() const {
    return height;
 }
@@ -543,29 +542,32 @@ void Dib::drawRectangle(unsigned x, unsigned y, unsigned width, unsigned height,
 }
 
 void Dib::tpPresetFilter() {
-   switch (getDpi()) {
-
-      case 400:
-         VLOG(5) << "tpPresetFilter: Applying DPI_400_KERNEL";
-         convolveFast3x3(Dib::DPI_400_KERNEL);
-         break;
-
-      case 600:
-         VLOG(5) << "tpPresetFilter: Applying BLANK_KERNEL";
-         convolveFast3x3(Dib::BLANK_KERNEL);
-
-         VLOG(5) << "tpPresetFilter: Applying BLUR_KERNEL";
-         convolveFast3x3(Dib::BLUR_KERNEL);
-         break;
-
-      case 300:
-         VLOG(5) << "tpPresetFilter: No filter applied (300 dpi)";
-         break;
-
-      default:
-         VLOG(5) << "tpPresetFilter: No filter applied (default) dpi/" << getDpi();
-         break;
-   }
+//   switch (getDpi()) {
+//
+//      case 400:
+//         VLOG(5) << "tpPresetFilter: Applying DPI_400_KERNEL";
+//         convolveFast3x3(Dib::DPI_400_KERNEL);
+//         break;
+//
+//      case 600:
+//         VLOG(5) << "tpPresetFilter: Applying BLANK_KERNEL";
+//         convolveFast3x3(Dib::BLANK_KERNEL);
+//
+//         VLOG(5) << "tpPresetFilter: Applying BLUR_KERNEL";
+//         convolveFast3x3(Dib::BLUR_KERNEL);
+//         break;
+//
+//      case 300:
+//         VLOG(5) << "tpPresetFilter: No filter applied (300 dpi)";
+//         break;
+//
+//      default:
+//         VLOG(5) << "tpPresetFilter: No filter applied (default) dpi/" << getDpi();
+//         break;
+//   }
+	VLOG(5) << "tpPresetFilter: Applying BLANK_KERNEL and BLUR_KERNEL";
+	convolveFast3x3(Dib::BLANK_KERNEL);
+	convolveFast3x3(Dib::BLUR_KERNEL);
 }
 
 // Can only be used for grayscale Dibs

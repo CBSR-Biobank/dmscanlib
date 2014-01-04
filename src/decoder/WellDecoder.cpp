@@ -20,9 +20,11 @@
 
 namespace dmscanlib {
 
-WellDecoder::WellDecoder(const Decoder & _decoder,
+WellDecoder::WellDecoder(
+		const Decoder & _decoder,
 		std::unique_ptr<const WellRectangle<unsigned> > _wellRectangle) :
-		decoder(_decoder), wellRectangle(std::move(_wellRectangle)),
+		decoder(_decoder),
+		wellRectangle(std::move(_wellRectangle)),
 		boundingBox(std::move(wellRectangle->getRectangle().getBoundingBox()))
 {
 	VLOG(9) << "constructor: bounding box: " << *boundingBox

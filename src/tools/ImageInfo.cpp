@@ -108,8 +108,7 @@ void ImageInfo::generateWells() {
 	dib.readFromFile(filename);
 
 	std::cout << basename((char *) filename.c_str()) << std::endl;
-	std::cout << dib.getWidth() / static_cast<double>(dib.getDpi()) << ","
-			<< dib.getHeight() / static_cast<double>(dib.getDpi()) << std::endl;
+	std::cout << dib.getWidth() << "," << dib.getHeight() << std::endl;
 
 	for(unsigned i = 0, n = wells.size(); i < n; ++i) {
 		const WellRectangle<double> & wellRect = *wells[i];

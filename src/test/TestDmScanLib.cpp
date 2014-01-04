@@ -33,7 +33,7 @@ TEST(TestDmScanLib, invalidRects) {
 		test::getDefaultDecodeOptions();
     std::vector<std::unique_ptr<const WellRectangle<double> > > wellRects;
 	DmScanLib dmScanLib(1);
-	int result = dmScanLib.decodeImageWells("testImages/96tubes.bmp", *decodeOptions, wellRects);
+	int result = dmScanLib.decodeImageWells("testImages/8x12/96tubes.bmp", *decodeOptions, wellRects);
 	EXPECT_EQ(SC_INVALID_NOTHING_DECODED, result);
 }
 
@@ -48,8 +48,7 @@ TEST(TestDmScanLib, invalidImage) {
 	std::vector<std::unique_ptr<const WellRectangle<double> > > wellRects;
     wellRects.push_back(std::move(wrect));
 
-    std::unique_ptr<DecodeOptions> decodeOptions = 
-		test::getDefaultDecodeOptions();
+    std::unique_ptr<DecodeOptions> decodeOptions = test::getDefaultDecodeOptions();
 	DmScanLib dmScanLib(1);
 	int result = dmScanLib.decodeImageWells("xyz.bmp", *decodeOptions, wellRects);
 	EXPECT_EQ(SC_INVALID_IMAGE, result);
@@ -58,7 +57,9 @@ TEST(TestDmScanLib, invalidImage) {
 TEST(TestDmScanLib, decodeImage) {
 	FLAGS_v = 3;
 
-	std::string fname("testImages/hardscan.bmp");
+	//std::string fname("testImages/8x12/hardscan.bmp");
+	std::string fname("testImages/8x12/96tubes.bmp");
+	//std::string fname("/home/nelson/Desktop/ohs_crash_image001.bmp");
 
 	DmScanLib dmScanLib(1);
 	int result = test::decodeImage(fname, dmScanLib);
@@ -80,7 +81,8 @@ void writeDecodeAllResults(std::vector<std::string>  & testResults) {
 	ofile.close();
 }
 
-TEST(TestDmScanLib, DISABLED_decodeAllImages) {
+//TEST(TestDmScanLib, DISABLED_decodeAllImages) {
+TEST(TestDmScanLib, decodeAllImages) {
 	FLAGS_v = 1;
 
     std::string dirname("testImages");
