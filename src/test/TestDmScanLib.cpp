@@ -58,7 +58,7 @@ TEST(TestDmScanLib, invalidImage) {
 TEST(TestDmScanLib, decodeImage) {
 	FLAGS_v = 3;
 
-	std::string fname("testImages/hardscan.bmp");
+	std::string fname("testImages/8x12/hardscan.bmp");
 
 	DmScanLib dmScanLib(1);
 	int result = test::decodeImage(fname, dmScanLib);
@@ -80,7 +80,8 @@ void writeDecodeAllResults(std::vector<std::string>  & testResults) {
 	ofile.close();
 }
 
-TEST(TestDmScanLib, DISABLED_decodeAllImages) {
+//TEST(TestDmScanLib, DISABLED_decodeAllImages) {
+TEST(TestDmScanLib, decodeAllImages) {
 	FLAGS_v = 1;
 
     std::string dirname("testImages");

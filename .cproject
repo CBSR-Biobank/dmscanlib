@@ -81,6 +81,7 @@
 									<listOptionValue builtIn="false" value="gtest"/>
 									<listOptionValue builtIn="false" value="glog"/>
 									<listOptionValue builtIn="false" value="OpenThreads"/>
+									<listOptionValue builtIn="false" value="pthread"/>
 								</option>
 								<option id="gnu.cpp.link.option.paths.1596644708" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths"/>
 								<option id="gnu.cpp.link.option.flags.1904128056" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="" valueType="string"/>
