@@ -24,13 +24,14 @@ namespace test {
 bool getTestImageFileNames(std::string dir, std::vector<std::string> & filenames);
 
 void getWellRectsForBoundingBox(
+		const BoundingBox<unsigned> & bbox,
 		const unsigned rows,
 		const unsigned cols,
-		const BoundingBox<double> & bbox,
 		std::vector<std::unique_ptr<const WellRectangle<double> > > & wellRects);
 
 void getWellRectsForPalletImage(
 		const std::string & fname,
+		const BoundingBox<unsigned> & bbox,
 		const unsigned rows,
 		const unsigned cols,
 		std::vector<std::unique_ptr<const WellRectangle<double> > > & wellRects);

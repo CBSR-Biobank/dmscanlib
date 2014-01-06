@@ -7,7 +7,7 @@ USAGE="$SCRIPT [DIR]
 Generates NFO files for DataMatrix pallet images
 "
 DIR=$1
-INFOTOOL="../Linux-imageinfo/dmscanlib"
+INFOTOOL="Linux-imageinfo/dmscanlib"
 
 if [ -z "$DIR" ]; then
     echo "ERROR: directory not specified"

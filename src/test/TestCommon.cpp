@@ -103,22 +103,25 @@ bool getTestImageFileNames(std::string dir, std::vector<std::string> & filenames
 }
 
 void getWellRectsForBoundingBox(
+		const BoundingBox<unsigned> & bbox,
 		const unsigned rows,
 		const unsigned cols,
-		const BoundingBox<double> & bbox,
 		std::vector<std::unique_ptr<const WellRectangle<double> > > & wellRects) {
 
 	double wellWidth = bbox.getWidth() / static_cast<double>(cols);
 	double wellHeight = bbox.getHeight() / static_cast<double>(rows);
 
+	Point<double> startPoint(
+			static_cast<double>(bbox.points[0].x),
+			static_cast<double>(bbox.points[0].y));
     Point<double> horTranslation(static_cast<double>(wellWidth), 0);
     Point<double> verTranslation(0, static_cast<double>(wellHeight));
 
     // round off the bounding box so image dimensions are not exceeded
 	Point<double> pt2(0.99999 * wellWidth, 0.99999 * wellHeight);
 	BoundingBox<double> startingWellBbox(
-			bbox.points[0],
-			*pt2.translate(bbox.points[0]));
+			startPoint,
+			*pt2.translate(startPoint));
 
     for (unsigned row = 0; row < rows; ++row) {
 	std::unique_ptr<const Point<double>> scaledVertTranslation = verTranslation.scale(row);
@@ -140,6 +143,7 @@ void getWellRectsForBoundingBox(
 
 void getWellRectsForPalletImage(
 		const std::string & fname,
+		BoundingBox<unsigned> & regionBbox,
 		const unsigned rows,
 		const unsigned cols,
 		std::vector<std::unique_ptr<const WellRectangle<double> > > & wellRects) {
@@ -150,13 +154,7 @@ void getWellRectsForPalletImage(
 		throw std::invalid_argument("could not load image");
 	}
 
-	const Point<double> pt1(0, 0);
-	const Point<double> pt2(
-		static_cast<double>(image.getWidth()),
-	    static_cast<double>(image.getHeight()));
-	const BoundingBox<double> bbox(pt1, pt2);
-
-	getWellRectsForBoundingBox(rows, cols, bbox, wellRects);
+	getWellRectsForBoundingBox(regionBbox, rows, cols, wellRects);
 }
 
 std::unique_ptr<DecodeOptions> getDefaultDecodeOptions() {

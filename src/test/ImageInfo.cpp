@@ -37,38 +37,39 @@ ImageInfo::ImageInfo(const std::string & filename) : decodedWellCount(0) {
 				}
 				imageFilename = tokens[0];
 			} else if (linecnt == 1) {
+				if (tokens.size() != 4) {
+					throw std::logic_error("four tokens expected");
+				}
+				unsigned x = stringToUnsigned(tokens[0]);
+				unsigned y = stringToUnsigned(tokens[1]);
+				unsigned width = stringToUnsigned(tokens[2]);
+				unsigned height = stringToUnsigned(tokens[3]);
+
+				Point<unsigned> pt1(x, y);
+				Point<unsigned> pt2(width, height);
+				BoundingBox<unsigned> bbox(pt1, pt2);
+
+				boundingBox = std::unique_ptr<const BoundingBox<unsigned> >(
+						new BoundingBox<unsigned>(pt1, pt2));
+			} else if (linecnt == 2) {
 				if (tokens.size() != 2) {
 					throw std::logic_error("two tokens expected");
 				}
-				double width = stringToDouble(tokens[0]);
-				double height = stringToDouble(tokens[1]);
-				dimensions = std::unique_ptr<const Point<double> >(
-						new Point<double >(width, height));
+				palletRows = stringToUnsigned(tokens[0]);
+				palletCols = stringToUnsigned(tokens[1]);
+
 			} else {
-				if ((tokens.size() != 9) && (tokens.size() != 10)) {
+				if ((tokens.size() < 1) && (tokens.size() > 2)) {
 					throw std::logic_error("invalid label line");
 				}
 
-				// get the rectangle points
-				std::vector<std::unique_ptr<const Point<double> > > points;
-				points.resize(4);
-				for (unsigned i = 0; i < 4; ++i) {
-					double x = stringToDouble(tokens[2 * i + 1]);
-					double y = stringToDouble(tokens[2 * i + 2]);
-					points[i] = std::unique_ptr<const Point<double> >(
-							new Point<double >(x, y));
-				}
-				std::unique_ptr<const Rect<double> > rect(new Rect<double>(*points[0], *points[1],
-						*points[2], *points[3]));
-
 				std::string decodedMsg;
-				if (tokens.size() == 10) {
+				if (tokens.size() == 2) {
 					++decodedWellCount;
-					decodedMsg = tokens[9];
+					decodedMsg = tokens[1];
 				}
 
-				wells.insert(std::make_pair(tokens[0],
-						std::make_pair(std::move(rect), decodedMsg)));
+				wells.insert(std::make_pair(tokens[0], decodedMsg));
 			}
 
 			++linecnt;
@@ -79,12 +80,11 @@ ImageInfo::ImageInfo(const std::string & filename) : decodedWellCount(0) {
 
 void ImageInfo::toCout() {
 	std::cout << imageFilename << ": ";
-	std::cout << *dimensions << std::endl;
-	std::map<const std::string, std::pair<std::unique_ptr<const Rect<double> >, const std::string>>::iterator ii = wells.begin();
+	std::cout << *boundingBox << std::endl;
+	std::map<const std::string, const std::string>::iterator ii = wells.begin();
 
 	for (; ii != wells.end(); ++ii) {
-		const Rect<double> & rect = *ii->second.first;
-		std::cout << ii->first << ":" << rect << ":" << ii->second.second << std::endl;
+		std::cout << ii->first << "," << ii->second << std::endl;
 	}
 }
 
@@ -98,20 +98,12 @@ std::vector<std::string> & ImageInfo::split(const std::string &s, char delim, st
 }
 
 
-double ImageInfo::stringToDouble(const std::string& s) {
+unsigned ImageInfo::stringToUnsigned(const std::string& s) {
 	std::istringstream i(s);
-	double x;
+	unsigned x;
 	if (!(i >> x))
 		return 0;
 	return x;
-}
-
-const Rect<double> & ImageInfo::getWellRect(const std::string & label) {
-	if (wells.find(label) == wells.end()) {
-		throw std::invalid_argument("label not present: " + label);
-	}
-
-	return *wells[label].first;
 }
 
 const std::string * ImageInfo::getBarcodeMsg(const std::string & label) {
@@ -119,7 +111,7 @@ const std::string * ImageInfo::getBarcodeMsg(const std::string & label) {
 		return NULL;
 	}
 
-	return &wells[label].second;
+	return &wells[label];
 }
 
 } /* namespace test */

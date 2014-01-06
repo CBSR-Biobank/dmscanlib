@@ -85,7 +85,7 @@ void writeDecodeAllResults(std::vector<std::string>  & testResults) {
 
 //TEST(TestDmScanLib, DISABLED_decodeAllImages) {
 TEST(TestDmScanLib, decodeAllImages) {
-	FLAGS_v = 2;
+	FLAGS_v = 1;
 
     std::string dirname("testImages");
     std::vector<std::string> filenames;
@@ -108,7 +108,12 @@ TEST(TestDmScanLib, decodeAllImages) {
 
 		dmscanlib::test::ImageInfo imageInfo(infoFilename);
 	    std::vector<std::unique_ptr<const WellRectangle<double> > > wellRects;
-	    test::getWellRectsForPalletImage(filename, 8, 12, wellRects);
+	    test::getWellRectsForPalletImage(
+	    		filename,
+	    		imageInfo.getBoundingBox(),
+	    		imageInfo.getPalletRows(),
+	    		imageInfo.getPalletCols(),
+	    		wellRects);
 
 		util::DmTime start;
 		DmScanLib dmScanLib(0);
