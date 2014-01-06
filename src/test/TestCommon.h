@@ -37,7 +37,7 @@ void getWellRectsForPalletImage(
 
 std::unique_ptr<DecodeOptions> getDefaultDecodeOptions();
 
-int decodeImage(std::string fname, DmScanLib & dmScanLib);
+int decodeImage(std::string fname, DmScanLib & dmScanLib, int rows, int cols);
 
 std::unique_ptr<const BoundingBox<double>> getWellsBoundingBox(
 	const BoundingBox<double> & bbox);

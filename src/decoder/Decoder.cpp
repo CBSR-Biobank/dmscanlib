@@ -85,7 +85,7 @@ void Decoder::applyFilters() {
 			? std::move(image.convertGrayscale())
 			: std::unique_ptr<Dib>(new Dib(image));
 
-	//workingImage->tpPresetFilter();
+	workingImage->tpPresetFilter();
 	if (VLOG_IS_ON(2)) {
 		workingImage->writeToFile("filtered.bmp");
 	}

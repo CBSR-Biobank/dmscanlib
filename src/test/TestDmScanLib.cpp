@@ -58,11 +58,13 @@ TEST(TestDmScanLib, decodeImage) {
 	FLAGS_v = 3;
 
 	//std::string fname("testImages/8x12/hardscan.bmp");
-	std::string fname("testImages/8x12/problem_tubes_2.bmp");
+	//std::string fname("testImages/8x12/plate.bmp");
 	//std::string fname("/home/nelson/Desktop/ohs_crash_image001.bmp");
+	//std::string fname("testImages/10x10/10x10.bmp");
+	std::string fname("/home/loyola/Desktop/ohs_pallet_crash.bmp");
 
 	DmScanLib dmScanLib(1);
-	int result = test::decodeImage(fname, dmScanLib);
+	int result = test::decodeImage(fname, dmScanLib, 8, 12);
 
 	EXPECT_EQ(SC_SUCCESS, result);
 	EXPECT_TRUE(dmScanLib.getDecodedWellCount() > 0);
@@ -83,7 +85,7 @@ void writeDecodeAllResults(std::vector<std::string>  & testResults) {
 
 //TEST(TestDmScanLib, DISABLED_decodeAllImages) {
 TEST(TestDmScanLib, decodeAllImages) {
-	FLAGS_v = 1;
+	FLAGS_v = 2;
 
     std::string dirname("testImages");
     std::vector<std::string> filenames;

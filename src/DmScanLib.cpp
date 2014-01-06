@@ -88,13 +88,6 @@ int DmScanLib::getScannerCapability() {
 	return imgScanner->getScannerCapability();
 }
 
-int DmScanLib::isValidDpi(int dpi) {
-	int dpiCap = imgScanner->getScannerCapability();
-	return ((dpiCap & CAP_DPI_300) && dpi == 300)
-			|| ((dpiCap & CAP_DPI_400) && dpi == 400)
-			|| ((dpiCap & CAP_DPI_600) && dpi == 600);
-}
-
 void DmScanLib::configLogging(unsigned level, bool useFile) {
 	if (loggingInitialized)  return;
 

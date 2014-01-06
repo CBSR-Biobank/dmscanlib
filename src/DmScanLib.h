@@ -84,9 +84,9 @@ public:
     const std::map<std::string, const WellDecoder *> & getDecodedWells() const;
 
 protected:
-    int isValidDpi(int dpi);
-
-    int decodeCommon(const Dib & image, const DecodeOptions & decodeOptions,
+    int decodeCommon(
+    		const Dib & image,
+    		const DecodeOptions & decodeOptions,
     		const std::string &decodedDibFilename,
     		std::vector<std::unique_ptr<const WellRectangle<double>  > > & wellRects);
 

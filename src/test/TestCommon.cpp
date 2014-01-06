@@ -115,7 +115,7 @@ void getWellRectsForBoundingBox(
     Point<double> verTranslation(0, static_cast<double>(wellHeight));
 
     // round off the bounding box so image dimensions are not exceeded
-	Point<double> pt2(0.9999 * wellWidth, 0.9999 * wellHeight);
+	Point<double> pt2(0.99999 * wellWidth, 0.99999 * wellHeight);
 	BoundingBox<double> startingWellBbox(
 			bbox.points[0],
 			*pt2.translate(bbox.points[0]));
@@ -170,10 +170,10 @@ std::unique_ptr<DecodeOptions> getDefaultDecodeOptions() {
 			corrections, shrink));
 }
 
-int decodeImage(std::string fname, DmScanLib & dmScanLib) {
+int decodeImage(std::string fname, DmScanLib & dmScanLib, int rows, int cols) {
     std::vector<std::unique_ptr<const WellRectangle<double> > > wellRects;
 
-    getWellRectsForPalletImage(fname, 8, 12, wellRects);
+    getWellRectsForPalletImage(fname, rows, cols, wellRects);
 
     std::unique_ptr<DecodeOptions> decodeOptions = getDefaultDecodeOptions();
     return dmScanLib.decodeImageWells(fname.c_str(), *decodeOptions, wellRects);
