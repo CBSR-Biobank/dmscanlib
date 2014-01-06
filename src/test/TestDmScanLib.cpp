@@ -58,7 +58,7 @@ TEST(TestDmScanLib, decodeImage) {
 	FLAGS_v = 3;
 
 	//std::string fname("testImages/8x12/hardscan.bmp");
-	std::string fname("testImages/8x12/96tubes.bmp");
+	std::string fname("testImages/8x12/problem_tubes_2.bmp");
 	//std::string fname("/home/nelson/Desktop/ohs_crash_image001.bmp");
 
 	DmScanLib dmScanLib(1);

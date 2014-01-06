@@ -160,7 +160,7 @@ void getWellRectsForPalletImage(
 }
 
 std::unique_ptr<DecodeOptions> getDefaultDecodeOptions() {
-    const double scanGap = 5;
+    const double scanGap = 25;
     const long squareDev = 15;
     const long edgeThresh = 5;
     const long corrections = 10;
