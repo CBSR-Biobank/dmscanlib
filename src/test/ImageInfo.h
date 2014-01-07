@@ -24,7 +24,14 @@ public:
 	ImageInfo(const std::string & filename);
 	virtual ~ImageInfo() {}
 
-	const std::string getImageFilename() const { return imageFilename; }
+	const bool isValid() {
+		return fileValid && imageFileValid;
+	}
+
+	const std::string & getImageFilename() const {
+		return imageFilename;
+	}
+
 	const Rect<double> & getWellRect(const std::string & label);
 	const std::string * getBarcodeMsg(const std::string & label);
 
@@ -46,11 +53,16 @@ public:
 
 
 private:
-	std::vector<std::string> & split(const std::string &s, char delim,
+	std::vector<std::string> & split(
+			const std::string &s, char delim,
 			std::vector<std::string> &elems);
 	unsigned stringToUnsigned(const std::string& s);
 	void toCout();
+	void setImageFilename(std::string & basename);
 
+	std::string filename;
+	bool fileValid;
+	bool imageFileValid;
 	std::string imageFilename;
 	std::unique_ptr<const BoundingBox<unsigned> > boundingBox;
 	std::map<const std::string, const std::string> wells;

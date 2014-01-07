@@ -83,6 +83,51 @@ void writeDecodeAllResults(std::vector<std::string>  & testResults) {
 	ofile.close();
 }
 
+// check that the decoded message matches the one in the "nfo" file
+void checkDecodeInfo(DmScanLib & dmScanLib, dmscanlib::test::ImageInfo & imageInfo) {
+	const std::map<std::string, const WellDecoder *> & decodedWells = dmScanLib.getDecodedWells();
+	for (std::map<std::string, const WellDecoder *>::const_iterator ii = decodedWells.begin();
+			ii != decodedWells.end(); ++ii) {
+		const WellDecoder & decodedWell = *(ii->second);
+		const std::string & label = decodedWell.getLabel();
+		const std::string * nfoDecodedMsg = imageInfo.getBarcodeMsg(label);
+
+		if ((decodedWell.getMessage().length() > 0) && (nfoDecodedMsg != NULL)) {
+			EXPECT_EQ(*nfoDecodedMsg, decodedWell.getMessage()) << "label: " << label;
+		}
+	}
+}
+
+TEST(TestDmScanLib, decodeFromInfo) {
+	FLAGS_v = 1;
+
+	std::string fnameInfoFile("testImages/8x12/plate.nfo");
+	dmscanlib::test::ImageInfo imageInfo(fnameInfoFile);
+
+	EXPECT_TRUE(imageInfo.isValid());
+
+    std::vector<std::unique_ptr<const WellRectangle<double> > > wellRects;
+    test::getWellRectsForBoundingBox(
+    		imageInfo.getBoundingBox(),
+    		imageInfo.getPalletRows(),
+    		imageInfo.getPalletCols(),
+    		wellRects);
+
+	util::DmTime start;
+	DmScanLib dmScanLib(0);
+    std::unique_ptr<DecodeOptions> decodeOptions = test::getDefaultDecodeOptions();
+    int decodeResult = dmScanLib.decodeImageWells(
+    		imageInfo.getImageFilename().c_str(), *decodeOptions, wellRects);
+	util::DmTime end;
+
+	std::unique_ptr<util::DmTime> difftime = end.difftime(start);
+
+	EXPECT_EQ(SC_SUCCESS, decodeResult);
+	EXPECT_TRUE(dmScanLib.getDecodedWellCount() > 0);
+	checkDecodeInfo(dmScanLib, imageInfo);
+}
+
+
 //TEST(TestDmScanLib, DISABLED_decodeAllImages) {
 TEST(TestDmScanLib, decodeAllImages) {
 	FLAGS_v = 1;
@@ -106,10 +151,13 @@ TEST(TestDmScanLib, decodeAllImages) {
 		std::size_t pos = filename.find("bmp");
 		infoFilename.replace(pos, pos+3, "nfo");
 
+		std::cout << "filename: " << filename << std::endl;
+
 		dmscanlib::test::ImageInfo imageInfo(infoFilename);
+		EXPECT_TRUE(imageInfo.isValid());
+
 	    std::vector<std::unique_ptr<const WellRectangle<double> > > wellRects;
-	    test::getWellRectsForPalletImage(
-	    		filename,
+	    test::getWellRectsForBoundingBox(
 	    		imageInfo.getBoundingBox(),
 	    		imageInfo.getPalletRows(),
 	    		imageInfo.getPalletCols(),

@@ -16,9 +16,13 @@
 namespace dmscanlib {
 namespace test {
 
-ImageInfo::ImageInfo(const std::string & filename) : decodedWellCount(0) {
+ImageInfo::ImageInfo(const std::string & fname) :
+		filename(fname),
+		decodedWellCount(0) {
 	std::ifstream file;
 	file.open(filename);
+
+	fileValid = file.good();
 
 	if (file.is_open()) {
 		unsigned linecnt = 0;
@@ -35,7 +39,7 @@ ImageInfo::ImageInfo(const std::string & filename) : decodedWellCount(0) {
 				if (tokens.size() != 1) {
 					throw std::logic_error("single token expected");
 				}
-				imageFilename = tokens[0];
+				setImageFilename(tokens[0]);
 			} else if (linecnt == 1) {
 				if (tokens.size() != 4) {
 					throw std::logic_error("four tokens expected");
@@ -75,6 +79,22 @@ ImageInfo::ImageInfo(const std::string & filename) : decodedWellCount(0) {
 			++linecnt;
 		}
 	}
+	file.close();
+}
+
+void ImageInfo::setImageFilename(std::string & basename) {
+	std::size_t pos = filename.rfind("/");
+	if (pos == std::string::npos) {
+		imageFilename = basename;
+	} else {
+		imageFilename = filename;
+		imageFilename.erase(pos + 1);
+		imageFilename.append(basename);
+	}
+
+	std::ifstream file;
+	file.open(imageFilename);
+	imageFileValid = file.good();
 	file.close();
 }
 

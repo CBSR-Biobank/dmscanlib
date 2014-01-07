@@ -141,22 +141,6 @@ void getWellRectsForBoundingBox(
     }
 }
 
-void getWellRectsForPalletImage(
-		const std::string & fname,
-		BoundingBox<unsigned> & regionBbox,
-		const unsigned rows,
-		const unsigned cols,
-		std::vector<std::unique_ptr<const WellRectangle<double> > > & wellRects) {
-
-	Dib image;
-	bool readResult = image.readFromFile(fname);
-	if (!readResult) {
-		throw std::invalid_argument("could not load image");
-	}
-
-	getWellRectsForBoundingBox(regionBbox, rows, cols, wellRects);
-}
-
 std::unique_ptr<DecodeOptions> getDefaultDecodeOptions() {
     const double scanGap = 25;
     const long squareDev = 15;
@@ -168,10 +152,20 @@ std::unique_ptr<DecodeOptions> getDefaultDecodeOptions() {
 			corrections, shrink));
 }
 
-int decodeImage(std::string fname, DmScanLib & dmScanLib, int rows, int cols) {
+int decodeImage(std::string fname, DmScanLib & dmScanLib, unsigned rows, unsigned cols) {
     std::vector<std::unique_ptr<const WellRectangle<double> > > wellRects;
 
-    getWellRectsForPalletImage(fname, rows, cols, wellRects);
+	Dib image;
+	bool readResult = image.readFromFile(fname);
+	if (!readResult) {
+		throw std::invalid_argument("could not load image");
+	}
+
+	Point<unsigned> pt1(0, 0);
+	Point<unsigned> pt2(image.getWidth(), image.getHeight());
+	BoundingBox<unsigned> bbox(pt1, pt2);
+
+	getWellRectsForBoundingBox(bbox, rows, cols, wellRects);
 
     std::unique_ptr<DecodeOptions> decodeOptions = getDefaultDecodeOptions();
     return dmScanLib.decodeImageWells(fname.c_str(), *decodeOptions, wellRects);
