@@ -55,12 +55,16 @@ Decoder::Decoder(
 	double width = static_cast<double>(image.getWidth());
 	double height = static_cast<double>(image.getHeight());
 
+	VLOG(1) << "Decoder: image size: " << width << ", " << height;
+
 	for(unsigned i = 0, n = wellRects.size(); i < n; ++i) {
 		// ensure well rectangles are within the image's region
 		const WellRectangle<double> & wellRect = *wellRects[i];
 
 		std::unique_ptr<const BoundingBox<double> > wellBbox =
 				wellRect.getRectangle().getBoundingBox();
+
+ 		VLOG(1) << "Decoder: well: " << *wellBbox;
 
 		if ((wellBbox->points[0].x >= width)
 				|| (wellBbox->points[0].y >= height)
