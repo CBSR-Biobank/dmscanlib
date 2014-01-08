@@ -200,7 +200,11 @@ std::unique_ptr<DmtxDecodeHelper> Decoder::createDmtxDecode(
 	std::unique_ptr<const BoundingBox<unsigned> > bbox = std::move(
 			wellDecoder.getWellRectangle().getBoundingBox());
 
+#ifdef _VISUALC_	
+	unsigned mindim = min(bbox->getWidth(), bbox->getHeight());
+#else
 	unsigned mindim = std::min(bbox->getWidth(), bbox->getHeight());
+#endif
 	dec->setProperty(DmtxPropEdgeMin, static_cast<int>(0.25 * mindim));
 	dec->setProperty(DmtxPropEdgeMax, static_cast<int>(0.5 * mindim));
 	dec->setProperty(DmtxPropScanGap, static_cast<unsigned>(decodeOptions.scanGap));

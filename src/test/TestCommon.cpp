@@ -118,7 +118,7 @@ void getWellRectsForBoundingBox(
     Point<double> verTranslation(0, static_cast<double>(wellHeight));
 
     // round off the bounding box so image dimensions are not exceeded
-	Point<double> pt2(0.99999 * wellWidth, 0.99999 * wellHeight);
+	Point<double> pt2(0.999 * wellWidth, 0.999 * wellHeight);
 	BoundingBox<double> startingWellBbox(
 			startPoint,
 			*pt2.translate(startPoint));
