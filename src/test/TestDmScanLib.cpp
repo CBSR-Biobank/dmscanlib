@@ -59,16 +59,16 @@ TEST(TestDmScanLib, invalidImage) {
 }
 
 TEST(TestDmScanLib, decodeImage) {
-	FLAGS_v = 3;
+	FLAGS_v = 2;
 
-	std::string fname("testImages/8x12/hardscan.bmp");
+	//std::string fname("testImages/8x12/hardscan.bmp");
 	//std::string fname("testImages/8x12/plate.bmp");
 	//std::string fname("/home/nelson/Desktop/ohs_crash_image001.bmp");
 	//std::string fname("testImages/10x10/10x10.bmp");
-	//std::string fname("/home/loyola/Desktop/ohs_pallet_crash.bmp");
+	std::string fname("testImages/10x10/10x10.bmp");
 
 	DmScanLib dmScanLib(1);
-	int result = test::decodeImage(fname, dmScanLib, 8, 12);
+	int result = test::decodeImage(fname, dmScanLib, 10, 10);
 
 	EXPECT_EQ(SC_SUCCESS, result);
 	EXPECT_TRUE(dmScanLib.getDecodedWellCount() > 0);
