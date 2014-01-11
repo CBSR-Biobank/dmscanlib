@@ -1,4 +1,4 @@
-#!/bin/bash
+testImages/8x12/#!/bin/bash
 
 SCRIPT=`basename $0`
 

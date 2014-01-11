@@ -25,13 +25,12 @@ namespace dmscanlib {
 namespace test {
 
 /*
- * Gets file names for all the test images in the "testImages" folder. Only MS
- * Windows bitmap files are included.
+ * Gets file names for all the test information files in the "testImageInfo" folder.
  *
- * These test images can be downloaded from
+ * The test images the info files refer to can be downloaded from
  * http://aicml-med.cs.ualberta.ca/CBSR/scanlib/testImages.tar.bz2
  */
-bool getTestImageFileNames(std::string dir, std::vector<std::string> & filenames) {
+bool getTestImageInfoFilenames(std::string dir, std::vector<std::string> & filenames) {
 #ifndef _VISUALC_
 	DIR * dp;
 	dirent * dirp;
@@ -45,11 +44,11 @@ bool getTestImageFileNames(std::string dir, std::vector<std::string> & filenames
 		if (((dirp->d_type == DT_DIR) && (dirp->d_name[0] != '.'))) {
 			std::string subdirname;
 			subdirname.append(dir).append("/").append(dirp->d_name);
-			getTestImageFileNames(subdirname, filenames);
+			getTestImageInfoFilenames(subdirname, filenames);
 		} else if (dirp->d_type == DT_REG) {
 			std::string basename(dirp->d_name);
 
-			if (basename.find(".bmp") != std::string::npos) {
+			if (basename.find(".nfo") != std::string::npos) {
 				filenames.push_back(std::string(dir).append("/").append(basename));
 			}
 		}

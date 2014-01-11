@@ -256,6 +256,9 @@ void DmScanLib::writeDecodedImage(const Dib & image,
 }
 
 const unsigned DmScanLib::getDecodedWellCount() {
+	if (decoder == NULL) {
+		throw std::logic_error("decoder is null");
+	}
 	return decoder->getDecodedWellCount();
 }
 

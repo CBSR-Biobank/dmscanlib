@@ -83,15 +83,7 @@ ImageInfo::ImageInfo(const std::string & fname) :
 }
 
 void ImageInfo::setImageFilename(std::string & basename) {
-	std::size_t pos = filename.rfind("/");
-	if (pos == std::string::npos) {
-		imageFilename = basename;
-	} else {
-		imageFilename = filename;
-		imageFilename.erase(pos + 1);
-		imageFilename.append(basename);
-	}
-
+	imageFilename = basename;
 	std::ifstream file;
 	file.open(imageFilename);
 	imageFileValid = file.good();

@@ -21,7 +21,7 @@ class DmScanLib;
 
 namespace test {
 
-bool getTestImageFileNames(std::string dir, std::vector<std::string> & filenames);
+bool getTestImageInfoFilenames(std::string dir, std::vector<std::string> & filenames);
 
 void getWellRectsForBoundingBox(
 		const BoundingBox<unsigned> & bbox,
