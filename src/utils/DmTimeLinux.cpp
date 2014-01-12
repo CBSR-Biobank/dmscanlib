@@ -51,9 +51,8 @@ std::unique_ptr<DmTime> DmTime::difftime(const DmTime & that) {
 	return result;
 }
 
-std::ostream & operator<<(std::ostream &os, const dmscanlib::util::DmTime & tm) {
-	os << tm.timeVal.tv_sec << "." << tm.timeVal.tv_usec/1000;
-	return os;
+double DmTime::getTime() {
+	return static_cast<double>(timeVal.tv_sec) + static_cast<double>(timeVal.tv_usec)/1000000;
 }
 
 } /* namespace */

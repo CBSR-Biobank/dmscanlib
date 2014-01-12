@@ -42,11 +42,10 @@ public:
 	DmTime(DmTime & that);
 	virtual ~DmTime() { }
 	std::unique_ptr<DmTime>  difftime(const DmTime & that);
+	double getTime();
 
 private:
 	slTime timeVal;
-
-	friend std::ostream & operator<<(std::ostream &os, const DmTime & tm);
 };
 
 } /* namespace */

@@ -151,6 +151,10 @@ TEST(TestDmScanLib, decodeAllImages) {
 	std::vector<std::string> testResults;
 	testResults.push_back("#filename,decoded,total,ratio,time (sec)");
 
+	unsigned totalTubes = 0;
+	unsigned totalDecoded = 0;
+	double totalTime = 0;
+
 	for (unsigned i = 0, n = filenames.size(); i < n; ++i) {
 		VLOG(1) << "test image info: " << filenames[i];
 
@@ -202,11 +206,33 @@ TEST(TestDmScanLib, decodeAllImages) {
 					<< imageInfo.getDecodedWellCount() << ","
 					<< dmScanLib.getDecodedWellCount()
 							/ static_cast<double>(imageInfo.getDecodedWellCount())
-					<< "," << *difftime;
+					<< "," << difftime->getTime();
+
+			VLOG(1)
+					<< "decoded: " << dmScanLib.getDecodedWellCount()
+							<< ", total: " << imageInfo.getDecodedWellCount();
+			VLOG(1) << "time taken: " << difftime->getTime() << std::endl;
+
+			totalTubes += imageInfo.getDecodedWellCount();
+			totalDecoded += dmScanLib.getDecodedWellCount();
+			totalTime += difftime->getTime();
 		}
 
 		testResults.push_back(ss.str());
 	}
+
+	std::stringstream ss;
+	ss << "decoded:," << totalDecoded << ", total:," << totalTubes;
+	testResults.push_back(ss.str());
+	ss.str("");
+
+	double avgDecodeTime = totalTime /filenames.size();
+	ss << "average decode time:," << avgDecodeTime;
+	testResults.push_back(ss.str());
+
+	VLOG(1)
+			<< "total decoded: " << totalDecoded << ", total tubes: "
+					<< totalTubes << ", average decode time: " << avgDecodeTime;
 
 	writeDecodeAllResults(testResults);
 }
