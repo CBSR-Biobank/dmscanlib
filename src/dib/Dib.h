@@ -28,6 +28,7 @@
 #include <memory>
 
 #ifdef WIN32
+#   define NOMINMAX
 #   include <windows.h>
 #   undef ERROR
 #else

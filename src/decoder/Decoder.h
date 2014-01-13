@@ -31,7 +31,8 @@
 #include <map>
 
 #ifdef WIN32
-#include <windows.h>
+#   define NOMINMAX
+#   include <windows.h>
 #endif
 
 namespace dmscanlib {

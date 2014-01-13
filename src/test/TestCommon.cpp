@@ -15,6 +15,7 @@
 
 #ifdef _VISUALC_
 #   pragma warning(disable : 4996)
+#   define NOMINMAX
 #   include <windows.h>
 #else
 #   include <dirent.h>

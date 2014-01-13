@@ -29,7 +29,7 @@
 #endif
 
 #ifdef WIN32
-#undef ERROR
+#   undef ERROR
 #endif
 
 #include "Dib.h"
@@ -414,13 +414,8 @@ std::unique_ptr<Dib> Dib::crop(const BoundingBox<unsigned> & bbox) const {
 	CHECK(bbox.points[1].y > bbox.points[0].y);
 
 
-#ifdef _VISUALC_
-	Point<unsigned> pt1(min(bbox.points[0].x, width-1), min(bbox.points[0].y, height-1));
-	Point<unsigned> pt2(min(bbox.points[1].x, width-1), min(bbox.points[1].y, height-1));
-#else
 	Point<unsigned> pt1(std::min(bbox.points[0].x, width-1), std::min(bbox.points[0].y, height-1));
 	Point<unsigned> pt2(std::min(bbox.points[1].x, width-1), std::min(bbox.points[1].y, height-1));
-#endif
 
 	BoundingBox<unsigned> boundBbox(pt1, pt2);
 

@@ -25,8 +25,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <memory>
 
 #if defined (WIN32) && ! defined(__MINGW32__)
-#define NOMINMAX
-#include <Windows.h>
+#   define NOMINMAX
+#   include <Windows.h>
 #else
 typedef void* HANDLE;
 #endif

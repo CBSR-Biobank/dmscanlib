@@ -19,8 +19,7 @@
  */
 
 #ifdef _VISUALC_
-// disable fopen warnings
-#pragma warning(disable : 4996)
+#   pragma warning(disable : 4996) // disable fopen warnings
 #endif
 
 #include "decoder/Decoder.h"
@@ -204,14 +203,11 @@ std::unique_ptr<DmtxDecodeHelper> Decoder::createDmtxDecode(
 	std::unique_ptr<const BoundingBox<unsigned> > bbox = std::move(
 			wellDecoder.getWellRectangle().getBoundingBox());
 
-#ifdef _VISUALC_	
-	unsigned mindim = min(bbox->getWidth(), bbox->getHeight());
-#else
 	unsigned mindim = std::min(bbox->getWidth(), bbox->getHeight());
-#endif
+
 	dec->setProperty(DmtxPropEdgeMin, static_cast<int>(0.15 * mindim));
 	dec->setProperty(DmtxPropEdgeMax, static_cast<int>(0.3 * mindim));
-	dec->setProperty(DmtxPropScanGap, static_cast<unsigned>(0.1 * mindim));
+	dec->setProperty(DmtxPropScanGap, static_cast<int>(0.1 * mindim));
 
 	dec->setProperty(DmtxPropSymbolSize, DmtxSymbolSquareAuto);
 	dec->setProperty(DmtxPropSquareDevn, decodeOptions.squareDev);
