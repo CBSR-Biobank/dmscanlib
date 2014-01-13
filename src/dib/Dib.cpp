@@ -234,16 +234,55 @@ bool Dib::readFromFile(const std::string & filename) {
     r = fread(infoHeaderRaw, sizeof(unsigned char), sizeof(infoHeaderRaw), fh);
     CHECK(r = sizeof(infoHeaderRaw));
 
-    unsigned size = *(unsigned *) &infoHeaderRaw[0];
-    unsigned width = *(unsigned *) &infoHeaderRaw[0x12 - 0xE];
-    unsigned height = *(unsigned *) &infoHeaderRaw[0x16 - 0xE];
-    unsigned colorBits = *(unsigned short *) &infoHeaderRaw[0x1C - 0xE];
-    unsigned hPixelsPerMeter = *(unsigned *) &infoHeaderRaw[0x26 - 0xE];
-    unsigned vPixelsPerMeter = *(unsigned *) &infoHeaderRaw[0x2A - 0xE];
+    unsigned size =
+            infoHeaderRaw[0] << 24
+            | infoHeaderRaw[1] << 16
+            | infoHeaderRaw[2] << 8
+            | infoHeaderRaw[3];
 
-    unsigned planes = *(unsigned short *) &infoHeaderRaw[0x1A - 0xE];
-    unsigned compression = *(unsigned *) &infoHeaderRaw[0x1E - 0xE];
-    unsigned numColorsImp = *(unsigned *) &infoHeaderRaw[0x32 - 0xE];
+    unsigned width =
+            infoHeaderRaw[4] << 24
+            | infoHeaderRaw[5] << 16
+            | infoHeaderRaw[6] << 8
+            | infoHeaderRaw[7];
+
+    unsigned height =
+            infoHeaderRaw[8] << 24
+            | infoHeaderRaw[9] << 16
+            | infoHeaderRaw[10] << 8
+            | infoHeaderRaw[11];
+
+    unsigned short planes =
+            infoHeaderRaw[12] << 8
+            | infoHeaderRaw[13];
+
+    unsigned short colorBits =
+            infoHeaderRaw[14] << 8
+            | infoHeaderRaw[15];
+
+    unsigned compression =
+            infoHeaderRaw[16] << 24
+            | infoHeaderRaw[17] << 16
+            | infoHeaderRaw[18] << 8
+            | infoHeaderRaw[19];
+
+    unsigned hPixelsPerMeter =
+            infoHeaderRaw[24] << 24
+            | infoHeaderRaw[25] << 16
+            | infoHeaderRaw[26] << 8
+            | infoHeaderRaw[27];
+
+    unsigned vPixelsPerMeter =
+            infoHeaderRaw[28] << 24
+            | infoHeaderRaw[29] << 16
+            | infoHeaderRaw[30] << 8
+            | infoHeaderRaw[21];
+
+    unsigned numColorsImp =
+            infoHeaderRaw[36] << 24
+            | infoHeaderRaw[37] << 16
+            | infoHeaderRaw[38] << 8
+            | infoHeaderRaw[39];
 
     CHECK((size == 40) || (size == 108));
 
@@ -279,25 +318,78 @@ bool Dib::writeToFile(const std::string & filename) const {
     unsigned paletteSize = getPaletteSize(colorBits);
     unsigned paletteBytes = paletteSize * sizeof(RgbQuad);
 
-    *(unsigned short *) &fileHeaderRaw[0] = 0x4D42;
-    *(unsigned *) &fileHeaderRaw[2] = imageSize + sizeof(fileHeaderRaw)
-            + sizeof(infoHeaderRaw) + paletteBytes;
-    *(unsigned short *) &fileHeaderRaw[6] = 0;
-    *(unsigned short *) &fileHeaderRaw[8] = 0;
-    *(unsigned *) &fileHeaderRaw[0xA] = sizeof(fileHeaderRaw)
-            + sizeof(infoHeaderRaw) + paletteBytes;
+    unsigned filesize = imageSize + sizeof(fileHeaderRaw) + sizeof(infoHeaderRaw) + paletteBytes;
+    unsigned offset = sizeof(fileHeaderRaw) + sizeof(infoHeaderRaw) + paletteBytes;
 
-    *(unsigned *) &infoHeaderRaw[0] = size;
-    *(unsigned *) &infoHeaderRaw[0x12 - 0xE] = width;
-    *(unsigned *) &infoHeaderRaw[0x16 - 0xE] = height;
-    *(unsigned short *) &infoHeaderRaw[0x1A - 0xE] = 1;
-    *(unsigned short *) &infoHeaderRaw[0x1C - 0xE] = colorBits;
-    *(unsigned *) &infoHeaderRaw[0x1E - 0xE] = 0;
-    *(unsigned *) &infoHeaderRaw[0x22 - 0xE] = imageSize;
-    *(unsigned *) &infoHeaderRaw[0x26 - 0xE] = pixelsPerMeter;
-    *(unsigned *) &infoHeaderRaw[0x2A - 0xE] = pixelsPerMeter;
-    *(unsigned *) &infoHeaderRaw[0x2E - 0xE] = paletteSize;
-    *(unsigned *) &infoHeaderRaw[0x32 - 0xE] = 0;
+    fileHeaderRaw[0x00] = 0x42;
+    fileHeaderRaw[0x01] = 0x4D;
+
+    fileHeaderRaw[0x02] = filesize & 0x000000FF;
+    fileHeaderRaw[0x03] = filesize & 0x0000FF00;
+    fileHeaderRaw[0x04] = filesize & 0x00FF0000;
+    fileHeaderRaw[0x05] = filesize & 0xFF000000;
+
+    fileHeaderRaw[0x06] = 0;
+    fileHeaderRaw[0x07] = 0;
+
+    fileHeaderRaw[0x08] = 0;
+    fileHeaderRaw[0x09] = 0;
+
+    fileHeaderRaw[0x0A] = offset & 0x000000FF;
+    fileHeaderRaw[0x0B] = offset & 0x0000FF00;
+    fileHeaderRaw[0x0C] = offset & 0x00FF0000;
+    fileHeaderRaw[0x0D] = offset & 0xFF000000;
+
+    infoHeaderRaw[0x00] = size & 0x000000FF;
+    infoHeaderRaw[0x01] = size & 0x0000FF00;
+    infoHeaderRaw[0x02] = size & 0x00FF0000;
+    infoHeaderRaw[0x03] = size & 0xFF000000;
+
+    infoHeaderRaw[0x04] = width & 0x000000FF;
+    infoHeaderRaw[0x05] = width & 0x0000FF00;
+    infoHeaderRaw[0x06] = width & 0x00FF0000;
+    infoHeaderRaw[0x07] = width & 0xFF000000;
+
+    infoHeaderRaw[0x08] = height & 0x000000FF;
+    infoHeaderRaw[0x09] = height & 0x0000FF00;
+    infoHeaderRaw[0x0A] = height & 0x00FF0000;
+    infoHeaderRaw[0x0B] = height & 0xFF000000;
+
+    infoHeaderRaw[0x0C] = 1;
+    infoHeaderRaw[0x0D] = 0;
+
+    infoHeaderRaw[0x0E] = colorBits & 0x00FF;
+    infoHeaderRaw[0x0F] = colorBits & 0xFF00;
+
+    infoHeaderRaw[0x10] = 0;
+    infoHeaderRaw[0x11] = 0;
+    infoHeaderRaw[0x12] = 0;
+    infoHeaderRaw[0x13] = 0;
+
+    infoHeaderRaw[0x14] = imageSize & 0x000000FF;
+    infoHeaderRaw[0x15] = imageSize & 0x0000FF00;
+    infoHeaderRaw[0x16] = imageSize & 0x00FF0000;
+    infoHeaderRaw[0x17] = imageSize & 0xFF000000;
+
+    infoHeaderRaw[0x18] = pixelsPerMeter & 0x000000FF;
+    infoHeaderRaw[0x19] = pixelsPerMeter & 0x0000FF00;
+    infoHeaderRaw[0x1A] = pixelsPerMeter & 0x00FF0000;
+    infoHeaderRaw[0x1B] = pixelsPerMeter & 0xFF000000;
+
+    infoHeaderRaw[0x1C] = pixelsPerMeter & 0x000000FF;
+    infoHeaderRaw[0x1D] = pixelsPerMeter & 0x0000FF00;
+    infoHeaderRaw[0x1E] = pixelsPerMeter & 0x00FF0000;
+    infoHeaderRaw[0x1F] = pixelsPerMeter & 0xFF000000;
+
+    infoHeaderRaw[0x20] = paletteSize & 0x000000FF;
+    infoHeaderRaw[0x21] = paletteSize & 0x0000FF00;
+    infoHeaderRaw[0x22] = paletteSize & 0x00FF0000;
+    infoHeaderRaw[0x23] = paletteSize & 0xFF000000;
+
+    infoHeaderRaw[0x24] = 0;
+    infoHeaderRaw[0x25] = 0;
+    infoHeaderRaw[0x26] = 0;
+    infoHeaderRaw[0x27] = 0;
 
     FILE *fh = fopen(filename.c_str(), "wb"); // C4996
     if (fh == NULL) {
@@ -305,8 +397,7 @@ bool Dib::writeToFile(const std::string & filename) const {
         return false;
     }
 
-    unsigned r = fwrite(fileHeaderRaw, sizeof(unsigned char),
-            sizeof(fileHeaderRaw), fh);
+    unsigned r = fwrite(fileHeaderRaw, sizeof(unsigned char), sizeof(fileHeaderRaw), fh);
     CHECK(r == sizeof(fileHeaderRaw));
     r = fwrite(infoHeaderRaw, sizeof(unsigned char), sizeof(infoHeaderRaw), fh);
     CHECK(r == sizeof(infoHeaderRaw));

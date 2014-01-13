@@ -146,7 +146,7 @@
 									<listOptionValue builtIn="false" value="STANDALONE"/>
 									<listOptionValue builtIn="false" value="__GXX_EXPERIMENTAL_CXX0X__"/>
 								</option>
-								<option id="gnu.cpp.compiler.option.optimization.level.1486534549" name="Optimization Level" superClass="gnu.cpp.compiler.option.optimization.level" value="gnu.cpp.compiler.optimization.level.none" valueType="enumerated"/>
+								<option id="gnu.cpp.compiler.option.optimization.level.1486534549" name="Optimization Level" superClass="gnu.cpp.compiler.option.optimization.level" value="gnu.cpp.compiler.optimization.level.most" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.option.debugging.level.550437530" name="Debug Level" superClass="gnu.cpp.compiler.option.debugging.level" value="gnu.cpp.compiler.debugging.level.none" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.option.preprocessor.preprocess.1975128604" name="Preprocess only (-E)" superClass="gnu.cpp.compiler.option.preprocessor.preprocess" value="false" valueType="boolean"/>
 								<option id="gnu.cpp.compiler.option.warnings.pedantic.625760045" name="Pedantic (-pedantic)" superClass="gnu.cpp.compiler.option.warnings.pedantic" value="true" valueType="boolean"/>
