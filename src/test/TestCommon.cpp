@@ -143,13 +143,16 @@ void getWellRectsForBoundingBox(
 }
 
 std::unique_ptr<DecodeOptions> getDefaultDecodeOptions() {
+    const double minEdgeFactor = 0.15;
+    const double maxEdgeFactor = 0.3;
+    const double scanGapFactor = 0.1;
     const long squareDev = 15;
     const long edgeThresh = 5;
     const long corrections = 10;
     const long shrink = 1;
 
-    return std::unique_ptr<DecodeOptions>(
-            new DecodeOptions(squareDev, edgeThresh, corrections, shrink));
+    return std::unique_ptr<DecodeOptions>(new DecodeOptions(
+            minEdgeFactor, maxEdgeFactor, scanGapFactor, squareDev, edgeThresh, corrections, shrink));
 }
 
 int decodeImage(std::string fname, DmScanLib & dmScanLib, unsigned rows, unsigned cols) {

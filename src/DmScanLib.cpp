@@ -192,7 +192,7 @@ int DmScanLib::decodeImageWells(const char * filename,
 
     VLOG(1) << "decodeImageWells: filename/" << filename
                       << " numWellRects/" << wellRects.size()
-                      << decodeOptions;
+                      << " " << decodeOptions;
 
     Dib image;
     bool readResult = image.readFromFile(filename);

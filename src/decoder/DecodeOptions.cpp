@@ -12,10 +12,16 @@
 namespace dmscanlib {
 
 DecodeOptions::DecodeOptions(
-        long _squareDev,
-        long _edgeThresh,
-        long _corrections,
-        long _shrink) :
+        const double _minEdgeFactor,
+        const double _maxEdgeFactor,
+        const double _scanGapFactor,
+        const long _squareDev,
+        const long _edgeThresh,
+        const long _corrections,
+        const long _shrink) :
+        minEdgeFactor(_minEdgeFactor),
+        maxEdgeFactor(_maxEdgeFactor),
+        scanGapFactor(_scanGapFactor),
         squareDev(_squareDev),
                 edgeThresh(_edgeThresh),
                 corrections(_corrections),
@@ -41,38 +47,35 @@ std::unique_ptr<DecodeOptions> DecodeOptions::getDecodeOptionsViaJni(
     if (env->ExceptionOccurred()) {
         return NULL;
     }
-    long squareDev = static_cast<long>(env->CallLongMethod(decodeOptionsObj,
-            getMethod, NULL));
+    long squareDev = static_cast<long>(env->CallLongMethod(decodeOptionsObj, getMethod, NULL));
 
-    getMethod = env->GetMethodID(decodeOptionsJavaClass, "getEdgeThresh",
-            "()J");
+    getMethod = env->GetMethodID(decodeOptionsJavaClass, "getEdgeThresh", "()J");
     if (env->ExceptionOccurred()) {
         return NULL;
     }
-    long edgeThresh = static_cast<long>(env->CallLongMethod(decodeOptionsObj,
-            getMethod, NULL));
+    long edgeThresh = static_cast<long>(env->CallLongMethod(decodeOptionsObj, getMethod, NULL));
 
-    getMethod = env->GetMethodID(decodeOptionsJavaClass, "getCorrections",
-            "()J");
+    getMethod = env->GetMethodID(decodeOptionsJavaClass, "getCorrections", "()J");
     if (env->ExceptionOccurred()) {
         return NULL;
     }
-    long corrections = static_cast<long>(env->CallLongMethod(decodeOptionsObj,
-            getMethod, NULL));
+    long corrections = static_cast<long>(env->CallLongMethod(decodeOptionsObj, getMethod, NULL));
 
     getMethod = env->GetMethodID(decodeOptionsJavaClass, "getShrink", "()J");
     if (env->ExceptionOccurred()) {
         return NULL;
     }
-    long shrink = static_cast<long>(env->CallLongMethod(decodeOptionsObj,
-            getMethod, NULL));
+    long shrink = static_cast<long>(env->CallLongMethod(decodeOptionsObj, getMethod, NULL));
 
-    return std::unique_ptr < DecodeOptions
-            > (new DecodeOptions(squareDev, edgeThresh, corrections, shrink));
+    return std::unique_ptr<DecodeOptions>(new DecodeOptions(
+            0.15, 0.3, 0.1, squareDev, edgeThresh, corrections, shrink));
 }
 
 std::ostream & operator<<(std::ostream &os, const DecodeOptions & m) {
-    os << " squareDev/" << m.squareDev
+    os << "minEdgeFactor/" << m.minEdgeFactor
+            << " maxEdgeFactor/" << m.maxEdgeFactor
+            << " scanGapFactor/" << m.scanGapFactor
+            << " squareDev/" << m.squareDev
             << " edgeThresh/" << m.edgeThresh
             << " corrections/" << m.corrections
             << " shrink/" << m.shrink;
