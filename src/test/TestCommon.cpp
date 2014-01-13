@@ -83,13 +83,13 @@ bool getTestImageInfoFilenames(std::string dir, std::vector<std::string> & filen
 
 				std::string subdirname;
 				subdirname.assign(subdirnamew.begin(), subdirnamew.end());
-				getTestImageFileNames(subdirname, filenames);
+				getTestImageInfoFilenames(subdirname, filenames);
 			} else{
 				std::wstring basenamew((wchar_t *)fdFile.cFileName);
 				std::string basename;
 				basename.assign(basenamew.begin(), basenamew.end());
 
-				if (basename.find(".bmp") != std::string::npos) {
+				if (basename.find(".nfo") != std::string::npos) {
 					filenames.push_back(std::string(dir).append("\\").append(basename));
 				}
 			}
