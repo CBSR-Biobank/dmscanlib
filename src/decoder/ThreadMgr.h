@@ -38,19 +38,19 @@ namespace decoder {
 
 class ThreadMgr {
 public:
-	ThreadMgr();
-	~ThreadMgr();
+    ThreadMgr();
+    ~ThreadMgr();
 
-	void decodeWells(std::vector<std::unique_ptr<dmscanlib::WellDecoder> > & wellDecoders);
+    void decodeWells(std::vector<std::unique_ptr<dmscanlib::WellDecoder> > & wellDecoders);
 
 private:
-	static const unsigned THREAD_NUM;
+    static const unsigned THREAD_NUM;
 
-	void threadHandler();
-	void threadProcessRange(unsigned int first, unsigned int last);
+    void threadHandler();
+    void threadProcessRange(unsigned int first, unsigned int last);
 
-	std::vector<dmscanlib::WellDecoder *> allThreads;
-	unsigned numThreads;
+    std::vector<dmscanlib::WellDecoder *> allThreads;
+    unsigned numThreads;
 };
 
 } /* namespace */

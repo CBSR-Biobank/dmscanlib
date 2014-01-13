@@ -49,7 +49,6 @@ const unsigned CAP_DPI_400 = 0x04;
 const unsigned CAP_DPI_600 = 0x08;
 const unsigned CAP_IS_SCANNER = 0x10;
 
-
 class Dib;
 class Decoder;
 class ImgScanner;
@@ -58,26 +57,26 @@ class DecodeOptions;
 
 class DmScanLib {
 public:
-	DmScanLib();
-	DmScanLib(unsigned loggingLevel, bool logToFile = true);
-	virtual ~DmScanLib();
+    DmScanLib();
+    DmScanLib(unsigned loggingLevel, bool logToFile = true);
+    virtual ~DmScanLib();
 
-	int isTwainAvailable();
+    int isTwainAvailable();
 
-	int selectSourceAsDefault();
-	int getScannerCapability();
-	int scanImage(unsigned dpi, int brightness, int contrast,
-			const ScanRegion<double> & bbox, const char * filename);
-	int scanFlatbed(unsigned dpi, int brightness, int contrast,
-			const char * filename);
-	int scanAndDecode(unsigned dpi, int brightness, int contrast,
-			const ScanRegion<double> & region, const DecodeOptions & decodeOptions,
-			std::vector<std::unique_ptr<const WellRectangle<double>  > > & wellRects);
-	int decodeImageWells(const char * filename,
-			const DecodeOptions & decodeOptions,
-			std::vector<std::unique_ptr<const WellRectangle<double>  > > & wellRects);
+    int selectSourceAsDefault();
+    int getScannerCapability();
+    int scanImage(unsigned dpi, int brightness, int contrast,
+            const ScanRegion<double> & bbox, const char * filename);
+    int scanFlatbed(unsigned dpi, int brightness, int contrast,
+            const char * filename);
+    int scanAndDecode(unsigned dpi, int brightness, int contrast,
+            const ScanRegion<double> & region, const DecodeOptions & decodeOptions,
+            std::vector<std::unique_ptr<const WellRectangle<double> > > & wellRects);
+    int decodeImageWells(const char * filename,
+            const DecodeOptions & decodeOptions,
+            std::vector<std::unique_ptr<const WellRectangle<double> > > & wellRects);
 
-	static void configLogging(unsigned level, bool useFile = true);
+    static void configLogging(unsigned level, bool useFile = true);
 
     const unsigned getDecodedWellCount();
 
@@ -85,10 +84,10 @@ public:
 
 protected:
     int decodeCommon(
-    		const Dib & image,
-    		const DecodeOptions & decodeOptions,
-    		const std::string &decodedDibFilename,
-    		std::vector<std::unique_ptr<const WellRectangle<double>  > > & wellRects);
+            const Dib & image,
+            const DecodeOptions & decodeOptions,
+            const std::string &decodedDibFilename,
+            std::vector<std::unique_ptr<const WellRectangle<double> > > & wellRects);
 
     void writeDecodedImage(const Dib & image, const std::string & decodedDibFilename);
 

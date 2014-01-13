@@ -23,7 +23,6 @@
 
 #include "WellRectangle.h"
 
-
 #include <dmtx.h>
 #include <string>
 #include <vector>
@@ -48,20 +47,20 @@ class DmtxDecodeHelper;
 class Decoder {
 public:
     Decoder(const Dib & image, const DecodeOptions & decodeOptions,
-    		std::vector<std::unique_ptr<const WellRectangle<double>  > > & wellRects);
+            std::vector<std::unique_ptr<const WellRectangle<double> > > & wellRects);
     virtual ~Decoder();
     int decodeWellRects();
     void decodeWellRect(const Dib & wellRectImage, WellDecoder & wellDecoder) const;
 
     const Dib & getWorkingImage() const {
-    	return *workingImage;
+        return *workingImage;
     }
 
     const unsigned getDecodedWellCount();
-	
+
     std::vector<std::unique_ptr<WellDecoder> > & getWellDecoders() {
-		return wellDecoders;
-	}
+        return wellDecoders;
+    }
 
     const std::map<std::string, const WellDecoder *> & getDecodedWells() const;
 
@@ -70,12 +69,12 @@ private:
     static DmtxImage * createDmtxImageFromDib(const Dib & dib);
     void decodeWellRect(WellDecoder & wellDecoder, DmtxDecode *dec) const;
     std::unique_ptr<decoder::DmtxDecodeHelper> createDmtxDecode(
-    		DmtxImage * dmtxImage,
-    		WellDecoder & wellDecoder,
-    		int scale) const;
+            DmtxImage * dmtxImage,
+            WellDecoder & wellDecoder,
+            int scale) const;
 
     void getDecodeInfo(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg,
-    		WellDecoder & wellDecoder) const;
+            WellDecoder & wellDecoder) const;
 
     void writeDiagnosticImage(DmtxDecode *dec, const std::string & id) const;
 

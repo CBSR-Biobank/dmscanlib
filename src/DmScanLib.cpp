@@ -57,215 +57,215 @@ const std::string DmScanLib::LIBRARY_NAME("dmscanlib");
 bool DmScanLib::loggingInitialized = false;
 
 DmScanLib::DmScanLib() :
-		imgScanner(std::move(ImgScanner::create()))
+        imgScanner(std::move(ImgScanner::create()))
 {
 }
 
 DmScanLib::DmScanLib(unsigned loggingLevel, bool logToFile) :
-		imgScanner(std::move(ImgScanner::create()))
+        imgScanner(std::move(ImgScanner::create()))
 {
-	configLogging(loggingLevel, logToFile);
+    configLogging(loggingLevel, logToFile);
 }
 
 DmScanLib::~DmScanLib() {
 }
 
 int DmScanLib::isTwainAvailable() {
-	if (imgScanner->twainAvailable()) {
-		return SC_SUCCESS;
-	}
-	return SC_TWAIN_UNAVAIL;
+    if (imgScanner->twainAvailable()) {
+        return SC_SUCCESS;
+    }
+    return SC_TWAIN_UNAVAIL;
 }
 
 int DmScanLib::selectSourceAsDefault() {
-	if (imgScanner->selectSourceAsDefault()) {
-		return SC_SUCCESS;
-	}
-	return SC_FAIL;
+    if (imgScanner->selectSourceAsDefault()) {
+        return SC_SUCCESS;
+    }
+    return SC_FAIL;
 }
 
 int DmScanLib::getScannerCapability() {
-	return imgScanner->getScannerCapability();
+    return imgScanner->getScannerCapability();
 }
 
 void DmScanLib::configLogging(unsigned level, bool useFile) {
-	if (loggingInitialized)  return;
+    if (loggingInitialized)
+        return;
 
-	google::InitGoogleLogging(LIBRARY_NAME.c_str());
-	FLAGS_v = level;
+    google::InitGoogleLogging(LIBRARY_NAME.c_str());
+    FLAGS_v = level;
 
 #ifdef _VISUALC_
-	FLAGS_stderrthreshold = (level > 0) ? google::GLOG_INFO : google::GLOG_ERROR;
+    FLAGS_stderrthreshold = (level > 0) ? google::GLOG_INFO : google::GLOG_ERROR;
 #else
-	FLAGS_stderrthreshold = (level > 0) ? google::INFO : google::ERROR;
+    FLAGS_stderrthreshold = (level > 0) ? google::INFO : google::ERROR;
 #endif
 
-	FLAGS_logtostderr = !useFile;
-	FLAGS_alsologtostderr = false;
+    FLAGS_logtostderr = !useFile;
+    FLAGS_alsologtostderr = false;
 
-	loggingInitialized = true;
+    loggingInitialized = true;
 }
 
 int DmScanLib::scanImage(unsigned dpi, int brightness, int contrast,
-		const ScanRegion<double> & bbox, const char * filename) {
-   if (filename == NULL) {
-	   throw std::invalid_argument("filename is null");
-   }
+        const ScanRegion<double> & bbox, const char * filename) {
+    if (filename == NULL) {
+        throw std::invalid_argument("filename is null");
+    }
 
-   VLOG(1) << "scanImage: dpi/" << dpi << " brightness/" << brightness
-	   << " contrast/" << contrast << bbox
-	   << " filename/" << filename;
+    VLOG(1) << "scanImage: dpi/" << dpi << " brightness/" << brightness
+                      << " contrast/" << contrast << bbox
+                      << " filename/" << filename;
 
-	HANDLE h = imgScanner->acquireImage(dpi, brightness, contrast, bbox);
-	if (h == NULL) {
-		VLOG(1) << "could not acquire image";
-		return imgScanner->getErrorCode();
-	}
-	Dib dib;
-	dib.readFromHandle(h);
-	if (dib.getDpi() != dpi) {
-		return SC_INCORRECT_DPI_SCANNED;
-	}
-	dib.writeToFile(filename);
-	imgScanner->freeImage(h);
-	return SC_SUCCESS;
+    HANDLE h = imgScanner->acquireImage(dpi, brightness, contrast, bbox);
+    if (h == NULL) {
+        VLOG(1) << "could not acquire image";
+        return imgScanner->getErrorCode();
+    }
+    Dib dib;
+    dib.readFromHandle(h);
+    if (dib.getDpi() != dpi) {
+        return SC_INCORRECT_DPI_SCANNED;
+    }
+    dib.writeToFile(filename);
+    imgScanner->freeImage(h);
+    return SC_SUCCESS;
 }
 
 int DmScanLib::scanFlatbed(unsigned dpi, int brightness, int contrast,
-		const char * filename) {
-   if (filename == NULL) {
-	   throw std::invalid_argument("filename is null");
-   }
+        const char * filename) {
+    if (filename == NULL) {
+        throw std::invalid_argument("filename is null");
+    }
 
-	VLOG(1) << "scanFlatbed: dpi/" << dpi << " brightness/" << brightness
-		<< " contrast/" << contrast << " filename/" << filename;
+    VLOG(1) << "scanFlatbed: dpi/" << dpi << " brightness/" << brightness
+                      << " contrast/" << contrast << " filename/" << filename;
 
-	HANDLE h = imgScanner->acquireFlatbed(dpi, brightness, contrast);
-	if (h == NULL) {
-		VLOG(1) << "could not acquire image";
-		return imgScanner->getErrorCode();
-	}
-	Dib dib;
-	dib.readFromHandle(h);
-	if (dib.getDpi() != dpi) {
-		return SC_INCORRECT_DPI_SCANNED;
-	}
-	dib.writeToFile(filename);
-	imgScanner->freeImage(h);
-	return SC_SUCCESS;
+    HANDLE h = imgScanner->acquireFlatbed(dpi, brightness, contrast);
+    if (h == NULL) {
+        VLOG(1) << "could not acquire image";
+        return imgScanner->getErrorCode();
+    }
+    Dib dib;
+    dib.readFromHandle(h);
+    if (dib.getDpi() != dpi) {
+        return SC_INCORRECT_DPI_SCANNED;
+    }
+    dib.writeToFile(filename);
+    imgScanner->freeImage(h);
+    return SC_SUCCESS;
 }
 
 int DmScanLib::scanAndDecode(unsigned dpi, int brightness, int contrast,
-		const ScanRegion<double> & region, const DecodeOptions & decodeOptions,
-		std::vector<std::unique_ptr<const WellRectangle<double>  > > & wellRects) {
-	VLOG(3) << "scanAndDecode: dpi/" << dpi << " brightness/" << brightness
-			<< " contrast/" << contrast
-			<< " " << region << " " << decodeOptions;
+        const ScanRegion<double> & region, const DecodeOptions & decodeOptions,
+        std::vector<std::unique_ptr<const WellRectangle<double> > > & wellRects) {
+    VLOG(3) << "scanAndDecode: dpi/" << dpi << " brightness/" << brightness
+                      << " contrast/" << contrast
+                      << " " << region << " " << decodeOptions;
 
-	HANDLE h;
-	int result;
+    HANDLE h;
+    int result;
 
-	h = imgScanner->acquireImage(dpi, brightness, contrast, region);
-	if (h == NULL) {
-		VLOG(1) << "could not acquire image";
-		return imgScanner->getErrorCode();
-	}
+    h = imgScanner->acquireImage(dpi, brightness, contrast, region);
+    if (h == NULL) {
+        VLOG(1) << "could not acquire image";
+        return imgScanner->getErrorCode();
+    }
 
-	Dib image;
-	image.readFromHandle(h);
-	if (image.getDpi() != dpi) {
-		return SC_INCORRECT_DPI_SCANNED;
-	}
+    Dib image;
+    image.readFromHandle(h);
+    if (image.getDpi() != dpi) {
+        return SC_INCORRECT_DPI_SCANNED;
+    }
 
-	image.writeToFile("scanned.bmp");
-	result = decodeCommon(image, decodeOptions, "decode.bmp", wellRects);
+    image.writeToFile("scanned.bmp");
+    result = decodeCommon(image, decodeOptions, "decode.bmp", wellRects);
 
-	imgScanner->freeImage(h);
-	VLOG(1) << "decodeCommon returned: " << result;
-	return result;
+    imgScanner->freeImage(h);
+    VLOG(1) << "decodeCommon returned: " << result;
+    return result;
 }
 
 int DmScanLib::decodeImageWells(const char * filename,
-		const DecodeOptions & decodeOptions,
-		std::vector<std::unique_ptr<const WellRectangle<double>  > > & wellRects) {
+        const DecodeOptions & decodeOptions,
+        std::vector<std::unique_ptr<const WellRectangle<double> > > & wellRects) {
 
-	VLOG(1) << "decodeImageWells: filename/" << filename
-			<< " numWellRects/" << wellRects.size()
-			<< decodeOptions;
+    VLOG(1) << "decodeImageWells: filename/" << filename
+                      << " numWellRects/" << wellRects.size()
+                      << decodeOptions;
 
-	Dib image;
-	bool readResult = image.readFromFile(filename);
-	if (!readResult) {
-		return SC_INVALID_IMAGE;
-	}
+    Dib image;
+    bool readResult = image.readFromFile(filename);
+    if (!readResult) {
+        return SC_INVALID_IMAGE;
+    }
 
-	return decodeCommon(image, decodeOptions, "decode.bmp", wellRects);
+    return decodeCommon(image, decodeOptions, "decode.bmp", wellRects);
 }
 
 int DmScanLib::decodeCommon(const Dib & image,
-		const DecodeOptions & decodeOptions,
-		const std::string &decodedDibFilename,
-		std::vector<std::unique_ptr<const WellRectangle<double>  > > & wellRects) {
+        const DecodeOptions & decodeOptions,
+        const std::string &decodedDibFilename,
+        std::vector<std::unique_ptr<const WellRectangle<double> > > & wellRects) {
 
-	decoder = std::unique_ptr<Decoder>(new Decoder(image, decodeOptions, wellRects));
-	int result = decoder->decodeWellRects();
+    decoder = std::unique_ptr < Decoder > (new Decoder(image, decodeOptions, wellRects));
+    int result = decoder->decodeWellRects();
 
-	if (result != SC_SUCCESS) {
-		return result;
-	}
+    if (result != SC_SUCCESS) {
+        return result;
+    }
 
-	const unsigned decodedWellCount = decoder->getDecodedWellCount();
+    const unsigned decodedWellCount = decoder->getDecodedWellCount();
 
-	if (decodedWellCount == 0) {
-		return SC_INVALID_NOTHING_DECODED;
-	}
+    if (decodedWellCount == 0) {
+        return SC_INVALID_NOTHING_DECODED;
+    }
 
-	writeDecodedImage(image, decodedDibFilename);
+    writeDecodedImage(image, decodedDibFilename);
 
-	return SC_SUCCESS;
+    return SC_SUCCESS;
 }
 
 void DmScanLib::writeDecodedImage(const Dib & image,
-		const std::string & decodedDibFilename) {
+        const std::string & decodedDibFilename) {
 
-	CHECK_NOTNULL(decoder.get());
+    CHECK_NOTNULL(decoder.get());
 
-    std::vector<std::unique_ptr<WellDecoder> > & wellDecoders = 
-		decoder->getWellDecoders();
+    std::vector<std::unique_ptr<WellDecoder> > & wellDecoders =
+            decoder->getWellDecoders();
     CHECK(wellDecoders.size() > 0);
 
     const std::map<std::string, const WellDecoder *> & decodedWells = decoder->getDecodedWells();
     CHECK(decodedWells.size() > 0);
 
-	Dib decodedDib(image);
-	RgbQuad colorBlue(0, 0, 255);
-	
-	for (unsigned i = 0, n = wellDecoders.size(); i < n; ++i) {
-		decodedDib.drawRectangle(wellDecoders[i]->getWellRectangle(), colorBlue);
-	}
+    Dib decodedDib(image);
+    RgbQuad colorBlue(0, 0, 255);
+
+    for (unsigned i = 0, n = wellDecoders.size(); i < n; ++i) {
+        decodedDib.drawRectangle(wellDecoders[i]->getWellRectangle(), colorBlue);
+    }
 
     RgbQuad colorRed(255, 0, 0);
     RgbQuad colorGreen(0, 255, 0);
-	for (std::map<std::string, const WellDecoder *>::const_iterator ii = decodedWells.begin();
-			ii != decodedWells.end(); ++ii) {
-		const WellDecoder & decodedWell = *(ii->second);
-		decodedDib.drawRectangle(decodedWell.getDecodedRectangle(), colorRed);
-		decodedDib.drawRectangle(decodedWell.getWellRectangle(), colorGreen);
-	}
-	decodedDib.writeToFile(decodedDibFilename);
+    for (std::map<std::string, const WellDecoder *>::const_iterator ii = decodedWells.begin();
+            ii != decodedWells.end(); ++ii) {
+        const WellDecoder & decodedWell = *(ii->second);
+        decodedDib.drawRectangle(decodedWell.getDecodedRectangle(), colorRed);
+        decodedDib.drawRectangle(decodedWell.getWellRectangle(), colorGreen);
+    }
+    decodedDib.writeToFile(decodedDibFilename);
 }
 
 const unsigned DmScanLib::getDecodedWellCount() {
-	if (decoder == NULL) {
-		throw std::logic_error("decoder is null");
-	}
-	return decoder->getDecodedWellCount();
+    if (decoder == NULL) {
+        throw std::logic_error("decoder is null");
+    }
+    return decoder->getDecodedWellCount();
 }
 
 const std::map<std::string, const WellDecoder *> & DmScanLib::getDecodedWells() const {
-	CHECK_NOTNULL(decoder.get());
-	return decoder->getDecodedWells();
+    CHECK_NOTNULL(decoder.get());
+    return decoder->getDecodedWells();
 }
-
 
 } /* namespace */

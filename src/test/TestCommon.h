@@ -24,20 +24,20 @@ namespace test {
 bool getTestImageInfoFilenames(std::string dir, std::vector<std::string> & filenames);
 
 void getWellRectsForBoundingBox(
-		const BoundingBox<unsigned> & bbox,
-		const unsigned rows,
-		const unsigned cols,
-		std::vector<std::unique_ptr<const WellRectangle<double> > > & wellRects);
+        const BoundingBox<unsigned> & bbox,
+        const unsigned rows,
+        const unsigned cols,
+        std::vector<std::unique_ptr<const WellRectangle<double> > > & wellRects);
 
 std::unique_ptr<DecodeOptions> getDefaultDecodeOptions();
 
 int decodeImage(std::string fname, DmScanLib & dmScanLib, unsigned rows, unsigned cols);
 
 std::unique_ptr<const BoundingBox<double>> getWellsBoundingBox(
-	const BoundingBox<double> & bbox);
+        const BoundingBox<double> & bbox);
 
 std::unique_ptr<const ScanRegion<double>> getWiaBoundingBox(
-	const ScanRegion<double> & bbox);
+        const ScanRegion<double> & bbox);
 
 } /* namespace */
 

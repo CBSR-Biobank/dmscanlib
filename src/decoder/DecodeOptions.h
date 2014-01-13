@@ -18,22 +18,22 @@ class Decoder;
 
 class DecodeOptions {
 public:
-	DecodeOptions(long squareDev, long edgeThresh, long corrections,
-			long shrink);
-	virtual ~DecodeOptions();
+    DecodeOptions(long squareDev, long edgeThresh, long corrections,
+            long shrink);
+    virtual ~DecodeOptions();
 
-	static std::unique_ptr<DecodeOptions> getDecodeOptionsViaJni(JNIEnv *env,
-			jobject decodeOptionsObj);
+    static std::unique_ptr<DecodeOptions> getDecodeOptionsViaJni(
+            JNIEnv *env,
+            jobject decodeOptionsObj);
 
 private:
-	friend class Decoder;
-	friend std::ostream & operator<<(std::ostream & os,
-			const DecodeOptions & m);
+    friend class Decoder;
+    friend std::ostream & operator<<(std::ostream & os, const DecodeOptions & m);
 
-	const long squareDev;
-	const long edgeThresh;
-	const long corrections;
-	const long shrink;
+    const long squareDev;
+    const long edgeThresh;
+    const long corrections;
+    const long shrink;
 };
 
 std::ostream & operator<<(std::ostream & os, const DecodeOptions & m);

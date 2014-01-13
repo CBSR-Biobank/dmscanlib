@@ -14,16 +14,15 @@ namespace dmscanlib {
 
 template<typename T>
 WellRectangle<T>::WellRectangle(const char * _label, const Rect<T> & _rect) :
-	label(_label), rect(_rect)
+        label(_label), rect(_rect)
 {
 }
 
 template<typename T>
-WellRectangle<T>::WellRectangle(const char * _label, BoundingBox<T> & bbox)  :
-	label(_label), rect(bbox)
+WellRectangle<T>::WellRectangle(const char * _label, BoundingBox<T> & bbox) :
+        label(_label), rect(bbox)
 {
 }
-
 
 template<typename T>
 const T WellRectangle<T>::getCornerX(unsigned cornerId) const {
@@ -40,11 +39,11 @@ const T WellRectangle<T>::getCornerY(unsigned cornerId) const {
 
 template<typename T>
 const Point<T> & WellRectangle<T>::getCorner(unsigned cornerId) const {
-	CHECK(cornerId < 4);
-	return rect.corners[cornerId];
+    CHECK(cornerId < 4);
+    return rect.corners[cornerId];
 }
 
-template class WellRectangle<unsigned>;
-template class WellRectangle<double>;
+template class WellRectangle<unsigned> ;
+template class WellRectangle<double> ;
 
 } /* namespace */

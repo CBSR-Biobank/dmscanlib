@@ -11,67 +11,72 @@
 
 namespace dmscanlib {
 
-DecodeOptions::DecodeOptions(long _squareDev, long _edgeThresh,
-		long _corrections, long _shrink) :
-		squareDev(_squareDev), edgeThresh(_edgeThresh), corrections(
-				_corrections), shrink(_shrink) {
+DecodeOptions::DecodeOptions(
+        long _squareDev,
+        long _edgeThresh,
+        long _corrections,
+        long _shrink) :
+        squareDev(_squareDev),
+                edgeThresh(_edgeThresh),
+                corrections(_corrections),
+                shrink(_shrink) {
 }
 
 DecodeOptions::~DecodeOptions() {
 }
 
 std::unique_ptr<DecodeOptions> DecodeOptions::getDecodeOptionsViaJni(
-		JNIEnv *env, jobject decodeOptionsObj) {
-	jclass decodeOptionsJavaClass = env->GetObjectClass(decodeOptionsObj);
+        JNIEnv *env, jobject decodeOptionsObj) {
+    jclass decodeOptionsJavaClass = env->GetObjectClass(decodeOptionsObj);
 
-	// run the following command to obtain method signatures from a class.
-	// javap -s -p edu.ualberta.med.scannerconfig.dmscanlib.ScanRegion
-	jmethodID getMethod = env->GetMethodID(decodeOptionsJavaClass, "getScanGap",
-			"()D");
-	if (env->ExceptionOccurred()) {
-		return NULL;
-	}
+    // run the following command to obtain method signatures from a class.
+    // javap -s -p edu.ualberta.med.scannerconfig.dmscanlib.ScanRegion
+    jmethodID getMethod = env->GetMethodID(decodeOptionsJavaClass, "getScanGap",
+            "()D");
+    if (env->ExceptionOccurred()) {
+        return NULL;
+    }
 
-	getMethod = env->GetMethodID(decodeOptionsJavaClass, "getSquareDev", "()J");
-	if (env->ExceptionOccurred()) {
-		return NULL;
-	}
-	long squareDev = static_cast<long>(env->CallLongMethod(decodeOptionsObj,
-			getMethod, NULL));
+    getMethod = env->GetMethodID(decodeOptionsJavaClass, "getSquareDev", "()J");
+    if (env->ExceptionOccurred()) {
+        return NULL;
+    }
+    long squareDev = static_cast<long>(env->CallLongMethod(decodeOptionsObj,
+            getMethod, NULL));
 
-	getMethod = env->GetMethodID(decodeOptionsJavaClass, "getEdgeThresh",
-			"()J");
-	if (env->ExceptionOccurred()) {
-		return NULL;
-	}
-	long edgeThresh = static_cast<long>(env->CallLongMethod(decodeOptionsObj,
-			getMethod, NULL));
+    getMethod = env->GetMethodID(decodeOptionsJavaClass, "getEdgeThresh",
+            "()J");
+    if (env->ExceptionOccurred()) {
+        return NULL;
+    }
+    long edgeThresh = static_cast<long>(env->CallLongMethod(decodeOptionsObj,
+            getMethod, NULL));
 
-	getMethod = env->GetMethodID(decodeOptionsJavaClass, "getCorrections",
-			"()J");
-	if (env->ExceptionOccurred()) {
-		return NULL;
-	}
-	long corrections = static_cast<long>(env->CallLongMethod(decodeOptionsObj,
-			getMethod, NULL));
+    getMethod = env->GetMethodID(decodeOptionsJavaClass, "getCorrections",
+            "()J");
+    if (env->ExceptionOccurred()) {
+        return NULL;
+    }
+    long corrections = static_cast<long>(env->CallLongMethod(decodeOptionsObj,
+            getMethod, NULL));
 
-	getMethod = env->GetMethodID(decodeOptionsJavaClass, "getShrink", "()J");
-	if (env->ExceptionOccurred()) {
-		return NULL;
-	}
-	long shrink = static_cast<long>(env->CallLongMethod(decodeOptionsObj,
-			getMethod, NULL));
+    getMethod = env->GetMethodID(decodeOptionsJavaClass, "getShrink", "()J");
+    if (env->ExceptionOccurred()) {
+        return NULL;
+    }
+    long shrink = static_cast<long>(env->CallLongMethod(decodeOptionsObj,
+            getMethod, NULL));
 
-	return std::unique_ptr < DecodeOptions
-			> (new DecodeOptions(squareDev, edgeThresh, corrections, shrink));
+    return std::unique_ptr < DecodeOptions
+            > (new DecodeOptions(squareDev, edgeThresh, corrections, shrink));
 }
 
 std::ostream & operator<<(std::ostream &os, const DecodeOptions & m) {
-	os << " squareDev/" << m.squareDev
-			<< " edgeThresh/" << m.edgeThresh
-			<< " corrections/" << m.corrections
-			<< " shrink/" << m.shrink;
-	return os;
+    os << " squareDev/" << m.squareDev
+            << " edgeThresh/" << m.edgeThresh
+            << " corrections/" << m.corrections
+            << " shrink/" << m.shrink;
+    return os;
 }
 
 } /* namespace */
