@@ -235,54 +235,54 @@ bool Dib::readFromFile(const std::string & filename) {
     CHECK(r = sizeof(infoHeaderRaw));
 
     unsigned size =
-            infoHeaderRaw[0] << 24
-            | infoHeaderRaw[1] << 16
-            | infoHeaderRaw[2] << 8
-            | infoHeaderRaw[3];
+            infoHeaderRaw[3] << 24
+            | infoHeaderRaw[2] << 16
+            | infoHeaderRaw[1] << 8
+            | infoHeaderRaw[0];
 
     unsigned width =
-            infoHeaderRaw[4] << 24
-            | infoHeaderRaw[5] << 16
-            | infoHeaderRaw[6] << 8
-            | infoHeaderRaw[7];
+            infoHeaderRaw[7] << 24
+            | infoHeaderRaw[6] << 16
+            | infoHeaderRaw[5] << 8
+            | infoHeaderRaw[4];
 
     unsigned height =
-            infoHeaderRaw[8] << 24
-            | infoHeaderRaw[9] << 16
-            | infoHeaderRaw[10] << 8
-            | infoHeaderRaw[11];
+            infoHeaderRaw[11] << 24
+            | infoHeaderRaw[10] << 16
+            | infoHeaderRaw[9] << 8
+            | infoHeaderRaw[8];
 
     unsigned short planes =
-            infoHeaderRaw[12] << 8
-            | infoHeaderRaw[13];
+            infoHeaderRaw[13] << 8
+            | infoHeaderRaw[12];
 
     unsigned short colorBits =
-            infoHeaderRaw[14] << 8
-            | infoHeaderRaw[15];
+            infoHeaderRaw[15] << 8
+            | infoHeaderRaw[14];
 
     unsigned compression =
-            infoHeaderRaw[16] << 24
-            | infoHeaderRaw[17] << 16
-            | infoHeaderRaw[18] << 8
-            | infoHeaderRaw[19];
+            infoHeaderRaw[19] << 24
+            | infoHeaderRaw[18] << 16
+            | infoHeaderRaw[17] << 8
+            | infoHeaderRaw[16];
 
     unsigned hPixelsPerMeter =
-            infoHeaderRaw[24] << 24
-            | infoHeaderRaw[25] << 16
-            | infoHeaderRaw[26] << 8
-            | infoHeaderRaw[27];
+            infoHeaderRaw[27] << 24
+            | infoHeaderRaw[26] << 16
+            | infoHeaderRaw[25] << 8
+            | infoHeaderRaw[24];
 
     unsigned vPixelsPerMeter =
-            infoHeaderRaw[28] << 24
-            | infoHeaderRaw[29] << 16
-            | infoHeaderRaw[30] << 8
-            | infoHeaderRaw[21];
+            infoHeaderRaw[31] << 24
+            | infoHeaderRaw[30] << 16
+            | infoHeaderRaw[29] << 8
+            | infoHeaderRaw[28];
 
     unsigned numColorsImp =
-            infoHeaderRaw[36] << 24
-            | infoHeaderRaw[37] << 16
-            | infoHeaderRaw[38] << 8
-            | infoHeaderRaw[39];
+            infoHeaderRaw[39] << 24
+            | infoHeaderRaw[38] << 16
+            | infoHeaderRaw[37] << 8
+            | infoHeaderRaw[36];
 
     CHECK((size == 40) || (size == 108));
 
@@ -315,81 +315,81 @@ bool Dib::writeToFile(const std::string & filename) const {
 
     unsigned char fileHeaderRaw[0xE];
     unsigned char infoHeaderRaw[0x28];
+
     unsigned paletteSize = getPaletteSize(colorBits);
     unsigned paletteBytes = paletteSize * sizeof(RgbQuad);
-
     unsigned filesize = imageSize + sizeof(fileHeaderRaw) + sizeof(infoHeaderRaw) + paletteBytes;
     unsigned offset = sizeof(fileHeaderRaw) + sizeof(infoHeaderRaw) + paletteBytes;
 
-    fileHeaderRaw[0x00] = 0x42;
-    fileHeaderRaw[0x01] = 0x4D;
+    fileHeaderRaw[0x00] = (unsigned char) 0x42;
+    fileHeaderRaw[0x01] = (unsigned char) 0x4D;
 
-    fileHeaderRaw[0x02] = filesize & 0x000000FF;
-    fileHeaderRaw[0x03] = filesize & 0x0000FF00;
-    fileHeaderRaw[0x04] = filesize & 0x00FF0000;
-    fileHeaderRaw[0x05] = filesize & 0xFF000000;
+    fileHeaderRaw[0x02] = (unsigned char) (filesize & 0x000000FF);
+    fileHeaderRaw[0x03] = (unsigned char) ((filesize & 0x0000FF00) >> 8);
+    fileHeaderRaw[0x04] = (unsigned char) ((filesize & 0x00FF0000) >> 16);
+    fileHeaderRaw[0x05] = (unsigned char) ((filesize & 0xFF000000) >> 24);
 
-    fileHeaderRaw[0x06] = 0;
-    fileHeaderRaw[0x07] = 0;
+    fileHeaderRaw[0x06] = (unsigned char) 0;
+    fileHeaderRaw[0x07] = (unsigned char) 0;
 
-    fileHeaderRaw[0x08] = 0;
-    fileHeaderRaw[0x09] = 0;
+    fileHeaderRaw[0x08] = (unsigned char) 0;
+    fileHeaderRaw[0x09] = (unsigned char) 0;
 
-    fileHeaderRaw[0x0A] = offset & 0x000000FF;
-    fileHeaderRaw[0x0B] = offset & 0x0000FF00;
-    fileHeaderRaw[0x0C] = offset & 0x00FF0000;
-    fileHeaderRaw[0x0D] = offset & 0xFF000000;
+    fileHeaderRaw[0x0A] = (unsigned char) (offset & 0x000000FF);
+    fileHeaderRaw[0x0B] = (unsigned char) ((offset & 0x0000FF00) >> 8);
+    fileHeaderRaw[0x0C] = (unsigned char) ((offset & 0x00FF0000) >> 16);
+    fileHeaderRaw[0x0D] = (unsigned char) ((offset & 0xFF000000) >> 24);
 
-    infoHeaderRaw[0x00] = size & 0x000000FF;
-    infoHeaderRaw[0x01] = size & 0x0000FF00;
-    infoHeaderRaw[0x02] = size & 0x00FF0000;
-    infoHeaderRaw[0x03] = size & 0xFF000000;
+    infoHeaderRaw[0x00] = (unsigned char) (size  & 0x000000FF);
+    infoHeaderRaw[0x01] = (unsigned char) ((size & 0x0000FF00) >> 8);
+    infoHeaderRaw[0x02] = (unsigned char) ((size & 0x00FF0000) >> 16);
+    infoHeaderRaw[0x03] = (unsigned char) ((size & 0xFF000000) >> 24);
 
-    infoHeaderRaw[0x04] = width & 0x000000FF;
-    infoHeaderRaw[0x05] = width & 0x0000FF00;
-    infoHeaderRaw[0x06] = width & 0x00FF0000;
-    infoHeaderRaw[0x07] = width & 0xFF000000;
+    infoHeaderRaw[0x04] = (unsigned char) (width & 0x000000FF);
+    infoHeaderRaw[0x05] = (unsigned char) ((width & 0x0000FF00) >> 8);
+    infoHeaderRaw[0x06] = (unsigned char) ((width & 0x00FF0000) >> 16);
+    infoHeaderRaw[0x07] = (unsigned char) ((width & 0xFF000000) >> 24);
 
-    infoHeaderRaw[0x08] = height & 0x000000FF;
-    infoHeaderRaw[0x09] = height & 0x0000FF00;
-    infoHeaderRaw[0x0A] = height & 0x00FF0000;
-    infoHeaderRaw[0x0B] = height & 0xFF000000;
+    infoHeaderRaw[0x08] = (unsigned char) (height & 0x000000FF);
+    infoHeaderRaw[0x09] = (unsigned char) ((height & 0x0000FF00) >> 8);
+    infoHeaderRaw[0x0A] = (unsigned char) ((height & 0x00FF0000) >> 16);
+    infoHeaderRaw[0x0B] = (unsigned char) ((height & 0xFF000000) >> 24);
 
-    infoHeaderRaw[0x0C] = 1;
-    infoHeaderRaw[0x0D] = 0;
+    infoHeaderRaw[0x0C] = (unsigned char) 1;
+    infoHeaderRaw[0x0D] = (unsigned char) 0;
 
-    infoHeaderRaw[0x0E] = colorBits & 0x00FF;
-    infoHeaderRaw[0x0F] = colorBits & 0xFF00;
+    infoHeaderRaw[0x0E] = (unsigned char) (colorBits & 0x00FF);
+    infoHeaderRaw[0x0F] = (unsigned char) ((colorBits & 0xFF00) >> 8);
 
-    infoHeaderRaw[0x10] = 0;
-    infoHeaderRaw[0x11] = 0;
-    infoHeaderRaw[0x12] = 0;
-    infoHeaderRaw[0x13] = 0;
+    infoHeaderRaw[0x10] = (unsigned char) 0;
+    infoHeaderRaw[0x11] = (unsigned char) 0;
+    infoHeaderRaw[0x12] = (unsigned char) 0;
+    infoHeaderRaw[0x13] = (unsigned char) 0;
 
-    infoHeaderRaw[0x14] = imageSize & 0x000000FF;
-    infoHeaderRaw[0x15] = imageSize & 0x0000FF00;
-    infoHeaderRaw[0x16] = imageSize & 0x00FF0000;
-    infoHeaderRaw[0x17] = imageSize & 0xFF000000;
+    infoHeaderRaw[0x14] = (unsigned char) (imageSize & 0x000000FF);
+    infoHeaderRaw[0x15] = (unsigned char) ((imageSize & 0x0000FF00) >> 8);
+    infoHeaderRaw[0x16] = (unsigned char) ((imageSize & 0x00FF0000) >> 16);
+    infoHeaderRaw[0x17] = (unsigned char) ((imageSize & 0xFF000000) >> 24);
 
-    infoHeaderRaw[0x18] = pixelsPerMeter & 0x000000FF;
-    infoHeaderRaw[0x19] = pixelsPerMeter & 0x0000FF00;
-    infoHeaderRaw[0x1A] = pixelsPerMeter & 0x00FF0000;
-    infoHeaderRaw[0x1B] = pixelsPerMeter & 0xFF000000;
+    infoHeaderRaw[0x18] = (unsigned char) (pixelsPerMeter & 0x000000FF);
+    infoHeaderRaw[0x19] = (unsigned char) ((pixelsPerMeter & 0x0000FF00) >> 8);
+    infoHeaderRaw[0x1A] = (unsigned char) ((pixelsPerMeter & 0x00FF0000) >> 16);
+    infoHeaderRaw[0x1B] = (unsigned char) ((pixelsPerMeter & 0xFF000000) >> 24);
 
-    infoHeaderRaw[0x1C] = pixelsPerMeter & 0x000000FF;
-    infoHeaderRaw[0x1D] = pixelsPerMeter & 0x0000FF00;
-    infoHeaderRaw[0x1E] = pixelsPerMeter & 0x00FF0000;
-    infoHeaderRaw[0x1F] = pixelsPerMeter & 0xFF000000;
+    infoHeaderRaw[0x1C] = (unsigned char) (pixelsPerMeter & 0x000000FF);
+    infoHeaderRaw[0x1D] = (unsigned char) ((pixelsPerMeter & 0x0000FF00) >> 8);
+    infoHeaderRaw[0x1E] = (unsigned char) ((pixelsPerMeter & 0x00FF0000) >> 16);
+    infoHeaderRaw[0x1F] = (unsigned char) ((pixelsPerMeter & 0xFF000000) >> 24);
 
-    infoHeaderRaw[0x20] = paletteSize & 0x000000FF;
-    infoHeaderRaw[0x21] = paletteSize & 0x0000FF00;
-    infoHeaderRaw[0x22] = paletteSize & 0x00FF0000;
-    infoHeaderRaw[0x23] = paletteSize & 0xFF000000;
+    infoHeaderRaw[0x20] = (unsigned char) (paletteSize & 0x000000FF);
+    infoHeaderRaw[0x21] = (unsigned char) ((paletteSize & 0x0000FF00) >> 8);
+    infoHeaderRaw[0x22] = (unsigned char) ((paletteSize & 0x00FF0000) >> 16);
+    infoHeaderRaw[0x23] = (unsigned char) ((paletteSize & 0xFF000000) >> 24);
 
-    infoHeaderRaw[0x24] = 0;
-    infoHeaderRaw[0x25] = 0;
-    infoHeaderRaw[0x26] = 0;
-    infoHeaderRaw[0x27] = 0;
+    infoHeaderRaw[0x24] = (unsigned char) 0;
+    infoHeaderRaw[0x25] = (unsigned char) 0;
+    infoHeaderRaw[0x26] = (unsigned char) 0;
+    infoHeaderRaw[0x27] = (unsigned char) 0;
 
     FILE *fh = fopen(filename.c_str(), "wb"); // C4996
     if (fh == NULL) {
