@@ -249,14 +249,15 @@ TEST(TestDmScanLib, decodeAllImagesAllParameters) {
     testResults.push_back("#filename,decoded,total,ratio,time (sec),minEdgeFactor,maxEdgeFactor,scanGapFactor");
     writeAllDecodeResults(testResults, false); // clear previous contents of the file
 
-    unsigned totalTubes = 0;
-    unsigned totalDecoded = 0;
-    double totalTime = 0;
     std::stringstream ss;
 
     for (double minEdge = 0; minEdge <= 1.0; minEdge += 0.05) {
         for (double maxEdge = 0; maxEdge <= 1.0; maxEdge += 0.05) {
             for (double scanGap = 0; scanGap <= 1.0; scanGap += 0.05) {
+                unsigned totalTubes = 0;
+                unsigned totalDecoded = 0;
+                double totalTime = 0;
+
                 testResults.clear();
 
                 DecodeOptions decodeOptions(
@@ -306,19 +307,15 @@ TEST(TestDmScanLib, decodeAllImagesAllParameters) {
                     testResults.push_back(ss.str());
                 }
 
+                double avgDecodeTime = totalTime / filenames.size();
                 ss.str("");
                 ss << "RESULTS:,decoded:," << totalDecoded
                         << ", total:," << totalTubes
+                        << ", average decode time:," << avgDecodeTime
                         << ", minEdgeFactor:," << minEdge
                         << ", maxedgeFactor:," << maxEdge
                         << ", scanGapFactor:," << scanGap;
                 testResults.push_back(ss.str());
-                ss.str("");
-
-                double avgDecodeTime = totalTime / filenames.size();
-                ss << "average decode time:," << avgDecodeTime;
-                testResults.push_back(ss.str());
-
                 writeAllDecodeResults(testResults, true);
             }
         }
