@@ -37,11 +37,23 @@ std::unique_ptr<DecodeOptions> DecodeOptions::getDecodeOptionsViaJni(
 
     // run the following command to obtain method signatures from a class.
     // javap -s -p edu.ualberta.med.scannerconfig.dmscanlib.ScanRegion
-    jmethodID getMethod = env->GetMethodID(decodeOptionsJavaClass, "getScanGap",
-            "()D");
+    jmethodID getMethod = env->GetMethodID(decodeOptionsJavaClass, "getMinEdgeFactor", "()D");
     if (env->ExceptionOccurred()) {
         return NULL;
     }
+    double minEdgeFactor = env->CallDoubleMethod(decodeOptionsObj, getMethod, NULL);
+
+    getMethod = env->GetMethodID(decodeOptionsJavaClass, "getMaxEdgeFactor", "()D");
+    if (env->ExceptionOccurred()) {
+        return NULL;
+    }
+    double maxEdgeFactor = env->CallDoubleMethod(decodeOptionsObj, getMethod, NULL);
+
+    getMethod = env->GetMethodID(decodeOptionsJavaClass, "getScanGapFactor", "()D");
+    if (env->ExceptionOccurred()) {
+        return NULL;
+    }
+    double scanGapFactor = env->CallDoubleMethod(decodeOptionsObj, getMethod, NULL);
 
     getMethod = env->GetMethodID(decodeOptionsJavaClass, "getSquareDev", "()J");
     if (env->ExceptionOccurred()) {
@@ -68,7 +80,7 @@ std::unique_ptr<DecodeOptions> DecodeOptions::getDecodeOptionsViaJni(
     long shrink = static_cast<long>(env->CallLongMethod(decodeOptionsObj, getMethod, NULL));
 
     return std::unique_ptr<DecodeOptions>(new DecodeOptions(
-            0.15, 0.3, 0.1, squareDev, edgeThresh, corrections, shrink));
+            minEdgeFactor, maxEdgeFactor, scanGapFactor, squareDev, edgeThresh, corrections, shrink));
 }
 
 std::ostream & operator<<(std::ostream &os, const DecodeOptions & m) {

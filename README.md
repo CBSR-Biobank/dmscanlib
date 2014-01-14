@@ -40,7 +40,7 @@ You need Eclipse CDT. The following projects are configured for Eclipse:
 
 ## JNI
 
-The JNI class used to interface to dmscanlib is ScanLibImpl. To generate 
+The JNI class used to interface to dmscanlib is DmScanLibJni. To generate 
 the C header file use the following commands:
 
 ```bash
