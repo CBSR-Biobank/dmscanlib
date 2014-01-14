@@ -52,7 +52,7 @@ LIB_PATH :=
 
 CC := g++
 CXX := $(CC)
-CFLAGS := -fmessage-length=0 -fPIC -std=gnu++0x
+CFLAGS := -O3 -fmessage-length=0 -fPIC -std=gnu++0x
 SED := /bin/sed
 
 ifeq ($(OSTYPE),mingw32)

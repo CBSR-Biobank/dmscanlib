@@ -251,19 +251,19 @@ TEST(TestDmScanLib, decodeAllImagesAllParameters) {
 
     std::stringstream ss;
 
-    for (double minEdge = 0; minEdge <= 1.0; minEdge += 0.05) {
-        for (double maxEdge = 0; maxEdge <= 1.0; maxEdge += 0.05) {
-            for (double scanGap = 0; scanGap <= 1.0; scanGap += 0.05) {
-                unsigned totalTubes = 0;
-                unsigned totalDecoded = 0;
-                double totalTime = 0;
+    for (double maxEdge = 0.15; maxEdge <= 1.05; maxEdge += 0.05) {
+       for (double minEdge = 0, n = maxEdge + 0.05; minEdge < n; minEdge += 0.05) {
+    		for (double scanGap = 0; scanGap <= 1.05; scanGap += 0.05) {
+    			unsigned totalTubes = 0;
+    			unsigned totalDecoded = 0;
+    			double totalTime = 0;
 
-                testResults.clear();
+    			testResults.clear();
 
-                DecodeOptions decodeOptions(
-                        minEdge,
-                        maxEdge,
-                        scanGap,
+    			DecodeOptions decodeOptions(
+    					minEdge,
+    					maxEdge,
+    					scanGap,
                         defaultDecodeOptions->squareDev,
                         defaultDecodeOptions->edgeThresh,
                         defaultDecodeOptions->corrections,
