@@ -28,6 +28,7 @@
 #include <glog/logging.h>
 
 #ifdef WIN32
+#   define NOMINMAX
 #   include <windows.h>
 #   undef ERROR
 #endif
@@ -44,48 +45,39 @@ ThreadMgr::ThreadMgr() {
 ThreadMgr::~ThreadMgr() {
 }
 
-   void ThreadMgr::decodeWells(std::vector<std::unique_ptr<WellDecoder> > & wellDecoders) {
-	numThreads = wellDecoders.size();
-	allThreads.resize(numThreads);
+void ThreadMgr::decodeWells(std::vector<std::unique_ptr<WellDecoder> > & wellDecoders) {
+    numThreads = wellDecoders.size();
+    allThreads.resize(numThreads);
 
-	for (unsigned i = 0; i < numThreads; ++i) {
-		allThreads[i] = wellDecoders[i].get();
-	}
+    for (unsigned i = 0; i < numThreads; ++i) {
+        allThreads[i] = wellDecoders[i].get();
+    }
 
-	threadHandler();
+    threadHandler();
 }
 
 void ThreadMgr::threadHandler() {
-	unsigned first = 0;
+    unsigned first = 0;
+    unsigned last = std::min(numThreads, THREAD_NUM);
 
-#ifdef _VISUALC_
-	unsigned last = min(numThreads, THREAD_NUM);
-#else
-	unsigned last = std::min(numThreads, THREAD_NUM);
-#endif
+    do {
+        threadProcessRange(first, last);
+        VLOG(5) << "Threads for cells finished: " << first << "/" << last - 1;
 
-	do {
-		threadProcessRange(first, last);
-		VLOG(5) << "Threads for cells finished: " << first << "/" << last - 1;
-
-		first = last;
-#ifdef _VISUALC_
-		last = min(last + THREAD_NUM, numThreads);
-#else
-		last = std::min(last + THREAD_NUM, numThreads);
-#endif
-	} while (first < numThreads);
+        first = last;
+        last = std::min(last + THREAD_NUM, numThreads);
+    } while (first < numThreads);
 }
 
 //first is inclusive , last is exclusive
 void ThreadMgr::threadProcessRange(unsigned first, unsigned last) {
-	for (unsigned int i = first; i < last; i++) {
-		allThreads[i]->start();
-	}
+    for (unsigned int i = first; i < last; i++) {
+        allThreads[i]->start();
+    }
 
-	for (unsigned int j = first; j < last; j++) {
-		allThreads[j]->join();
-	}
+    for (unsigned int j = first; j < last; j++) {
+        allThreads[j]->join();
+    }
 }
 
 } /* namespace */

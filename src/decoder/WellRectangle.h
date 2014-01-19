@@ -20,39 +20,39 @@ class WellRectangle;
 
 template<typename T>
 std::ostream & operator<<(std::ostream &os, const WellRectangle<T> & m) {
-	os << m.label << " - " << m.rect;
-	return os;
+    os << m.label << " - " << m.rect;
+    return os;
 }
 
 template<typename T>
 class WellRectangle {
 public:
-	WellRectangle(const char * label, const Rect<T> & rect);
+    WellRectangle(const char * label, const Rect<T> & rect);
 
-	WellRectangle(const char * label, BoundingBox<T> & bbox);
+    WellRectangle(const char * label, BoundingBox<T> & bbox);
 
-	virtual ~WellRectangle() {
-	}
+    virtual ~WellRectangle() {
+    }
 
-	const std::string & getLabel() const {
-		return label;
-	}
+    const std::string & getLabel() const {
+        return label;
+    }
 
-	const Rect<T> & getRectangle() const {
-		return rect;
-	}
+    const Rect<T> & getRectangle() const {
+        return rect;
+    }
 
-	const Point<T> & getCorner(unsigned cornerId) const;
+    const Point<T> & getCorner(unsigned cornerId) const;
 
-	const T getCornerX(unsigned cornerId) const;
+    const T getCornerX(unsigned cornerId) const;
 
-	const T getCornerY(unsigned cornerId) const;
+    const T getCornerY(unsigned cornerId) const;
 
 private:
-	const std::string label;
-	const Rect<T> rect;
+    const std::string label;
+    const Rect<T> rect;
 
-	friend std::ostream & operator<< <> (std::ostream & os, const WellRectangle<T> & m);
+    friend std::ostream & operator<<<>(std::ostream & os, const WellRectangle<T> & m);
 };
 
 } /* namespace */

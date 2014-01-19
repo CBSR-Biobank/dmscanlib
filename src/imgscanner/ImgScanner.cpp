@@ -16,9 +16,9 @@ ImgScanner::~ImgScanner() {
 
 std::unique_ptr<ImgScanner> ImgScanner::create() {
 #ifdef WIN32
-	return std::unique_ptr<ImgScanner>(new imgscanner::ImgScannerImpl());
+    return std::unique_ptr<ImgScanner>(new imgscanner::ImgScannerImpl());
 #else
-	return std::unique_ptr<ImgScanner>(new imgscanner::ImgScannerSimulator());
+    return std::unique_ptr < ImgScanner > (new imgscanner::ImgScannerSimulator());
 #endif
 }
 

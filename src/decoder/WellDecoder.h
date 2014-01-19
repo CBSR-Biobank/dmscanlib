@@ -19,50 +19,50 @@ class Dib;
 class RgbQuad;
 class PalletGrid;
 
-class WellDecoder : public ::OpenThreads::Thread {
+class WellDecoder: public ::OpenThreads::Thread {
 public:
-	WellDecoder(const Decoder & decoder,
-			std::unique_ptr<const WellRectangle<unsigned> > _wellRectangle);
+    WellDecoder(const Decoder & decoder,
+            std::unique_ptr<const WellRectangle<unsigned> > _wellRectangle);
 
-	virtual ~WellDecoder();
+    virtual ~WellDecoder();
 
-	virtual void run();
+    virtual void run();
 
-	bool isFinished();
+    bool isFinished();
 
-	void decodeCallback(std::string & decodedMsg, Point<unsigned>(&corners)[4]);
+    void decodeCallback(std::string & decodedMsg, Point<unsigned> (&corners)[4]);
 
-	const std::string & getLabel() const {
-		return wellRectangle->getLabel();
-	}
+    const std::string & getLabel() const {
+        return wellRectangle->getLabel();
+    }
 
-	const std::string & getMessage() const {
-		return message;
-	}
+    const std::string & getMessage() const {
+        return message;
+    }
 
-	void setMessage(const char * message, int messageLength);
+    void setMessage(const char * message, int messageLength);
 
-	const Rect<unsigned> & getWellRectangle() const {
-		return wellRectangle->getRectangle();
-	}
+    const Rect<unsigned> & getWellRectangle() const {
+        return wellRectangle->getRectangle();
+    }
 
-	const Rect<unsigned> & getDecodedRectangle() const;
+    const Rect<unsigned> & getDecodedRectangle() const;
 
-	void setDecodeRectangle(const Rect<double> & rect, int scale);
+    void setDecodeRectangle(const Rect<double> & rect, int scale);
 
-	const bool getDecodeValid() {
-		return message.empty();
-	}
+    const bool getDecodeValid() {
+        return message.empty();
+    }
 
 private:
-	const Decoder & decoder;
-	std::unique_ptr<const WellRectangle<unsigned> > wellRectangle;
-	std::unique_ptr<const Dib> wellImage;
-	std::unique_ptr<const BoundingBox<unsigned> > boundingBox;
-	std::unique_ptr<const Rect<unsigned> > decodedRect;
-	std::string message;
+    const Decoder & decoder;
+    std::unique_ptr<const WellRectangle<unsigned> > wellRectangle;
+    std::unique_ptr<const Dib> wellImage;
+    std::unique_ptr<const BoundingBox<unsigned> > boundingBox;
+    std::unique_ptr<const Rect<unsigned> > decodedRect;
+    std::string message;
 
-	friend std::ostream & operator<<(std::ostream & os, const WellDecoder & m);
+    friend std::ostream & operator<<(std::ostream & os, const WellDecoder & m);
 };
 
 } /* namespace */

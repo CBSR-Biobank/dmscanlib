@@ -44,9 +44,8 @@ std::unique_ptr<DmTime> DmTime::difftime(const DmTime & that) {
 	return result;
 }
 
-std::ostream & operator<<(std::ostream &os, const dmscanlib::util::DmTime & tm) {
-	os << tm.timeVal;
-	return os;
+double DmTime::getTime() {
+	return static_cast<double>(timeVal);
 }
 
 } /* namespace */

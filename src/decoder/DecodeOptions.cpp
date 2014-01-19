@@ -11,64 +11,87 @@
 
 namespace dmscanlib {
 
-DecodeOptions::DecodeOptions(double _scanGap, long _squareDev,
-		long _edgeThresh, long _corrections, long _shrink) :
-    scanGap(_scanGap),squareDev(_squareDev), edgeThresh(_edgeThresh),
-    corrections(_corrections),shrink(_shrink)
-{
+DecodeOptions::DecodeOptions(
+        const double _minEdgeFactor,
+        const double _maxEdgeFactor,
+        const double _scanGapFactor,
+        const long _squareDev,
+        const long _edgeThresh,
+        const long _corrections,
+        const long _shrink) :
+        minEdgeFactor(_minEdgeFactor),
+        maxEdgeFactor(_maxEdgeFactor),
+        scanGapFactor(_scanGapFactor),
+        squareDev(_squareDev),
+                edgeThresh(_edgeThresh),
+                corrections(_corrections),
+                shrink(_shrink) {
 }
 
 DecodeOptions::~DecodeOptions() {
 }
 
 std::unique_ptr<DecodeOptions> DecodeOptions::getDecodeOptionsViaJni(
-		JNIEnv *env, jobject decodeOptionsObj) {
+        JNIEnv *env, jobject decodeOptionsObj) {
     jclass decodeOptionsJavaClass = env->GetObjectClass(decodeOptionsObj);
 
     // run the following command to obtain method signatures from a class.
     // javap -s -p edu.ualberta.med.scannerconfig.dmscanlib.ScanRegion
-    jmethodID getMethod = env->GetMethodID(
-    		decodeOptionsJavaClass, "getScanGap", "()D");
-    if(env->ExceptionOccurred()) {
-    	return NULL;
+    jmethodID getMethod = env->GetMethodID(decodeOptionsJavaClass, "getMinEdgeFactor", "()D");
+    if (env->ExceptionOccurred()) {
+        return NULL;
     }
-    double scanGap= env->CallDoubleMethod(decodeOptionsObj, getMethod, NULL);
+    double minEdgeFactor = env->CallDoubleMethod(decodeOptionsObj, getMethod, NULL);
+
+    getMethod = env->GetMethodID(decodeOptionsJavaClass, "getMaxEdgeFactor", "()D");
+    if (env->ExceptionOccurred()) {
+        return NULL;
+    }
+    double maxEdgeFactor = env->CallDoubleMethod(decodeOptionsObj, getMethod, NULL);
+
+    getMethod = env->GetMethodID(decodeOptionsJavaClass, "getScanGapFactor", "()D");
+    if (env->ExceptionOccurred()) {
+        return NULL;
+    }
+    double scanGapFactor = env->CallDoubleMethod(decodeOptionsObj, getMethod, NULL);
 
     getMethod = env->GetMethodID(decodeOptionsJavaClass, "getSquareDev", "()J");
-    if(env->ExceptionOccurred()) {
-    	return NULL;
+    if (env->ExceptionOccurred()) {
+        return NULL;
     }
-    long squareDev= static_cast<long>(env->CallLongMethod(decodeOptionsObj, getMethod, NULL));
+    long squareDev = static_cast<long>(env->CallLongMethod(decodeOptionsObj, getMethod, NULL));
 
     getMethod = env->GetMethodID(decodeOptionsJavaClass, "getEdgeThresh", "()J");
-    if(env->ExceptionOccurred()) {
-    	return NULL;
+    if (env->ExceptionOccurred()) {
+        return NULL;
     }
-    long edgeThresh= static_cast<long>(env->CallLongMethod(decodeOptionsObj, getMethod, NULL));
+    long edgeThresh = static_cast<long>(env->CallLongMethod(decodeOptionsObj, getMethod, NULL));
 
     getMethod = env->GetMethodID(decodeOptionsJavaClass, "getCorrections", "()J");
-    if(env->ExceptionOccurred()) {
-    	return NULL;
+    if (env->ExceptionOccurred()) {
+        return NULL;
     }
-    long corrections= static_cast<long>(env->CallLongMethod(decodeOptionsObj, getMethod, NULL));
+    long corrections = static_cast<long>(env->CallLongMethod(decodeOptionsObj, getMethod, NULL));
 
     getMethod = env->GetMethodID(decodeOptionsJavaClass, "getShrink", "()J");
-    if(env->ExceptionOccurred()) {
-    	return NULL;
+    if (env->ExceptionOccurred()) {
+        return NULL;
     }
     long shrink = static_cast<long>(env->CallLongMethod(decodeOptionsObj, getMethod, NULL));
 
     return std::unique_ptr<DecodeOptions>(new DecodeOptions(
-    	    scanGap, squareDev, edgeThresh, corrections, shrink));
+            minEdgeFactor, maxEdgeFactor, scanGapFactor, squareDev, edgeThresh, corrections, shrink));
 }
 
 std::ostream & operator<<(std::ostream &os, const DecodeOptions & m) {
-	os << " scanGap/" << m.scanGap
-			<< " squareDev/" << m.squareDev
-			<< " edgeThresh/" << m.edgeThresh
-			<< " corrections/"	<< m.corrections
-			<< " shrink/" << m.shrink;
-	return os;
+    os << "minEdgeFactor/" << m.minEdgeFactor
+            << " maxEdgeFactor/" << m.maxEdgeFactor
+            << " scanGapFactor/" << m.scanGapFactor
+            << " squareDev/" << m.squareDev
+            << " edgeThresh/" << m.edgeThresh
+            << " corrections/" << m.corrections
+            << " shrink/" << m.shrink;
+    return os;
 }
 
 } /* namespace */

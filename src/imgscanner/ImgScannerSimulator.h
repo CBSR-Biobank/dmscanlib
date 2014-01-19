@@ -2,24 +2,24 @@
 #define __INCLUDE_IMG_SCANNER_SIMULATOR_H
 
 /*
-Dmscanlib is a software library and standalone application that scans
-and decodes libdmtx compatible test-tubes. It is currently designed
-to decode 12x8 pallets that use 2D data-matrix laser etched test-tubes.
-Copyright (C) 2010 Canadian Biosample Repository
+ Dmscanlib is a software library and standalone application that scans
+ and decodes libdmtx compatible test-tubes. It is currently designed
+ to decode 12x8 pallets that use 2D data-matrix laser etched test-tubes.
+ Copyright (C) 2010 Canadian Biosample Repository
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include "imgscanner/ImgScanner.h"
 
@@ -31,25 +31,27 @@ namespace imgscanner {
  * This class interfaces with the TWAIN driver to acquire images from the
  * scanner.
  */
-class ImgScannerSimulator : public ImgScanner {
+class ImgScannerSimulator: public ImgScanner {
 public:
-	ImgScannerSimulator();
-	virtual ~ImgScannerSimulator();
+    ImgScannerSimulator();
+    virtual ~ImgScannerSimulator();
 
-	bool twainAvailable();
+    bool twainAvailable();
 
-	bool selectSourceAsDefault();
+    bool selectSourceAsDefault();
 
-	int getScannerCapability();
+    int getScannerCapability();
 
-	HANDLE acquireImage(unsigned dpi, int brightness, int contrast,
-		const ScanRegion<double> & bbox);
+    HANDLE acquireImage(unsigned dpi, int brightness, int contrast,
+            const ScanRegion<double> & bbox);
 
-	HANDLE acquireFlatbed(unsigned dpi, int brightness, int contrast);
+    HANDLE acquireFlatbed(unsigned dpi, int brightness, int contrast);
 
-	void freeImage(HANDLE handle);
+    void freeImage(HANDLE handle);
 
-    int getErrorCode() { return 0; }
+    int getErrorCode() {
+        return 0;
+    }
 
 private:
 };

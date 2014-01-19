@@ -19,8 +19,7 @@
  */
 
 #ifdef _VISUALC_
-// disable fopen warnings
-#pragma warning(disable : 4996)
+#   pragma warning(disable : 4996) // disable fopen warnings
 #endif
 
 #include "decoder/Decoder.h"
@@ -45,319 +44,316 @@ namespace dmscanlib {
 
 using namespace decoder;
 
-Decoder::Decoder(const Dib & _image, const DecodeOptions & _decodeOptions,
-		std::vector<std::unique_ptr<const WellRectangle<double>  > > & _wellRects) :
-		image(_image), decodeOptions(_decodeOptions),
-		wellRects(_wellRects), decodeSuccessful(false)
+Decoder::Decoder(
+        const Dib & _image,
+        const DecodeOptions & _decodeOptions,
+        std::vector<std::unique_ptr<const WellRectangle<double> > > & _wellRects) :
+        image(_image), decodeOptions(_decodeOptions),
+                wellRects(_wellRects), decodeSuccessful(false)
 {
-	const double doubleDpi = static_cast<double>(image.getDpi());
-	double width = static_cast<double>(image.getWidth()) / doubleDpi;
-	double height = static_cast<double>(image.getHeight()) / doubleDpi;
+    double width = static_cast<double>(image.getWidth());
+    double height = static_cast<double>(image.getHeight());
 
-	for(unsigned i = 0, n = wellRects.size(); i < n; ++i) {
-		// ensure well rectangles are within the image's region
-		const WellRectangle<double> & wellRect = *wellRects[i];
+    VLOG(5) << "Decoder: image size: " << width << ", " << height;
 
-		std::unique_ptr<const BoundingBox<double> > wellBbox =
-				wellRect.getRectangle().getBoundingBox();
+    for (unsigned i = 0, n = wellRects.size(); i < n; ++i) {
+        // ensure well rectangles are within the image's region
+        const WellRectangle<double> & wellRect = *wellRects[i];
 
-		if ((wellBbox->points[0].x >= width)
-				|| (wellBbox->points[0].y >= height)
-				|| (wellBbox->points[1].x >= width)
-				|| (wellBbox->points[1].y >= height)) {
-			throw std::invalid_argument("well rectangle exeeds image dimensions: "
-					+ wellRect.getLabel());
-		}
-	}
+        std::unique_ptr<const BoundingBox<double> > wellBbox =
+                wellRect.getRectangle().getBoundingBox();
 
-	wellDecoders.resize(wellRects.size());
-	applyFilters();
+        VLOG(5) << "Decoder: well: " << *wellBbox;
 
-	CHECK_NOTNULL(workingImage.get());
+        if ((wellBbox->points[0].x >= width)
+                || (wellBbox->points[0].y >= height)
+                || (wellBbox->points[1].x >= width)
+                || (wellBbox->points[1].y >= height)) {
+            throw std::invalid_argument("well rectangle exeeds image dimensions: "
+                    + wellRect.getLabel());
+        }
+    }
+
+    wellDecoders.resize(wellRects.size());
+    applyFilters();
+
+    CHECK_NOTNULL(workingImage.get());
 }
 
 Decoder::~Decoder() {
 }
 
 void Decoder::applyFilters() {
-	workingImage = (image.getBitsPerPixel() != 8)
-			? std::move(image.convertGrayscale())
-			: std::unique_ptr<Dib>(new Dib(image));
+    workingImage = (image.getBitsPerPixel() != 8)
+                   ? std::move(image.convertGrayscale())
+                             :
+                     std::unique_ptr < Dib > (new Dib(image));
 
-	workingImage->tpPresetFilter();
-	if (VLOG_IS_ON(2)) {
-		workingImage->writeToFile("filtered.bmp");
-	}
+    workingImage->tpPresetFilter();
+    if (VLOG_IS_ON(2)) {
+        workingImage->writeToFile("filtered.bmp");
+    }
 }
 
 int Decoder::decodeWellRects() {
-	const unsigned dpi = workingImage->getDpi();
-	if ((dpi != 300) && (dpi != 400) && (dpi != 600)) {
-		VLOG(5) << "decodeWellRects: invalid dpi: " << dpi;
-		return SC_INVALID_DPI;
-	}
+    VLOG(3) << "decodeWellRects: numWellRects/" << wellRects.size();
 
-	VLOG(3) << "decodeWellRects: dpi/" << dpi << " numWellRects/" << wellRects.size();
+    for (unsigned i = 0, n = wellRects.size(); i < n; ++i) {
+        const WellRectangle<double> & wellRect = *wellRects[i];
 
-	for(unsigned i = 0, n = wellRects.size(); i < n; ++i) {
-		const WellRectangle<double> & wellRect = *wellRects[i];
+        VLOG(5) << "well rect: " << wellRect;
 
-		VLOG(5) << "well rect: " << wellRect;
+        const Rect<double> & rectDouble = wellRect.getRectangle();
 
-		std::unique_ptr<const Rect<double> > factoredRect =
-				wellRect.getRectangle().scale(static_cast<double>(dpi));
+        Point<unsigned> pt1(
+                static_cast<unsigned>(rectDouble.corners[0].x),
+                static_cast<unsigned>(rectDouble.corners[0].y));
+        Point<unsigned> pt2(
+                static_cast<unsigned>(rectDouble.corners[1].x),
+                static_cast<unsigned>(rectDouble.corners[1].y));
+        Point<unsigned> pt3(
+                static_cast<unsigned>(rectDouble.corners[2].x),
+                static_cast<unsigned>(rectDouble.corners[2].y));
+        Point<unsigned> pt4(
+                static_cast<unsigned>(rectDouble.corners[3].x),
+                static_cast<unsigned>(rectDouble.corners[3].y));
 
-		Point<unsigned> pt1(
-				static_cast<unsigned>(factoredRect->corners[0].x),
-				static_cast<unsigned>(factoredRect->corners[0].y));
-		Point<unsigned> pt2(
-				static_cast<unsigned>(factoredRect->corners[1].x),
-				static_cast<unsigned>(factoredRect->corners[1].y));
-		Point<unsigned> pt3(
-				static_cast<unsigned>(factoredRect->corners[2].x),
-				static_cast<unsigned>(factoredRect->corners[2].y));
-		Point<unsigned> pt4(
-				static_cast<unsigned>(factoredRect->corners[3].x),
-				static_cast<unsigned>(factoredRect->corners[3].y));
+        Rect<unsigned> rect(pt1, pt2, pt3, pt4);
 
-		Rect<unsigned> rect(pt1, pt2, pt3, pt4);
+        std::unique_ptr<WellRectangle<unsigned> > convertedWellRect(
+                new WellRectangle<unsigned>(wellRect.getLabel().c_str(), rect));
 
-		std::unique_ptr<WellRectangle<unsigned> > convertedWellTect(
-				new WellRectangle<unsigned>(
-						wellRect.getLabel().c_str(), rect));
-
-		wellDecoders[i] = std::unique_ptr<WellDecoder>(
-				new WellDecoder(*this, std::move(convertedWellTect)));
-	}
-	return decodeMultiThreaded();
-	//return decodeSingleThreaded();
+        wellDecoders[i] = std::unique_ptr < WellDecoder > (
+                new WellDecoder(*this, std::move(convertedWellRect)));
+    }
+    return decodeMultiThreaded();
+    //return decodeSingleThreaded();
 }
 
 int Decoder::decodeSingleThreaded() {
-	for(unsigned i = 0, n = wellDecoders.size(); i < n; ++i) {
-		wellDecoders[i]->run();
-		if (!wellDecoders[i]->getMessage().empty()) {
-			decodedWells[wellDecoders[i]->getMessage()] = wellDecoders[i].get();
-		}
-	}
-	return SC_SUCCESS;
+    for (unsigned i = 0, n = wellDecoders.size(); i < n; ++i) {
+        wellDecoders[i]->run();
+        if (!wellDecoders[i]->getMessage().empty()) {
+            decodedWells[wellDecoders[i]->getMessage()] = wellDecoders[i].get();
+        }
+    }
+    return SC_SUCCESS;
 }
 
 int Decoder::decodeMultiThreaded() {
-	decoder::ThreadMgr threadMgr;
-	threadMgr.decodeWells(wellDecoders);
+    decoder::ThreadMgr threadMgr;
+    threadMgr.decodeWells(wellDecoders);
 
-	for(unsigned i = 0, n = wellDecoders.size(); i < n; ++i) {
-		WellDecoder & wellDecoder = *wellDecoders[i];
-		VLOG(5) << wellDecoder;
-		if (!wellDecoder.getMessage().empty()) {
-			if (decodedWells.find(wellDecoder.getMessage()) != decodedWells.end()) {
-				VLOG(1) << "duplicate decode message found: " << wellDecoder.getMessage();
-				return SC_FAIL;
-			}
+    for (unsigned i = 0, n = wellDecoders.size(); i < n; ++i) {
+        WellDecoder & wellDecoder = *wellDecoders[i];
+        VLOG(5) << wellDecoder;
+        if (!wellDecoder.getMessage().empty()) {
+            if (decodedWells.find(wellDecoder.getMessage()) != decodedWells.end()) {
+                VLOG(1) << "duplicate decode message found: " << wellDecoder.getMessage();
+                return SC_FAIL;
+            }
 
-			decodedWells[wellDecoder.getMessage()] = &wellDecoder;
-		}
-	}
-	decodeSuccessful = true;
-	return SC_SUCCESS;
+            decodedWells[wellDecoder.getMessage()] = &wellDecoder;
+        }
+    }
+    decodeSuccessful = true;
+    return SC_SUCCESS;
 }
 
 const unsigned Decoder::getDecodedWellCount() {
-	if (!decodeSuccessful) return 0;
+    if (!decodeSuccessful)
+        return 0;
 
-	return decodedWells.size();
+    return decodedWells.size();
 }
 
 const std::map<std::string, const WellDecoder *> & Decoder::getDecodedWells() const {
-	if (!decodeSuccessful) {
-		throw std::logic_error("duplicate decoded messages found");
-	}
-	return decodedWells;
+    if (!decodeSuccessful) {
+        throw std::logic_error("duplicate decoded messages found");
+    }
+    return decodedWells;
 }
 
 /*
  * Called by multiple threads.
  */
 void Decoder::decodeWellRect(const Dib & wellRectImage, WellDecoder & wellDecoder) const {
-	const unsigned dpi = wellRectImage.getDpi();
-	CHECK((dpi == 300) || (dpi == 400) || (dpi == 600));
+    DmtxImage * dmtxImage = wellRectImage.getDmtxImage();
+    CHECK_NOTNULL(dmtxImage);
 
-	DmtxImage * dmtxImage = wellRectImage.getDmtxImage();
-	CHECK_NOTNULL(dmtxImage);
+    VLOG(3) << "decodeWellRect: " << wellDecoder;
 
-	VLOG(3) << "decodeWellRect: " << wellDecoder;
+    std::unique_ptr<DmtxDecodeHelper> dec =
+            createDmtxDecode(dmtxImage, wellDecoder, decodeOptions.shrink);
+    decodeWellRect(wellDecoder, dec->getDecode());
 
-	std::unique_ptr<DmtxDecodeHelper> dec =
-			createDmtxDecode(dmtxImage, dpi, wellDecoder, decodeOptions.shrink);
-	decodeWellRect(wellDecoder, dec->getDecode());
-
-	if (wellDecoder.getMessage().empty()) {
-		VLOG(3) << "decodeWellRect: second attempt " << wellDecoder;
-		dec = std::move(createDmtxDecode(
-				dmtxImage, dpi, wellDecoder, decodeOptions.shrink + 1));
-		decodeWellRect(wellDecoder, dec->getDecode());
-	}
-	dmtxImageDestroy(&dmtxImage);
+    if (wellDecoder.getMessage().empty()) {
+        VLOG(3) << "decodeWellRect: second attempt " << wellDecoder;
+        dec = std::move(createDmtxDecode(
+                dmtxImage, wellDecoder, decodeOptions.shrink + 1));
+        decodeWellRect(wellDecoder, dec->getDecode());
+    }
+    dmtxImageDestroy(&dmtxImage);
 }
 
-std::unique_ptr<DmtxDecodeHelper> Decoder::createDmtxDecode(DmtxImage * dmtxImage,
-		const unsigned dpi, WellDecoder & wellDecoder, int scale) const {
-	std::unique_ptr<DmtxDecodeHelper> dec(new DmtxDecodeHelper(dmtxImage, scale));
+std::unique_ptr<DmtxDecodeHelper> Decoder::createDmtxDecode(
+        DmtxImage * dmtxImage,
+        WellDecoder & wellDecoder,
+        int scale) const {
+    std::unique_ptr<DmtxDecodeHelper> dec(new DmtxDecodeHelper(dmtxImage, scale));
 
-	std::unique_ptr<const BoundingBox<unsigned> > bbox = std::move(
-			wellDecoder.getWellRectangle().getBoundingBox());
+    std::unique_ptr<const BoundingBox<unsigned> > bbox = std::move(
+            wellDecoder.getWellRectangle().getBoundingBox());
 
-	// slightly smaller than the new tube edge
-	dec->setProperty(DmtxPropEdgeMin, static_cast<int>(0.08 * dpi));
+    unsigned mindim = std::min(bbox->getWidth(), bbox->getHeight());
 
-	// slightly bigger than the Nunc edge
-	dec->setProperty(DmtxPropEdgeMax, static_cast<int>(0.18 * dpi));
+    dec->setProperty(DmtxPropEdgeMin, static_cast<int>(0.15 * mindim));
+    dec->setProperty(DmtxPropEdgeMax, static_cast<int>(0.3 * mindim));
+    dec->setProperty(DmtxPropScanGap, static_cast<int>(0.1 * mindim));
 
-	dec->setProperty(DmtxPropSymbolSize, DmtxSymbolSquareAuto);
-	dec->setProperty(DmtxPropScanGap,
-			static_cast<unsigned>(decodeOptions.scanGap * dpi));
-	dec->setProperty(DmtxPropSquareDevn, decodeOptions.squareDev);
-	dec->setProperty(DmtxPropEdgeThresh, decodeOptions.edgeThresh);
+    dec->setProperty(DmtxPropSymbolSize, DmtxSymbolSquareAuto);
+    dec->setProperty(DmtxPropSquareDevn, decodeOptions.squareDev);
+    dec->setProperty(DmtxPropEdgeThresh, decodeOptions.edgeThresh);
 
-	return dec;
+    return dec;
 }
 
 void Decoder::decodeWellRect(WellDecoder & wellDecoder, DmtxDecode *dec) const {
-	DmtxRegion * reg;
-	while (1) {
-		reg = dmtxRegionFindNext(dec, NULL);
-		if (reg == NULL) {
-			break;
-		}
+    DmtxRegion * reg;
+    while (1) {
+        reg = dmtxRegionFindNext(dec, NULL);
+        if (reg == NULL) {
+            break;
+        }
 
-		DmtxMessage *msg = dmtxDecodeMatrixRegion(dec, reg, decodeOptions.corrections);
-		if (msg != NULL) {
-			getDecodeInfo(dec, reg, msg, wellDecoder);
+        DmtxMessage *msg = dmtxDecodeMatrixRegion(dec, reg, decodeOptions.corrections);
+        if (msg != NULL) {
+            getDecodeInfo(dec, reg, msg, wellDecoder);
 
-			if (VLOG_IS_ON(5)) {
-				showStats(dec, reg, msg);
-			}
-			dmtxMessageDestroy(&msg);
-		}
-		dmtxRegionDestroy(&reg);
-	}
+            if (VLOG_IS_ON(5)) {
+                showStats(dec, reg, msg);
+            }
+            dmtxMessageDestroy(&msg);
+        }
+        dmtxRegionDestroy(&reg);
+    }
 
-	if (VLOG_IS_ON(5)) {
-		writeDiagnosticImage(dec, wellDecoder.getLabel());
-	}
+    if (VLOG_IS_ON(5)) {
+        writeDiagnosticImage(dec, wellDecoder.getLabel());
+    }
 
 }
 
 void Decoder::getDecodeInfo(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg,
-		WellDecoder & wellDecoder) const {
-	CHECK_NOTNULL(dec);
-	CHECK_NOTNULL(reg);
-	CHECK_NOTNULL(msg);
+        WellDecoder & wellDecoder) const {
+    CHECK_NOTNULL(dec);
+    CHECK_NOTNULL(reg);
+    CHECK_NOTNULL(msg);
 
-	DmtxVector2 p00, p10, p11, p01;
+    DmtxVector2 p00, p10, p11, p01;
 
-	wellDecoder.setMessage((char *) msg->output, msg->outputIdx);
+    wellDecoder.setMessage((char *) msg->output, msg->outputIdx);
 
-	int height = dmtxDecodeGetProp(dec, DmtxPropHeight);
-	p00.X = p00.Y = p10.Y = p01.X = 0.0;
-	p10.X = p01.Y = p11.X = p11.Y = 1.0;
-	dmtxMatrix3VMultiplyBy(&p00, reg->fit2raw);
-	dmtxMatrix3VMultiplyBy(&p10, reg->fit2raw);
-	dmtxMatrix3VMultiplyBy(&p11, reg->fit2raw);
-	dmtxMatrix3VMultiplyBy(&p01, reg->fit2raw);
+    int height = dmtxDecodeGetProp(dec, DmtxPropHeight);
+    p00.X = p00.Y = p10.Y = p01.X = 0.0;
+    p10.X = p01.Y = p11.X = p11.Y = 1.0;
+    dmtxMatrix3VMultiplyBy(&p00, reg->fit2raw);
+    dmtxMatrix3VMultiplyBy(&p10, reg->fit2raw);
+    dmtxMatrix3VMultiplyBy(&p11, reg->fit2raw);
+    dmtxMatrix3VMultiplyBy(&p01, reg->fit2raw);
 
-	p00.Y = height - 1 - p00.Y;
-	p10.Y = height - 1 - p10.Y;
-	p11.Y = height - 1 - p11.Y;
-	p01.Y = height - 1 - p01.Y;
+    p00.Y = height - 1 - p00.Y;
+    p10.Y = height - 1 - p10.Y;
+    p11.Y = height - 1 - p11.Y;
+    p01.Y = height - 1 - p01.Y;
 
-	Point<double> pt1(p00.X, p00.Y);
-	Point<double> pt2(p10.X, p10.Y);
-	Point<double> pt3(p11.X, p11.Y);
-	Point<double> pt4(p01.X, p01.Y);
-	Rect<double> decodeRect(pt1, pt2, pt3, pt4);
+    Point<double> pt1(p00.X, p00.Y);
+    Point<double> pt2(p10.X, p10.Y);
+    Point<double> pt3(p11.X, p11.Y);
+    Point<double> pt4(p01.X, p01.Y);
+    Rect<double> decodeRect(pt1, pt2, pt3, pt4);
 
-	wellDecoder.setDecodeRectangle(decodeRect, dec->scale);
+    wellDecoder.setDecodeRectangle(decodeRect, dec->scale);
 }
 
 void Decoder::showStats(DmtxDecode * dec, DmtxRegion * reg, DmtxMessage * msg) const {
-	if (!VLOG_IS_ON(5)) return;
+    if (!VLOG_IS_ON(5))
+        return;
 
-	int height;
-	int dataWordLength;
-	int rotateInt;
-	double rotate;
-	DmtxVector2 p00, p10, p11, p01;
+    int height;
+    int dataWordLength;
+    int rotateInt;
+    double rotate;
+    DmtxVector2 p00, p10, p11, p01;
 
-	height = dmtxDecodeGetProp(dec, DmtxPropHeight);
+    height = dmtxDecodeGetProp(dec, DmtxPropHeight);
 
-	p00.X = p00.Y = p10.Y = p01.X = 0.0;
-	p10.X = p01.Y = p11.X = p11.Y = 1.0;
-	dmtxMatrix3VMultiplyBy(&p00, reg->fit2raw);
-	dmtxMatrix3VMultiplyBy(&p10, reg->fit2raw);
-	dmtxMatrix3VMultiplyBy(&p11, reg->fit2raw);
-	dmtxMatrix3VMultiplyBy(&p01, reg->fit2raw);
+    p00.X = p00.Y = p10.Y = p01.X = 0.0;
+    p10.X = p01.Y = p11.X = p11.Y = 1.0;
+    dmtxMatrix3VMultiplyBy(&p00, reg->fit2raw);
+    dmtxMatrix3VMultiplyBy(&p10, reg->fit2raw);
+    dmtxMatrix3VMultiplyBy(&p11, reg->fit2raw);
+    dmtxMatrix3VMultiplyBy(&p01, reg->fit2raw);
 
-	dataWordLength = dmtxGetSymbolAttribute(DmtxSymAttribSymbolDataWords,
-			reg->sizeIdx);
+    dataWordLength = dmtxGetSymbolAttribute(DmtxSymAttribSymbolDataWords,
+            reg->sizeIdx);
 
-	rotate = (2 * M_PI)
-			+ (atan2(reg->fit2raw[0][1], reg->fit2raw[1][1])
-					- atan2(reg->fit2raw[1][0], reg->fit2raw[0][0])) / 2.0;
+    rotate = (2 * M_PI)
+            + (atan2(reg->fit2raw[0][1], reg->fit2raw[1][1])
+                    - atan2(reg->fit2raw[1][0], reg->fit2raw[0][0])) / 2.0;
 
-	rotateInt = (int) (rotate * 180 / M_PI + 0.5);
-	if (rotateInt >= 360)
-		rotateInt -= 360;
+    rotateInt = (int) (rotate * 180 / M_PI + 0.5);
+    if (rotateInt >= 360)
+        rotateInt -= 360;
 
-	VLOG(5) << "\n--------------------------------------------------"
-			<< "\n       Matrix Size: "
-			<< dmtxGetSymbolAttribute(DmtxSymAttribSymbolRows, reg->sizeIdx)
-			<< " x "
-			<< dmtxGetSymbolAttribute(DmtxSymAttribSymbolCols, reg->sizeIdx)
-			<< "\n    Data Codewords: "
-			<< dataWordLength - msg->padCount << " (capacity "
-			<< dataWordLength << ")" << "\n   Error Codewords: "
-			<< dmtxGetSymbolAttribute(DmtxSymAttribSymbolErrorWords, reg->sizeIdx)
-			<< "\n      Data Regions: "
-			<< dmtxGetSymbolAttribute(DmtxSymAttribHorizDataRegions, reg->sizeIdx)
-			<< " x "
-			<< dmtxGetSymbolAttribute(DmtxSymAttribVertDataRegions, reg->sizeIdx)
-			<< "\nInterleaved Blocks: "
-			<< dmtxGetSymbolAttribute(DmtxSymAttribInterleavedBlocks, reg->sizeIdx)
-			<< "\n    Rotation Angle: "
-			<< rotateInt << "\n          Corner 0: (" << p00.X << ", "
-			<< height - 1 - p00.Y << ")" << "\n          Corner 1: ("
-			<< p10.X << ", " << height - 1 - p10.Y << ")"
-			<< "\n          Corner 2: (" << p11.X << ", "
-			<< height - 1 - p11.Y << ")" << "\n          Corner 3: ("
-			<< p01.X << ", " << height - 1 - p01.Y << ")"
-			<< "\n--------------------------------------------------";
+    VLOG(5) << "\n--------------------------------------------------"
+                      << "\n       Matrix Size: "
+                      << dmtxGetSymbolAttribute(DmtxSymAttribSymbolRows, reg->sizeIdx)
+                      << " x "
+                      << dmtxGetSymbolAttribute(DmtxSymAttribSymbolCols, reg->sizeIdx)
+                      << "\n    Data Codewords: "
+                      << dataWordLength - msg->padCount << " (capacity "
+                      << dataWordLength << ")" << "\n   Error Codewords: "
+                      << dmtxGetSymbolAttribute(DmtxSymAttribSymbolErrorWords, reg->sizeIdx)
+                      << "\n      Data Regions: "
+                      << dmtxGetSymbolAttribute(DmtxSymAttribHorizDataRegions, reg->sizeIdx)
+                      << " x "
+                      << dmtxGetSymbolAttribute(DmtxSymAttribVertDataRegions, reg->sizeIdx)
+                      << "\nInterleaved Blocks: "
+                      << dmtxGetSymbolAttribute(DmtxSymAttribInterleavedBlocks, reg->sizeIdx)
+                      << "\n    Rotation Angle: "
+                      << rotateInt << "\n          Corner 0: (" << p00.X << ", "
+                      << height - 1 - p00.Y << ")" << "\n          Corner 1: ("
+                      << p10.X << ", " << height - 1 - p10.Y << ")"
+                      << "\n          Corner 2: (" << p11.X << ", "
+                      << height - 1 - p11.Y << ")" << "\n          Corner 3: ("
+                      << p01.X << ", " << height - 1 - p01.Y << ")"
+                      << "\n--------------------------------------------------";
 }
 
 void Decoder::writeDiagnosticImage(DmtxDecode *dec, const std::string & id) const {
-	if (!VLOG_IS_ON(5))
-		return;
+    if (!VLOG_IS_ON(5))
+        return;
 
-	int totalBytes, headerBytes;
-	int bytesWritten;
-	unsigned char *pnm;
-	FILE *fp;
+    int totalBytes, headerBytes;
+    int bytesWritten;
+    unsigned char *pnm;
+    FILE *fp;
 
-	std::ostringstream fname;
-	fname << "diagnostic-" << id << ".pnm";
+    std::ostringstream fname;
+    fname << "diagnostic-" << id << ".pnm";
 
-	fp = fopen(fname.str().c_str(), "wb");
-	CHECK_NOTNULL(fp);
+    fp = fopen(fname.str().c_str(), "wb");
+    CHECK_NOTNULL(fp);
 
-	pnm = dmtxDecodeCreateDiagnostic(dec, &totalBytes, &headerBytes, 0);
-	CHECK_NOTNULL(pnm);
+    pnm = dmtxDecodeCreateDiagnostic(dec, &totalBytes, &headerBytes, 0);
+    CHECK_NOTNULL(pnm);
 
-	bytesWritten = fwrite(pnm, sizeof(unsigned char), totalBytes, fp);
-	CHECK(bytesWritten == totalBytes);
+    bytesWritten = fwrite(pnm, sizeof(unsigned char), totalBytes, fp);
+    CHECK(bytesWritten == totalBytes);
 
-	free(pnm);
-	fclose(fp);
+    free(pnm);
+    fclose(fp);
 }
 
 } /* namespace */

@@ -14,22 +14,20 @@ namespace dmscanlib {
 namespace decoder {
 
 DmtxDecodeHelper::DmtxDecodeHelper(DmtxImage * dmtxImage, int scale) :
-		dec(dmtxDecodeCreate(dmtxImage, scale))
+        dec(dmtxDecodeCreate(dmtxImage, scale))
 {
-	CHECK_NOTNULL(dec);
+    CHECK_NOTNULL(dec);
 }
 
-
 DmtxDecodeHelper::~DmtxDecodeHelper() {
-	dmtxDecodeDestroy(&dec);
+    dmtxDecodeDestroy(&dec);
 }
 
 unsigned DmtxDecodeHelper::setProperty(int prop, int value) {
-	CHECK_NOTNULL(dec);
-	return dmtxDecodeSetProp(dec, prop, value);
+    CHECK_NOTNULL(dec);
+    return dmtxDecodeSetProp(dec, prop, value);
 }
 
 } /* namespace decoder */
-
 
 } /* namespace dmscanlib */

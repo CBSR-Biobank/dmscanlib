@@ -28,6 +28,7 @@
 #include <memory>
 
 #ifdef WIN32
+#   define NOMINMAX
 #   include <windows.h>
 #   undef ERROR
 #else
@@ -41,83 +42,84 @@ class RgbQuad;
 class Dib {
 public:
 
-	Dib();
-	Dib(const Dib & src);
-	Dib(unsigned width, unsigned height, unsigned colorBits,
-			unsigned pixelsPerMeter);
+    Dib();
+    Dib(const Dib & src);
+    Dib(unsigned width, unsigned height, unsigned colorBits,
+            unsigned pixelsPerMeter);
 
-	~Dib();
+    ~Dib();
 
-	bool readFromFile(const std::string & filename);
-	bool writeToFile(const std::string & filename) const;
+    bool readFromFile(const std::string & filename);
+    bool writeToFile(const std::string & filename) const;
 
-	std::unique_ptr<Dib> convertGrayscale() const;
+    std::unique_ptr<Dib> convertGrayscale() const;
 
-	std::unique_ptr<Dib> crop(const BoundingBox<unsigned> & bbox) const;
+    std::unique_ptr<Dib> crop(const BoundingBox<unsigned> & bbox) const;
 
-	void tpPresetFilter();
+    void tpPresetFilter();
 
-	unsigned getDpi() const;
-	unsigned getHeight() const;
-	unsigned getWidth() const;
-	unsigned getBitsPerPixel() const;
+    unsigned getDpi() const;
+    unsigned getHeight() const;
+    unsigned getWidth() const;
+    unsigned getBitsPerPixel() const;
 
-	void drawLine(unsigned x0, unsigned y0, unsigned x1, unsigned y1, const RgbQuad & quad);
+    void drawLine(unsigned x0, unsigned y0, unsigned x1, unsigned y1, const RgbQuad & quad);
 
-    void drawLine(const Point<unsigned> & start, const Point<unsigned> & end, const RgbQuad & quad) {
-	    drawLine(start.x, start.y, end.x, end.y, quad);
-	}
+    void drawLine(const Point<unsigned> & start, const Point<unsigned> & end,
+            const RgbQuad & quad) {
+        drawLine(start.x, start.y, end.x, end.y, quad);
+    }
 
-	void drawRectangle(unsigned x, unsigned y, unsigned width, unsigned height,
-			const RgbQuad & quad);
+    void drawRectangle(unsigned x, unsigned y, unsigned width, unsigned height,
+            const RgbQuad & quad);
 
-	void drawRectangle(const Rect<unsigned> & rect, const RgbQuad & quad);
+    void drawRectangle(const Rect<unsigned> & rect, const RgbQuad & quad);
 
-	void readFromHandle(HANDLE handle);
+    void readFromHandle(HANDLE handle);
 
-	DmtxImage * getDmtxImage() const;
+    DmtxImage * getDmtxImage() const;
 
 private:
 
-	static const float BLUR_KERNEL[9];
-	static const float BLANK_KERNEL[9];
-	static const float DPI_400_KERNEL[9];
-	static const double UNSHARP_RAD;
-	static const double UNSHARP_DEPTH;
-	static const unsigned GAUSS_WIDTH;
-	static const unsigned GAUSS_FACTORS[];
-	static const unsigned GAUSS_SUM;
+    static const float BLUR_KERNEL[9];
+    static const float BLANK_KERNEL[9];
+    static const float DPI_400_KERNEL[9];
+    static const double UNSHARP_RAD;
+    static const double UNSHARP_DEPTH;
+    static const unsigned GAUSS_WIDTH;
+    static const unsigned GAUSS_FACTORS[];
+    static const unsigned GAUSS_SUM;
 
-	unsigned size;
-	unsigned width;
-	unsigned imageSize;
-	unsigned height;
-	unsigned colorBits;
-	unsigned pixelsPerMeter;
-	unsigned paletteSize;
-	unsigned bytesPerPixel;
-	unsigned rowBytes;
-	unsigned rowPaddingBytes;
-	unsigned char * pixels;
+    unsigned size;
+    unsigned width;
+    unsigned imageSize;
+    unsigned height;
+    unsigned colorBits;
+    unsigned pixelsPerMeter;
+    unsigned paletteSize;
+    unsigned bytesPerPixel;
+    unsigned rowBytes;
+    unsigned rowPaddingBytes;
+    unsigned char * pixels;
 
-	/*
-	 * Dib can be created with a borrowed pixel buffer. When an image is scanned,
-	 * the TWAIN driver owns the memory to the pixel buffer. In this case
-	 * isAllocated is set to false.
-	 */
-	bool isAllocated;
+    /*
+     * Dib can be created with a borrowed pixel buffer. When an image is scanned,
+     * the TWAIN driver owns the memory to the pixel buffer. In this case
+     * isAllocated is set to false.
+     */
+    bool isAllocated;
 
-	void init(unsigned width, unsigned height, unsigned colorBits,
-			unsigned pixelsPerMeter, bool allocatePixelBuf = true);
-	void initPalette(RgbQuad * palette) const;
+    void init(unsigned width, unsigned height, unsigned colorBits,
+            unsigned pixelsPerMeter, bool allocatePixelBuf = true);
+    void initPalette(RgbQuad * palette) const;
 
-	void allocate(unsigned int allocateSize);
-	void deallocate();
+    void allocate(unsigned int allocateSize);
+    void deallocate();
 
     void setPixel(unsigned row, unsigned col, const RgbQuad & quad);
-	unsigned getPaletteSize(unsigned bitCount) const;
-	unsigned getRowBytes(unsigned width, unsigned bitCount);
-	void convolveFast3x3(const float(&kernel)[9]);
+    unsigned getPaletteSize(unsigned bitCount) const;
+    unsigned getRowBytes(unsigned width, unsigned bitCount);
+    void convolveFast3x3(const float (&kernel)[9]);
 
 };
 

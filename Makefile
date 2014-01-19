@@ -47,7 +47,7 @@ DEPS := $(OBJ:.o=.d)
 
 INCLUDE_PATH := $(foreach inc,$(PATHS),$(inc)) third_party/libdmtx third_party/glog/src \
 	$(JAVA_HOME)/include $(JAVA_HOME)/include/linux
-LIBS := -lglog -ldmtx -lOpenThreads -lpthread -lgtest
+LIBS := -lglog -ldmtx -lOpenThreads -lgtest -lpthread
 LIB_PATH :=
 
 CC := g++

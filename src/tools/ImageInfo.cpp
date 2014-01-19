@@ -32,7 +32,7 @@ std::string usage(
 
 DEFINE_bool(decode, true, "include decoded barcode messages.");
 DEFINE_string(palletSize, "8x12", "comma-seperated list of pallet sizes. "
-		"Valid sizer are 8x12, 10x10, and 1x1");
+		"Valid sizes are \"8x12\", \"10x10\", and \"1x1\"");
 
 enum PalletSize { PSIZE_8x12, PSIZE_10x10, PSIZE_1x1, PSIZE_MAX };
 
@@ -108,20 +108,15 @@ void ImageInfo::generateWells() {
 	dib.readFromFile(filename);
 
 	std::cout << basename((char *) filename.c_str()) << std::endl;
-	std::cout << dib.getWidth() / static_cast<double>(dib.getDpi()) << ","
-			<< dib.getHeight() / static_cast<double>(dib.getDpi()) << std::endl;
+	std::cout << "0,0," << dib.getWidth() << "," << dib.getHeight() << std::endl;
+	std::cout << RowColsForPalletSize[palletSize].first
+			<< "," << RowColsForPalletSize[palletSize].second
+			<< std::endl;
 
 	for(unsigned i = 0, n = wells.size(); i < n; ++i) {
 		const WellRectangle<double> & wellRect = *wells[i];
 
-		// remove spaces and brackets from what Rect returns for stream out
-		std::stringstream ss;
-		ss << wellRect.getRectangle();
-		std::string rectString(ss.str());
-		rectString.erase(remove_if(rectString.begin(), rectString.end(), IsOutputInvalidChar()),
-				rectString.end());
-
-		std::cout << wellRect.getLabel() << "," << rectString;
+		std::cout << wellRect.getLabel();
 		if (decodedMessages.find(wellRect.getLabel()) != decodedMessages.end()) {
 			std::cout << "," << decodedMessages[wellRect.getLabel()];
 		}

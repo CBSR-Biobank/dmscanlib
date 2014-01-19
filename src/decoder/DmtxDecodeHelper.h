@@ -16,15 +16,17 @@ namespace decoder {
 
 class DmtxDecodeHelper {
 public:
-	DmtxDecodeHelper(DmtxImage * dmtxImage, int scale);
-	virtual ~DmtxDecodeHelper();
+    DmtxDecodeHelper(DmtxImage * dmtxImage, int scale);
+    virtual ~DmtxDecodeHelper();
 
-	unsigned setProperty(int prop, int value);
+    unsigned setProperty(int prop, int value);
 
-	DmtxDecode * getDecode() { return dec; }
+    DmtxDecode * getDecode() {
+        return dec;
+    }
 
 private:
-	DmtxDecode *dec;
+    DmtxDecode *dec;
 };
 
 } /* namespace decoder */
