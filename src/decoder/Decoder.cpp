@@ -207,9 +207,14 @@ std::unique_ptr<DmtxDecodeHelper> Decoder::createDmtxDecode(
 
     unsigned mindim = std::min(bbox->getWidth(), bbox->getHeight());
 
-    dec->setProperty(DmtxPropEdgeMin, static_cast<int>(0.15 * mindim));
-    dec->setProperty(DmtxPropEdgeMax, static_cast<int>(0.3 * mindim));
-    dec->setProperty(DmtxPropScanGap, static_cast<int>(0.1 * mindim));
+    dec->setProperty(DmtxPropEdgeMin, static_cast<int>(decodeOptions.minEdgeFactor * mindim));
+    dec->setProperty(DmtxPropEdgeMax, static_cast<int>(decodeOptions.maxEdgeFactor * mindim));
+    dec->setProperty(DmtxPropScanGap, static_cast<int>(decodeOptions.scanGapFactor * mindim));
+
+    VLOG(3) << "createDmtxDecode: minEdgeFactor "   << decodeOptions.minEdgeFactor
+    	    << ", maxEdgeFactor " << decodeOptions.maxEdgeFactor
+    		<< ", scanGapFactor " << decodeOptions.scanGapFactor;
+
 
     dec->setProperty(DmtxPropSymbolSize, DmtxSymbolSquareAuto);
     dec->setProperty(DmtxPropSquareDevn, decodeOptions.squareDev);

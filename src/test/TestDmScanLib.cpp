@@ -155,12 +155,23 @@ std::unique_ptr<DecodeTestResult> decodeFromInfo(
 }
 
 TEST(TestDmScanLib, decodeFromInfo) {
-    FLAGS_v = 1;
+    FLAGS_v = 3;
 
     std::string infoFilename("testImageInfo/8x12/plate.nfo");
+
+    std::unique_ptr<DecodeOptions> defaultDecodeOptions = test::getDefaultDecodeOptions();
+    DecodeOptions decodeOptions(
+            0.2,
+            0.3,
+            0.2,
+            defaultDecodeOptions->squareDev,
+            defaultDecodeOptions->edgeThresh,
+            defaultDecodeOptions->corrections,
+            defaultDecodeOptions->shrink);
+
     DmScanLib dmScanLib(0);
     std::unique_ptr<DecodeTestResult> testResult =
-            decodeFromInfo(infoFilename, *test::getDefaultDecodeOptions(), dmScanLib);
+            decodeFromInfo(infoFilename, decodeOptions, dmScanLib);
 
     EXPECT_TRUE(testResult->infoFileValid);
     EXPECT_EQ(SC_SUCCESS, testResult->decodeResult);
