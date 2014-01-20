@@ -64,6 +64,10 @@ public:
 
     const std::map<std::string, const WellDecoder *> & getDecodedWells() const;
 
+    static void showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg);
+
+    static void writeDiagnosticImage(DmtxDecode *dec, const std::string & id);
+
 private:
     void applyFilters();
     static DmtxImage * createDmtxImageFromDib(const Dib & dib);
@@ -76,9 +80,6 @@ private:
     void getDecodeInfo(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg,
             WellDecoder & wellDecoder) const;
 
-    void writeDiagnosticImage(DmtxDecode *dec, const std::string & id) const;
-
-    void showStats(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg) const;
     int decodeSingleThreaded();
     int decodeMultiThreaded();
 

@@ -37,6 +37,7 @@ You need Eclipse CDT. The following projects are configured for Eclipse:
   - `libgoogle-glog-dev`
   - `libgtest-dev`
   - `libgflags-dev`
+  - `libopencv-dev`
 
 ## JNI
 

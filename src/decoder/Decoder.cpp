@@ -83,6 +83,7 @@ Decoder::Decoder(
 Decoder::~Decoder() {
 }
 
+// FIXME: this method should not be here, it belongs with loading an image
 void Decoder::applyFilters() {
     workingImage = (image.getBitsPerPixel() != 8)
                    ? std::move(image.convertGrayscale())
@@ -281,7 +282,7 @@ void Decoder::getDecodeInfo(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg,
     wellDecoder.setDecodeRectangle(decodeRect, dec->scale);
 }
 
-void Decoder::showStats(DmtxDecode * dec, DmtxRegion * reg, DmtxMessage * msg) const {
+void Decoder::showStats(DmtxDecode * dec, DmtxRegion * reg, DmtxMessage * msg) {
     if (!VLOG_IS_ON(5))
         return;
 
@@ -336,9 +337,8 @@ void Decoder::showStats(DmtxDecode * dec, DmtxRegion * reg, DmtxMessage * msg) c
                       << "\n--------------------------------------------------";
 }
 
-void Decoder::writeDiagnosticImage(DmtxDecode *dec, const std::string & id) const {
-    if (!VLOG_IS_ON(5))
-        return;
+void Decoder::writeDiagnosticImage(DmtxDecode *dec, const std::string & id) {
+    //if (!VLOG_IS_ON(5)) return;
 
     int totalBytes, headerBytes;
     int bytesWritten;
