@@ -49,7 +49,7 @@ const unsigned CAP_DPI_400 = 0x04;
 const unsigned CAP_DPI_600 = 0x08;
 const unsigned CAP_IS_SCANNER = 0x10;
 
-class Dib;
+class Image;
 class Decoder;
 class ImgScanner;
 class WellDecoder;
@@ -84,12 +84,12 @@ public:
 
 protected:
     int decodeCommon(
-            const Dib & image,
+            const Image & image,
             const DecodeOptions & decodeOptions,
             const std::string &decodedDibFilename,
             std::vector<std::unique_ptr<const WellRectangle<double> > > & wellRects);
 
-    void writeDecodedImage(const Dib & image, const std::string & decodedDibFilename);
+    void writeDecodedImage(const Image & image, const std::string & decodedDibFilename);
 
     static const std::string LIBRARY_NAME;
 

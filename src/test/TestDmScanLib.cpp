@@ -6,6 +6,7 @@
  */
 
 #include "DmScanLib.h"
+#include "Image.h"
 #include "decoder/Decoder.h"
 #include "decoder/DecodeOptions.h"
 #include "decoder/WellDecoder.h"
@@ -264,24 +265,6 @@ std::unique_ptr<decoder::DmtxDecodeHelper> createDmtxDecode(
     return dec;
 }
 
-
-/**
- * Converts an OpenCV image to a DmtxImage.
- *
- * NOTE: The caller must detroy the image.
- */
-DmtxImage * getDmtxImage(cv::Mat & image) {
-    if (image.elemSize() != 1) {
-        throw std::logic_error("invalid bytes per pixel in image");
-    }
-
-    DmtxImage * dmtxImage = dmtxImageCreate(image.data, image.cols, image.rows, DmtxPack8bppK);
-    //set the properties (pad bytes, flip)
-    dmtxImageSetProp(dmtxImage, DmtxPropRowPadBytes, image.step1() - image.cols);
-    //dmtxImageSetProp(dmtxImage, DmtxPropImageFlip, DmtxFlipY); // DIBs are flipped in Y
-    return dmtxImage;
-}
-
 TEST(TestDmScanLib, opencv) {
     FLAGS_v = 1;
 
@@ -359,54 +342,19 @@ TEST(TestDmScanLib, opencv) {
 TEST(TestDmScanLib, opencv_jpg) {
     FLAGS_v = 1;
 
-    cv::Mat blankKernel(3,3,CV_64F);
-
-    blankKernel.at<double>(0,0) = 0.06185567;
-    blankKernel.at<double>(0,1) = 0.12371134;
-    blankKernel.at<double>(0,2) = 0.06185567;
-    blankKernel.at<double>(1,0) = 0.12371134;
-    blankKernel.at<double>(1,1) = 0.25773195;
-    blankKernel.at<double>(1,2) = 0.12371134;
-    blankKernel.at<double>(2,0) = 0.06185567;
-    blankKernel.at<double>(2,1) = 0.12371134;
-    blankKernel.at<double>(2,2) = 0.06185567;
-
-    cv::Mat blurKernel(3,3,CV_64F);
-
-    blurKernel.at<double>(0,0) = 0.0;
-    blurKernel.at<double>(0,1) = 0.2;
-    blurKernel.at<double>(0,2) = 0.0;
-    blurKernel.at<double>(1,0) = 0.2;
-    blurKernel.at<double>(1,1) = 0.2;
-    blurKernel.at<double>(1,2) = 0.2;
-    blurKernel.at<double>(2,0) = 0.0;
-    blurKernel.at<double>(2,1) = 0.2;
-    blurKernel.at<double>(2,2) = 0.0;
-
     std::string fname("/home/loyola/Desktop/single_tube.jpg");
-    cv::Mat src = cv::imread(fname.c_str(), CV_LOAD_IMAGE_GRAYSCALE);
+    Image src(fname.c_str());
 
-    VLOG(1) << "opencv: width: " << src.cols << ", height: " << src.rows
-            << ", depth: " << src.elemSize() << ", " << src.step1();
-
-    cv::Mat filter1Image, filter2Image;
-
-    cv::Point anchor(-1, -1);
-    double delta = 0;
-    int ddepth = -1;
-
-    cv::filter2D(src, filter1Image, ddepth , blankKernel, anchor, delta);
-    cv::filter2D(filter1Image, filter2Image, ddepth , blurKernel, anchor, delta);
-
-    cv::imwrite("out.bmp", filter2Image);
+    src.write("out.bmp");
+    cv::Size size = src.getSize();
 
     Point<double> pt1(0, 0);
-    Point<double> pt2(filter2Image.cols, filter2Image.rows);
+    Point<double> pt2(size.width, size.height);
     BoundingBox<double> bbox(pt1, pt2);
 
     VLOG(1) << "opencv: well: " << bbox;
 
-    DmtxImage * dmtxImage = getDmtxImage(filter2Image);
+    DmtxImage * dmtxImage = getDmtxImage(src.getEnhancedImage());
     std::unique_ptr<decoder::DmtxDecodeHelper> dec = createDmtxDecode(dmtxImage, bbox, 1);
     decodeWellRect(dec->getDecode());
     dmtxImageDestroy(&dmtxImage);

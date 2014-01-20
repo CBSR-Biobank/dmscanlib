@@ -5,6 +5,7 @@
 #include "geometry.h"
 
 #include <dmtx.h>
+#include <opencv/cv.h>
 #include <string>
 #include <ostream>
 #include <memory>
@@ -15,7 +16,7 @@
 namespace dmscanlib {
 
 class Decoder;
-class Dib;
+class Image;
 class RgbQuad;
 class PalletGrid;
 
@@ -42,7 +43,7 @@ public:
 
     void setMessage(const char * message, int messageLength);
 
-    const Rect<unsigned> & getWellRectangle() const {
+    const cv::Rect & getWellRectangle() const {
         return wellRectangle->getRectangle();
     }
 
@@ -57,7 +58,7 @@ public:
 private:
     const Decoder & decoder;
     std::unique_ptr<const WellRectangle<unsigned> > wellRectangle;
-    std::unique_ptr<const Dib> wellImage;
+    std::unique_ptr<const Image> wellImage;
     std::unique_ptr<const BoundingBox<unsigned> > boundingBox;
     std::unique_ptr<const Rect<unsigned> > decodedRect;
     std::string message;

@@ -27,7 +27,7 @@
 #include "decoder/WellDecoder.h"
 #include "decoder/ThreadMgr.h"
 #include "decoder/DmtxDecodeHelper.h"
-#include "dib/Dib.h"
+#include "Image.h"
 #include "DmScanLib.h"
 
 #include <glog/logging.h>
@@ -45,14 +45,15 @@ namespace dmscanlib {
 using namespace decoder;
 
 Decoder::Decoder(
-        const Dib & _image,
+        const Image & _image,
         const DecodeOptions & _decodeOptions,
         std::vector<std::unique_ptr<const WellRectangle<double> > > & _wellRects) :
         image(_image), decodeOptions(_decodeOptions),
                 wellRects(_wellRects), decodeSuccessful(false)
 {
-    double width = static_cast<double>(image.getWidth());
-    double height = static_cast<double>(image.getHeight());
+    cv::Size size = image.size();
+    double width = static_cast<double>(size.width);
+    double height = static_cast<double>(size.height);
 
     VLOG(5) << "Decoder: image size: " << width << ", " << height;
 
@@ -75,25 +76,9 @@ Decoder::Decoder(
     }
 
     wellDecoders.resize(wellRects.size());
-    applyFilters();
-
-    CHECK_NOTNULL(workingImage.get());
 }
 
 Decoder::~Decoder() {
-}
-
-// FIXME: this method should not be here, it belongs with loading an image
-void Decoder::applyFilters() {
-    workingImage = (image.getBitsPerPixel() != 8)
-                   ? std::move(image.convertGrayscale())
-                             :
-                     std::unique_ptr < Dib > (new Dib(image));
-
-    workingImage->tpPresetFilter();
-    if (VLOG_IS_ON(2)) {
-        workingImage->writeToFile("filtered.bmp");
-    }
 }
 
 int Decoder::decodeWellRects() {
@@ -178,8 +163,8 @@ const std::map<std::string, const WellDecoder *> & Decoder::getDecodedWells() co
 /*
  * Called by multiple threads.
  */
-void Decoder::decodeWellRect(const Dib & wellRectImage, WellDecoder & wellDecoder) const {
-    DmtxImage * dmtxImage = wellRectImage.getDmtxImage();
+void Decoder::decodeWellRect(const Image & wellRectImage, WellDecoder & wellDecoder) const {
+    DmtxImage * dmtxImage = wellRectImage.dmtxImage();
     CHECK_NOTNULL(dmtxImage);
 
     VLOG(3) << "decodeWellRect: " << wellDecoder;

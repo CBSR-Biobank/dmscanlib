@@ -36,7 +36,7 @@
 
 namespace dmscanlib {
 
-class Dib;
+class Image;
 class DecodeOptions;
 class WellDecoder;
 
@@ -46,14 +46,14 @@ class DmtxDecodeHelper;
 
 class Decoder {
 public:
-    Decoder(const Dib & image, const DecodeOptions & decodeOptions,
+    Decoder(const Image & image, const DecodeOptions & decodeOptions,
             std::vector<std::unique_ptr<const WellRectangle<double> > > & wellRects);
     virtual ~Decoder();
     int decodeWellRects();
-    void decodeWellRect(const Dib & wellRectImage, WellDecoder & wellDecoder) const;
+    void decodeWellRect(const Image & wellRectImage, WellDecoder & wellDecoder) const;
 
-    const Dib & getWorkingImage() const {
-        return *workingImage;
+    const Image & getWorkingImage() const {
+        return image;
     }
 
     const unsigned getDecodedWellCount();
@@ -70,7 +70,6 @@ public:
 
 private:
     void applyFilters();
-    static DmtxImage * createDmtxImageFromDib(const Dib & dib);
     void decodeWellRect(WellDecoder & wellDecoder, DmtxDecode *dec) const;
     std::unique_ptr<decoder::DmtxDecodeHelper> createDmtxDecode(
             DmtxImage * dmtxImage,
@@ -83,8 +82,7 @@ private:
     int decodeSingleThreaded();
     int decodeMultiThreaded();
 
-    const Dib & image;
-    std::unique_ptr<Dib> workingImage;
+    const Image & image;
     const DecodeOptions & decodeOptions;
     const std::vector<std::unique_ptr<const WellRectangle<double> > > & wellRects;
     std::vector<std::unique_ptr<WellDecoder> > wellDecoders;

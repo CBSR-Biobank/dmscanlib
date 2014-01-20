@@ -35,7 +35,7 @@
 #include "decoder/Decoder.h"
 #include "decoder/DecodeOptions.h"
 #include "decoder/WellDecoder.h"
-#include "dib/Dib.h"
+#include "Image.h"
 #include "dib/RgbQuad.h"
 
 #include <stdio.h>
@@ -122,12 +122,8 @@ int DmScanLib::scanImage(unsigned dpi, int brightness, int contrast,
         VLOG(1) << "could not acquire image";
         return imgScanner->getErrorCode();
     }
-    Dib dib;
-    dib.readFromHandle(h);
-    if (dib.getDpi() != dpi) {
-        return SC_INCORRECT_DPI_SCANNED;
-    }
-    dib.writeToFile(filename);
+    Image image(h);
+    image.write(filename);
     imgScanner->freeImage(h);
     return SC_SUCCESS;
 }
@@ -146,12 +142,8 @@ int DmScanLib::scanFlatbed(unsigned dpi, int brightness, int contrast,
         VLOG(1) << "could not acquire image";
         return imgScanner->getErrorCode();
     }
-    Dib dib;
-    dib.readFromHandle(h);
-    if (dib.getDpi() != dpi) {
-        return SC_INCORRECT_DPI_SCANNED;
-    }
-    dib.writeToFile(filename);
+    Image image(h);
+    image.write(filename);
     imgScanner->freeImage(h);
     return SC_SUCCESS;
 }
@@ -172,13 +164,8 @@ int DmScanLib::scanAndDecode(unsigned dpi, int brightness, int contrast,
         return imgScanner->getErrorCode();
     }
 
-    Dib image;
-    image.readFromHandle(h);
-    if (image.getDpi() != dpi) {
-        return SC_INCORRECT_DPI_SCANNED;
-    }
-
-    image.writeToFile("scanned.bmp");
+    Image image(h);
+    image.write("scanned.bmp");
     result = decodeCommon(image, decodeOptions, "decode.bmp", wellRects);
 
     imgScanner->freeImage(h);
@@ -194,21 +181,20 @@ int DmScanLib::decodeImageWells(const char * filename,
                       << " numWellRects/" << wellRects.size()
                       << " " << decodeOptions;
 
-    Dib image;
-    bool readResult = image.readFromFile(filename);
-    if (!readResult) {
+    Image image(filename);
+    if (!image.isValid()) {
         return SC_INVALID_IMAGE;
     }
 
     return decodeCommon(image, decodeOptions, "decode.bmp", wellRects);
 }
 
-int DmScanLib::decodeCommon(const Dib & image,
+int DmScanLib::decodeCommon(const Image & image,
         const DecodeOptions & decodeOptions,
         const std::string &decodedDibFilename,
         std::vector<std::unique_ptr<const WellRectangle<double> > > & wellRects) {
 
-    decoder = std::unique_ptr < Decoder > (new Decoder(image, decodeOptions, wellRects));
+    decoder = std::unique_ptr<Decoder>(new Decoder(image, decodeOptions, wellRects));
     int result = decoder->decodeWellRects();
 
     if (result != SC_SUCCESS) {
@@ -226,34 +212,34 @@ int DmScanLib::decodeCommon(const Dib & image,
     return SC_SUCCESS;
 }
 
-void DmScanLib::writeDecodedImage(const Dib & image,
+void DmScanLib::writeDecodedImage(
+        const Image & image,
         const std::string & decodedDibFilename) {
 
     CHECK_NOTNULL(decoder.get());
 
-    std::vector<std::unique_ptr<WellDecoder> > & wellDecoders =
-            decoder->getWellDecoders();
+    std::vector<std::unique_ptr<WellDecoder> > & wellDecoders = decoder->getWellDecoders();
     CHECK(wellDecoders.size() > 0);
 
     const std::map<std::string, const WellDecoder *> & decodedWells = decoder->getDecodedWells();
     CHECK(decodedWells.size() > 0);
 
-    Dib decodedDib(image);
-    RgbQuad colorBlue(0, 0, 255);
+    Image decodedImage(image);
+    cv::Scalar colorBlue(0, 0, 255);
 
     for (unsigned i = 0, n = wellDecoders.size(); i < n; ++i) {
-        decodedDib.drawRectangle(wellDecoders[i]->getWellRectangle(), colorBlue);
+        decodedImage.drawRectangle(wellDecoders[i]->getWellRectangle(), colorBlue);
     }
 
-    RgbQuad colorRed(255, 0, 0);
-    RgbQuad colorGreen(0, 255, 0);
+    cv::Scalar colorRed(255, 0, 0);
+    cv::Scalar colorGreen(0, 255, 0);
     for (std::map<std::string, const WellDecoder *>::const_iterator ii = decodedWells.begin();
             ii != decodedWells.end(); ++ii) {
         const WellDecoder & decodedWell = *(ii->second);
-        decodedDib.drawRectangle(decodedWell.getDecodedRectangle(), colorRed);
-        decodedDib.drawRectangle(decodedWell.getWellRectangle(), colorGreen);
+        decodedImage.drawRectangle(decodedWell.getDecodedRectangle(), colorRed);
+        decodedImage.drawRectangle(decodedWell.getWellRectangle(), colorGreen);
     }
-    decodedDib.writeToFile(decodedDibFilename);
+    decodedImage.write(decodedDibFilename.c_str());
 }
 
 const unsigned DmScanLib::getDecodedWellCount() {

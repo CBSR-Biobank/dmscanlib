@@ -6,7 +6,7 @@
  */
 
 #include "WellDecoder.h"
-#include "dib/Dib.h"
+#include "Image.h"
 #include "Decoder.h"
 #include "geometry.h"
 
@@ -38,7 +38,11 @@ WellDecoder::~WellDecoder() {
  * This method runs in its own thread.
  */
 void WellDecoder::run() {
-    wellImage = decoder.getWorkingImage().crop(*boundingBox);
+    wellImage = decoder.getWorkingImage().crop(
+            boundingBox->points[0].x,
+            boundingBox->points[0].y,
+            boundingBox->points[1].x - boundingBox->points[0].x,
+            boundingBox->points[1].y - boundingBox->points[0].y);
     decoder.decodeWellRect(*wellImage, *this);
     if (!message.empty()) {
         VLOG(3) << "run: " << *this;
