@@ -13,7 +13,7 @@ OSTYPE := $(shell uname -s | tr [:upper:] [:lower:])
 MTYPE := $(shell uname -m)
 LANG := en_US                # for gcc error messages
 BUILD_DIR := obj
-JAVA_HOME := /usr/lib/jvm/jdk1.6.0_45
+JAVA_HOME := /usr/lib/jvm/java-6-oracle
 
 SRCS := \
 	src/DmScanLib.cpp \

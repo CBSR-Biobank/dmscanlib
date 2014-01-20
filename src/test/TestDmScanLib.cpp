@@ -27,31 +27,31 @@ using namespace dmscanlib;
 namespace {
 
 TEST(TestDmScanLib, invalidRects) {
-    FLAGS_v = 0;
+	FLAGS_v = 0;
 
     std::unique_ptr<DecodeOptions> decodeOptions = test::getDefaultDecodeOptions();
     std::vector<std::unique_ptr<const WellRectangle<double> > > wellRects;
-    DmScanLib dmScanLib(1);
+	DmScanLib dmScanLib(1);
     int result = dmScanLib.decodeImageWells("testImages/8x12/96tubes.bmp", *decodeOptions,
             wellRects);
-    EXPECT_EQ(SC_INVALID_NOTHING_DECODED, result);
+	EXPECT_EQ(SC_INVALID_NOTHING_DECODED, result);
 }
 
 TEST(TestDmScanLib, invalidImage) {
-    FLAGS_v = 0;
+	FLAGS_v = 0;
 
-    Point<double> pt1(0, 0);
-    Point<double> pt2(10, 10);
-    BoundingBox<double> bbox(pt1, pt2);
-    std::unique_ptr<const WellRectangle<double> > wrect(new WellRectangle<double>("label", bbox));
+	Point<double> pt1(0,0);
+	Point<double> pt2(10,10);
+	BoundingBox<double> bbox(pt1, pt2);
+	std::unique_ptr<const WellRectangle<double> > wrect(new WellRectangle<double>("label", bbox));
 
-    std::vector<std::unique_ptr<const WellRectangle<double> > > wellRects;
+	std::vector<std::unique_ptr<const WellRectangle<double> > > wellRects;
     wellRects.push_back(std::move(wrect));
 
     std::unique_ptr<DecodeOptions> decodeOptions = test::getDefaultDecodeOptions();
-    DmScanLib dmScanLib(1);
-    int result = dmScanLib.decodeImageWells("xyz.bmp", *decodeOptions, wellRects);
-    EXPECT_EQ(SC_INVALID_IMAGE, result);
+	DmScanLib dmScanLib(1);
+	int result = dmScanLib.decodeImageWells("xyz.bmp", *decodeOptions, wellRects);
+	EXPECT_EQ(SC_INVALID_IMAGE, result);
 }
 
 TEST(TestDmScanLib, decodeImage) {
@@ -63,15 +63,15 @@ TEST(TestDmScanLib, decodeImage) {
     //std::string fname("testImages/10x10/10x10.bmp");
     std::string fname("testImages/10x10/10x10.bmp");
 
-    DmScanLib dmScanLib(1);
+	DmScanLib dmScanLib(1);
     int result = test::decodeImage(fname, dmScanLib, 10, 10);
 
-    EXPECT_EQ(SC_SUCCESS, result);
-    EXPECT_TRUE(dmScanLib.getDecodedWellCount() > 0);
+	EXPECT_EQ(SC_SUCCESS, result);
+	EXPECT_TRUE(dmScanLib.getDecodedWellCount() > 0);
 
-    if (dmScanLib.getDecodedWellCount() > 0) {
-        VLOG(1) << "number of wells decoded: " << dmScanLib.getDecodedWells().size();
-    }
+	if (dmScanLib.getDecodedWellCount() > 0) {
+		VLOG(1) << "number of wells decoded: " << dmScanLib.getDecodedWells().size();
+	}
 }
 
 void writeAllDecodeResults(std::vector<std::string> & testResults, bool append = false) {
@@ -82,10 +82,10 @@ void writeAllDecodeResults(std::vector<std::string> & testResults, bool append =
         ofile.open("all_images_results.csv");
     }
 
-    for (unsigned i = 0, n = testResults.size(); i < n; ++i) {
-        ofile << testResults[i] << std::endl;
-    }
-    ofile.close();
+	for (unsigned i = 0, n = testResults.size(); i < n; ++i) {
+		ofile <<  testResults[i] << std::endl;
+	}
+	ofile.close();
 }
 
 // check that the decoded message matches the one in the "nfo" file
@@ -106,7 +106,7 @@ void checkDecodeInfo(DmScanLib & dmScanLib, dmscanlib::test::ImageInfo & imageIn
 class DecodeTestResult {
 public:
     bool infoFileValid;
-    int decodeResult;
+	int decodeResult;
     unsigned totalTubes;
     unsigned totalDecoded;
     double decodeTime;
@@ -123,25 +123,24 @@ std::unique_ptr<DecodeTestResult> decodeFromInfo(
 
     std::unique_ptr<DecodeTestResult> testResult(new DecodeTestResult());
 
-    dmscanlib::test::ImageInfo imageInfo(infoFilename);
+		dmscanlib::test::ImageInfo imageInfo(infoFilename);
     testResult->infoFileValid = imageInfo.isValid();
 
     if (testResult->infoFileValid) {
         testResult->totalTubes = imageInfo.getDecodedWellCount();
-
-        std::vector<std::unique_ptr<const WellRectangle<double> > > wellRects;
+	    std::vector<std::unique_ptr<const WellRectangle<double> > > wellRects;
         test::getWellRectsForBoundingBox(
                 imageInfo.getBoundingBox(),
                 imageInfo.getPalletRows(),
                 imageInfo.getPalletCols(),
                 wellRects);
 
-        util::DmTime start;
+		util::DmTime start;
         testResult->decodeResult = dmScanLib.decodeImageWells(
                 imageInfo.getImageFilename().c_str(),
                 decodeOptions,
                 wellRects);
-        util::DmTime end;
+		util::DmTime end;
 
         testResult->decodeTime = end.difftime(start)->getTime();
 
@@ -156,19 +155,30 @@ std::unique_ptr<DecodeTestResult> decodeFromInfo(
 }
 
 TEST(TestDmScanLib, decodeFromInfo) {
-    FLAGS_v = 1;
+    FLAGS_v = 3;
 
     std::string infoFilename("testImageInfo/8x12/plate.nfo");
+
+    std::unique_ptr<DecodeOptions> defaultDecodeOptions = test::getDefaultDecodeOptions();
+    DecodeOptions decodeOptions(
+            0.2,
+            0.3,
+            0.2,
+            defaultDecodeOptions->squareDev,
+            defaultDecodeOptions->edgeThresh,
+            defaultDecodeOptions->corrections,
+            defaultDecodeOptions->shrink);
+
     DmScanLib dmScanLib(0);
     std::unique_ptr<DecodeTestResult> testResult =
-            decodeFromInfo(infoFilename, *test::getDefaultDecodeOptions(), dmScanLib);
+            decodeFromInfo(infoFilename, decodeOptions, dmScanLib);
 
     EXPECT_TRUE(testResult->infoFileValid);
     EXPECT_EQ(SC_SUCCESS, testResult->decodeResult);
     if (testResult->decodeResult == SC_SUCCESS) {
         EXPECT_TRUE(testResult->totalDecoded > 0);
-    }
-}
+			}
+		}
 
 //TEST(TestDmScanLib, DISABLED_decodeAllImages) {
 TEST(TestDmScanLib, decodeAllImages) {
@@ -185,7 +195,7 @@ TEST(TestDmScanLib, decodeAllImages) {
     unsigned totalTubes = 0;
     unsigned totalDecoded = 0;
     double totalTime = 0;
-    std::stringstream ss;
+	    std::stringstream ss;
     std::unique_ptr<DecodeOptions> decodeOptions = test::getDefaultDecodeOptions();
 
     for (unsigned i = 0, n = filenames.size(); i < n; ++i) {
@@ -216,9 +226,8 @@ TEST(TestDmScanLib, decodeAllImages) {
             totalTubes += testResult->totalTubes;
             totalTime += testResult->decodeTime;
         }
-
-        testResults.push_back(ss.str());
-    }
+		testResults.push_back(ss.str());
+	}
 
     ss.str("");
     ss << "decoded:," << totalDecoded << ", total:," << totalTubes;
