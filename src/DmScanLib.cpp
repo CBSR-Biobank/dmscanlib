@@ -161,8 +161,8 @@ int DmScanLib::scanAndDecode(unsigned dpi, int brightness, int contrast,
     }
 
     Image image(h);
-    image.write("scanned.bmp");
-    result = decodeCommon(image, decodeOptions, "decode.bmp", wellRects);
+    image.write("scanned.png");
+    result = decodeCommon(image, decodeOptions, "decode.png", wellRects);
 
     imgScanner->freeImage(h);
     VLOG(1) << "decodeCommon returned: " << result;
@@ -234,14 +234,8 @@ void DmScanLib::writeDecodedImage(
     for (std::map<std::string, const WellDecoder *>::const_iterator ii = decodedWells.begin();
             ii != decodedWells.end(); ++ii) {
         const WellDecoder & decodedWell = *(ii->second);
-        const BoundingBox<unsigned> & bboxDecoded = *decodedWell.getDecodedRectangle().getBoundingBox();
-
-        const cv::Rect r(
-                bboxDecoded.points[0].x,
-                bboxDecoded.points[0].y,
-                bboxDecoded.points[1].x - bboxDecoded.points[0].x,
-                bboxDecoded.points[1].y - bboxDecoded.points[0].y);
-        decodedImage.drawRectangle(r, colorRed);
+        const cv::Rect bboxDecoded = decodedWell.getDecodedRectangle();
+        decodedImage.drawRectangle(bboxDecoded, colorRed);
 
         const cv::Rect & wellBbox = decodedWell.getWellRectangle();
         decodedImage.drawRectangle(wellBbox, colorGreen);

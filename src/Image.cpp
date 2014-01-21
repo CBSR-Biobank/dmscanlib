@@ -99,7 +99,7 @@ Image::Image(HANDLE handle) : filename("") {
 	}
 	
 	cvSetData(cv_image, pixels, cv_image->widthStep);
-	opencvImage = cv_image;
+	cv::flip(cv::Mat(cv_image), opencvImage, 0);
 
     valid = true;
 #else

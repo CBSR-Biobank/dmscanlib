@@ -57,9 +57,28 @@ void WellDecoder::setMessage(const char * message, int messageLength) {
     this->message.assign(message, messageLength);
 }
 
-const Rect<unsigned> & WellDecoder::getDecodedRectangle() const {
-    CHECK_NOTNULL(decodedRect.get());
-    return *decodedRect;
+
+const cv::Rect WellDecoder::getWellRectangle() const {	
+    CHECK_NOTNULL(wellRectangle.get());
+	VLOG(9) << "getWellRectangle: bbox: " << *wellRectangle->getRectangle().getBoundingBox();
+
+	std::unique_ptr<const BoundingBox<unsigned> >  bbox = wellRectangle->getRectangle().getBoundingBox();
+
+	return cv::Rect(
+		bbox->points[0].x,
+		bbox->points[0].y,
+		bbox->points[1].x - bbox->points[0].x,
+		bbox->points[1].y - bbox->points[0].y);
+}
+
+const cv::Rect WellDecoder::getDecodedRectangle() const {
+	CHECK_NOTNULL(decodedRect.get());
+	const BoundingBox<unsigned> & bbox = *decodedRect->getBoundingBox();
+	return cv::Rect(
+		bbox.points[0].x,
+		bbox.points[0].y,
+		bbox.points[1].x - bbox.points[0].x,
+		bbox.points[1].y - bbox.points[0].y);
 }
 
 // the rectangle passed in is in coordinates of the cropped image,

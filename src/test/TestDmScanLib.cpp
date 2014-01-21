@@ -64,7 +64,7 @@ TEST(TestDmScanLib, invalidImage) {
 }
 
 TEST(TestDmScanLib, decodeImage) {
-    FLAGS_v = 5;
+    FLAGS_v = 3;
 
     //std::string fname("testImages/8x12/hardscan.bmp");
     std::string fname("testImages/8x12/plate.bmp");

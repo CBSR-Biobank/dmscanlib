@@ -203,11 +203,6 @@ std::unique_ptr<DmtxDecodeHelper> Decoder::createDmtxDecode(
     dec->setProperty(DmtxPropEdgeMax, static_cast<int>(decodeOptions.maxEdgeFactor * mindim));
     dec->setProperty(DmtxPropScanGap, static_cast<int>(decodeOptions.scanGapFactor * mindim));
 
-    VLOG(3) << "createDmtxDecode: minEdgeFactor "   << decodeOptions.minEdgeFactor
-    	    << ", maxEdgeFactor " << decodeOptions.maxEdgeFactor
-    		<< ", scanGapFactor " << decodeOptions.scanGapFactor;
-
-
     dec->setProperty(DmtxPropSymbolSize, DmtxSymbolSquareAuto);
     dec->setProperty(DmtxPropSquareDevn, decodeOptions.squareDev);
     dec->setProperty(DmtxPropEdgeThresh, decodeOptions.edgeThresh);

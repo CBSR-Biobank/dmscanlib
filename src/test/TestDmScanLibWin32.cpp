@@ -97,7 +97,7 @@ TEST(TestDmScanLibWin32, scanImageBadParams) {
 	std::unique_ptr<DecodeOptions> decodeOptions = 
 		test::getDefaultDecodeOptions();
 
-	std::string fname("tmpscan.bmp");
+	std::string fname("tmpscan.png");
 	std::wstring fnamew(fname.begin(), fname.end());
 	DeleteFile(fnamew.c_str());
 
@@ -117,17 +117,17 @@ TEST(TestDmScanLibWin32, scanImageInvalidDpi) {
 	DmScanLib dmScanLib(1);
 	ScanRegion<double> scanRegion(originPt, pt1);
 
-	int result = dmScanLib.scanImage(100, 0, 0, scanRegion, "tmpscan.bmp");
+	int result = dmScanLib.scanImage(100, 0, 0, scanRegion, "tmpscan.png");
 	EXPECT_EQ(SC_INVALID_DPI, result);
 
-	result = dmScanLib.scanImage(200, 0, 0, scanRegion, "tmpscan.bmp");
+	result = dmScanLib.scanImage(200, 0, 0, scanRegion, "tmpscan.png");
 	EXPECT_EQ(SC_INVALID_DPI, result);
 }
 
 TEST(TestDmScanLibWin32, scanFlatbed) {
 	FLAGS_v = 3;
 
-	std::string fname("flatbed.bmp");
+	std::string fname("flatbed.png");
 	std::wstring fnamew(fname.begin(), fname.end());
 	DeleteFile(fnamew.c_str());
 
@@ -143,7 +143,7 @@ TEST(TestDmScanLibWin32, scanFlatbed) {
 TEST(TestDmScanLibWin32, scanFlatbedBadParams) {
 	FLAGS_v = 3;
 
-	std::string fname("flatbed.bmp");
+	std::string fname("flatbed.png");
 	std::wstring fnamew(fname.begin(), fname.end());
 	DeleteFile(fnamew.c_str());
 
@@ -151,37 +151,6 @@ TEST(TestDmScanLibWin32, scanFlatbedBadParams) {
     ASSERT_THROW(dmScanLib.scanFlatbed(300, 0, 0, NULL), std::invalid_argument);
 
 	int result = dmScanLib.scanFlatbed(0, 0, 0, fname.c_str());
-	EXPECT_EQ(SC_INVALID_DPI, result);
-}
-
-TEST(TestDmScanLibWin32, scanAndDecodeInvalidDpi) {
-	FLAGS_v = 3;
-
-	const unsigned dpi = 200;
-	const Point<double> pt1(0.396, 0.240);
-	const Point<double> pt2(4.566, 3.089);
-	const ScanRegion<double> scanRegion(pt1, pt2);
-
-	std::unique_ptr<const ScanRegion<double> > scanRegionWia(
-		test::getWiaBoundingBox(scanRegion));
-	std::unique_ptr<DecodeOptions> decodeOptions = 
-		test::getDefaultDecodeOptions();
-
-	const Point<unsigned> wrPt1(0, 0);
-	const Point<unsigned> wrPt2(
-		static_cast<unsigned>(dpi * (pt2.x - pt1.x)), 
-		static_cast<unsigned>(dpi * (pt2.y - pt1.y)));
-
-	std::unique_ptr<const BoundingBox<unsigned> > wellsBbox(
-		new BoundingBox<unsigned>(wrPt1, wrPt2));
-
-	std::vector<std::unique_ptr<const WellRectangle<double> > > wellRects;
-    test::getWellRectsForBoundingBox(*wellsBbox, 8, 12, wellRects);
-
-	DmScanLib dmScanLib(1);
-	int result = dmScanLib.scanAndDecode(dpi, 0, 0, *scanRegionWia, *decodeOptions, 
-		wellRects);
-
 	EXPECT_EQ(SC_INVALID_DPI, result);
 }
 

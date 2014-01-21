@@ -43,16 +43,9 @@ public:
 
     void setMessage(const char * message, int messageLength);
 
-    const cv::Rect getWellRectangle() const {
-        const BoundingBox<unsigned> & bbox = *wellRectangle->getRectangle().getBoundingBox();
-        return cv::Rect(
-                bbox.points[0].x,
-                bbox.points[0].y,
-                bbox.points[1].x - bbox.points[0].x,
-                bbox.points[1].y - bbox.points[0].y);
-    }
+    const cv::Rect getWellRectangle() const;
 
-    const Rect<unsigned> & getDecodedRectangle() const;
+    const cv::Rect getDecodedRectangle() const;
 
     void setDecodeRectangle(const Rect<double> & rect, int scale);
 
