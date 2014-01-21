@@ -161,7 +161,9 @@ void Image::drawRectangle(const cv::Rect rect, const cv::Scalar & color) {
 }
 
 int Image::write(const std::string & filename) const {
-    return cvSaveImage(filename.c_str(), &(IplImage(opencvImage)));
+    IplImage saveImage = opencvImage;
+    int result = cvSaveImage(filename.c_str(), &saveImage);
+    return result;
 }
 
 }/* namespace */
