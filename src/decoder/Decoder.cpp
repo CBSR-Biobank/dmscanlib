@@ -45,13 +45,21 @@ namespace dmscanlib {
 using namespace decoder;
 
 Decoder::Decoder(
-        const Image & _image,
+        const Image & image,
         const DecodeOptions & _decodeOptions,
         std::vector<std::unique_ptr<const WellRectangle<double> > > & _wellRects) :
-        image(_image), decodeOptions(_decodeOptions),
-                wellRects(_wellRects), decodeSuccessful(false)
+        decodeOptions(_decodeOptions),
+        wellRects(_wellRects),
+        decodeSuccessful(false)
 {
-    cv::Size size = image.size();
+//    grayscaleImage = image.grayscale();
+    std::unique_ptr<const Image> filteredImage = image.applyFilters();
+        if (VLOG_IS_ON(2)) {
+            filteredImage->write("filtered.bmp");
+        }
+    grayscaleImage = filteredImage->grayscale();
+
+    cv::Size size = grayscaleImage->size();
     double width = static_cast<double>(size.width);
     double height = static_cast<double>(size.height);
 

@@ -7,6 +7,7 @@
 
 #include "Image.h"
 
+#include <opencv/highgui.h>
 #include <glog/logging.h>
 
 namespace dmscanlib {
@@ -28,12 +29,12 @@ const cv::Mat Image::BLUR_KERNEL(3, 3, CV_64F, (void *) &Image::BLUR_KERNEL_DATA
 const cv::Mat Image::BLANK_KERNEL(3, 3, CV_64F, (void *) &Image::BLANK_KERNEL_DATA);
 
 Image::Image(const char * _filename) : filename(_filename) {
-    opencvImage = cv::imread(filename, CV_LOAD_IMAGE_GRAYSCALE);
+    opencvImage = cv::imread(filename);
 
     valid = (opencvImage.data != NULL);
 
     if (valid) {
-        VLOG(1) << "Image::Image: width: " << opencvImage.cols
+        VLOG(5) << "Image::Image: width: " << opencvImage.cols
                 << ", height: " << opencvImage.rows
                 << ", depth: " << opencvImage.elemSize()
                 << ", step: " << opencvImage.step1();
@@ -48,7 +49,7 @@ Image::Image(cv::Mat that) {
     opencvImage = that;
     valid = true;
 
-    VLOG(1) << "Image::Image: width: " << opencvImage.cols
+    VLOG(5) << "Image::Image: width: " << opencvImage.cols
             << ", height: " << opencvImage.rows
             << ", depth: " << opencvImage.elemSize()
             << ", step: " << opencvImage.step1();
@@ -89,15 +90,21 @@ Image::Image(HANDLE handle) {
 Image::~Image() {
 }
 
+std::unique_ptr<const Image> Image::grayscale() const {
+    cv::Mat greyscale(opencvImage.size(), opencvImage.type());
+    cv::cvtColor(opencvImage, greyscale, CV_BGR2GRAY);
+    return std::unique_ptr<const Image>(new Image(greyscale));
+}
+
 std::unique_ptr<const Image> Image::applyFilters() const {
-    cv::Mat blurredImage;
+    //cv::Mat blurredImage;
     cv::Mat enhancedImage;
     cv::Point anchor(-1, -1);
     double delta = 0;
     int ddepth = -1;
 
-    cv::filter2D(opencvImage, blurredImage, ddepth , Image::BLUR_KERNEL, anchor, delta);
-    cv::filter2D(blurredImage, enhancedImage, ddepth , Image::BLANK_KERNEL, anchor, delta);
+    //cv::filter2D(opencvImage, blurredImage, ddepth , Image::BLUR_KERNEL, anchor, delta);
+    cv::filter2D(opencvImage, enhancedImage, ddepth , Image::BLANK_KERNEL, anchor, delta);
     return std::unique_ptr<const Image>(new Image(enhancedImage));
 }
 

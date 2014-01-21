@@ -1,7 +1,7 @@
-#include <cv.h>
 #include <cxtypes.h>
-#include <cvaux.h>
-#include <highgui.h>
+#include <opencv/cv.h>
+#include <opencv/cvaux.h>
+#include <opencv/highgui.h>
 #include <stdio.h>
 #include <math.h>
 #include <dirent.h>

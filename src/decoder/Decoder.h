@@ -53,7 +53,7 @@ public:
     void decodeWellRect(const Image & wellRectImage, WellDecoder & wellDecoder) const;
 
     const Image & getWorkingImage() const {
-        return image;
+        return *grayscaleImage;
     }
 
     const unsigned getDecodedWellCount();
@@ -82,7 +82,7 @@ private:
     int decodeSingleThreaded();
     int decodeMultiThreaded();
 
-    const Image & image;
+    std::unique_ptr<const Image> grayscaleImage;
     const DecodeOptions & decodeOptions;
     const std::vector<std::unique_ptr<const WellRectangle<double> > > & wellRects;
     std::vector<std::unique_ptr<WellDecoder> > wellDecoders;

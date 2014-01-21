@@ -18,7 +18,6 @@
 
 #include <algorithm>
 #include <opencv/cv.h>
-#include <opencv/highgui.h>
 
 #include <stdexcept>
 #include <stddef.h>
@@ -163,7 +162,7 @@ std::unique_ptr<DecodeTestResult> decodeFromInfo(
 }
 
 TEST(TestDmScanLib, decodeFromInfo) {
-    FLAGS_v = 3;
+    FLAGS_v = 2;
 
     std::string infoFilename("testImageInfo/8x12/hardscan.nfo");
 
@@ -186,141 +185,6 @@ TEST(TestDmScanLib, decodeFromInfo) {
     if (testResult->decodeResult == SC_SUCCESS) {
         EXPECT_TRUE(testResult->totalDecoded > 0);
     }
-}
-
-void getDecodeInfo(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg) {
-    CHECK_NOTNULL(dec);
-    CHECK_NOTNULL(reg);
-    CHECK_NOTNULL(msg);
-
-    DmtxVector2 p00, p10, p11, p01;
-
-    std::string message;
-    message.assign((char *) msg->output, msg->outputIdx);
-
-    VLOG(1) << "message: " << message;
-
-    int height = dmtxDecodeGetProp(dec, DmtxPropHeight);
-    p00.X = p00.Y = p10.Y = p01.X = 0.0;
-    p10.X = p01.Y = p11.X = p11.Y = 1.0;
-    dmtxMatrix3VMultiplyBy(&p00, reg->fit2raw);
-    dmtxMatrix3VMultiplyBy(&p10, reg->fit2raw);
-    dmtxMatrix3VMultiplyBy(&p11, reg->fit2raw);
-    dmtxMatrix3VMultiplyBy(&p01, reg->fit2raw);
-
-    p00.Y = height - 1 - p00.Y;
-    p10.Y = height - 1 - p10.Y;
-    p11.Y = height - 1 - p11.Y;
-    p01.Y = height - 1 - p01.Y;
-
-    Point<double> pt1(p00.X, p00.Y);
-    Point<double> pt2(p10.X, p10.Y);
-    Point<double> pt3(p11.X, p11.Y);
-    Point<double> pt4(p01.X, p01.Y);
-    Rect<double> decodeRect(pt1, pt2, pt3, pt4);
-
-    VLOG(1) << "getDecodeInfo: rect: " << decodeRect;
-}
-
-void decodeWellRect(DmtxDecode *dec) {
-    DmtxRegion * reg;
-    while (1) {
-        reg = dmtxRegionFindNext(dec, NULL);
-        if (reg == NULL) {
-            break;
-        }
-
-        DmtxMessage *msg = dmtxDecodeMatrixRegion(dec, reg, 10);
-
-        if (msg != NULL) {
-            getDecodeInfo(dec, reg, msg);
-
-            Decoder::showStats(dec, reg, msg);
-            dmtxMessageDestroy(&msg);
-        }
-        dmtxRegionDestroy(&reg);
-    }
-
-    std::string label("LABEL");
-    Decoder::writeDiagnosticImage(dec, label);
-}
-
-std::unique_ptr<decoder::DmtxDecodeHelper> createDmtxDecode(
-        DmtxImage * dmtxImage,
-        const BoundingBox<double> & bbox,
-        int scale) {
-    std::unique_ptr<decoder::DmtxDecodeHelper> dec(
-            new decoder::DmtxDecodeHelper(dmtxImage, scale));
-
-    unsigned mindim = std::min(bbox.getWidth(), bbox.getHeight());
-
-    dec->setProperty(DmtxPropEdgeMin, static_cast<int>(0.1 * mindim));
-    dec->setProperty(DmtxPropEdgeMax, static_cast<int>(0.3 * mindim));
-    dec->setProperty(DmtxPropScanGap, static_cast<int>(0.15 * mindim));
-
-    dec->setProperty(DmtxPropSymbolSize, DmtxSymbolSquareAuto);
-    dec->setProperty(DmtxPropSquareDevn, 15);
-    dec->setProperty(DmtxPropEdgeThresh, 5);
-
-    return dec;
-}
-
-TEST(TestDmScanLib, opencv) {
-    FLAGS_v = 1;
-
-    std::string fname("testImages/8x12/hardscan.bmp");
-    Image src(fname.c_str());
-
-    const Image workingImage = *src.applyFilters();
-    cv::Size size = workingImage.size();
-
-    std::vector<std::unique_ptr<const WellRectangle<double> > > wellRects;
-    Point<unsigned> pt1(0, 0);
-    Point<unsigned> pt2(size.width, size.height);
-    BoundingBox<unsigned> bbox(pt1, pt2);
-
-    test::getWellRectsForBoundingBox(bbox, 8, 12, wellRects);
-
-    std::unique_ptr<const BoundingBox<double>> wellBbox =
-            wellRects[2]->getRectangle().getBoundingBox();
-
-    VLOG(1) << "opencv: well: " << *wellBbox;
-
-    const Image wellImage = *workingImage.crop(
-            static_cast<int>(wellBbox->points[0].x),
-            static_cast<int>(wellBbox->points[0].y),
-            static_cast<int>(wellBbox->points[1].x - wellBbox->points[0].x),
-            static_cast<int>(wellBbox->points[1].y - wellBbox->points[0].y));
-
-    bool r = wellImage.write("out.bmp");
-    EXPECT_EQ(true, r);
-
-    DmtxImage * dmtxImage = wellImage.dmtxImage();
-    std::unique_ptr<decoder::DmtxDecodeHelper> dec =
-            createDmtxDecode(dmtxImage, *wellBbox, 1);
-    decodeWellRect(dec->getDecode());
-    dmtxImageDestroy(&dmtxImage);
-}
-
-TEST(TestDmScanLib, opencv_jpg) {
-    FLAGS_v = 1;
-
-    std::string fname("/home/loyola/Desktop/single_tube.jpg");
-    Image src(fname.c_str());
-
-    src.write("out.bmp");
-    cv::Size size = src.size();
-
-    Point<double> pt1(0, 0);
-    Point<double> pt2(size.width, size.height);
-    BoundingBox<double> bbox(pt1, pt2);
-
-    VLOG(1) << "opencv: well: " << bbox;
-
-    DmtxImage * dmtxImage = src.dmtxImage();
-    std::unique_ptr<decoder::DmtxDecodeHelper> dec = createDmtxDecode(dmtxImage, bbox, 1);
-    decodeWellRect(dec->getDecode());
-    dmtxImageDestroy(&dmtxImage);
 }
 
 //TEST(TestDmScanLib, DISABLED_decodeAllImages) {
@@ -381,13 +245,14 @@ TEST(TestDmScanLib, decodeAllImages) {
     ss << "average decode time:," << avgDecodeTime;
     testResults.push_back(ss.str());
 
-    VLOG(1) << ", total tubes: " << totalTubes
-                      << "total decoded: " << totalDecoded
-                      << ", average decode time: " << avgDecodeTime;
+    VLOG(1) << "total tubes: " << totalTubes
+            << ", total decoded: " << totalDecoded
+            << ", average decode time: " << avgDecodeTime;
 
     writeAllDecodeResults(testResults);
 }
 
+//TEST(TestDmScanLib, DISABLED_decodeAllImagesAllParameters) {
 TEST(TestDmScanLib, decodeAllImagesAllParameters) {
     FLAGS_v = 1;
 

@@ -36,8 +36,7 @@ SRCS := \
 	src/test/TestCommon.cpp \
 	src/test/TestRect.cpp \
 	src/test/TestBoundingBox.cpp \
-	src/dib/Dib.cpp \
-	src/dib/RgbQuad.cpp
+	src/Image.cpp
 
 
 FILES = $(notdir $(SRCS))
@@ -47,7 +46,7 @@ DEPS := $(OBJ:.o=.d)
 
 INCLUDE_PATH := $(foreach inc,$(PATHS),$(inc)) third_party/libdmtx third_party/glog/src \
 	$(JAVA_HOME)/include $(JAVA_HOME)/include/linux
-LIBS := -lglog -ldmtx -lOpenThreads -lgtest -lpthread
+LIBS := -lglog -ldmtx -lOpenThreads -lgtest -lpthread -lopencv_core -lopencv_highgui -lopencv_imgproc
 LIB_PATH :=
 
 CC := g++

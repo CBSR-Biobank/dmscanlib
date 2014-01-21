@@ -172,13 +172,14 @@ int DmScanLib::scanAndDecode(unsigned dpi, int brightness, int contrast,
     return result;
 }
 
-int DmScanLib::decodeImageWells(const char * filename,
+int DmScanLib::decodeImageWells(
+        const char * filename,
         const DecodeOptions & decodeOptions,
         std::vector<std::unique_ptr<const WellRectangle<double> > > & wellRects) {
 
     VLOG(1) << "decodeImageWells: filename/" << filename
-                      << " numWellRects/" << wellRects.size()
-                      << " " << decodeOptions;
+            << " numWellRects/" << wellRects.size()
+            << " " << decodeOptions;
 
     Image image(filename);
     if (!image.isValid()) {
@@ -236,15 +237,17 @@ void DmScanLib::writeDecodedImage(
     for (std::map<std::string, const WellDecoder *>::const_iterator ii = decodedWells.begin();
             ii != decodedWells.end(); ++ii) {
         const WellDecoder & decodedWell = *(ii->second);
-        const BoundingBox<unsigned> & bbox = *decodedWell.getDecodedRectangle().getBoundingBox();
+        const BoundingBox<unsigned> & bboxDecoded = *decodedWell.getDecodedRectangle().getBoundingBox();
 
         const cv::Rect r(
-                bbox.points[0].x,
-                bbox.points[0].y,
-                bbox.points[1].x - bbox.points[0].x,
-                bbox.points[1].y - bbox.points[0].y);
-
+                bboxDecoded.points[0].x,
+                bboxDecoded.points[0].y,
+                bboxDecoded.points[1].x - bboxDecoded.points[0].x,
+                bboxDecoded.points[1].y - bboxDecoded.points[0].y);
         decodedImage.drawRectangle(r, colorRed);
+
+        const cv::Rect & wellBbox = decodedWell.getWellRectangle();
+        decodedImage.drawRectangle(wellBbox, colorGreen);
     }
     decodedImage.write(decodedDibFilename.c_str());
 }

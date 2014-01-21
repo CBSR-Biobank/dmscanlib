@@ -13,7 +13,6 @@
 #include <algorithm>
 #include <memory>
 #include <opencv/cv.h>
-#include <opencv/highgui.h>
 
 #if defined (WIN32) && ! defined(__MINGW32__)
 #   define NOMINMAX
@@ -46,6 +45,8 @@ public:
     const cv::Size size() const {
         return opencvImage.size();
     }
+
+    std::unique_ptr<const Image> grayscale() const;
 
     std::unique_ptr<const Image> applyFilters() const;
 

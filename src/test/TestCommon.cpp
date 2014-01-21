@@ -15,7 +15,6 @@
 
 #include <algorithm>
 #include <opencv/cv.h>
-#include <opencv/highgui.h>
 
 #ifdef _VISUALC_
 #   pragma warning(disable : 4996)
@@ -147,7 +146,7 @@ void getWellRectsForBoundingBox(
 }
 
 std::unique_ptr<DecodeOptions> getDefaultDecodeOptions() {
-    const double minEdgeFactor = 0.15;
+    const double minEdgeFactor = 0.2;
     const double maxEdgeFactor = 0.3;
     const double scanGapFactor = 0.1;
     const long squareDev = 15;
