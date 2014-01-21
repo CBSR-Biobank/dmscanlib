@@ -7,11 +7,15 @@
 
 #include "test/TestCommon.h"
 #include "DmScanLib.h"
+#include "Image.h"
 #include "decoder/WellRectangle.h"
 #include "decoder/DecodeOptions.h"
-#include "dib/Dib.h"
 
 #include <sstream>
+
+#include <algorithm>
+#include <opencv/cv.h>
+#include <opencv/highgui.h>
 
 #ifdef _VISUALC_
 #   pragma warning(disable : 4996)
@@ -158,14 +162,15 @@ std::unique_ptr<DecodeOptions> getDefaultDecodeOptions() {
 int decodeImage(std::string fname, DmScanLib & dmScanLib, unsigned rows, unsigned cols) {
     std::vector<std::unique_ptr<const WellRectangle<double> > > wellRects;
 
-    Dib image;
-    bool readResult = image.readFromFile(fname);
-    if (!readResult) {
+    Image image(fname.c_str());
+    if (!image.isValid()) {
         throw std::invalid_argument("could not load image");
     }
 
+    cv::Size size = image.size();
+
     Point<unsigned> pt1(0, 0);
-    Point<unsigned> pt2(image.getWidth(), image.getHeight());
+    Point<unsigned> pt2(size.width, size.height);
     BoundingBox<unsigned> bbox(pt1, pt2);
 
     getWellRectsForBoundingBox(bbox, rows, cols, wellRects);
@@ -192,6 +197,6 @@ std::unique_ptr<const ScanRegion<double>> getWiaBoundingBox(
             bbox.points[0], *bbox.points[1].translate(*bboxPt1Neg)));
 }
 
-} /* namespace */
+} /* namespace test */
 
-} /* namespace */
+} /* namespace dmscanlib */

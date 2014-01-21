@@ -36,7 +36,6 @@
 #include "decoder/DecodeOptions.h"
 #include "decoder/WellDecoder.h"
 #include "Image.h"
-#include "dib/RgbQuad.h"
 
 #include <stdio.h>
 #include <iostream>
