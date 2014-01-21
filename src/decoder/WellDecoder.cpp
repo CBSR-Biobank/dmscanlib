@@ -84,24 +84,24 @@ const cv::Rect WellDecoder::getDecodedRectangle() const {
 // the rectangle passed in is in coordinates of the cropped image,
 // the rectangle has to be translated into the coordinates of the overall
 // image
-void WellDecoder::setDecodeRectangle(const Rect<double> & rect, int scale) {
-    std::unique_ptr<const Rect<double> > rectCopy;
+void WellDecoder::setDecodeRectangle(const Rect<float> & rect, int scale) {
+    std::unique_ptr<const Rect<float> > rectCopy;
     if (scale == 1) {
-        rectCopy = std::unique_ptr < Rect<double> > (new Rect<double>(rect));
+        rectCopy = std::unique_ptr < Rect<float> > (new Rect<float>(rect));
     } else {
         rectCopy = rect.scale(scale);
     }
 
-    Point<unsigned> pt0(static_cast<unsigned>(rectCopy->corners[0].x),
+    cv::Point_<unsigned> pt0(static_cast<unsigned>(rectCopy->corners[0].x),
             static_cast<unsigned>(rectCopy->corners[0].y));
 
-    Point<unsigned> pt1(static_cast<unsigned>(rectCopy->corners[1].x),
+    cv::Point_<unsigned> pt1(static_cast<unsigned>(rectCopy->corners[1].x),
             static_cast<unsigned>(rectCopy->corners[1].y));
 
-    Point<unsigned> pt2(static_cast<unsigned>(rectCopy->corners[2].x),
+    cv::Point_<unsigned> pt2(static_cast<unsigned>(rectCopy->corners[2].x),
             static_cast<unsigned>(rectCopy->corners[2].y));
 
-    Point<unsigned> pt3(static_cast<unsigned>(rectCopy->corners[3].x),
+    cv::Point_<unsigned> pt3(static_cast<unsigned>(rectCopy->corners[3].x),
             static_cast<unsigned>(rectCopy->corners[3].y));
 
     decodedRect = std::unique_ptr<Rect<unsigned>>(

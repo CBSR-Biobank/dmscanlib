@@ -42,7 +42,7 @@ public:
         return rect;
     }
 
-    const Point<T> & getCorner(unsigned cornerId) const;
+    const cv::Point_<T> & getCorner(unsigned cornerId) const;
 
     const T getCornerX(unsigned cornerId) const;
 

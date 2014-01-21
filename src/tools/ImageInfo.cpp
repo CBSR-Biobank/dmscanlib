@@ -46,7 +46,7 @@ public:
 
 private:
 	void generateWells();
-	void decodeImage(std::vector<std::unique_ptr<const WellRectangle<double> > > & wells,
+	void decodeImage(std::vector<std::unique_ptr<const WellRectangle<float> > > & wells,
 			std::map<std::string, std::string> & decodedMessages);
 
 	static const std::pair<const unsigned, const unsigned> RowColsForPalletSize[PSIZE_MAX];
@@ -92,7 +92,7 @@ PalletSize ImageInfo::getPalletSizeFromString(std::string & palletSizeStr) {
 }
 
 void ImageInfo::generateWells() {
-    std::vector<std::unique_ptr<const WellRectangle<double> > > wells;
+    std::vector<std::unique_ptr<const WellRectangle<float> > > wells;
 
     test::getWellRectsForPalletImage(filename,
     		RowColsForPalletSize[palletSize].first,
@@ -114,7 +114,7 @@ void ImageInfo::generateWells() {
 			<< std::endl;
 
 	for(unsigned i = 0, n = wells.size(); i < n; ++i) {
-		const WellRectangle<double> & wellRect = *wells[i];
+		const WellRectangle<float> & wellRect = *wells[i];
 
 		std::cout << wellRect.getLabel();
 		if (decodedMessages.find(wellRect.getLabel()) != decodedMessages.end()) {
@@ -125,7 +125,7 @@ void ImageInfo::generateWells() {
 }
 
 void ImageInfo::decodeImage(
-		std::vector<std::unique_ptr<const WellRectangle<double> > > & wellRects,
+		std::vector<std::unique_ptr<const WellRectangle<float> > > & wellRects,
 		std::map<std::string, std::string> & decodedMessages) {
 	DmScanLib dmScanLib(0);
 

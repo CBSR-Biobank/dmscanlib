@@ -52,7 +52,7 @@ public:
     virtual int getScannerCapability() = 0;
 
     virtual HANDLE acquireImage(unsigned dpi, int brightness, int contrast,
-            const ScanRegion<double> & bbox) = 0;
+            const ScanRegion<float> & bbox) = 0;
 
     virtual HANDLE acquireFlatbed(unsigned dpi, int brightness, int contrast) = 0;
 

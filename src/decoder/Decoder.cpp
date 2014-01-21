@@ -46,7 +46,7 @@ using namespace decoder;
 Decoder::Decoder(
         const Image & image,
         const DecodeOptions & _decodeOptions,
-        std::vector<std::unique_ptr<const WellRectangle<double> > > & _wellRects) :
+        std::vector<std::unique_ptr<const WellRectangle<float> > > & _wellRects) :
         decodeOptions(_decodeOptions),
         wellRects(_wellRects),
         decodeSuccessful(false)
@@ -59,16 +59,16 @@ Decoder::Decoder(
     grayscaleImage = filteredImage->grayscale();
 
     cv::Size size = grayscaleImage->size();
-    double width = static_cast<double>(size.width);
-    double height = static_cast<double>(size.height);
+    double width = static_cast<float>(size.width);
+    double height = static_cast<float>(size.height);
 
     VLOG(5) << "Decoder: image size: " << width << ", " << height;
 
     for (unsigned i = 0, n = wellRects.size(); i < n; ++i) {
         // ensure well rectangles are within the image's region
-        const WellRectangle<double> & wellRect = *wellRects[i];
+        const WellRectangle<float> & wellRect = *wellRects[i];
 
-        std::unique_ptr<const BoundingBox<double> > wellBbox =
+        std::unique_ptr<const BoundingBox<float> > wellBbox =
                 wellRect.getRectangle().getBoundingBox();
 
         VLOG(5) << "Decoder: well: " << *wellBbox;
@@ -92,22 +92,22 @@ int Decoder::decodeWellRects() {
     VLOG(3) << "decodeWellRects: numWellRects/" << wellRects.size();
 
     for (unsigned i = 0, n = wellRects.size(); i < n; ++i) {
-        const WellRectangle<double> & wellRect = *wellRects[i];
+        const WellRectangle<float> & wellRect = *wellRects[i];
 
         VLOG(5) << "well rect: " << wellRect;
 
-        const Rect<double> & rectDouble = wellRect.getRectangle();
+        const Rect<float> & rectDouble = wellRect.getRectangle();
 
-        Point<unsigned> pt1(
+        cv::Point_<unsigned> pt1(
                 static_cast<unsigned>(rectDouble.corners[0].x),
                 static_cast<unsigned>(rectDouble.corners[0].y));
-        Point<unsigned> pt2(
+        cv::Point_<unsigned> pt2(
                 static_cast<unsigned>(rectDouble.corners[1].x),
                 static_cast<unsigned>(rectDouble.corners[1].y));
-        Point<unsigned> pt3(
+        cv::Point_<unsigned> pt3(
                 static_cast<unsigned>(rectDouble.corners[2].x),
                 static_cast<unsigned>(rectDouble.corners[2].y));
-        Point<unsigned> pt4(
+        cv::Point_<unsigned> pt4(
                 static_cast<unsigned>(rectDouble.corners[3].x),
                 static_cast<unsigned>(rectDouble.corners[3].y));
 
@@ -259,11 +259,11 @@ void Decoder::getDecodeInfo(DmtxDecode *dec, DmtxRegion *reg, DmtxMessage *msg,
     p11.Y = height - 1 - p11.Y;
     p01.Y = height - 1 - p01.Y;
 
-    Point<double> pt1(p00.X, p00.Y);
-    Point<double> pt2(p10.X, p10.Y);
-    Point<double> pt3(p11.X, p11.Y);
-    Point<double> pt4(p01.X, p01.Y);
-    Rect<double> decodeRect(pt1, pt2, pt3, pt4);
+    cv::Point_<float> pt1(p00.X, p00.Y);
+    cv::Point_<float> pt2(p10.X, p10.Y);
+    cv::Point_<float> pt3(p11.X, p11.Y);
+    cv::Point_<float> pt4(p01.X, p01.Y);
+    Rect<float> decodeRect(pt1, pt2, pt3, pt4);
 
     wellDecoder.setDecodeRectangle(decodeRect, dec->scale);
 }

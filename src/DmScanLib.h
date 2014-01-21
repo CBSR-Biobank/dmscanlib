@@ -66,15 +66,15 @@ public:
     int selectSourceAsDefault();
     int getScannerCapability();
     int scanImage(unsigned dpi, int brightness, int contrast,
-            const ScanRegion<double> & bbox, const char * filename);
+            const ScanRegion<float> & bbox, const char * filename);
     int scanFlatbed(unsigned dpi, int brightness, int contrast,
             const char * filename);
     int scanAndDecode(unsigned dpi, int brightness, int contrast,
-            const ScanRegion<double> & region, const DecodeOptions & decodeOptions,
-            std::vector<std::unique_ptr<const WellRectangle<double> > > & wellRects);
+            const ScanRegion<float> & region, const DecodeOptions & decodeOptions,
+            std::vector<std::unique_ptr<const WellRectangle<float> > > & wellRects);
     int decodeImageWells(const char * filename,
             const DecodeOptions & decodeOptions,
-            std::vector<std::unique_ptr<const WellRectangle<double> > > & wellRects);
+            std::vector<std::unique_ptr<const WellRectangle<float> > > & wellRects);
 
     static void configLogging(unsigned level, bool useFile = true);
 
@@ -87,7 +87,7 @@ protected:
             const Image & image,
             const DecodeOptions & decodeOptions,
             const std::string &decodedDibFilename,
-            std::vector<std::unique_ptr<const WellRectangle<double> > > & wellRects);
+            std::vector<std::unique_ptr<const WellRectangle<float> > > & wellRects);
 
     void writeDecodedImage(const Image & image, const std::string & decodedDibFilename);
 

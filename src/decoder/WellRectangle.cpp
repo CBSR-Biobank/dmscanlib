@@ -38,12 +38,12 @@ const T WellRectangle<T>::getCornerY(unsigned cornerId) const {
 }
 
 template<typename T>
-const Point<T> & WellRectangle<T>::getCorner(unsigned cornerId) const {
+const cv::Point_<T> & WellRectangle<T>::getCorner(unsigned cornerId) const {
     CHECK(cornerId < 4);
     return rect.corners[cornerId];
 }
 
 template class WellRectangle<unsigned> ;
-template class WellRectangle<double> ;
+template class WellRectangle<float> ;
 
 } /* namespace */

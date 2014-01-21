@@ -202,7 +202,7 @@ void ImgScannerImpl::setFloatToIntPair(const double f, short & whole,
  *	Grab an image from the twain source and convert it to the dmtxImage format
  */
 HANDLE ImgScannerImpl::acquireImage(unsigned dpi, int brightness, int contrast,
-                                    const ScanRegion<double> & scanRegion) {
+                                    const ScanRegion<float> & scanRegion) {
    CHECK_NOTNULL(g_hLib);
 
    TW_UINT16 rc;
@@ -411,9 +411,9 @@ HANDLE ImgScannerImpl::acquireFlatbed(unsigned dpi, int brightness, int contrast
    double physicalHeight = getPhysicalDimensions(srcID, ICAP_PHYSICALHEIGHT);
 
    scannerSourceDeinit(hwnd, srcID);
-   Point<double> topLeft(0, 0);
-   Point<double> bottomRight(physicalWidth, physicalHeight);
-   ScanRegion<double> scanRegion(topLeft, bottomRight);
+   cv::Point_<float> topLeft(0, 0);
+   cv::Point_<float> bottomRight(physicalWidth, physicalHeight);
+   ScanRegion<float> scanRegion(topLeft, bottomRight);
 
    return acquireImage(dpi, brightness, contrast, scanRegion);
 }
@@ -682,7 +682,7 @@ inline double ImgScannerImpl::uint32ToFloat(TW_UINT32 uint32) {
 }
 
 inline double ImgScannerImpl::twfix32ToFloat(TW_FIX32 fix32) {
-   return static_cast<double> (fix32.Whole) + static_cast<double> (fix32.Frac)
+   return static_cast<float> (fix32.Whole) + static_cast<float> (fix32.Frac)
       / 65536.0;
 }
 

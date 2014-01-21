@@ -52,7 +52,7 @@ std::unique_ptr<DmTime> DmTime::difftime(const DmTime & that) {
 }
 
 double DmTime::getTime() {
-    return static_cast<double>(timeVal.tv_sec) + static_cast<double>(timeVal.tv_usec) / 1000000;
+    return static_cast<float>(timeVal.tv_sec) + static_cast<float>(timeVal.tv_usec) / 1000000;
 }
 
 } /* namespace */

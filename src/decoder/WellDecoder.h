@@ -31,7 +31,7 @@ public:
 
     bool isFinished();
 
-    void decodeCallback(std::string & decodedMsg, Point<unsigned> (&corners)[4]);
+    void decodeCallback(std::string & decodedMsg, cv::Point_<unsigned> (&corners)[4]);
 
     const std::string & getLabel() const {
         return wellRectangle->getLabel();
@@ -47,7 +47,7 @@ public:
 
     const cv::Rect getDecodedRectangle() const;
 
-    void setDecodeRectangle(const Rect<double> & rect, int scale);
+    void setDecodeRectangle(const Rect<float> & rect, int scale);
 
     const bool getDecodeValid() {
         return message.empty();

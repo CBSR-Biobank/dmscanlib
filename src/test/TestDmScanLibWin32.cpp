@@ -55,12 +55,12 @@ TEST(TestDmScanLibWin32, getScannerCapability) {
 TEST(TestDmScanLibWin32, scanImage) {
 	FLAGS_v = 3;
 
-	const Point<double> pt1(0.400, 0.265);
-	const Point<double> pt2(4.566, 3.020); 
-	const ScanRegion<double> scanRegion(pt1, pt2);
-	std::unique_ptr<const BoundingBox<double> > wellsBbox(
+	const cv::Point_<float> pt1(0.400, 0.265);
+	const cv::Point_<float> pt2(4.566, 3.020); 
+	const ScanRegion<float> scanRegion(pt1, pt2);
+	std::unique_ptr<const BoundingBox<float> > wellsBbox(
 		test::getWellsBoundingBox(*scanRegion.toBoundingBox()));
-	std::unique_ptr<const ScanRegion<double> > scanBbox(
+	std::unique_ptr<const ScanRegion<float> > scanBbox(
 		test::getWiaBoundingBox(scanRegion));
 	std::unique_ptr<DecodeOptions> decodeOptions = 
 		test::getDefaultDecodeOptions();
@@ -76,7 +76,7 @@ TEST(TestDmScanLibWin32, scanImage) {
 	EXPECT_EQ(SC_SUCCESS, result);
 	Image dib(fname.c_str());
 
-	BoundingBox<double> expectedImageSize(pt1, pt2);
+	BoundingBox<float> expectedImageSize(pt1, pt2);
 
 	cv::Size size = dib.size();
 
@@ -87,12 +87,12 @@ TEST(TestDmScanLibWin32, scanImage) {
 TEST(TestDmScanLibWin32, scanImageBadParams) {
 	FLAGS_v = 3;	
 
-	const Point<double> pt1(0.400, 0.265);
-	const Point<double> pt2(4.566, 3.020); 
-	const ScanRegion<double> scanRegion(pt1, pt2);
-	std::unique_ptr<const BoundingBox<double> > wellsBbox(
+	const cv::Point_<float> pt1(0.400, 0.265);
+	const cv::Point_<float> pt2(4.566, 3.020); 
+	const ScanRegion<float> scanRegion(pt1, pt2);
+	std::unique_ptr<const BoundingBox<float> > wellsBbox(
 		test::getWellsBoundingBox(*scanRegion.toBoundingBox()));
-	std::unique_ptr<const ScanRegion<double> > scanBbox(
+	std::unique_ptr<const ScanRegion<float> > scanBbox(
 		test::getWiaBoundingBox(scanRegion));
 	std::unique_ptr<DecodeOptions> decodeOptions = 
 		test::getDefaultDecodeOptions();
@@ -111,11 +111,11 @@ TEST(TestDmScanLibWin32, scanImageBadParams) {
 TEST(TestDmScanLibWin32, scanImageInvalidDpi) {
 	FLAGS_v = 3;
 
-	const Point<double> originPt(0, 0);
-	const Point<double> pt1(0.400, 0.265);
+	const cv::Point_<float> originPt(0, 0);
+	const cv::Point_<float> pt1(0.400, 0.265);
 
 	DmScanLib dmScanLib(1);
-	ScanRegion<double> scanRegion(originPt, pt1);
+	ScanRegion<float> scanRegion(originPt, pt1);
 
 	int result = dmScanLib.scanImage(100, 0, 0, scanRegion, "tmpscan.png");
 	EXPECT_EQ(SC_INVALID_DPI, result);
@@ -158,23 +158,23 @@ TEST(TestDmScanLibWin32, scanAndDecodeValidDpi) {
 	FLAGS_v = 3;
 
 	const unsigned dpi = 600;
-	const Point<double> pt1(0.400, 0.265);
-	const Point<double> pt2(4.566, 3.020); 
-	const ScanRegion<double> scanRegion(pt1, pt2);
-	std::unique_ptr<const ScanRegion<double> > scanRegionWia(
+	const cv::Point_<float> pt1(0.400, 0.265);
+	const cv::Point_<float> pt2(4.566, 3.020); 
+	const ScanRegion<float> scanRegion(pt1, pt2);
+	std::unique_ptr<const ScanRegion<float> > scanRegionWia(
 		test::getWiaBoundingBox(scanRegion));
 	std::unique_ptr<DecodeOptions> decodeOptions = 
 		test::getDefaultDecodeOptions();
 
-	const Point<unsigned> wrPt1(0, 0);
-	const Point<unsigned> wrPt2(
+	const cv::Point_<unsigned> wrPt1(0, 0);
+	const cv::Point_<unsigned> wrPt2(
 		static_cast<unsigned>(dpi * (pt2.x - pt1.x)), 
 		static_cast<unsigned>(dpi * (pt2.y - pt1.y)));
 
 	std::unique_ptr<const BoundingBox<unsigned> > wellsBbox(
 		new BoundingBox<unsigned>(wrPt1, wrPt2));
 
-	std::vector<std::unique_ptr<const WellRectangle<double> > > wellRects;
+	std::vector<std::unique_ptr<const WellRectangle<float> > > wellRects;
 
     test::getWellRectsForBoundingBox(*wellsBbox, 8, 12, wellRects);
 	DmScanLib dmScanLib(1);
@@ -201,24 +201,24 @@ TEST(TestDmScanLibWin32, scanAndDecodeMultiple) {
 	FLAGS_v = 1;
 
 	const unsigned dpi = 600;
-	const Point<double> pt1(0.400, 0.265);
-	const Point<double> pt2(4.566, 3.020); 
+	const cv::Point_<float> pt1(0.400, 0.265);
+	const cv::Point_<float> pt2(4.566, 3.020); 
 
-	const ScanRegion<double> scanRegion(pt1, pt2);
-	std::unique_ptr<const ScanRegion<double> > scanRegionWia(
+	const ScanRegion<float> scanRegion(pt1, pt2);
+	std::unique_ptr<const ScanRegion<float> > scanRegionWia(
 		test::getWiaBoundingBox(scanRegion));
 	std::unique_ptr<DecodeOptions> decodeOptions = 
 		test::getDefaultDecodeOptions();
 
-	const Point<unsigned> wrPt1(0, 0);
-	const Point<unsigned> wrPt2(
+	const cv::Point_<unsigned> wrPt1(0, 0);
+	const cv::Point_<unsigned> wrPt2(
 		static_cast<unsigned>(dpi * (pt2.x - pt1.x)), 
 		static_cast<unsigned>(dpi * (pt2.y - pt1.y)));
 
 	std::unique_ptr<const BoundingBox<unsigned> > wellsBbox(
 		new BoundingBox<unsigned>(wrPt1, wrPt2));
 
-	std::vector<std::unique_ptr<const WellRectangle<double> > > wellRects;
+	std::vector<std::unique_ptr<const WellRectangle<float> > > wellRects;
 
     test::getWellRectsForBoundingBox(*wellsBbox, 8, 12, wellRects);
 	DmScanLib dmScanLib(1);

@@ -33,7 +33,7 @@ public:
         return imageFilename;
     }
 
-    const Rect<double> & getWellRect(const std::string & label);
+    const Rect<float> & getWellRect(const std::string & label);
     const std::string * getBarcodeMsg(const std::string & label);
 
     const BoundingBox<unsigned> & getBoundingBox() const {

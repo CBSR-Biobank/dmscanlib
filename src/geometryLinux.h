@@ -8,44 +8,16 @@
 #include <glog/logging.h>
 #include <stdexcept>
 
+#include <opencv/cv.h>
+
 namespace dmscanlib {
-
-template<typename T>
-struct Point {
-    const T x;
-    const T y;
-
-    Point(const T _x, const T _y) :
-            x(_x), y(_y) {
-    }
-
-    Point(const Point<T> & point) :
-            x(point.x), y(point.y)
-    {
-
-    }
-
-    std::unique_ptr<const Point<T> > scale(const T factor) const {
-        return std::unique_ptr<const Point<T> >(new Point<T>(x * factor, y * factor));
-    }
-
-    std::unique_ptr<const Point<T> > translate(const Point<T> distance) const {
-        return std::unique_ptr<const Point<T> >(new Point<T>(x + distance.x, y + distance.y));
-    }
-};
-
-template<typename T>
-std::ostream & operator<<(std::ostream &os, const Point<T> & m) {
-    os << "(" << m.x << ", " << m.y << ")";
-    return os;
-}
 
 template<typename T>
 struct Rect;
 
 template<typename T>
 struct BoundingBox {
-    BoundingBox(const Point<T> & p1, const Point<T> & p2) :
+    BoundingBox(const cv::Point_<T> & p1, const cv::Point_<T> & p2) :
             points( { p1, p2 })
     {
         if (!isValid()) {
@@ -56,8 +28,8 @@ struct BoundingBox {
 
     BoundingBox(const BoundingBox<T> & that) :
             points( {
-                    Point<T>(that.points[0].x, that.points[0].y),
-                    Point<T>(that.points[1].x, that.points[1].y)
+                    cv::Point_<T>(that.points[0].x, that.points[0].y),
+                    cv::Point_<T>(that.points[1].x, that.points[1].y)
             }) {
         if (!isValid()) {
             throw std::invalid_argument("invalid bounding box");
@@ -80,18 +52,18 @@ struct BoundingBox {
         return points[1].y - points[0].y;
     }
 
-    std::unique_ptr<const BoundingBox<T> > translate(const Point<T> & distance) const {
-        std::unique_ptr<const Point<T> > pt1 = std::move(points[0].translate(distance));
-        std::unique_ptr<const Point<T> > pt2 = std::move(points[1].translate(distance));
+    std::unique_ptr<const BoundingBox<T> > translate(const cv::Point_<T> & distance) const {
+        const cv::Point_<T> pt1 = std::move(points[0].translate(distance));
+        const cv::Point_<T> pt2 = std::move(points[1].translate(distance));
         return std::unique_ptr<const BoundingBox<T> >(new BoundingBox<T>(*pt1, *pt2));
     }
 
-    const Point<T> points[2];
+    const cv::Point_<T> points[2];
 };
 
 template<typename T>
 struct ScanRegion {
-    ScanRegion(const Point<T> & p1, const Point<T> & p2) :
+    ScanRegion(const cv::Point_<T> & p1, const cv::Point_<T> & p2) :
             points( { p1, p2 })
     {
         if (!isValid()) {
@@ -101,8 +73,8 @@ struct ScanRegion {
 
     ScanRegion(const ScanRegion<T> & that) :
             points( {
-                    Point<T>(that.points[0].x, that.points[0].y),
-                    Point<T>(that.points[1].x, that.points[1].y)
+                    cv::Point_<T>(that.points[0].x, that.points[0].y),
+                    cv::Point_<T>(that.points[1].x, that.points[1].y)
             }) {
         if (!isValid()) {
             throw std::invalid_argument("invalid scan region");
@@ -136,13 +108,13 @@ struct ScanRegion {
                 points[0], points[1]));
     }
 
-    std::unique_ptr<const ScanRegion<T> > translate(const Point<T> & distance) const {
-        std::unique_ptr<const Point<T> > pt1 = std::move(points[0].translate(distance));
-        std::unique_ptr<const Point<T> > pt2 = std::move(points[1].translate(distance));
-        return std::unique_ptr<const ScanRegion<T> >(new ScanRegion<T>(*pt1, *pt2));
+    std::unique_ptr<const ScanRegion<T> > translate(const cv::Point_<T> & distance) const {
+        const cv::Point_<T> pt1(points[0].x + distance, points[0].y + distance);
+        const cv::Point_<T> pt2(points[1].x + distance, points[1].y + distance);
+        return std::unique_ptr<const ScanRegion<T> >(new ScanRegion<T>(pt1, pt2));
     }
 
-    const Point<T> points[2];
+    const cv::Point_<T> points[2];
 };
 
 template<typename T>
@@ -165,8 +137,8 @@ std::ostream & operator<<(std::ostream &os, const Rect<T> & m) {
 
 template<typename T>
 struct Rect {
-    Rect(const Point<T> & pt1, const Point<T> & pt2, const Point<T> & pt3,
-            const Point<T> & pt4) :
+    Rect(const cv::Point_<T> & pt1, const cv::Point_<T> & pt2, const cv::Point_<T> & pt3,
+            const cv::Point_<T> & pt4) :
             corners( { pt1, pt2, pt3, pt4 })
     {
 
@@ -181,27 +153,35 @@ struct Rect {
     // goes clockwise through points starting at top left
     Rect(const BoundingBox<T> & bbox) :
             corners( {
-                    Point<T>(bbox.points[0].x, bbox.points[0].y),
-                    Point<T>(bbox.points[0].x, bbox.points[1].y),
-                    Point<T>(bbox.points[1].x, bbox.points[1].y),
-                    Point<T>(bbox.points[1].x, bbox.points[0].y) })
+                    cv::Point_<T>(bbox.points[0].x, bbox.points[0].y),
+                    cv::Point_<T>(bbox.points[0].x, bbox.points[1].y),
+                    cv::Point_<T>(bbox.points[1].x, bbox.points[1].y),
+                    cv::Point_<T>(bbox.points[1].x, bbox.points[0].y) })
     {
     }
 
     std::unique_ptr<const Rect<T> > scale(const T factor) const {
-        std::unique_ptr<const Point<T> > pt1 = std::move(corners[0].scale(factor));
-        std::unique_ptr<const Point<T> > pt2 = std::move(corners[1].scale(factor));
-        std::unique_ptr<const Point<T> > pt3 = std::move(corners[2].scale(factor));
-        std::unique_ptr<const Point<T> > pt4 = std::move(corners[3].scale(factor));
-        return std::unique_ptr<const Rect<T> >(new Rect<T>(*pt1, *pt2, *pt3, *pt4));
+        const cv::Point_<T> pt1(
+                corners[0].x * factor, corners[0].y * factor);
+        const cv::Point_<T> pt2(
+                corners[1].x * factor, corners[1].y * factor);
+        const cv::Point_<T> pt3(
+                corners[2].x * factor, corners[2].y * factor);
+        const cv::Point_<T> pt4(
+                corners[3].x * factor, corners[3].y * factor);
+        return std::unique_ptr<const Rect<T> >(new Rect<T>(pt1, pt2, pt3, pt4));
     }
 
-    std::unique_ptr<const Rect<T> > translate(const Point<T> & distance) const {
-        std::unique_ptr<const Point<T> > pt1 = std::move(corners[0].translate(distance));
-        std::unique_ptr<const Point<T> > pt2 = std::move(corners[1].translate(distance));
-        std::unique_ptr<const Point<T> > pt3 = std::move(corners[2].translate(distance));
-        std::unique_ptr<const Point<T> > pt4 = std::move(corners[3].translate(distance));
-        return std::unique_ptr<const Rect<T> >(new Rect<T>(*pt1, *pt2, *pt3, *pt4));
+    std::unique_ptr<const Rect<T> > translate(const cv::Point_<T> & distance) const {
+        const cv::Point_<T> pt1(
+                corners[0].x + distance.x, corners[0].y + distance.y);
+        const cv::Point_<T> pt2(
+                corners[1].x + distance.x, corners[1].y + distance.y);
+        const cv::Point_<T> pt3(
+                corners[2].x + distance.x, corners[2].y + distance.y);
+        const cv::Point_<T> pt4(
+                corners[3].x + distance.x, corners[3].y + distance.y);
+        return std::unique_ptr<const Rect<T> >(new Rect<T>(pt1, pt2, pt3, pt4));
     }
 
     std::unique_ptr<const BoundingBox<T> > getBoundingBox() const {
@@ -218,12 +198,12 @@ struct Rect {
             maxX = std::max(maxX, corners[i].x);
             maxY = std::max(maxY, corners[i].y);
         }
-        Point<T> p1(minX, minY);
-        Point<T> p2(maxX, maxY);
+        cv::Point_<T> p1(minX, minY);
+        cv::Point_<T> p2(maxX, maxY);
         return std::unique_ptr<const BoundingBox<T> >(new BoundingBox<T>(p1, p2));
     }
 
-    const Point<T> corners[4];
+    const cv::Point_<T> corners[4];
     friend std::ostream & operator<<<>(std::ostream & os, const Rect<T> & m);
 };
 

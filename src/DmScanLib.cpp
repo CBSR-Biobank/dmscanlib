@@ -104,7 +104,7 @@ void DmScanLib::configLogging(unsigned level, bool useFile) {
 }
 
 int DmScanLib::scanImage(unsigned dpi, int brightness, int contrast,
-        const ScanRegion<double> & bbox, const char * filename) {
+        const ScanRegion<float> & bbox, const char * filename) {
     if (filename == NULL) {
         throw std::invalid_argument("filename is null");
     }
@@ -145,8 +145,8 @@ int DmScanLib::scanFlatbed(unsigned dpi, int brightness, int contrast,
 }
 
 int DmScanLib::scanAndDecode(unsigned dpi, int brightness, int contrast,
-        const ScanRegion<double> & region, const DecodeOptions & decodeOptions,
-        std::vector<std::unique_ptr<const WellRectangle<double> > > & wellRects) {
+        const ScanRegion<float> & region, const DecodeOptions & decodeOptions,
+        std::vector<std::unique_ptr<const WellRectangle<float> > > & wellRects) {
     VLOG(3) << "scanAndDecode: dpi/" << dpi << " brightness/" << brightness
                       << " contrast/" << contrast
                       << " " << region << " " << decodeOptions;
@@ -172,7 +172,7 @@ int DmScanLib::scanAndDecode(unsigned dpi, int brightness, int contrast,
 int DmScanLib::decodeImageWells(
         const char * filename,
         const DecodeOptions & decodeOptions,
-        std::vector<std::unique_ptr<const WellRectangle<double> > > & wellRects) {
+        std::vector<std::unique_ptr<const WellRectangle<float> > > & wellRects) {
 
     VLOG(1) << "decodeImageWells: filename/" << filename
             << " numWellRects/" << wellRects.size()
@@ -189,7 +189,7 @@ int DmScanLib::decodeImageWells(
 int DmScanLib::decodeCommon(const Image & image,
         const DecodeOptions & decodeOptions,
         const std::string &decodedDibFilename,
-        std::vector<std::unique_ptr<const WellRectangle<double> > > & wellRects) {
+        std::vector<std::unique_ptr<const WellRectangle<float> > > & wellRects) {
 
     decoder = std::unique_ptr<Decoder>(new Decoder(image, decodeOptions, wellRects));
     int result = decoder->decodeWellRects();

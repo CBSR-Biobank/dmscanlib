@@ -92,7 +92,7 @@ jobject createDecodeResultObject(JNIEnv * env, int resultCode,
 }
 
 int getWellRectangles(JNIEnv *env, jsize numWells, jobjectArray _wellRects,
-        std::vector<std::unique_ptr<const WellRectangle<double> > > & wellRects) {
+        std::vector<std::unique_ptr<const WellRectangle<float> > > & wellRects) {
     jobject wellRectJavaObj;
     jclass wellRectJavaClass = NULL;
     jmethodID wellRectGetLabelMethodID = NULL;
@@ -147,14 +147,14 @@ int getWellRectangles(JNIEnv *env, jsize numWells, jobjectArray _wellRects,
         double x4 = env->CallDoubleMethod(wellRectJavaObj, wellRectGetCornerXMethodID, 3);
         double y4 = env->CallDoubleMethod(wellRectJavaObj, wellRectGetCornerYMethodID, 3);
 
-        Point<double> pt1(x1, y1);
-        Point<double> pt2(x2, y2);
-        Point<double> pt3(x3, y3);
-        Point<double> pt4(x4, y4);
-        Rect<double> rect(pt1, pt2, pt3, pt4);
+        cv::Point_<float> pt1(x1, y1);
+        cv::Point_<float> pt2(x2, y2);
+        cv::Point_<float> pt3(x3, y3);
+        cv::Point_<float> pt4(x4, y4);
+        Rect<float> rect(pt1, pt2, pt3, pt4);
 
-        std::unique_ptr<const WellRectangle<double> > wellRect(
-                new WellRectangle<double>(label, rect));
+        std::unique_ptr<const WellRectangle<float> > wellRect(
+                new WellRectangle<float>(label, rect));
 
         VLOG(5) << *wellRect;
 
@@ -166,7 +166,7 @@ int getWellRectangles(JNIEnv *env, jsize numWells, jobjectArray _wellRects,
     return 1;
 }
 
-std::unique_ptr<ScanRegion<double> > getScanRegion(JNIEnv *env, jobject regionJavaObj) {
+std::unique_ptr<ScanRegion<float> > getScanRegion(JNIEnv *env, jobject regionJavaObj) {
     CHECK_NOTNULL(regionJavaObj);
     jclass regionJavaClass = env->GetObjectClass(regionJavaObj);
 
@@ -180,15 +180,15 @@ std::unique_ptr<ScanRegion<double> > getScanRegion(JNIEnv *env, jobject regionJa
         return NULL;
     }
 
-    Point<double> pt0(
+    cv::Point_<float> pt0(
             env->CallDoubleMethod(regionJavaObj, getCornerXMethodID, 0),
             env->CallDoubleMethod(regionJavaObj, getCornerYMethodID, 0));
 
-    Point<double> pt1(
+    cv::Point_<float> pt1(
             env->CallDoubleMethod(regionJavaObj, getCornerXMethodID, 1),
             env->CallDoubleMethod(regionJavaObj, getCornerYMethodID, 1));
 
-    return std::unique_ptr < ScanRegion<double> > (new ScanRegion<double>(
+    return std::unique_ptr < ScanRegion<float> > (new ScanRegion<float>(
             pt0, pt1));
 }
 
@@ -212,7 +212,7 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
     dmscanlib::DmScanLib::configLogging(static_cast<unsigned>(_verbose), false);
     std::unique_ptr<dmscanlib::DecodeOptions> decodeOptions =
             dmscanlib::DecodeOptions::getDecodeOptionsViaJni(env, _decodeOptions);
-    std::vector<std::unique_ptr<const dmscanlib::WellRectangle<double> > > wellRects;
+    std::vector<std::unique_ptr<const dmscanlib::WellRectangle<float> > > wellRects;
 
     jsize numWells = env->GetArrayLength(_wellRects);
     int result = dmscanlib::jni::getWellRectangles(env, numWells, _wellRects, wellRects);

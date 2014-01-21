@@ -39,7 +39,7 @@ TEST(TestDmScanLib, invalidRects) {
 	FLAGS_v = 0;
 
     std::unique_ptr<DecodeOptions> decodeOptions = test::getDefaultDecodeOptions();
-    std::vector<std::unique_ptr<const WellRectangle<double> > > wellRects;
+    std::vector<std::unique_ptr<const WellRectangle<float> > > wellRects;
 	DmScanLib dmScanLib(1);
     int result = dmScanLib.decodeImageWells("testImages/8x12/96tubes.bmp", *decodeOptions,
             wellRects);
@@ -49,12 +49,12 @@ TEST(TestDmScanLib, invalidRects) {
 TEST(TestDmScanLib, invalidImage) {
 	FLAGS_v = 0;
 
-	Point<double> pt1(0,0);
-	Point<double> pt2(10,10);
-	BoundingBox<double> bbox(pt1, pt2);
-	std::unique_ptr<const WellRectangle<double> > wrect(new WellRectangle<double>("label", bbox));
+	cv::Point_<float> pt1(0,0);
+	cv::Point_<float> pt2(10,10);
+	BoundingBox<float> bbox(pt1, pt2);
+	std::unique_ptr<const WellRectangle<float> > wrect(new WellRectangle<float>("label", bbox));
 
-	std::vector<std::unique_ptr<const WellRectangle<double> > > wellRects;
+	std::vector<std::unique_ptr<const WellRectangle<float> > > wellRects;
     wellRects.push_back(std::move(wrect));
 
     std::unique_ptr<DecodeOptions> decodeOptions = test::getDefaultDecodeOptions();
@@ -66,8 +66,8 @@ TEST(TestDmScanLib, invalidImage) {
 TEST(TestDmScanLib, decodeImage) {
     FLAGS_v = 3;
 
-    //std::string fname("testImages/8x12/hardscan.bmp");
-    std::string fname("testImages/8x12/plate.bmp");
+    std::string fname("testImages/8x12/96tubes.bmp");
+    //std::string fname("testImages/8x12/plate.bmp");
     //std::string fname("testImages/10x10/10x10.bmp");
     //std::string fname("testImages/10x10/10x10.bmp");
 
@@ -136,7 +136,7 @@ std::unique_ptr<DecodeTestResult> decodeFromInfo(
 
     if (testResult->infoFileValid) {
         testResult->totalTubes = imageInfo.getDecodedWellCount();
-        std::vector<std::unique_ptr<const WellRectangle<double> > > wellRects;
+        std::vector<std::unique_ptr<const WellRectangle<float> > > wellRects;
         test::getWellRectsForBoundingBox(
                 imageInfo.getBoundingBox(),
                 imageInfo.getPalletRows(),
@@ -223,7 +223,7 @@ TEST(TestDmScanLib, decodeAllImages) {
 
             ss << "," << testResult->totalDecoded << ","
                     << testResult->totalTubes << ","
-                    << testResult->totalDecoded / static_cast<double>(testResult->totalTubes) << ","
+                    << testResult->totalDecoded / static_cast<float>(testResult->totalTubes) << ","
                     << testResult->decodeTime;
 
             VLOG(1) << "decoded: " << testResult->totalDecoded
@@ -304,7 +304,7 @@ TEST(TestDmScanLib, decodeAllImagesAllParameters) {
 
                         ss << "," << testResult->totalDecoded
                                 << "," << testResult->totalTubes
-                                << "," << testResult->totalDecoded / static_cast<double>(testResult->totalTubes)
+                                << "," << testResult->totalDecoded / static_cast<float>(testResult->totalTubes)
                                 << "," << testResult->decodeTime
                                 << "," << minEdge
                                 << "," << maxEdge

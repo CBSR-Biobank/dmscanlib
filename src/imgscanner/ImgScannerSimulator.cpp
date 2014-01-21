@@ -61,7 +61,7 @@ int ImgScannerSimulator::getScannerCapability() {
 }
 
 HANDLE ImgScannerSimulator::acquireImage(unsigned dpi, int brightness, int contrast,
-        const ScanRegion<double> & bbox) {
+        const ScanRegion<float> & bbox) {
     VLOG(2) << "acquireImage";
     return NULL;
 }

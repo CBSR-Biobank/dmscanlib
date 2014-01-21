@@ -50,8 +50,8 @@ ImageInfo::ImageInfo(const std::string & fname) :
                 unsigned width = stringToUnsigned(tokens[2]);
                 unsigned height = stringToUnsigned(tokens[3]);
 
-                Point<unsigned> pt1(x, y);
-                Point<unsigned> pt2(width, height);
+                cv::Point_<unsigned> pt1(x, y);
+                cv::Point_<unsigned> pt2(width, height);
                 BoundingBox<unsigned> bbox(pt1, pt2);
 
                 boundingBox = std::unique_ptr<const BoundingBox<unsigned> >(

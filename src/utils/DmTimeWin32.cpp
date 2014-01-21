@@ -45,7 +45,7 @@ std::unique_ptr<DmTime> DmTime::difftime(const DmTime & that) {
 }
 
 double DmTime::getTime() {
-	return static_cast<double>(timeVal);
+	return static_cast<float>(timeVal);
 }
 
 } /* namespace */

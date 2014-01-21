@@ -112,38 +112,43 @@ void getWellRectsForBoundingBox(
         const BoundingBox<unsigned> & bbox,
         const unsigned rows,
         const unsigned cols,
-        std::vector<std::unique_ptr<const WellRectangle<double> > > & wellRects) {
+        std::vector<std::unique_ptr<const WellRectangle<float> > > & wellRects) {
 
-    double wellWidth = bbox.getWidth() / static_cast<double>(cols);
-    double wellHeight = bbox.getHeight() / static_cast<double>(rows);
+    double wellWidth = bbox.getWidth() / static_cast<float>(cols);
+    double wellHeight = bbox.getHeight() / static_cast<float>(rows);
 
-    Point<double> startPoint(
-            static_cast<double>(bbox.points[0].x),
-            static_cast<double>(bbox.points[0].y));
-    Point<double> horTranslation(static_cast<double>(wellWidth), 0);
-    Point<double> verTranslation(0, static_cast<double>(wellHeight));
+    cv::Point_<float> startPoint(
+            static_cast<float>(bbox.points[0].x),
+            static_cast<float>(bbox.points[0].y));
+    cv::Point2f horTranslation(static_cast<float>(wellWidth), 0);
+    cv::Point2f verTranslation(0, static_cast<float>(wellHeight));
 
     // round off the bounding box so image dimensions are not exceeded
-    Point<double> pt2(0.999 * wellWidth, 0.999 * wellHeight);
-    BoundingBox<double> startingWellBbox(
-            startPoint,
-            *pt2.translate(startPoint));
+    cv::Size2f pt2(0.999 * wellWidth, 0.999 * wellHeight);
+
+    float verOffset = 0;
+    float horOffset = 0;
 
     for (unsigned row = 0; row < rows; ++row) {
-        std::unique_ptr<const Point<double>> scaledVertTranslation = verTranslation.scale(row);
-        std::unique_ptr<const BoundingBox<double> > bboxTranslated =
-                startingWellBbox.translate(*scaledVertTranslation);
+        horOffset = 0;
 
         for (unsigned col = 0; col < cols; ++col) {
+
             std::ostringstream label;
             label << (char) ('A' + row) << cols - col;
 
-            std::unique_ptr<WellRectangle<double> > wellRect(
-                    new WellRectangle<double>(label.str().c_str(), *bboxTranslated));
+            cv::Point2f tlCorner(horOffset, verOffset);
+            cv::Point2f brCorner(horOffset + pt2.width, verOffset + pt2.height);
+            const BoundingBox<float> bbox(tlCorner, brCorner);
+
+            std::unique_ptr<WellRectangle<float> > wellRect(
+                    new WellRectangle<float>(label.str().c_str(), bbox));
             VLOG(3) << *wellRect;
             wellRects.push_back(std::move(wellRect));
-            bboxTranslated = bboxTranslated->translate(horTranslation);
+
+            horOffset += wellWidth;
         }
+        verOffset += wellHeight;
     }
 }
 
@@ -161,7 +166,7 @@ std::unique_ptr<DecodeOptions> getDefaultDecodeOptions() {
 }
 
 int decodeImage(std::string fname, DmScanLib & dmScanLib, unsigned rows, unsigned cols) {
-    std::vector<std::unique_ptr<const WellRectangle<double> > > wellRects;
+    std::vector<std::unique_ptr<const WellRectangle<float> > > wellRects;
 
     Image image(fname);
     if (!image.isValid()) {
@@ -170,8 +175,8 @@ int decodeImage(std::string fname, DmScanLib & dmScanLib, unsigned rows, unsigne
 
     cv::Size size = image.size();
 
-    Point<unsigned> pt1(0, 0);
-    Point<unsigned> pt2(size.width, size.height);
+    cv::Point_<unsigned> pt1(0, 0);
+    cv::Point_<unsigned> pt2(size.width, size.height);
     BoundingBox<unsigned> bbox(pt1, pt2);
 
     getWellRectsForBoundingBox(bbox, rows, cols, wellRects);
@@ -181,21 +186,25 @@ int decodeImage(std::string fname, DmScanLib & dmScanLib, unsigned rows, unsigne
 }
 
 // bbox here has to start at (0,0)
-std::unique_ptr<const BoundingBox<double>> getWellsBoundingBox(
-        const BoundingBox<double> & bbox) {
-    const Point<double> origin(0, 0);
-    std::unique_ptr<const Point<double> > bboxPt1Neg(bbox.points[0].scale(-1));
+std::unique_ptr<const BoundingBox<float>> getWellsBoundingBox(
+        const BoundingBox<float> & bbox) {
+    const cv::Point_<float> origin(0, 0);
+    const cv::Point_<float> bboxPt2(
+            bbox.points[1].x - bbox.points[0].x,
+            bbox.points[1].y - bbox.points[0].y);
 
-    return std::unique_ptr<const BoundingBox<double>>(new BoundingBox<double>(
-            origin, *bbox.points[1].translate(*bboxPt1Neg)));
+    return std::unique_ptr<const BoundingBox<float>>(new BoundingBox<float>(
+            origin, bboxPt2));
 }
 
-std::unique_ptr<const ScanRegion<double>> getWiaBoundingBox(
-        const ScanRegion<double> & bbox) {
-    std::unique_ptr<const Point<double> > bboxPt1Neg(bbox.points[0].scale(-1));
+std::unique_ptr<const ScanRegion<float>> getWiaBoundingBox(
+        const ScanRegion<float> & bbox) {
+    const cv::Point_<float> bboxPt2(
+            bbox.points[1].x - bbox.points[0].x,
+            bbox.points[1].y - bbox.points[0].y);
 
-    return std::unique_ptr<const ScanRegion<double>>(new ScanRegion<double>(
-            bbox.points[0], *bbox.points[1].translate(*bboxPt1Neg)));
+    return std::unique_ptr<const ScanRegion<float>>(new ScanRegion<float>(
+            bbox.points[0], bboxPt2));
 }
 
 } /* namespace test */
