@@ -2,6 +2,8 @@
  * Contains JNI code common to both MS Windows and Linux.
  */
 
+#define _CRT_SECURE_NO_DEPRECATE
+
 #include "DmScanLibJni.h"
 #include "DmScanLibJniInternal.h"
 #include "DmScanLib.h"

@@ -5,6 +5,8 @@
  *      Author: nelson
  */
 
+#define _CRT_SECURE_NO_DEPRECATE
+
 #include "DmScanLib.h"
 #include "Image.h"
 #include "decoder/Decoder.h"
@@ -62,16 +64,15 @@ TEST(TestDmScanLib, invalidImage) {
 }
 
 TEST(TestDmScanLib, decodeImage) {
-    FLAGS_v = 2;
+    FLAGS_v = 5;
 
     //std::string fname("testImages/8x12/hardscan.bmp");
-    //std::string fname("testImages/8x12/plate.bmp");
-    //std::string fname("/home/nelson/Desktop/ohs_crash_image001.bmp");
+    std::string fname("testImages/8x12/plate.bmp");
     //std::string fname("testImages/10x10/10x10.bmp");
-    std::string fname("testImages/10x10/10x10.bmp");
+    //std::string fname("testImages/10x10/10x10.bmp");
 
 	DmScanLib dmScanLib(1);
-    int result = test::decodeImage(fname, dmScanLib, 10, 10);
+    int result = test::decodeImage(fname, dmScanLib, 8, 12);
 
 	EXPECT_EQ(SC_SUCCESS, result);
 	EXPECT_TRUE(dmScanLib.getDecodedWellCount() > 0);

@@ -1,3 +1,5 @@
+#define _CRT_SECURE_NO_DEPRECATE
+
 #include "imgscanner/ImgScanner.h"
 #include "imgscanner/ImgScannerImpl.h"
 #include "imgscanner/ImgScannerSimulator.h"

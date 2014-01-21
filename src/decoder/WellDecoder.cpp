@@ -5,6 +5,8 @@
  *      Author: loyola
  */
 
+#define _CRT_SECURE_NO_DEPRECATE
+
 #include "WellDecoder.h"
 #include "Image.h"
 #include "Decoder.h"

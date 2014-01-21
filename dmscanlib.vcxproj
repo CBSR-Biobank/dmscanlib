@@ -86,7 +86,7 @@
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>gtest.lib;OpenThreadsWin32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>gtest.lib;OpenThreadsWin32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;opencv_core248.lib;opencv_highgui248.lib;opencv_imgproc248.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ShowProgress>NotSet</ShowProgress>
       <AdditionalLibraryDirectories>.\third_party\lib\win32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>libcmt.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
@@ -171,9 +171,8 @@
     <ClCompile Include="src\decoder\ThreadMgr.cpp" />
     <ClCompile Include="src\decoder\WellDecoder.cpp" />
     <ClCompile Include="src\decoder\WellRectangle.cpp" />
-    <ClCompile Include="src\dib\Dib.cpp" />
-    <ClCompile Include="src\dib\RgbQuad.cpp" />
     <ClCompile Include="src\DmScanLib.cpp" />
+    <ClCompile Include="src\Image.cpp" />
     <ClCompile Include="src\imgscanner\ImgScanner.cpp" />
     <ClCompile Include="src\imgscanner\ImgScannerImpl.cpp" />
     <ClCompile Include="src\jni\DmScanLibJniCommon.cpp" />
@@ -238,6 +237,7 @@
     <ClInclude Include="src\geometry.h" />
     <ClInclude Include="src\geometryLinux.h" />
     <ClInclude Include="src\geometryWindows.h" />
+    <ClInclude Include="src\Image.h" />
     <ClInclude Include="src\imgscanner\ImgScanner.h" />
     <ClInclude Include="src\imgscanner\ImgScannerImpl.h" />
     <ClInclude Include="src\imgscanner\ImgScannerSimulator.h" />
@@ -258,7 +258,6 @@
     <ClInclude Include="src\test\ImageInfo.h" />
     <ClInclude Include="src\test\TestCommon.h" />
     <ClInclude Include="src\utils\DmTime.h" />
-    <ClInclude Include="TestCommon.h" />
     <ClInclude Include="third_party\glog\utilities.h" />
     <ClInclude Include="third_party\include\glog\logging.h" />
     <ClInclude Include="third_party\include\glog\log_severity.h" />

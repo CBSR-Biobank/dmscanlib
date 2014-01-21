@@ -23,7 +23,7 @@
 #if defined (WIN32) && ! defined(__MINGW32__)
 
 #include "imgscanner/ImgScanner.h"
-#include "dib/Dib.h"
+#include "Image.h"
 #include "DmScanLib.h"
 
 #include <dmtx.h>

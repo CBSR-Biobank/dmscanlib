@@ -27,6 +27,8 @@
  * Some portions of the implementation borrowed from EZTWAIN.
  */
 
+#define _CRT_SECURE_NO_DEPRECATE
+
 #include "ImgScannerImpl.h"
 
 #include <math.h>

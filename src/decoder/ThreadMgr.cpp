@@ -18,6 +18,8 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#define _CRT_SECURE_NO_DEPRECATE
+
 #include "ThreadMgr.h"
 #include "DmScanLib.h"
 #include "WellDecoder.h"

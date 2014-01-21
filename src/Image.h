@@ -8,11 +8,12 @@
  *      Author: loyola
  */
 
+#define _CRT_SECURE_NO_DEPRECATE
+
 #include <dmtx.h>
 
 #include <algorithm>
 #include <memory>
-#include <opencv/cv.h>
 
 #if defined (WIN32) && ! defined(__MINGW32__)
 #   define NOMINMAX
@@ -21,11 +22,13 @@
 typedef void* HANDLE;
 #endif
 
+#include <opencv/cv.h>
+
 namespace dmscanlib {
 
 class Image {
 public:
-    Image(const char * filename);
+    Image(const std::string & filename);
     Image(HANDLE handle);
     Image(cv::Mat that);
     virtual ~Image();
@@ -34,7 +37,7 @@ public:
         return valid;
     }
 
-    const char * getFilename() const {
+    const std::string & getFilename() const {
         return filename;
     }
 
@@ -56,7 +59,7 @@ public:
 
     void drawRectangle(const cv::Rect rect, const cv::Scalar & color);
 
-    bool write(const char * filename) const;
+    int write(const std::string & filename) const;
 
 private:
 
@@ -67,7 +70,7 @@ private:
     static const cv::Mat BLANK_KERNEL;
 
     bool valid;
-    const char * filename;
+    const std::string filename;
     cv::Mat opencvImage;
 };
 

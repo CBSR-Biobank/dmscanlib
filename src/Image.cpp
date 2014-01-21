@@ -8,6 +8,8 @@
 #include "Image.h"
 
 #include <opencv/highgui.h>
+
+#define GLOG_NO_ABBREVIATED_SEVERITIES
 #include <glog/logging.h>
 
 namespace dmscanlib {
@@ -28,8 +30,8 @@ const cv::Mat Image::BLUR_KERNEL(3, 3, CV_64F, (void *) &Image::BLUR_KERNEL_DATA
 
 const cv::Mat Image::BLANK_KERNEL(3, 3, CV_64F, (void *) &Image::BLANK_KERNEL_DATA);
 
-Image::Image(const char * _filename) : filename(_filename) {
-    opencvImage = cv::imread(filename);
+Image::Image(const std::string & _filename) : filename(_filename) {
+    opencvImage = cvLoadImageM(filename.c_str());
 
     valid = (opencvImage.data != NULL);
 
@@ -41,7 +43,7 @@ Image::Image(const char * _filename) : filename(_filename) {
     }
 }
 
-Image::Image(cv::Mat that) {
+Image::Image(cv::Mat that) : filename("") {
     if (that.data == NULL) {
         throw std::invalid_argument("parameter is null");
     }
@@ -55,7 +57,7 @@ Image::Image(cv::Mat that) {
             << ", step: " << opencvImage.step1();
 }
 
-Image::Image(HANDLE handle) {
+Image::Image(HANDLE handle) : filename("") {
 #ifdef WIN32
     BITMAPINFOHEADER *dibHeaderPtr = (BITMAPINFOHEADER *) GlobalLock(handle);
 
@@ -66,20 +68,38 @@ Image::Image(HANDLE handle) {
     CHECK(dibHeaderPtr->biXPelsPerMeter == dibHeaderPtr->biYPelsPerMeter);
     CHECK(dibHeaderPtr->biClrImportant == 0);
 
-    init(dibHeaderPtr->biWidth, dibHeaderPtr->biHeight,
-            dibHeaderPtr->biBitCount, dibHeaderPtr->biXPelsPerMeter, false);
+	unsigned rowBytes = static_cast<unsigned>(
+		ceil((dibHeaderPtr->biWidth * dibHeaderPtr->biBitCount) / 32.0)) << 2;
+		
+	unsigned paletteSize;
+    switch (dibHeaderPtr->biBitCount) {
+    case 1:
+        paletteSize = 2;
+		break;
+    case 4:
+        paletteSize = 16;
+		break;
+    case 8:
+        paletteSize = 256;
+		break;
+    default:
+		paletteSize = 0;
+    }
 
-    pixels = reinterpret_cast <unsigned char *>(dibHeaderPtr)
-    + sizeof(BITMAPINFOHEADER) + paletteSize * sizeof(RgbQuad);
+    char * pixels = reinterpret_cast <char *>(dibHeaderPtr)
+    + sizeof(BITMAPINFOHEADER) + paletteSize * sizeof(RGBQUAD);
 
-    VLOG(3) << "readFromHandle: "
-    << " size/" << size
-    << " width/" << width
-    << " height/" << height
-    << " colorBits/" << colorBits
-    << " imageSize/" << imageSize
-    << " rowBytes/" << rowBytes
-    << " paddingBytes/" << rowPaddingBytes << " dpi/" << getDpi();
+	int channels = 3; // RGB
+	IplImage* cv_image = cvCreateImageHeader(
+		cvSize(dibHeaderPtr->biWidth, dibHeaderPtr->biHeight), 
+		IPL_DEPTH_8U, 
+		channels);
+	if (!cv_image) {
+		throw std::logic_error("invalid image type");
+	}
+	
+	cvSetData(cv_image, pixels, cv_image->widthStep);
+	opencvImage = cv_image;
 
     valid = true;
 #else
@@ -140,8 +160,8 @@ void Image::drawRectangle(const cv::Rect rect, const cv::Scalar & color) {
 
 }
 
-bool Image::write(const char * filename) const {
-    return cv::imwrite(filename, opencvImage);
+int Image::write(const std::string & filename) const {
+    return cvSaveImage(filename.c_str(), &(IplImage(opencvImage)));
 }
 
 }/* namespace */

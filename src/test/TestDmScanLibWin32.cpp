@@ -5,13 +5,15 @@
  *      Author: nelson
  */
 
+#define _CRT_SECURE_NO_DEPRECATE
+
 #include "test/TestCommon.h"
 #include "DmScanLib.h"
 #include "decoder/Decoder.h"
 #include "decoder/DecodeOptions.h"
 #include "decoder/WellRectangle.h"
 #include "decoder/WellDecoder.h"
-#include "dib/Dib.h"
+#include "Image.h"
 
 #include <stdexcept>
 #include <stddef.h>
@@ -63,7 +65,7 @@ TEST(TestDmScanLibWin32, scanImage) {
 	std::unique_ptr<DecodeOptions> decodeOptions = 
 		test::getDefaultDecodeOptions();
 
-	std::string fname("tmpscan.bmp");
+	std::string fname("tmpscan.png");
 	std::wstring fnamew(fname.begin(), fname.end());
 	DeleteFile(fnamew.c_str());
 
@@ -72,16 +74,14 @@ TEST(TestDmScanLibWin32, scanImage) {
 	int result = dmScanLib.scanImage(dpi, 0, 0, *scanBbox, fname.c_str());
 
 	EXPECT_EQ(SC_SUCCESS, result);
-	Dib dib;
-	dib.readFromFile(fname);
-	EXPECT_EQ(dpi, dib.getDpi());
+	Image dib(fname.c_str());
 
 	BoundingBox<double> expectedImageSize(pt1, pt2);
 
-	EXPECT_EQ(static_cast<unsigned>(expectedImageSize.getWidth() * dpi), 
-		dib.getWidth());
-	EXPECT_EQ(static_cast<unsigned>(expectedImageSize.getHeight() * dpi), 
-		dib.getHeight());
+	cv::Size size = dib.size();
+
+	EXPECT_EQ(static_cast<unsigned>(expectedImageSize.getWidth() * dpi), size.width);
+	EXPECT_EQ(static_cast<unsigned>(expectedImageSize.getHeight() * dpi), size.height);
 }
 
 TEST(TestDmScanLibWin32, scanImageBadParams) {
@@ -136,9 +136,8 @@ TEST(TestDmScanLibWin32, scanFlatbed) {
 	int result = dmScanLib.scanFlatbed(dpi, 0, 0, fname.c_str());
 
 	EXPECT_EQ(SC_SUCCESS, result);
-	Dib dib;
-	dib.readFromFile(fname);
-	EXPECT_EQ(dpi, dib.getDpi());
+	Image dib(fname.c_str());
+	EXPECT_TRUE(dib.isValid());
 }
 
 TEST(TestDmScanLibWin32, scanFlatbedBadParams) {

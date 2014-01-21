@@ -18,9 +18,8 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef _VISUALC_
-#   pragma warning(disable : 4996) // disable fopen warnings
-#endif
+// disable fopen warnings
+#define _CRT_SECURE_NO_DEPRECATE
 
 #include "decoder/Decoder.h"
 #include "decoder/DecodeOptions.h"

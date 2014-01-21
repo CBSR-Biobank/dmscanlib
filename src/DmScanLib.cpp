@@ -25,10 +25,7 @@
  *
  ******************************************************************************/
 
-#ifdef _VISUALC_
-// disable warnings about fopen
-#pragma warning(disable : 4996)
-#endif
+#define _CRT_SECURE_NO_DEPRECATE
 
 #include "DmScanLib.h"
 #include "imgscanner/ImgScanner.h"

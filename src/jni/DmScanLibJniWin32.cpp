@@ -2,6 +2,8 @@
  * Contains the code used in the library when building it for MS Windows.
  */
 
+#define _CRT_SECURE_NO_DEPRECATE
+
 #include "jni/DmScanLibJni.h"
 #include "jni/DmScanLibJniInternal.h"
 #include "geometry.h"

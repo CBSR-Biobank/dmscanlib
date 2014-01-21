@@ -5,6 +5,8 @@
  *      Author: nelson
  */
 
+#define _CRT_SECURE_NO_DEPRECATE
+
 #include "test/TestCommon.h"
 #include "DmScanLib.h"
 #include "Image.h"
@@ -161,7 +163,7 @@ std::unique_ptr<DecodeOptions> getDefaultDecodeOptions() {
 int decodeImage(std::string fname, DmScanLib & dmScanLib, unsigned rows, unsigned cols) {
     std::vector<std::unique_ptr<const WellRectangle<double> > > wellRects;
 
-    Image image(fname.c_str());
+    Image image(fname);
     if (!image.isValid()) {
         throw std::invalid_argument("could not load image");
     }
