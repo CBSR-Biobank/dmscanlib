@@ -188,10 +188,9 @@ std::unique_ptr<DmtxDecodeHelper> Decoder::createDmtxDecode(
         int scale) const {
     std::unique_ptr<DmtxDecodeHelper> dec(new DmtxDecodeHelper(dmtxImage, scale));
 
-    std::unique_ptr<const BoundingBox<unsigned> > bbox = std::move(
-            wellDecoder.getWellRectangle().getBoundingBox());
+    cv::Rect bbox = wellDecoder.getWellRectangle();
 
-    unsigned mindim = std::min(bbox->getWidth(), bbox->getHeight());
+    unsigned mindim = std::min(bbox.width, bbox.height);
 
     dec->setProperty(DmtxPropEdgeMin, static_cast<int>(decodeOptions.minEdgeFactor * mindim));
     dec->setProperty(DmtxPropEdgeMax, static_cast<int>(decodeOptions.maxEdgeFactor * mindim));

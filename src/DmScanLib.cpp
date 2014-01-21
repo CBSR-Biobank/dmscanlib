@@ -224,20 +224,28 @@ void DmScanLib::writeDecodedImage(
     const std::map<std::string, const WellDecoder *> & decodedWells = decoder->getDecodedWells();
     CHECK(decodedWells.size() > 0);
 
-    Image decodedImage(image);
     cv::Scalar colorBlue(0, 0, 255);
+    cv::Scalar colorRed(255, 0, 0);
+    cv::Scalar colorGreen(0, 255, 0);
+
+    Image decodedImage(image);
 
     for (unsigned i = 0, n = wellDecoders.size(); i < n; ++i) {
         decodedImage.drawRectangle(wellDecoders[i]->getWellRectangle(), colorBlue);
     }
 
-    cv::Scalar colorRed(255, 0, 0);
-    cv::Scalar colorGreen(0, 255, 0);
     for (std::map<std::string, const WellDecoder *>::const_iterator ii = decodedWells.begin();
             ii != decodedWells.end(); ++ii) {
         const WellDecoder & decodedWell = *(ii->second);
-        decodedImage.drawRectangle(decodedWell.getDecodedRectangle(), colorRed);
-        decodedImage.drawRectangle(decodedWell.getWellRectangle(), colorGreen);
+        const BoundingBox<unsigned> & bbox = *decodedWell.getDecodedRectangle().getBoundingBox();
+
+        const cv::Rect r(
+                bbox.points[0].x,
+                bbox.points[0].y,
+                bbox.points[1].x - bbox.points[0].x,
+                bbox.points[1].y - bbox.points[0].y);
+
+        decodedImage.drawRectangle(r, colorRed);
     }
     decodedImage.write(decodedDibFilename.c_str());
 }

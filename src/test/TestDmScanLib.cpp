@@ -268,50 +268,15 @@ std::unique_ptr<decoder::DmtxDecodeHelper> createDmtxDecode(
 TEST(TestDmScanLib, opencv) {
     FLAGS_v = 1;
 
+    std::string fname("testImages/8x12/hardscan.bmp");
+    Image src(fname.c_str());
 
-    cv::Mat blankKernel(3,3,CV_64F);
-
-    blankKernel.at<double>(0,0) = 0.06185567;
-    blankKernel.at<double>(0,1) = 0.12371134;
-    blankKernel.at<double>(0,2) = 0.06185567;
-    blankKernel.at<double>(1,0) = 0.12371134;
-    blankKernel.at<double>(1,1) = 0.25773195;
-    blankKernel.at<double>(1,2) = 0.12371134;
-    blankKernel.at<double>(2,0) = 0.06185567;
-    blankKernel.at<double>(2,1) = 0.12371134;
-    blankKernel.at<double>(2,2) = 0.06185567;
-
-    cv::Mat blurKernel(3,3,CV_64F);
-
-    blurKernel.at<double>(0,0) = 0.0;
-    blurKernel.at<double>(0,1) = 0.2;
-    blurKernel.at<double>(0,2) = 0.0;
-    blurKernel.at<double>(1,0) = 0.2;
-    blurKernel.at<double>(1,1) = 0.2;
-    blurKernel.at<double>(1,2) = 0.2;
-    blurKernel.at<double>(2,0) = 0.0;
-    blurKernel.at<double>(2,1) = 0.2;
-    blurKernel.at<double>(2,2) = 0.0;
-
-    //std::string fname("testImages/8x12/hardscan.bmp");
-    std::string fname("/home/loyola/Desktop/single_tube.jpg");
-    cv::Mat src = cv::imread(fname.c_str(), CV_LOAD_IMAGE_GRAYSCALE);
-
-    VLOG(1) << "opencv: width: " << src.cols << ", height: " << src.rows
-            << ", depth: " << src.elemSize() << ", " << src.step1();
-
-    cv::Mat filter1Image, filter2Image;
-
-    cv::Point anchor(-1, -1);
-    double delta = 0;
-    int ddepth = -1;
-
-    cv::filter2D(src, filter1Image, ddepth , blankKernel, anchor, delta);
-    cv::filter2D(filter1Image, filter2Image, ddepth , blurKernel, anchor, delta);
+    const Image workingImage = *src.applyFilters();
+    cv::Size size = workingImage.size();
 
     std::vector<std::unique_ptr<const WellRectangle<double> > > wellRects;
     Point<unsigned> pt1(0, 0);
-    Point<unsigned> pt2(filter2Image.cols, filter2Image.rows);
+    Point<unsigned> pt2(size.width, size.height);
     BoundingBox<unsigned> bbox(pt1, pt2);
 
     test::getWellRectsForBoundingBox(bbox, 8, 12, wellRects);
@@ -321,18 +286,16 @@ TEST(TestDmScanLib, opencv) {
 
     VLOG(1) << "opencv: well: " << *wellBbox;
 
-    cv::Rect roi(
+    const Image wellImage = *workingImage.crop(
             static_cast<int>(wellBbox->points[0].x),
             static_cast<int>(wellBbox->points[0].y),
             static_cast<int>(wellBbox->points[1].x - wellBbox->points[0].x),
             static_cast<int>(wellBbox->points[1].y - wellBbox->points[0].y));
 
-    cv::Mat firstWell = filter2Image(roi);
-
-    bool r = cv::imwrite("out.bmp", firstWell);
+    bool r = wellImage.write("out.bmp");
     EXPECT_EQ(true, r);
 
-    DmtxImage * dmtxImage = getDmtxImage(firstWell);
+    DmtxImage * dmtxImage = wellImage.dmtxImage();
     std::unique_ptr<decoder::DmtxDecodeHelper> dec =
             createDmtxDecode(dmtxImage, *wellBbox, 1);
     decodeWellRect(dec->getDecode());
@@ -346,7 +309,7 @@ TEST(TestDmScanLib, opencv_jpg) {
     Image src(fname.c_str());
 
     src.write("out.bmp");
-    cv::Size size = src.getSize();
+    cv::Size size = src.size();
 
     Point<double> pt1(0, 0);
     Point<double> pt2(size.width, size.height);
@@ -354,7 +317,7 @@ TEST(TestDmScanLib, opencv_jpg) {
 
     VLOG(1) << "opencv: well: " << bbox;
 
-    DmtxImage * dmtxImage = getDmtxImage(src.getEnhancedImage());
+    DmtxImage * dmtxImage = src.dmtxImage();
     std::unique_ptr<decoder::DmtxDecodeHelper> dec = createDmtxDecode(dmtxImage, bbox, 1);
     decodeWellRect(dec->getDecode());
     dmtxImageDestroy(&dmtxImage);

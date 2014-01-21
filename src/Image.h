@@ -47,6 +47,8 @@ public:
         return opencvImage.size();
     }
 
+    std::unique_ptr<const Image> applyFilters() const;
+
     DmtxImage * dmtxImage() const;
 
     std::unique_ptr<const Image> crop(unsigned x, unsigned y, unsigned width, unsigned height) const;
@@ -66,8 +68,6 @@ private:
     bool valid;
     const char * filename;
     cv::Mat opencvImage;
-
-    void applyFilters();
 };
 
 } /* namespace */

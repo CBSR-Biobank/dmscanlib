@@ -98,7 +98,7 @@ std::unique_ptr<const Image> Image::applyFilters() const {
 
     cv::filter2D(opencvImage, blurredImage, ddepth , Image::BLUR_KERNEL, anchor, delta);
     cv::filter2D(blurredImage, enhancedImage, ddepth , Image::BLANK_KERNEL, anchor, delta);
-    return std::unique_ptr<Image>(new Image(enhancedImage));
+    return std::unique_ptr<const Image>(new Image(enhancedImage));
 }
 
 
