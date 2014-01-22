@@ -162,7 +162,8 @@ std::unique_ptr<DecodeTestResult> decodeFromInfo(
 TEST(TestDmScanLib, decodeFromInfo) {
     FLAGS_v = 3;
 
-    std::string infoFilename("testImageInfo/8x12/96tubes.nfo");
+    //std::string infoFilename("testImageInfo/8x12/calgary2.nfo");
+    std::string infoFilename("testImageInfo/8x12/calgary1.nfo");
 
     std::unique_ptr<DecodeOptions> defaultDecodeOptions = test::getDefaultDecodeOptions();
     DecodeOptions decodeOptions(

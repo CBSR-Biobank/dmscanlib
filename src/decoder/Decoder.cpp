@@ -60,6 +60,7 @@ Decoder::Decoder(
     grayscaleImage = filteredImage->grayscale();
 
     cv::Size size = grayscaleImage->size();
+    cv::Rect imageRect(0, 0, size.width, size.height);
     float width = static_cast<float>(size.width);
     float height = static_cast<float>(size.height);
 
@@ -73,10 +74,7 @@ Decoder::Decoder(
 
         VLOG(5) << "Decoder: well: " << rect;
 
-        if ((rect.x >= width)
-                || (rect.y >= height)
-                || (rect.x + rect.width >= width)
-                || (rect.y + rect.height >= height)) {
+        if (!imageRect.contains(rect.tl()) || !imageRect.contains(rect.br())) {
             throw std::invalid_argument("well rectangle exceeds image dimensions: "
                     + wellRect.getLabel());
         }

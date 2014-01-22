@@ -9,7 +9,6 @@
 #include "decoder/DecodeOptions.h"
 #include "decoder/WellRectangle.h"
 #include "decoder/WellDecoder.h"
-#include "dib/Dib.h"
 #include "test/TestCommon.h"
 
 #include <gflags/gflags.h>
