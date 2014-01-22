@@ -183,7 +183,7 @@ int DmScanLib::decodeImageWells(
         return SC_INVALID_IMAGE;
     }
 
-    return decodeCommon(image, decodeOptions, "decode.bmp", wellRects);
+    return decodeCommon(image, decodeOptions, "decode.png", wellRects);
 }
 
 int DmScanLib::decodeCommon(const Image & image,
@@ -234,8 +234,12 @@ void DmScanLib::writeDecodedImage(
     for (std::map<std::string, const WellDecoder *>::const_iterator ii = decodedWells.begin();
             ii != decodedWells.end(); ++ii) {
         const WellDecoder & decodedWell = *(ii->second);
-        const cv::Rect bboxDecoded = decodedWell.getDecodedRectangle();
-        decodedImage.drawRectangle(bboxDecoded, colorRed);
+        const std::vector<cv::Point> & bboxDecoded = decodedWell.getDecodedRectangle();
+
+        decodedImage.drawLine(bboxDecoded[0], bboxDecoded[1], colorRed);
+        decodedImage.drawLine(bboxDecoded[1], bboxDecoded[2], colorRed);
+        decodedImage.drawLine(bboxDecoded[2], bboxDecoded[3], colorRed);
+        decodedImage.drawLine(bboxDecoded[3], bboxDecoded[0], colorRed);
 
         const cv::Rect & wellBbox = decodedWell.getWellRectangle();
         decodedImage.drawRectangle(wellBbox, colorGreen);

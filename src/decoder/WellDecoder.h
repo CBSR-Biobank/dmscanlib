@@ -46,7 +46,9 @@ public:
 
     const cv::Rect getWellRectangle() const;
 
-    const std::vector<cv::Point> getDecodedRectangle() const;
+    const std::vector<cv::Point> & getDecodedRectangle() const {
+        return decodedRect;
+    }
 
     void setDecodeRectangle(const Rect<float> & rect, int scale);
 

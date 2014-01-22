@@ -39,11 +39,6 @@ private:
     friend std::ostream & operator<<(std::ostream & os, const WellRectangle & m);
 };
 
-std::ostream & operator<<(std::ostream &os, const WellRectangle & m) {
-    os << m.label << " - " << m.rect;
-    return os;
-}
-
 } /* namespace */
 
 #endif /* WELLCOORDINATES_H_ */

@@ -142,8 +142,8 @@ void getWellRectsForBoundingBox(
                             label.str().c_str(),
                             horOffset,
                             verOffset,
-                            horOffset + pt2.width,
-                            verOffset + pt2.height));
+                            pt2.width,
+                            pt2.height));
             VLOG(3) << *wellRect;
             wellRects.push_back(std::move(wellRect));
 

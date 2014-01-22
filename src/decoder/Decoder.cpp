@@ -54,13 +54,13 @@ Decoder::Decoder(
 //    grayscaleImage = image.grayscale();
     std::unique_ptr<const Image> filteredImage = image.applyFilters();
         if (VLOG_IS_ON(2)) {
-            filteredImage->write("filtered.bmp");
+            filteredImage->write("filtered.png");
         }
     grayscaleImage = filteredImage->grayscale();
 
     cv::Size size = grayscaleImage->size();
-    double width = static_cast<float>(size.width);
-    double height = static_cast<float>(size.height);
+    float width = static_cast<float>(size.width);
+    float height = static_cast<float>(size.height);
 
     VLOG(5) << "Decoder: image size: " << width << ", " << height;
 

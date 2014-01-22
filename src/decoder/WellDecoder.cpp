@@ -67,10 +67,6 @@ const cv::Rect WellDecoder::getWellRectangle() const {
 	return wellRectangle->getRectangle();
 }
 
-const std::vector<cv::Point> WellDecoder::getDecodedRectangle() const {
-	return decodedRect;
-}
-
 // the rectangle passed in is in coordinates of the cropped image,
 // the rectangle has to be translated into the coordinates of the overall
 // image
@@ -82,25 +78,18 @@ void WellDecoder::setDecodeRectangle(const Rect<float> & rect, int scale) {
         rectCopy = rect.scale(scale);
     }
 
-    cv::Point_<unsigned> pt0(static_cast<unsigned>(rectCopy->corners[0].x),
-            static_cast<unsigned>(rectCopy->corners[0].y));
+    const cv::Point & bboxTl = boundingBox.tl();
+    for (unsigned i = 0; i < 4; ++i) {
+        cv::Point pt(
+                static_cast<unsigned>(rectCopy->corners[i].x),
+                static_cast<unsigned>(rectCopy->corners[i].y));
 
-    cv::Point_<unsigned> pt1(static_cast<unsigned>(rectCopy->corners[1].x),
-            static_cast<unsigned>(rectCopy->corners[1].y));
-
-    cv::Point_<unsigned> pt2(static_cast<unsigned>(rectCopy->corners[2].x),
-            static_cast<unsigned>(rectCopy->corners[2].y));
-
-    cv::Point_<unsigned> pt3(static_cast<unsigned>(rectCopy->corners[3].x),
-            static_cast<unsigned>(rectCopy->corners[3].y));
-
-    decodedRect = std::unique_ptr<Rect<unsigned>>(
-            new Rect<unsigned>(pt0, pt1, pt2, pt3));
-    decodedRect = decodedRect + boundingBox.tl();
+        decodedRect.push_back(pt + bboxTl);
+    }
 }
 
 std::ostream & operator<<(std::ostream &os, const WellDecoder & m) {
-    os << m.getLabel() << ": \"" << m.getMessage() << "\" " << *m.boundingBox;
+    os << m.getLabel() << ": \"" << m.getMessage() << "\" " << m.boundingBox;
     return os;
 }
 

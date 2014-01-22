@@ -57,7 +57,9 @@ public:
 
     std::unique_ptr<const Image> crop(unsigned x, unsigned y, unsigned width, unsigned height) const;
 
-    void drawRectangle(const cv::Rect rect, const cv::Scalar & color);
+    void drawRectangle(const cv::Rect & rect, const cv::Scalar & color);
+
+    void drawLine(const cv::Point & pt1, const cv::Point & pt2, const cv::Scalar & color);
 
     int write(const std::string & filename) const;
 

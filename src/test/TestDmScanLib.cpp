@@ -166,9 +166,9 @@ TEST(TestDmScanLib, decodeFromInfo) {
 
     std::unique_ptr<DecodeOptions> defaultDecodeOptions = test::getDefaultDecodeOptions();
     DecodeOptions decodeOptions(
-            0.2,
+            0.1,
             0.3,
-            0.2,
+            0.15,
             defaultDecodeOptions->squareDev,
             defaultDecodeOptions->edgeThresh,
             defaultDecodeOptions->corrections,

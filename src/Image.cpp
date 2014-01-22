@@ -155,9 +155,12 @@ std::unique_ptr<const Image> Image::crop(
     return std::unique_ptr<Image>(new Image(croppedImage));
 }
 
-void Image::drawRectangle(const cv::Rect rect, const cv::Scalar & color) {
+void Image::drawRectangle(const cv::Rect & rect, const cv::Scalar & color) {
     cv::rectangle(opencvImage, rect, color);
+}
 
+void Image::drawLine(const cv::Point & pt1, const cv::Point & pt2, const cv::Scalar & color) {
+    cv::line(opencvImage, pt1, pt2, color, 2);
 }
 
 int Image::write(const std::string & filename) const {

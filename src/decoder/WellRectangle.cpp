@@ -12,9 +12,14 @@
 
 namespace dmscanlib {
 
-WellRectangle<T>::WellRectangle(const char * _label, unsigned x, unsigned y, unsigned width, unsigned height) :
+WellRectangle::WellRectangle(const char * _label, unsigned x, unsigned y, unsigned width, unsigned height) :
         label(_label), rect(x, y, width, height)
 {
+}
+
+std::ostream & operator<<(std::ostream &os, const WellRectangle & m) {
+    os << m.label << " - " << m.rect;
+    return os;
 }
 
 } /* namespace */
