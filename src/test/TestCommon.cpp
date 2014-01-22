@@ -112,7 +112,7 @@ void getWellRectsForBoundingBox(
         const BoundingBox<unsigned> & bbox,
         const unsigned rows,
         const unsigned cols,
-        std::vector<std::unique_ptr<const WellRectangle<float> > > & wellRects) {
+        std::vector<std::unique_ptr<const WellRectangle> > & wellRects) {
 
     double wellWidth = bbox.getWidth() / static_cast<float>(cols);
     double wellHeight = bbox.getHeight() / static_cast<float>(rows);
@@ -137,12 +137,13 @@ void getWellRectsForBoundingBox(
             std::ostringstream label;
             label << (char) ('A' + row) << cols - col;
 
-            cv::Point2f tlCorner(horOffset, verOffset);
-            cv::Point2f brCorner(horOffset + pt2.width, verOffset + pt2.height);
-            const BoundingBox<float> bbox(tlCorner, brCorner);
-
-            std::unique_ptr<WellRectangle<float> > wellRect(
-                    new WellRectangle<float>(label.str().c_str(), bbox));
+            std::unique_ptr<WellRectangle> wellRect(
+                    new WellRectangle(
+                            label.str().c_str(),
+                            horOffset,
+                            verOffset,
+                            horOffset + pt2.width,
+                            verOffset + pt2.height));
             VLOG(3) << *wellRect;
             wellRects.push_back(std::move(wellRect));
 
@@ -166,7 +167,7 @@ std::unique_ptr<DecodeOptions> getDefaultDecodeOptions() {
 }
 
 int decodeImage(std::string fname, DmScanLib & dmScanLib, unsigned rows, unsigned cols) {
-    std::vector<std::unique_ptr<const WellRectangle<float> > > wellRects;
+    std::vector<std::unique_ptr<const WellRectangle> > wellRects;
 
     Image image(fname);
     if (!image.isValid()) {

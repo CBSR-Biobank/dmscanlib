@@ -24,13 +24,15 @@ namespace dmscanlib {
 
 WellDecoder::WellDecoder(
         const Decoder & _decoder,
-        std::unique_ptr<const WellRectangle<unsigned> > _wellRectangle) :
+        std::unique_ptr<const WellRectangle> _wellRectangle) :
         decoder(_decoder),
-                wellRectangle(std::move(_wellRectangle)),
-                boundingBox(std::move(wellRectangle->getRectangle().getBoundingBox()))
+        wellRectangle(std::move(_wellRectangle)),
+        boundingBox(wellRectangle->getRectangle()),
+        decodedRect()
 {
-    VLOG(9) << "constructor: bounding box: " << *boundingBox
-                      << ", rect: " << wellRectangle->getRectangle();
+    decodedRect.reserve(4);
+    VLOG(9) << "constructor: bounding box: " << boundingBox
+            << ", rect: " << wellRectangle->getRectangle();
 }
 
 WellDecoder::~WellDecoder() {
@@ -41,10 +43,10 @@ WellDecoder::~WellDecoder() {
  */
 void WellDecoder::run() {
     wellImage = decoder.getWorkingImage().crop(
-            boundingBox->points[0].x,
-            boundingBox->points[0].y,
-            boundingBox->points[1].x - boundingBox->points[0].x,
-            boundingBox->points[1].y - boundingBox->points[0].y);
+            boundingBox.x,
+            boundingBox.y,
+            boundingBox.width,
+            boundingBox.height);
     decoder.decodeWellRect(*wellImage, *this);
     if (!message.empty()) {
         VLOG(3) << "run: " << *this;
@@ -60,25 +62,13 @@ void WellDecoder::setMessage(const char * message, int messageLength) {
 
 const cv::Rect WellDecoder::getWellRectangle() const {	
     CHECK_NOTNULL(wellRectangle.get());
-	VLOG(9) << "getWellRectangle: bbox: " << *wellRectangle->getRectangle().getBoundingBox();
+	VLOG(9) << "getWellRectangle: bbox: " << wellRectangle->getRectangle();
 
-	std::unique_ptr<const BoundingBox<unsigned> >  bbox = wellRectangle->getRectangle().getBoundingBox();
-
-	return cv::Rect(
-		bbox->points[0].x,
-		bbox->points[0].y,
-		bbox->points[1].x - bbox->points[0].x,
-		bbox->points[1].y - bbox->points[0].y);
+	return wellRectangle->getRectangle();
 }
 
-const cv::Rect WellDecoder::getDecodedRectangle() const {
-	CHECK_NOTNULL(decodedRect.get());
-	const BoundingBox<unsigned> & bbox = *decodedRect->getBoundingBox();
-	return cv::Rect(
-		bbox.points[0].x,
-		bbox.points[0].y,
-		bbox.points[1].x - bbox.points[0].x,
-		bbox.points[1].y - bbox.points[0].y);
+const std::vector<cv::Point> WellDecoder::getDecodedRectangle() const {
+	return decodedRect;
 }
 
 // the rectangle passed in is in coordinates of the cropped image,
@@ -106,7 +96,7 @@ void WellDecoder::setDecodeRectangle(const Rect<float> & rect, int scale) {
 
     decodedRect = std::unique_ptr<Rect<unsigned>>(
             new Rect<unsigned>(pt0, pt1, pt2, pt3));
-    decodedRect = decodedRect->translate(boundingBox->points[0]);
+    decodedRect = decodedRect + boundingBox.tl();
 }
 
 std::ostream & operator<<(std::ostream &os, const WellDecoder & m) {

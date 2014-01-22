@@ -27,7 +27,7 @@ void getWellRectsForBoundingBox(
         const BoundingBox<unsigned> & bbox,
         const unsigned rows,
         const unsigned cols,
-        std::vector<std::unique_ptr<const WellRectangle<float> > > & wellRects);
+        std::vector<std::unique_ptr<const WellRectangle> > & wellRects);
 
 std::unique_ptr<DecodeOptions> getDefaultDecodeOptions();
 

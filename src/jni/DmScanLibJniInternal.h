@@ -41,7 +41,7 @@ std::unique_ptr<ScanRegion<float> > getScanRegion(
         JNIEnv *env, jobject regionJavaObj);
 
 int getWellRectangles(JNIEnv *env, jsize numWells, jobjectArray _wellRects,
-        std::vector<std::unique_ptr<const WellRectangle<float> > > & wellRects);
+        std::vector<std::unique_ptr<const WellRectangle> > & wellRects);
 
 } /* namespace */
 

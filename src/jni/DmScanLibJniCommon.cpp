@@ -92,7 +92,7 @@ jobject createDecodeResultObject(JNIEnv * env, int resultCode,
 }
 
 int getWellRectangles(JNIEnv *env, jsize numWells, jobjectArray _wellRects,
-        std::vector<std::unique_ptr<const WellRectangle<float> > > & wellRects) {
+        std::vector<std::unique_ptr<const WellRectangle> > & wellRects) {
     jobject wellRectJavaObj;
     jclass wellRectJavaClass = NULL;
     jmethodID wellRectGetLabelMethodID = NULL;
@@ -147,14 +147,14 @@ int getWellRectangles(JNIEnv *env, jsize numWells, jobjectArray _wellRects,
         double x4 = env->CallDoubleMethod(wellRectJavaObj, wellRectGetCornerXMethodID, 3);
         double y4 = env->CallDoubleMethod(wellRectJavaObj, wellRectGetCornerYMethodID, 3);
 
-        cv::Point_<float> pt1(x1, y1);
-        cv::Point_<float> pt2(x2, y2);
-        cv::Point_<float> pt3(x3, y3);
-        cv::Point_<float> pt4(x4, y4);
-        Rect<float> rect(pt1, pt2, pt3, pt4);
+        double xmin = std::min(x1, std::min(x2, std::min(x3, x4)));
+        double ymin = std::min(y1, std::min(y2, std::min(y3, y4)));
 
-        std::unique_ptr<const WellRectangle<float> > wellRect(
-                new WellRectangle<float>(label, rect));
+        double xmax = std::max(x1, std::max(x2, std::max(x3, x4)));
+        double ymax = std::max(y1, std::max(y2, std::max(y3, y4)));
+
+        std::unique_ptr<const WellRectangle> wellRect(
+                new WellRectangle(label, xmin, ymin, xmax - xmin, ymax - ymin));
 
         VLOG(5) << *wellRect;
 
@@ -212,7 +212,7 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
     dmscanlib::DmScanLib::configLogging(static_cast<unsigned>(_verbose), false);
     std::unique_ptr<dmscanlib::DecodeOptions> decodeOptions =
             dmscanlib::DecodeOptions::getDecodeOptionsViaJni(env, _decodeOptions);
-    std::vector<std::unique_ptr<const dmscanlib::WellRectangle<float> > > wellRects;
+    std::vector<std::unique_ptr<const dmscanlib::WellRectangle> > wellRects;
 
     jsize numWells = env->GetArrayLength(_wellRects);
     int result = dmscanlib::jni::getWellRectangles(env, numWells, _wellRects, wellRects);

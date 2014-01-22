@@ -46,7 +46,7 @@ using namespace decoder;
 Decoder::Decoder(
         const Image & image,
         const DecodeOptions & _decodeOptions,
-        std::vector<std::unique_ptr<const WellRectangle<float> > > & _wellRects) :
+        std::vector<std::unique_ptr<const WellRectangle> > & _wellRects) :
         decodeOptions(_decodeOptions),
         wellRects(_wellRects),
         decodeSuccessful(false)
@@ -66,18 +66,17 @@ Decoder::Decoder(
 
     for (unsigned i = 0, n = wellRects.size(); i < n; ++i) {
         // ensure well rectangles are within the image's region
-        const WellRectangle<float> & wellRect = *wellRects[i];
+        const WellRectangle & wellRect = *wellRects[i];
 
-        std::unique_ptr<const BoundingBox<float> > wellBbox =
-                wellRect.getRectangle().getBoundingBox();
+        const cv::Rect & rect = wellRect.getRectangle();
 
-        VLOG(5) << "Decoder: well: " << *wellBbox;
+        VLOG(5) << "Decoder: well: " << rect;
 
-        if ((wellBbox->points[0].x >= width)
-                || (wellBbox->points[0].y >= height)
-                || (wellBbox->points[1].x >= width)
-                || (wellBbox->points[1].y >= height)) {
-            throw std::invalid_argument("well rectangle exeeds image dimensions: "
+        if ((rect.x >= width)
+                || (rect.y >= height)
+                || (rect.x + rect.width >= width)
+                || (rect.y + rect.height >= height)) {
+            throw std::invalid_argument("well rectangle exceeds image dimensions: "
                     + wellRect.getLabel());
         }
     }
@@ -92,31 +91,22 @@ int Decoder::decodeWellRects() {
     VLOG(3) << "decodeWellRects: numWellRects/" << wellRects.size();
 
     for (unsigned i = 0, n = wellRects.size(); i < n; ++i) {
-        const WellRectangle<float> & wellRect = *wellRects[i];
+        const WellRectangle & wellRect = *wellRects[i];
 
         VLOG(5) << "well rect: " << wellRect;
 
-        const Rect<float> & rectDouble = wellRect.getRectangle();
+        const cv::Rect & rect = wellRect.getRectangle();
 
-        cv::Point_<unsigned> pt1(
-                static_cast<unsigned>(rectDouble.corners[0].x),
-                static_cast<unsigned>(rectDouble.corners[0].y));
-        cv::Point_<unsigned> pt2(
-                static_cast<unsigned>(rectDouble.corners[1].x),
-                static_cast<unsigned>(rectDouble.corners[1].y));
-        cv::Point_<unsigned> pt3(
-                static_cast<unsigned>(rectDouble.corners[2].x),
-                static_cast<unsigned>(rectDouble.corners[2].y));
-        cv::Point_<unsigned> pt4(
-                static_cast<unsigned>(rectDouble.corners[3].x),
-                static_cast<unsigned>(rectDouble.corners[3].y));
+        std::unique_ptr<WellRectangle> convertedWellRect(
+                new WellRectangle(
+                        wellRect.getLabel().c_str(),
+                        rect.x,
+                        rect.y,
+                        rect.width,
+                        rect.height
+                ));
 
-        Rect<unsigned> rect(pt1, pt2, pt3, pt4);
-
-        std::unique_ptr<WellRectangle<unsigned> > convertedWellRect(
-                new WellRectangle<unsigned>(wellRect.getLabel().c_str(), rect));
-
-        wellDecoders[i] = std::unique_ptr < WellDecoder > (
+        wellDecoders[i] = std::unique_ptr<WellDecoder>(
                 new WellDecoder(*this, std::move(convertedWellRect)));
     }
     return decodeMultiThreaded();

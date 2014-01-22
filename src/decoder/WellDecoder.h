@@ -22,8 +22,9 @@ class PalletGrid;
 
 class WellDecoder: public ::OpenThreads::Thread {
 public:
-    WellDecoder(const Decoder & decoder,
-            std::unique_ptr<const WellRectangle<unsigned> > _wellRectangle);
+    WellDecoder(
+            const Decoder & decoder,
+            std::unique_ptr<const WellRectangle> _wellRectangle);
 
     virtual ~WellDecoder();
 
@@ -45,7 +46,7 @@ public:
 
     const cv::Rect getWellRectangle() const;
 
-    const cv::Rect getDecodedRectangle() const;
+    const std::vector<cv::Point> getDecodedRectangle() const;
 
     void setDecodeRectangle(const Rect<float> & rect, int scale);
 
@@ -55,10 +56,10 @@ public:
 
 private:
     const Decoder & decoder;
-    std::unique_ptr<const WellRectangle<unsigned> > wellRectangle;
+    std::unique_ptr<const WellRectangle> wellRectangle;
     std::unique_ptr<const Image> wellImage;
-    std::unique_ptr<const BoundingBox<unsigned> > boundingBox;
-    std::unique_ptr<const Rect<unsigned> > decodedRect;
+    cv::Rect boundingBox;
+    std::vector<cv::Point> decodedRect;
     std::string message;
 
     friend std::ostream & operator<<(std::ostream & os, const WellDecoder & m);

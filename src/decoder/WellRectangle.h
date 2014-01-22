@@ -12,24 +12,13 @@
 
 #include <ostream>
 #include <string>
+#include <opencv/cv.h>
 
 namespace dmscanlib {
 
-template<typename T>
-class WellRectangle;
-
-template<typename T>
-std::ostream & operator<<(std::ostream &os, const WellRectangle<T> & m) {
-    os << m.label << " - " << m.rect;
-    return os;
-}
-
-template<typename T>
 class WellRectangle {
 public:
-    WellRectangle(const char * label, const Rect<T> & rect);
-
-    WellRectangle(const char * label, BoundingBox<T> & bbox);
+    WellRectangle(const char * label, unsigned x, unsigned y, unsigned width, unsigned height);
 
     virtual ~WellRectangle() {
     }
@@ -38,22 +27,22 @@ public:
         return label;
     }
 
-    const Rect<T> & getRectangle() const {
+    const cv::Rect & getRectangle() const {
         return rect;
     }
 
-    const cv::Point_<T> & getCorner(unsigned cornerId) const;
-
-    const T getCornerX(unsigned cornerId) const;
-
-    const T getCornerY(unsigned cornerId) const;
 
 private:
     const std::string label;
-    const Rect<T> rect;
+    const cv::Rect rect;
 
-    friend std::ostream & operator<<<>(std::ostream & os, const WellRectangle<T> & m);
+    friend std::ostream & operator<<(std::ostream & os, const WellRectangle & m);
 };
+
+std::ostream & operator<<(std::ostream &os, const WellRectangle & m) {
+    os << m.label << " - " << m.rect;
+    return os;
+}
 
 } /* namespace */
 

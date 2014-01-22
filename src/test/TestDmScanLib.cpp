@@ -39,7 +39,7 @@ TEST(TestDmScanLib, invalidRects) {
 	FLAGS_v = 0;
 
     std::unique_ptr<DecodeOptions> decodeOptions = test::getDefaultDecodeOptions();
-    std::vector<std::unique_ptr<const WellRectangle<float> > > wellRects;
+    std::vector<std::unique_ptr<const WellRectangle> > wellRects;
 	DmScanLib dmScanLib(1);
     int result = dmScanLib.decodeImageWells("testImages/8x12/96tubes.bmp", *decodeOptions,
             wellRects);
@@ -49,12 +49,9 @@ TEST(TestDmScanLib, invalidRects) {
 TEST(TestDmScanLib, invalidImage) {
 	FLAGS_v = 0;
 
-	cv::Point_<float> pt1(0,0);
-	cv::Point_<float> pt2(10,10);
-	BoundingBox<float> bbox(pt1, pt2);
-	std::unique_ptr<const WellRectangle<float> > wrect(new WellRectangle<float>("label", bbox));
+	std::unique_ptr<const WellRectangle> wrect(new WellRectangle("label", 0,0,10,10));
 
-	std::vector<std::unique_ptr<const WellRectangle<float> > > wellRects;
+	std::vector<std::unique_ptr<const WellRectangle> > wellRects;
     wellRects.push_back(std::move(wrect));
 
     std::unique_ptr<DecodeOptions> decodeOptions = test::getDefaultDecodeOptions();
@@ -136,7 +133,7 @@ std::unique_ptr<DecodeTestResult> decodeFromInfo(
 
     if (testResult->infoFileValid) {
         testResult->totalTubes = imageInfo.getDecodedWellCount();
-        std::vector<std::unique_ptr<const WellRectangle<float> > > wellRects;
+        std::vector<std::unique_ptr<const WellRectangle> > wellRects;
         test::getWellRectsForBoundingBox(
                 imageInfo.getBoundingBox(),
                 imageInfo.getPalletRows(),
