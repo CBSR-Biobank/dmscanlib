@@ -20,9 +20,8 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "geometry.h"
-
 #include <memory>
+#include <opencv/cv.h>
 
 #if defined (WIN32) && ! defined(__MINGW32__)
 #   define NOMINMAX
@@ -51,10 +50,16 @@ public:
 
     virtual int getScannerCapability() = 0;
 
-    virtual HANDLE acquireImage(unsigned dpi, int brightness, int contrast,
-            const ScanRegion<float> & bbox) = 0;
+    virtual HANDLE acquireImage(
+            const unsigned dpi,
+            const int brightness,
+            const int contrast,
+            const cv::Rect_<float> & bbox) = 0;
 
-    virtual HANDLE acquireFlatbed(unsigned dpi, int brightness, int contrast) = 0;
+    virtual HANDLE acquireFlatbed(
+            const unsigned dpi,
+            const int brightness,
+            const int contrast) = 0;
 
     virtual void freeImage(HANDLE handle) = 0;
 

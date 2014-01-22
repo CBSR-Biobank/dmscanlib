@@ -8,7 +8,6 @@
 #ifndef IMAGEINFO_H_
 #define IMAGEINFO_H_
 
-#include "geometry.h"
 #include "decoder/WellRectangle.h"
 
 #include <string>
@@ -33,10 +32,9 @@ public:
         return imageFilename;
     }
 
-    const Rect<float> & getWellRect(const std::string & label);
     const std::string * getBarcodeMsg(const std::string & label);
 
-    const BoundingBox<unsigned> & getBoundingBox() const {
+    const cv::Rect & getBoundingBox() const {
         return *boundingBox;
     }
 
@@ -64,7 +62,7 @@ private:
     bool fileValid;
     bool imageFileValid;
     std::string imageFilename;
-    std::unique_ptr<const BoundingBox<unsigned> > boundingBox;
+    std::unique_ptr<const cv::Rect> boundingBox;
     std::map<const std::string, const std::string> wells;
     unsigned palletRows;
     unsigned palletCols;

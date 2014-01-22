@@ -10,7 +10,6 @@
  *  This file not meant to be included from outside this directory.
  */
 
-#include "geometry.h"
 #include "decoder/WellRectangle.h"
 
 #include <jni.h>
@@ -34,11 +33,9 @@ jobject createDecodeResultObject(JNIEnv * env, int resultCode);
 jobject createDecodeResultObject(JNIEnv * env, int resultCode,
         const std::map<std::string, const WellDecoder *> & wellDecoders);
 
-std::unique_ptr<BoundingBox<float> > getBoundingBox(
-        JNIEnv *env, jobject bboxJavaObj);
+std::unique_ptr<const cv::Rect> getBoundingBox(JNIEnv *env, jobject bboxJavaObj);
 
-std::unique_ptr<ScanRegion<float> > getScanRegion(
-        JNIEnv *env, jobject regionJavaObj);
+std::unique_ptr<const cv::Rect_<float> > getScanRegion(JNIEnv *env, jobject regionJavaObj);
 
 int getWellRectangles(JNIEnv *env, jsize numWells, jobjectArray _wellRects,
         std::vector<std::unique_ptr<const WellRectangle> > & wellRects);

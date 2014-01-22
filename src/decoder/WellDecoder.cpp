@@ -10,7 +10,6 @@
 #include "WellDecoder.h"
 #include "Image.h"
 #include "Decoder.h"
-#include "geometry.h"
 
 #include <sstream>
 #include <glog/logging.h>
@@ -27,11 +26,11 @@ WellDecoder::WellDecoder(
         std::unique_ptr<const WellRectangle> _wellRectangle) :
         decoder(_decoder),
         wellRectangle(std::move(_wellRectangle)),
-        boundingBox(wellRectangle->getRectangle()),
-        decodedRect()
+        rectangle(wellRectangle->getRectangle()),
+        decodedQuad()
 {
-    decodedRect.reserve(4);
-    VLOG(9) << "constructor: bounding box: " << boundingBox
+    decodedQuad.reserve(4);
+    VLOG(9) << "constructor: bounding box: " << rectangle
             << ", rect: " << wellRectangle->getRectangle();
 }
 
@@ -43,10 +42,10 @@ WellDecoder::~WellDecoder() {
  */
 void WellDecoder::run() {
     wellImage = decoder.getWorkingImage().crop(
-            boundingBox.x,
-            boundingBox.y,
-            boundingBox.width,
-            boundingBox.height);
+            rectangle.x,
+            rectangle.y,
+            rectangle.width,
+            rectangle.height);
     decoder.decodeWellRect(*wellImage, *this);
     if (!message.empty()) {
         VLOG(3) << "run: " << *this;
@@ -67,29 +66,19 @@ const cv::Rect WellDecoder::getWellRectangle() const {
 	return wellRectangle->getRectangle();
 }
 
-// the rectangle passed in is in coordinates of the cropped image,
-// the rectangle has to be translated into the coordinates of the overall
+// the quadrilateral passed in is in coordinates of the cropped image,
+// the quadrilateral has to be translated into the coordinates of the overall
 // image
-void WellDecoder::setDecodeRectangle(const Rect<float> & rect, int scale) {
-    std::unique_ptr<const Rect<float> > rectCopy;
-    if (scale == 1) {
-        rectCopy = std::unique_ptr < Rect<float> > (new Rect<float>(rect));
-    } else {
-        rectCopy = rect.scale(scale);
-    }
-
-    const cv::Point & bboxTl = boundingBox.tl();
+void WellDecoder::setDecodeQuad(const cv::Point2f (&points)[4]) {
+    const cv::Point & bboxTl = rectangle.tl();
     for (unsigned i = 0; i < 4; ++i) {
-        cv::Point pt(
-                static_cast<unsigned>(rectCopy->corners[i].x),
-                static_cast<unsigned>(rectCopy->corners[i].y));
-
-        decodedRect.push_back(pt + bboxTl);
+        const cv::Point pt = points[i];
+        decodedQuad.push_back(pt + bboxTl);
     }
 }
 
 std::ostream & operator<<(std::ostream &os, const WellDecoder & m) {
-    os << m.getLabel() << ": \"" << m.getMessage() << "\" " << m.boundingBox;
+    os << m.getLabel() << ": \"" << m.getMessage() << "\" " << m.rectangle;
     return os;
 }
 

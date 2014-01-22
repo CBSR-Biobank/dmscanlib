@@ -8,8 +8,6 @@
  *      Author: loyola
  */
 
-#include "geometry.h"
-
 #include <ostream>
 #include <string>
 #include <opencv/cv.h>

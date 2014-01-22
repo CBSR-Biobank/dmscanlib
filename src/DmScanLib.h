@@ -64,15 +64,38 @@ public:
     int isTwainAvailable();
 
     int selectSourceAsDefault();
+
     int getScannerCapability();
-    int scanImage(unsigned dpi, int brightness, int contrast,
-            const ScanRegion<float> & bbox, const char * filename);
-    int scanFlatbed(unsigned dpi, int brightness, int contrast,
+
+    int scanImage(
+            const unsigned dpi,
+            const int brightness,
+            const int contrast,
+            const unsigned x1,
+            const unsigned y1,
+            const unsigned x2,
+            const unsigned y2,
             const char * filename);
-    int scanAndDecode(unsigned dpi, int brightness, int contrast,
-            const ScanRegion<float> & region, const DecodeOptions & decodeOptions,
+
+    int scanFlatbed(
+            unsigned dpi,
+            int brightness,
+            int contrast,
+            const char * filename);
+
+    int scanAndDecode(
+            const unsigned dpi,
+            const int brightness,
+            const int contrast,
+            const unsigned x1,
+            const unsigned y1,
+            const unsigned x2,
+            const unsigned y2,
+            const DecodeOptions & decodeOptions,
             std::vector<std::unique_ptr<const WellRectangle> > & wellRects);
-    int decodeImageWells(const char * filename,
+
+    int decodeImageWells(
+            const char * filename,
             const DecodeOptions & decodeOptions,
             std::vector<std::unique_ptr<const WellRectangle> > & wellRects);
 

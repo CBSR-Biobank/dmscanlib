@@ -90,12 +90,7 @@ void DmScanLib::configLogging(unsigned level, bool useFile) {
 
     google::InitGoogleLogging(LIBRARY_NAME.c_str());
     FLAGS_v = level;
-
-#ifdef _VISUALC_
     FLAGS_stderrthreshold = (level > 0) ? google::GLOG_INFO : google::GLOG_ERROR;
-#else
-    FLAGS_stderrthreshold = (level > 0) ? google::INFO : google::ERROR;
-#endif
 
     FLAGS_logtostderr = !useFile;
     FLAGS_alsologtostderr = false;
@@ -103,17 +98,27 @@ void DmScanLib::configLogging(unsigned level, bool useFile) {
     loggingInitialized = true;
 }
 
-int DmScanLib::scanImage(unsigned dpi, int brightness, int contrast,
-        const ScanRegion<float> & bbox, const char * filename) {
+int DmScanLib::scanImage(
+        const unsigned dpi,
+        const int brightness,
+        const int contrast,
+        const unsigned x1,
+        const unsigned y1,
+        const unsigned x2,
+        const unsigned y2,
+        const char * filename) {
     if (filename == NULL) {
         throw std::invalid_argument("filename is null");
     }
 
-    VLOG(1) << "scanImage: dpi/" << dpi << " brightness/" << brightness
-                      << " contrast/" << contrast << bbox
-                      << " filename/" << filename;
+    cv::Rect region(x1, y1, x2 - x1, y2 - y1);
 
-    HANDLE h = imgScanner->acquireImage(dpi, brightness, contrast, bbox);
+    VLOG(1) << "scanImage: dpi/" << dpi
+            << " brightness/" << brightness
+            << " contrast/" << contrast << region
+            << " filename/" << filename;
+
+    HANDLE h = imgScanner->acquireImage(dpi, brightness, contrast, region);
     if (h == NULL) {
         VLOG(1) << "could not acquire image";
         return imgScanner->getErrorCode();
@@ -144,12 +149,23 @@ int DmScanLib::scanFlatbed(unsigned dpi, int brightness, int contrast,
     return SC_SUCCESS;
 }
 
-int DmScanLib::scanAndDecode(unsigned dpi, int brightness, int contrast,
-        const ScanRegion<float> & region, const DecodeOptions & decodeOptions,
+int DmScanLib::scanAndDecode(
+        const unsigned dpi,
+        const int brightness,
+        const int contrast,
+        const unsigned x1,
+        const unsigned y1,
+        const unsigned x2,
+        const unsigned y2,
+        const DecodeOptions & decodeOptions,
         std::vector<std::unique_ptr<const WellRectangle> > & wellRects) {
-    VLOG(3) << "scanAndDecode: dpi/" << dpi << " brightness/" << brightness
-                      << " contrast/" << contrast
-                      << " " << region << " " << decodeOptions;
+
+    cv::Rect region(x1, y1, x2 - x1, y2 - y1);
+
+    VLOG(3) << "scanAndDecode: dpi/" << dpi
+            << " brightness/" << brightness
+            << " contrast/" << contrast
+            << " " << region << " " << decodeOptions;
 
     HANDLE h;
     int result;
@@ -234,7 +250,7 @@ void DmScanLib::writeDecodedImage(
     for (std::map<std::string, const WellDecoder *>::const_iterator ii = decodedWells.begin();
             ii != decodedWells.end(); ++ii) {
         const WellDecoder & decodedWell = *(ii->second);
-        const std::vector<cv::Point> & bboxDecoded = decodedWell.getDecodedRectangle();
+        const std::vector<cv::Point> & bboxDecoded = decodedWell.getDecodedQuad();
 
         decodedImage.drawLine(bboxDecoded[0], bboxDecoded[1], colorRed);
         decodedImage.drawLine(bboxDecoded[1], bboxDecoded[2], colorRed);

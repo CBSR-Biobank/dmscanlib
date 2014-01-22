@@ -201,8 +201,11 @@ void ImgScannerImpl::setFloatToIntPair(const double f, short & whole,
  *
  *	Grab an image from the twain source and convert it to the dmtxImage format
  */
-HANDLE ImgScannerImpl::acquireImage(unsigned dpi, int brightness, int contrast,
-                                    const ScanRegion<float> & scanRegion) {
+HANDLE ImgScannerImpl::acquireImage(
+        const unsigned dpi,
+        const int brightness,
+        const int contrast,
+        const cv::Rect_<float> & bbox) {
    CHECK_NOTNULL(g_hLib);
 
    TW_UINT16 rc;

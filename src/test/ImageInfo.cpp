@@ -50,12 +50,8 @@ ImageInfo::ImageInfo(const std::string & fname) :
                 unsigned width = stringToUnsigned(tokens[2]);
                 unsigned height = stringToUnsigned(tokens[3]);
 
-                cv::Point_<unsigned> pt1(x, y);
-                cv::Point_<unsigned> pt2(width, height);
-                BoundingBox<unsigned> bbox(pt1, pt2);
-
-                boundingBox = std::unique_ptr<const BoundingBox<unsigned> >(
-                        new BoundingBox<unsigned>(pt1, pt2));
+                boundingBox = std::unique_ptr<const cv::Rect>(
+                        new cv::Rect(x, y, width, height));
             } else if (linecnt == 2) {
                 if (tokens.size() != 2) {
                     throw std::logic_error("two tokens expected");

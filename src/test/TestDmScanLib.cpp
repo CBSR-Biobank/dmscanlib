@@ -160,9 +160,9 @@ std::unique_ptr<DecodeTestResult> decodeFromInfo(
 }
 
 TEST(TestDmScanLib, decodeFromInfo) {
-    FLAGS_v = 2;
+    FLAGS_v = 3;
 
-    std::string infoFilename("testImageInfo/8x12/hardscan.nfo");
+    std::string infoFilename("testImageInfo/8x12/96tubes.nfo");
 
     std::unique_ptr<DecodeOptions> defaultDecodeOptions = test::getDefaultDecodeOptions();
     DecodeOptions decodeOptions(
@@ -182,6 +182,11 @@ TEST(TestDmScanLib, decodeFromInfo) {
     EXPECT_EQ(SC_SUCCESS, testResult->decodeResult);
     if (testResult->decodeResult == SC_SUCCESS) {
         EXPECT_TRUE(testResult->totalDecoded > 0);
+
+        VLOG(1) << "total: " << testResult->totalTubes
+                << ", decoded: " << testResult->totalDecoded
+                << ", time taken: " << testResult->decodeTime;
+
     }
 }
 
@@ -224,8 +229,8 @@ TEST(TestDmScanLib, decodeAllImages) {
                     << testResult->decodeTime;
 
             VLOG(1) << "decoded: " << testResult->totalDecoded
-                              << ", total: " << testResult->totalTubes
-                              << ", time taken: " << testResult->decodeTime;
+                    << ", total: " << testResult->totalTubes
+                    << ", time taken: " << testResult->decodeTime;
 
             totalDecoded += testResult->totalDecoded;
             totalTubes += testResult->totalTubes;

@@ -2,7 +2,6 @@
 #define __INC_PALLET_CELL_H
 
 #include "WellRectangle.h"
-#include "geometry.h"
 
 #include <dmtx.h>
 #include <opencv/cv.h>
@@ -32,8 +31,6 @@ public:
 
     bool isFinished();
 
-    void decodeCallback(std::string & decodedMsg, cv::Point_<unsigned> (&corners)[4]);
-
     const std::string & getLabel() const {
         return wellRectangle->getLabel();
     }
@@ -46,11 +43,11 @@ public:
 
     const cv::Rect getWellRectangle() const;
 
-    const std::vector<cv::Point> & getDecodedRectangle() const {
-        return decodedRect;
+    const std::vector<cv::Point> & getDecodedQuad() const {
+        return decodedQuad;
     }
 
-    void setDecodeRectangle(const Rect<float> & rect, int scale);
+    void setDecodeQuad(const cv::Point2f (&points)[4]);
 
     const bool getDecodeValid() {
         return message.empty();
@@ -60,8 +57,8 @@ private:
     const Decoder & decoder;
     std::unique_ptr<const WellRectangle> wellRectangle;
     std::unique_ptr<const Image> wellImage;
-    cv::Rect boundingBox;
-    std::vector<cv::Point> decodedRect;
+    cv::Rect rectangle;
+    std::vector<cv::Point> decodedQuad;
     std::string message;
 
     friend std::ostream & operator<<(std::ostream & os, const WellDecoder & m);

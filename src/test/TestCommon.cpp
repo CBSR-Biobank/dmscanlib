@@ -17,6 +17,7 @@
 
 #include <algorithm>
 #include <opencv/cv.h>
+#include <glog/logging.h>
 
 #ifdef _VISUALC_
 #   pragma warning(disable : 4996)
@@ -109,31 +110,27 @@ bool getTestImageInfoFilenames(std::string dir, std::vector<std::string> & filen
 }
 
 void getWellRectsForBoundingBox(
-        const BoundingBox<unsigned> & bbox,
+        const cv::Rect & bbox,
         const unsigned rows,
         const unsigned cols,
         std::vector<std::unique_ptr<const WellRectangle> > & wellRects) {
 
-    double wellWidth = bbox.getWidth() / static_cast<float>(cols);
-    double wellHeight = bbox.getHeight() / static_cast<float>(rows);
+    float wellWidth = bbox.width / static_cast<float>(cols);
+    float wellHeight = bbox.height / static_cast<float>(rows);
 
-    cv::Point_<float> startPoint(
-            static_cast<float>(bbox.points[0].x),
-            static_cast<float>(bbox.points[0].y));
     cv::Point2f horTranslation(static_cast<float>(wellWidth), 0);
     cv::Point2f verTranslation(0, static_cast<float>(wellHeight));
 
-    // round off the bounding box so image dimensions are not exceeded
-    cv::Size2f pt2(0.999 * wellWidth, 0.999 * wellHeight);
+    // round off the cell size so image dimensions are not exceeded
+    cv::Size2f cellSize(0.999 * wellWidth, 0.999 * wellHeight);
 
-    float verOffset = 0;
-    float horOffset = 0;
+    float horOffset;
+    float verOffset = bbox.y;
 
     for (unsigned row = 0; row < rows; ++row) {
-        horOffset = 0;
+        horOffset = bbox.x;
 
         for (unsigned col = 0; col < cols; ++col) {
-
             std::ostringstream label;
             label << (char) ('A' + row) << cols - col;
 
@@ -142,9 +139,9 @@ void getWellRectsForBoundingBox(
                             label.str().c_str(),
                             horOffset,
                             verOffset,
-                            pt2.width,
-                            pt2.height));
-            VLOG(3) << *wellRect;
+                            cellSize.width,
+                            cellSize.height));
+            VLOG(3) << "getWellRectsForBoundingBox: " << *wellRect;
             wellRects.push_back(std::move(wellRect));
 
             horOffset += wellWidth;
@@ -175,10 +172,7 @@ int decodeImage(std::string fname, DmScanLib & dmScanLib, unsigned rows, unsigne
     }
 
     cv::Size size = image.size();
-
-    cv::Point_<unsigned> pt1(0, 0);
-    cv::Point_<unsigned> pt2(size.width, size.height);
-    BoundingBox<unsigned> bbox(pt1, pt2);
+    cv::Rect bbox(0, 0, size.width, size.height);
 
     getWellRectsForBoundingBox(bbox, rows, cols, wellRects);
 
@@ -187,25 +181,16 @@ int decodeImage(std::string fname, DmScanLib & dmScanLib, unsigned rows, unsigne
 }
 
 // bbox here has to start at (0,0)
-std::unique_ptr<const BoundingBox<float>> getWellsBoundingBox(
-        const BoundingBox<float> & bbox) {
-    const cv::Point_<float> origin(0, 0);
-    const cv::Point_<float> bboxPt2(
-            bbox.points[1].x - bbox.points[0].x,
-            bbox.points[1].y - bbox.points[0].y);
-
-    return std::unique_ptr<const BoundingBox<float>>(new BoundingBox<float>(
-            origin, bboxPt2));
+std::unique_ptr<const cv::Rect> getWellsBoundingBox(const cv::Rect & bbox) {
+    cv::Size size = bbox.size();
+    return std::unique_ptr<const cv::Rect>(new cv::Rect(0, 0, size.width, size.height));
 }
 
-std::unique_ptr<const ScanRegion<float>> getWiaBoundingBox(
-        const ScanRegion<float> & bbox) {
-    const cv::Point_<float> bboxPt2(
-            bbox.points[1].x - bbox.points[0].x,
-            bbox.points[1].y - bbox.points[0].y);
+std::unique_ptr<const cv::Rect_<float>> getWiaBoundingBox(const cv::Rect_<float> & bbox) {
+    cv::Size size = bbox.size();
 
-    return std::unique_ptr<const ScanRegion<float>>(new ScanRegion<float>(
-            bbox.points[0], bboxPt2));
+    return std::unique_ptr<const cv::Rect_<float>>(new cv::Rect_<float>(
+            bbox.x, bbox.y, size.width, size.height));
 }
 
 } /* namespace test */

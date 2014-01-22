@@ -24,7 +24,7 @@ namespace test {
 bool getTestImageInfoFilenames(std::string dir, std::vector<std::string> & filenames);
 
 void getWellRectsForBoundingBox(
-        const BoundingBox<unsigned> & bbox,
+        const cv::Rect & bbox,
         const unsigned rows,
         const unsigned cols,
         std::vector<std::unique_ptr<const WellRectangle> > & wellRects);
@@ -33,11 +33,8 @@ std::unique_ptr<DecodeOptions> getDefaultDecodeOptions();
 
 int decodeImage(std::string fname, DmScanLib & dmScanLib, unsigned rows, unsigned cols);
 
-std::unique_ptr<const BoundingBox<float>> getWellsBoundingBox(
-        const BoundingBox<float> & bbox);
-
-std::unique_ptr<const ScanRegion<float>> getWiaBoundingBox(
-        const ScanRegion<float> & bbox);
+std::unique_ptr<const cv::Rect_<float>> getWiaBoundingBox(
+        const cv::Rect_<float> & bbox);
 
 } /* namespace */
 

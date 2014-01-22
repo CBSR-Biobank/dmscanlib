@@ -7,7 +7,6 @@
 #include "DmScanLibJni.h"
 #include "DmScanLibJniInternal.h"
 #include "DmScanLib.h"
-#include "geometry.h"
 #include "decoder/DecodeOptions.h"
 #include "decoder/WellDecoder.h"
 
@@ -166,7 +165,7 @@ int getWellRectangles(JNIEnv *env, jsize numWells, jobjectArray _wellRects,
     return 1;
 }
 
-std::unique_ptr<ScanRegion<float> > getScanRegion(JNIEnv *env, jobject regionJavaObj) {
+std::unique_ptr<const cv::Rect_<float> > getScanRegion(JNIEnv *env, jobject regionJavaObj) {
     CHECK_NOTNULL(regionJavaObj);
     jclass regionJavaClass = env->GetObjectClass(regionJavaObj);
 
@@ -188,8 +187,7 @@ std::unique_ptr<ScanRegion<float> > getScanRegion(JNIEnv *env, jobject regionJav
             env->CallDoubleMethod(regionJavaObj, getCornerXMethodID, 1),
             env->CallDoubleMethod(regionJavaObj, getCornerYMethodID, 1));
 
-    return std::unique_ptr < ScanRegion<float> > (new ScanRegion<float>(
-            pt0, pt1));
+    return std::unique_ptr<cv::Rect_<float> >(new cv::Rect_<float>(pt0, pt1));
 }
 
 } /* namespace */
