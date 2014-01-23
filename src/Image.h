@@ -30,7 +30,7 @@ class Image {
 public:
     Image(const std::string & filename);
     Image(HANDLE handle);
-    Image(cv::Mat that);
+    Image(const cv::Mat & that);
     virtual ~Image();
 
     const bool isValid() const {
@@ -42,11 +42,11 @@ public:
     }
 
     const cv::Mat getOriginalImage() const {
-        return opencvImage;
+        return image;
     }
 
     const cv::Size size() const {
-        return opencvImage.size();
+        return image.size();
     }
 
     std::unique_ptr<const Image> grayscale() const;
@@ -73,7 +73,8 @@ private:
 
     bool valid;
     const std::string filename;
-    cv::Mat opencvImage;
+    IplImage * opencvImage;
+    cv::Mat image;
 };
 
 } /* namespace */

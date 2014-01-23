@@ -163,17 +163,16 @@ void Decoder::decodeWellRect(const Image & wellRectImage, WellDecoder & wellDeco
     DmtxImage * dmtxImage = wellRectImage.dmtxImage();
     CHECK_NOTNULL(dmtxImage);
 
-    VLOG(3) << "decodeWellRect: " << wellDecoder;
-
     std::unique_ptr<DmtxDecodeHelper> dec =
             createDmtxDecode(dmtxImage, wellDecoder, decodeOptions.shrink);
     decodeWellRect(wellDecoder, dec->getDecode());
+    VLOG(5) << "decodeWellRect: " << wellDecoder;
 
     if (wellDecoder.getMessage().empty()) {
-        VLOG(3) << "decodeWellRect: second attempt " << wellDecoder;
         dec = std::move(createDmtxDecode(
                 dmtxImage, wellDecoder, decodeOptions.shrink + 1));
         decodeWellRect(wellDecoder, dec->getDecode());
+        VLOG(5) << "decodeWellRect: second attempt " << wellDecoder;
     }
     dmtxImageDestroy(&dmtxImage);
 }

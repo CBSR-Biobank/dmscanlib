@@ -141,8 +141,14 @@ void getWellRectsForBoundingBox(
                             verOffset,
                             cellSize.width,
                             cellSize.height));
-            VLOG(3) << "getWellRectsForBoundingBox: " << *wellRect;
+            const cv::Rect & wRect = wellRect->getRectangle();
+            if (!bbox.contains(wRect.tl()) || !bbox.contains(wRect.br())) {
+                throw std::logic_error("well rectangle outside image: " + label.str());
+            }
+
+            VLOG(5) << "getWellRectsForBoundingBox: " << *wellRect;
             wellRects.push_back(std::move(wellRect));
+
 
             horOffset += wellWidth;
         }

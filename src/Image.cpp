@@ -31,33 +31,35 @@ const cv::Mat Image::BLUR_KERNEL(3, 3, CV_64F, (void *) &Image::BLUR_KERNEL_DATA
 const cv::Mat Image::BLANK_KERNEL(3, 3, CV_64F, (void *) &Image::BLANK_KERNEL_DATA);
 
 Image::Image(const std::string & _filename) : filename(_filename) {
-    opencvImage = cvLoadImageM(filename.c_str());
+    opencvImage = cvLoadImage(filename.c_str());
+    image = cv::Mat(opencvImage);
 
-    valid = (opencvImage.data != NULL);
+    valid = (image.data != NULL);
 
     if (valid) {
-        VLOG(5) << "Image::Image: width: " << opencvImage.cols
-                << ", height: " << opencvImage.rows
-                << ", depth: " << opencvImage.elemSize()
-                << ", step: " << opencvImage.step1();
+        VLOG(5) << "Image::Image: width: " << image.cols
+                << ", height: " << image.rows
+                << ", depth: " << image.elemSize()
+                << ", step: " << image.step1();
     }
 }
 
-Image::Image(cv::Mat that) : filename("") {
+Image::Image(const cv::Mat & that) : filename(""), opencvImage(NULL) {
     if (that.data == NULL) {
         throw std::invalid_argument("parameter is null");
     }
 
-    opencvImage = that;
+    opencvImage = NULL;
+    image = that;
     valid = true;
 
-    VLOG(5) << "Image::Image: width: " << opencvImage.cols
-            << ", height: " << opencvImage.rows
-            << ", depth: " << opencvImage.elemSize()
-            << ", step: " << opencvImage.step1();
+    VLOG(5) << "Image::Image: width: " << image.cols
+            << ", height: " << image.rows
+            << ", depth: " << image.elemSize()
+            << ", step: " << image.step1();
 }
 
-Image::Image(HANDLE handle) : filename("") {
+Image::Image(HANDLE handle) : filename(""), opencvImage(NULL) {
 #ifdef WIN32
     BITMAPINFOHEADER *dibHeaderPtr = (BITMAPINFOHEADER *) GlobalLock(handle);
 
@@ -99,7 +101,7 @@ Image::Image(HANDLE handle) : filename("") {
 	}
 	
 	cvSetData(cv_image, pixels, cv_image->widthStep);
-	cv::flip(cv::Mat(cv_image), opencvImage, 0);
+	cv::flip(cv::Mat(cv_image), image, 0);
 
     valid = true;
 #else
@@ -108,23 +110,25 @@ Image::Image(HANDLE handle) : filename("") {
 }
 
 Image::~Image() {
+    if (opencvImage != NULL) {
+        cvReleaseImage(&opencvImage);
+    }
 }
 
 std::unique_ptr<const Image> Image::grayscale() const {
-    cv::Mat greyscale(opencvImage.size(), opencvImage.type());
-    cv::cvtColor(opencvImage, greyscale, CV_BGR2GRAY);
+    cv::Mat greyscale(image.size(), image.type());
+    cv::cvtColor(image, greyscale, CV_BGR2GRAY);
     return std::unique_ptr<const Image>(new Image(greyscale));
 }
 
+// from: http://opencv-help.blogspot.ca/2013/01/how-to-sharpen-image-using-opencv.html
 std::unique_ptr<const Image> Image::applyFilters() const {
-    //cv::Mat blurredImage;
+    cv::Mat blurredImage;
     cv::Mat enhancedImage;
-    cv::Point anchor(-1, -1);
-    double delta = 0;
-    int ddepth = -1;
 
-    //cv::filter2D(opencvImage, blurredImage, ddepth , Image::BLUR_KERNEL, anchor, delta);
-    cv::filter2D(opencvImage, enhancedImage, ddepth , Image::BLANK_KERNEL, anchor, delta);
+
+    cv::GaussianBlur(image, blurredImage, cv::Size(0, 0), 3);
+    cv::addWeighted(image, 1.5, blurredImage, -0.5, 0, enhancedImage);
     return std::unique_ptr<const Image>(new Image(enhancedImage));
 }
 
@@ -135,13 +139,13 @@ std::unique_ptr<const Image> Image::applyFilters() const {
  * NOTE: The caller must detroy the image.
  */
 DmtxImage * Image::dmtxImage() const {
-    if (opencvImage.elemSize() != 1) {
+    if (image.elemSize() != 1) {
         throw std::logic_error("invalid bytes per pixel in image");
     }
 
     DmtxImage * dmtxImage = dmtxImageCreate(
-            opencvImage.data, opencvImage.cols, opencvImage.rows, DmtxPack8bppK);
-    dmtxImageSetProp(dmtxImage, DmtxPropRowPadBytes, opencvImage.step1() - opencvImage.cols);
+            image.data, image.cols, image.rows, DmtxPack8bppK);
+    dmtxImageSetProp(dmtxImage, DmtxPropRowPadBytes, image.step1() - image.cols);
     return dmtxImage;
 }
 
@@ -151,20 +155,20 @@ std::unique_ptr<const Image> Image::crop(
         unsigned width,
         unsigned height) const {
     cv::Rect roi(x, y, width, height);
-    cv::Mat croppedImage = opencvImage(roi);
+    cv::Mat croppedImage = image(roi);
     return std::unique_ptr<Image>(new Image(croppedImage));
 }
 
 void Image::drawRectangle(const cv::Rect & rect, const cv::Scalar & color) {
-    cv::rectangle(opencvImage, rect, color);
+    cv::rectangle(image, rect, color);
 }
 
 void Image::drawLine(const cv::Point & pt1, const cv::Point & pt2, const cv::Scalar & color) {
-    cv::line(opencvImage, pt1, pt2, color, 2);
+    cv::line(image, pt1, pt2, color, 2);
 }
 
 int Image::write(const std::string & filename) const {
-    IplImage saveImage = opencvImage;
+    IplImage saveImage = image;
     int result = cvSaveImage(filename.c_str(), &saveImage);
     return result;
 }
