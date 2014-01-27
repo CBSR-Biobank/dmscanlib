@@ -228,20 +228,15 @@ HANDLE ImgScannerImpl::acquireImage(
       errorCode = SC_FAIL;
       return NULL;
    }
-   if (!(((scannerCapability & CAP_DPI_300) && dpi == 300)
-         || ((scannerCapability & CAP_DPI_400) && dpi == 400)
-         || ((scannerCapability & CAP_DPI_600) && dpi == 600))) {
-	  scannerSourceDeinit(hwnd, srcID);
-      errorCode = SC_INVALID_DPI;
-      return NULL;
-   }
 
    double physicalWidth = getPhysicalDimensions(srcID, ICAP_PHYSICALWIDTH);
    double physicalHeight = getPhysicalDimensions(srcID, ICAP_PHYSICALHEIGHT);
 
-   if ((scanRegion.points[0].x > physicalWidth) || (scanRegion.points[0].y > physicalHeight)
-	   || (scanRegion.points[0].x + scanRegion.points[1].x > physicalWidth) 
-	   || (scanRegion.points[0].y + scanRegion.points[1].y > physicalHeight)) {
+   cv::Rect_<float> flatbedRect(0, 0, 
+	   static_cast<float>(physicalWidth),
+	   static_cast<float>(physicalHeight));
+
+   if (!flatbedRect.contains(bbox.tl()) && !flatbedRect.contains(bbox.br()))  {
 		   throw std::invalid_argument("bounding box exeeds image dimensions");
    }
 
@@ -267,15 +262,14 @@ HANDLE ImgScannerImpl::acquireImage(
    VLOG(3) << "acquireImage: source/\"" << srcID.ProductName << "\""
            << " brightness/" << brightness
            << " constrast/" << contrast
-           << " " << scanRegion;
+           << " " << bbox;
 
    setCapOneValue(&srcID, ICAP_UNITS, TWTY_UINT16, TWUN_INCHES);
    TW_IMAGELAYOUT layout;
-   setFloatToIntPair(scanRegion.points[0].x, layout.Frame.Left.Whole, layout.Frame.Left.Frac);
-   setFloatToIntPair(scanRegion.points[0].y, layout.Frame.Top.Whole, layout.Frame.Top.Frac);
-   setFloatToIntPair(scanRegion.points[1].x, layout.Frame.Right.Whole, layout.Frame.Right.Frac);
-   setFloatToIntPair(scanRegion.points[1].y, layout.Frame.Bottom.Whole,
-                     layout.Frame.Bottom.Frac);
+   setFloatToIntPair(bbox.x, layout.Frame.Left.Whole, layout.Frame.Left.Frac);
+   setFloatToIntPair(bbox.y, layout.Frame.Top.Whole, layout.Frame.Top.Frac);
+   setFloatToIntPair(bbox.x + bbox.width, layout.Frame.Right.Whole, layout.Frame.Right.Frac);
+   setFloatToIntPair(bbox.y + bbox.height, layout.Frame.Bottom.Whole, layout.Frame.Bottom.Frac);
    layout.DocumentNumber = 1;
    layout.PageNumber = 1;
    layout.FrameNumber = 1;
@@ -414,11 +408,10 @@ HANDLE ImgScannerImpl::acquireFlatbed(unsigned dpi, int brightness, int contrast
    double physicalHeight = getPhysicalDimensions(srcID, ICAP_PHYSICALHEIGHT);
 
    scannerSourceDeinit(hwnd, srcID);
-   cv::Point_<float> topLeft(0, 0);
-   cv::Point_<float> bottomRight(physicalWidth, physicalHeight);
-   ScanRegion<float> scanRegion(topLeft, bottomRight);
-
-   return acquireImage(dpi, brightness, contrast, scanRegion);
+   cv::Rect_<float> scanRect(0, 0, 
+	   static_cast<float>(physicalWidth),
+	   static_cast<float>(physicalHeight));
+   return acquireImage(dpi, brightness, contrast, scanRect);
 }
 
 BOOL ImgScannerImpl::setCapOneValue(TW_IDENTITY * srcId, unsigned Cap,

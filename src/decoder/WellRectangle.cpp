@@ -5,6 +5,8 @@
  *      Author: loyola
  */
 
+#define _CRT_SECURE_NO_DEPRECATE
+
 #include "WellRectangle.h"
 
 #include <glog/logging.h>

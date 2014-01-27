@@ -102,16 +102,16 @@ int DmScanLib::scanImage(
         const unsigned dpi,
         const int brightness,
         const int contrast,
-        const unsigned x1,
-        const unsigned y1,
-        const unsigned x2,
-        const unsigned y2,
+            const float x1,
+            const float y1,
+            const float x2,
+            const float y2,
         const char * filename) {
     if (filename == NULL) {
         throw std::invalid_argument("filename is null");
     }
 
-    cv::Rect region(x1, y1, x2 - x1, y2 - y1);
+    cv::Rect_<float> region(x1, y1, x2 - x1, y2 - y1);
 
     VLOG(1) << "scanImage: dpi/" << dpi
             << " brightness/" << brightness
@@ -153,14 +153,14 @@ int DmScanLib::scanAndDecode(
         const unsigned dpi,
         const int brightness,
         const int contrast,
-        const unsigned x1,
-        const unsigned y1,
-        const unsigned x2,
-        const unsigned y2,
+            const float x1,
+            const float y1,
+            const float x2,
+            const float y2,
         const DecodeOptions & decodeOptions,
         std::vector<std::unique_ptr<const WellRectangle> > & wellRects) {
 
-    cv::Rect region(x1, y1, x2 - x1, y2 - y1);
+    cv::Rect_<float> region(x1, y1, x2 - x1, y2 - y1);
 
     VLOG(3) << "scanAndDecode: dpi/" << dpi
             << " brightness/" << brightness

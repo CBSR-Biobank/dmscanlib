@@ -28,6 +28,7 @@
 #include <iostream>
 #include <fstream>
 
+#define GLOG_NO_ABBREVIATED_SEVERITIES
 #include <glog/logging.h>
 #include <gtest/gtest.h>
 

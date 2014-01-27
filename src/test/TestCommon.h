@@ -33,9 +33,6 @@ std::unique_ptr<DecodeOptions> getDefaultDecodeOptions();
 
 int decodeImage(std::string fname, DmScanLib & dmScanLib, unsigned rows, unsigned cols);
 
-std::unique_ptr<const cv::Rect_<float>> getWiaBoundingBox(
-        const cv::Rect_<float> & bbox);
-
 } /* namespace */
 
 } /* namespace */

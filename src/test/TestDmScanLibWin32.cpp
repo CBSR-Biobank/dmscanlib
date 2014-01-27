@@ -25,6 +25,7 @@
 #   include <dirent.h>
 #endif
 
+#define GLOG_NO_ABBREVIATED_SEVERITIES
 #include <glog/logging.h>
 #include <gtest/gtest.h>
 
@@ -55,13 +56,7 @@ TEST(TestDmScanLibWin32, getScannerCapability) {
 TEST(TestDmScanLibWin32, scanImage) {
 	FLAGS_v = 3;
 
-	const cv::Point_<float> pt1(0.400, 0.265);
-	const cv::Point_<float> pt2(4.566, 3.020); 
-	const ScanRegion<float> scanRegion(pt1, pt2);
-	std::unique_ptr<const BoundingBox<float> > wellsBbox(
-		test::getWellsBoundingBox(*scanRegion.toBoundingBox()));
-	std::unique_ptr<const ScanRegion<float> > scanBbox(
-		test::getWiaBoundingBox(scanRegion));
+	const cv::Rect_<float> scanBbox(0.400f, 0.265f, 4.166f, 2.755f); 
 	std::unique_ptr<DecodeOptions> decodeOptions = 
 		test::getDefaultDecodeOptions();
 
@@ -71,29 +66,35 @@ TEST(TestDmScanLibWin32, scanImage) {
 
 	DmScanLib dmScanLib(1);
 	const unsigned dpi = 300;
-	int result = dmScanLib.scanImage(dpi, 0, 0, *scanBbox, fname.c_str());
+	int result = dmScanLib.scanImage(
+		dpi, 
+		0, 
+		0, 
+		scanBbox.x,
+		scanBbox.y, 
+		scanBbox.x + scanBbox.width,
+		scanBbox.y + scanBbox.height, 
+		fname.c_str());
 
 	EXPECT_EQ(SC_SUCCESS, result);
-	Image dib(fname.c_str());
+	Image image(fname.c_str());
+	cv::Size size = image.size();
 
-	BoundingBox<float> expectedImageSize(pt1, pt2);
-
-	cv::Size size = dib.size();
-
-	EXPECT_EQ(static_cast<unsigned>(expectedImageSize.getWidth() * dpi), size.width);
-	EXPECT_EQ(static_cast<unsigned>(expectedImageSize.getHeight() * dpi), size.height);
+	EXPECT_EQ(static_cast<unsigned>(scanBbox.width * dpi), size.width);
+	EXPECT_EQ(static_cast<unsigned>(scanBbox.height * dpi), size.height);
 }
 
 TEST(TestDmScanLibWin32, scanImageBadParams) {
 	FLAGS_v = 3;	
 
-	const cv::Point_<float> pt1(0.400, 0.265);
-	const cv::Point_<float> pt2(4.566, 3.020); 
-	const ScanRegion<float> scanRegion(pt1, pt2);
-	std::unique_ptr<const BoundingBox<float> > wellsBbox(
-		test::getWellsBoundingBox(*scanRegion.toBoundingBox()));
-	std::unique_ptr<const ScanRegion<float> > scanBbox(
-		test::getWiaBoundingBox(scanRegion));
+	unsigned dpi = 300;
+	const cv::Rect_<float> scanBbox(0.400f, 0.265f, 4.166f, 2.755f); 
+	const cv::Rect wellsBbox(
+		0,
+		0,
+		static_cast<unsigned>(scanBbox.width * dpi),
+		static_cast<unsigned>(scanBbox.height * dpi)
+		);
 	std::unique_ptr<DecodeOptions> decodeOptions = 
 		test::getDefaultDecodeOptions();
 
@@ -102,25 +103,55 @@ TEST(TestDmScanLibWin32, scanImageBadParams) {
 	DeleteFile(fnamew.c_str());
 
 	DmScanLib dmScanLib(1);
-    ASSERT_THROW(dmScanLib.scanImage(300, 0, 0, *scanBbox, NULL), std::invalid_argument);
+	ASSERT_THROW(dmScanLib.scanImage(
+		dpi, 
+		0, 
+		0, 
+		scanBbox.x,
+		scanBbox.y, 
+		scanBbox.x + scanBbox.width,
+		scanBbox.y + scanBbox.height, 
+		NULL), 
+		std::invalid_argument);
 
-	int result = dmScanLib.scanImage(0, 0, 0, *scanBbox, fname.c_str());
+	int result = dmScanLib.scanImage(
+		0, 
+		0, 
+		0, 
+		scanBbox.x,
+		scanBbox.y, 
+		scanBbox.x + scanBbox.width,
+		scanBbox.y + scanBbox.height, 
+		fname.c_str());
 	EXPECT_EQ(SC_INVALID_DPI, result);
 }
 
 TEST(TestDmScanLibWin32, scanImageInvalidDpi) {
 	FLAGS_v = 3;
 
-	const cv::Point_<float> originPt(0, 0);
-	const cv::Point_<float> pt1(0.400, 0.265);
-
+	const cv::Rect_<float> scanBbox(0.400f, 0.265f, 4.166f, 2.755f); 
 	DmScanLib dmScanLib(1);
-	ScanRegion<float> scanRegion(originPt, pt1);
 
-	int result = dmScanLib.scanImage(100, 0, 0, scanRegion, "tmpscan.png");
+	int result = dmScanLib.scanImage(
+		100, 
+		0, 
+		0, 
+		scanBbox.x,
+		scanBbox.y, 
+		scanBbox.x + scanBbox.width,
+		scanBbox.y + scanBbox.height, 
+		"tmpscan.png");
 	EXPECT_EQ(SC_INVALID_DPI, result);
 
-	result = dmScanLib.scanImage(200, 0, 0, scanRegion, "tmpscan.png");
+	result = dmScanLib.scanImage(
+		200, 
+		0, 
+		0, 
+		scanBbox.x,
+		scanBbox.y, 
+		scanBbox.x + scanBbox.width,
+		scanBbox.y + scanBbox.height, 
+		"tmpscan.png");
 	EXPECT_EQ(SC_INVALID_DPI, result);
 }
 
@@ -158,27 +189,30 @@ TEST(TestDmScanLibWin32, scanAndDecodeValidDpi) {
 	FLAGS_v = 3;
 
 	const unsigned dpi = 600;
-	const cv::Point_<float> pt1(0.400, 0.265);
-	const cv::Point_<float> pt2(4.566, 3.020); 
-	const ScanRegion<float> scanRegion(pt1, pt2);
-	std::unique_ptr<const ScanRegion<float> > scanRegionWia(
-		test::getWiaBoundingBox(scanRegion));
+    const cv::Rect_<float> scanBbox(0.400f, 0.265f, 4.166f, 2.755f); 
 	std::unique_ptr<DecodeOptions> decodeOptions = 
-		test::getDefaultDecodeOptions();
+		test::getDefaultDecodeOptions();	
+	const cv::Rect wellsBbox(
+		0,
+		0,
+		static_cast<unsigned>(scanBbox.width * dpi),
+		static_cast<unsigned>(scanBbox.height * dpi)
+		);
 
-	const cv::Point_<unsigned> wrPt1(0, 0);
-	const cv::Point_<unsigned> wrPt2(
-		static_cast<unsigned>(dpi * (pt2.x - pt1.x)), 
-		static_cast<unsigned>(dpi * (pt2.y - pt1.y)));
+	std::vector<std::unique_ptr<const WellRectangle> > wellRects;
 
-	std::unique_ptr<const BoundingBox<unsigned> > wellsBbox(
-		new BoundingBox<unsigned>(wrPt1, wrPt2));
-
-	std::vector<std::unique_ptr<const WellRectangle<float> > > wellRects;
-
-    test::getWellRectsForBoundingBox(*wellsBbox, 8, 12, wellRects);
+    test::getWellRectsForBoundingBox(wellsBbox, 8, 12, wellRects);
 	DmScanLib dmScanLib(1);
-	int result = dmScanLib.scanAndDecode(dpi, 0, 0, *scanRegionWia, *decodeOptions, wellRects);
+	int result = dmScanLib.scanAndDecode(
+		dpi, 
+		0, 
+		0, 
+		scanBbox.x,
+		scanBbox.y, 
+		scanBbox.x + scanBbox.width,
+		scanBbox.y + scanBbox.height, 
+		*decodeOptions, 
+		wellRects);
 
 	EXPECT_EQ(SC_SUCCESS, result);
 	EXPECT_TRUE(dmScanLib.getDecodedWellCount() > 0);
@@ -201,28 +235,31 @@ TEST(TestDmScanLibWin32, scanAndDecodeMultiple) {
 	FLAGS_v = 1;
 
 	const unsigned dpi = 600;
-	const cv::Point_<float> pt1(0.400, 0.265);
-	const cv::Point_<float> pt2(4.566, 3.020); 
-
-	const ScanRegion<float> scanRegion(pt1, pt2);
-	std::unique_ptr<const ScanRegion<float> > scanRegionWia(
-		test::getWiaBoundingBox(scanRegion));
+    const cv::Rect_<float> scanBbox(0.400f, 0.265f, 4.166f, 2.755f); 
 	std::unique_ptr<DecodeOptions> decodeOptions = 
 		test::getDefaultDecodeOptions();
 
-	const cv::Point_<unsigned> wrPt1(0, 0);
-	const cv::Point_<unsigned> wrPt2(
-		static_cast<unsigned>(dpi * (pt2.x - pt1.x)), 
-		static_cast<unsigned>(dpi * (pt2.y - pt1.y)));
+	const cv::Rect wellsBbox(
+		0,
+		0,
+		static_cast<unsigned>(scanBbox.width * dpi),
+		static_cast<unsigned>(scanBbox.height * dpi)
+		);
 
-	std::unique_ptr<const BoundingBox<unsigned> > wellsBbox(
-		new BoundingBox<unsigned>(wrPt1, wrPt2));
+	std::vector<std::unique_ptr<const WellRectangle> > wellRects;
 
-	std::vector<std::unique_ptr<const WellRectangle<float> > > wellRects;
-
-    test::getWellRectsForBoundingBox(*wellsBbox, 8, 12, wellRects);
+    test::getWellRectsForBoundingBox(wellsBbox, 8, 12, wellRects);
 	DmScanLib dmScanLib(1);
-	int result = dmScanLib.scanAndDecode(dpi, 0, 0, *scanRegionWia, *decodeOptions, wellRects);
+	int result = dmScanLib.scanAndDecode(
+		dpi, 
+		0, 
+		0, 
+		scanBbox.x,
+		scanBbox.y, 
+		scanBbox.x + scanBbox.width,
+		scanBbox.y + scanBbox.height, 
+		*decodeOptions, 
+		wellRects);
 
 	EXPECT_EQ(SC_SUCCESS, result);
 	EXPECT_TRUE(dmScanLib.getDecodedWellCount() > 0);
@@ -237,7 +274,17 @@ TEST(TestDmScanLibWin32, scanAndDecodeMultiple) {
 		lastResults[wellDecoder.getLabel()] = wellDecoder.getMessage();
 	}
 
-	result = dmScanLib.scanAndDecode(600, 0, 0, *scanRegionWia, *decodeOptions, wellRects);
+	result = dmScanLib.scanAndDecode(
+		dpi, 
+		0, 
+		0, 
+		scanBbox.x,
+		scanBbox.y, 
+		scanBbox.x + scanBbox.width,
+		scanBbox.y + scanBbox.height, 
+		*decodeOptions, 
+		wellRects);
+
 	const std::map<std::string, const WellDecoder *> & decodedWells2 =
 		dmScanLib.getDecodedWells();
    	for (std::map<std::string, const WellDecoder *>::const_iterator ii = decodedWells2.begin();

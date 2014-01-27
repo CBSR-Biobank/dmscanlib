@@ -17,6 +17,8 @@
 
 #include <algorithm>
 #include <opencv/cv.h>
+
+#define GLOG_NO_ABBREVIATED_SEVERITIES
 #include <glog/logging.h>
 
 #ifdef _VISUALC_
@@ -184,19 +186,6 @@ int decodeImage(std::string fname, DmScanLib & dmScanLib, unsigned rows, unsigne
 
     std::unique_ptr<DecodeOptions> decodeOptions = getDefaultDecodeOptions();
     return dmScanLib.decodeImageWells(fname.c_str(), *decodeOptions, wellRects);
-}
-
-// bbox here has to start at (0,0)
-std::unique_ptr<const cv::Rect> getWellsBoundingBox(const cv::Rect & bbox) {
-    cv::Size size = bbox.size();
-    return std::unique_ptr<const cv::Rect>(new cv::Rect(0, 0, size.width, size.height));
-}
-
-std::unique_ptr<const cv::Rect_<float>> getWiaBoundingBox(const cv::Rect_<float> & bbox) {
-    cv::Size size = bbox.size();
-
-    return std::unique_ptr<const cv::Rect_<float>>(new cv::Rect_<float>(
-            bbox.x, bbox.y, size.width, size.height));
 }
 
 } /* namespace test */

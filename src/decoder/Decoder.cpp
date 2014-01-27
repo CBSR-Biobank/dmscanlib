@@ -29,7 +29,9 @@
 #include "Image.h"
 #include "DmScanLib.h"
 
+#define GLOG_NO_ABBREVIATED_SEVERITIES
 #include <glog/logging.h>
+
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
@@ -251,10 +253,10 @@ void Decoder::getDecodeInfo(
     p01.Y = height - 1 - p01.Y;
 
     cv::Point2f points[4] = {
-            cv::Point2f(p00.X, p00.Y) * dec->scale,
-            cv::Point2f(p10.X, p10.Y) * dec->scale,
-            cv::Point2f(p11.X, p11.Y) * dec->scale,
-            cv::Point2f(p01.X, p01.Y) * dec->scale
+            cv::Point2f(static_cast<float>(p00.X), static_cast<float>(p00.Y)) * dec->scale,
+            cv::Point2f(static_cast<float>(p10.X), static_cast<float>(p10.Y)) * dec->scale,
+            cv::Point2f(static_cast<float>(p11.X), static_cast<float>(p11.Y)) * dec->scale,
+            cv::Point2f(static_cast<float>(p01.X), static_cast<float>(p01.Y)) * dec->scale
     };
 
     wellDecoder.setDecodeQuad(points);

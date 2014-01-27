@@ -6,7 +6,6 @@
 
 #include "jni/DmScanLibJni.h"
 #include "jni/DmScanLibJniInternal.h"
-#include "geometry.h"
 #include "DmScanLib.h"
 #include "decoder/DecodeOptions.h"
 #include "decoder/WellDecoder.h"
@@ -108,11 +107,19 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
     unsigned brightness = static_cast<unsigned>(_brightness);
     unsigned contrast = static_cast<unsigned>(_contrast);
     const char *filename = env->GetStringUTFChars(_filename, 0);
-    std::unique_ptr<dmscanlib::ScanRegion<float> > bbox = 
+    std::unique_ptr<const cv::Rect_<float> > bbox = 
 		dmscanlib::jni::getScanRegion(env, _region);
 
     dmscanlib::DmScanLib dmScanLib(verbose);
-    int result = dmScanLib.scanImage(dpi, brightness, contrast, *bbox, filename);
+    int result = dmScanLib.scanImage(
+		dpi, 
+		brightness, 
+		contrast, 
+		bbox->x,
+		bbox->y,
+		bbox->x + bbox->width,
+		bbox->y + bbox->height,
+		filename);
     jobject resultObj = dmscanlib::jni::createScanResultObject(env, result, result);
     env->ReleaseStringUTFChars(_filename, filename);
     return resultObj;
@@ -162,11 +169,11 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
     unsigned dpi = static_cast<unsigned>(_dpi);
     unsigned brightness = static_cast<unsigned>(_brightness);
     unsigned contrast = static_cast<unsigned>(_contrast);
-    std::vector<std::unique_ptr<const dmscanlib::WellRectangle<float> > > wellRects;
+    std::vector<std::unique_ptr<const dmscanlib::WellRectangle> > wellRects;
 
     std::unique_ptr<dmscanlib::DecodeOptions> decodeOptions = 
 		dmscanlib::DecodeOptions::getDecodeOptionsViaJni(env, _decodeOptions);
-    std::unique_ptr<dmscanlib::ScanRegion<float> > scanRegion = 
+    std::unique_ptr<const cv::Rect_<float> > bbox = 
 		dmscanlib::jni::getScanRegion(env, _region);
 
 	jsize numWells = env->GetArrayLength(_wellRects);
@@ -181,7 +188,16 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
 	}
 
     dmscanlib::DmScanLib dmScanLib(0);
-    result = dmScanLib.scanAndDecode(dpi, brightness, contrast, *scanRegion, *decodeOptions, wellRects);
+    result = dmScanLib.scanAndDecode(
+		dpi, 
+		brightness, 
+		contrast, 
+		bbox->x,
+		bbox->y,
+		bbox->x + bbox->width,
+		bbox->y + bbox->height,
+		*decodeOptions, 
+		wellRects);
 
 	if (result == dmscanlib::SC_SUCCESS) {
 		return dmscanlib::jni::createDecodeResultObject(env,result, dmScanLib.getDecodedWells());

@@ -54,10 +54,16 @@ namespace dmscanlib {
 
             int getScannerCapability();
 
-            HANDLE acquireImage(unsigned dpi, int brightness, int contrast,
-                    const ScanRegion<float> & bbox);
+            HANDLE acquireImage(
+            const unsigned dpi,
+            const int brightness,
+            const int contrast,
+            const cv::Rect_<float> & bbox);
 
-            HANDLE acquireFlatbed(unsigned dpi, int brightness, int contrast);
+            HANDLE acquireFlatbed(
+            const unsigned dpi,
+            const int brightness,
+            const int contrast);
 
             void freeImage(HANDLE handle);
 
