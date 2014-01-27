@@ -30,7 +30,7 @@ class Image {
 public:
     Image(const std::string & filename);
     Image(HANDLE handle);
-    Image(const cv::Mat & that);
+    Image(const Image & that);
     virtual ~Image();
 
     const bool isValid() const {
@@ -70,6 +70,8 @@ private:
 
     static const cv::Mat BLUR_KERNEL;
     static const cv::Mat BLANK_KERNEL;
+
+    Image(const cv::Mat & mat);
 
     bool valid;
     const std::string filename;

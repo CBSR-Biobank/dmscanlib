@@ -63,13 +63,11 @@ TEST(TestDmScanLib, invalidImage) {
 TEST(TestDmScanLib, decodeImage) {
     FLAGS_v = 3;
 
-    std::string fname("testImages/8x12/96tubes.bmp");
-    //std::string fname("testImages/8x12/plate.bmp");
-    //std::string fname("testImages/10x10/10x10.bmp");
-    //std::string fname("testImages/10x10/10x10.bmp");
+    //std::string fname("testImages/8x12/96tubes.bmp");
+    std::string fname("testImages/1x1/single_tube.png");
 
 	DmScanLib dmScanLib(1);
-    int result = test::decodeImage(fname, dmScanLib, 8, 12);
+    int result = test::decodeImage(fname, dmScanLib, 1, 1);
 
 	EXPECT_EQ(SC_SUCCESS, result);
 	EXPECT_TRUE(dmScanLib.getDecodedWellCount() > 0);

@@ -52,12 +52,12 @@ Decoder::Decoder(
         wellRects(_wellRects),
         decodeSuccessful(false)
 {
-//    grayscaleImage = image.grayscale();
-    std::unique_ptr<const Image> filteredImage = image.applyFilters();
-        if (VLOG_IS_ON(2)) {
-            filteredImage->write("filtered.png");
-        }
-    grayscaleImage = filteredImage->grayscale();
+    grayscaleImage = image.grayscale();
+    std::unique_ptr<const Image> filteredImage = grayscaleImage->applyFilters();
+    if (VLOG_IS_ON(2)) {
+        filteredImage->write("filtered.png");
+    }
+    grayscaleImage = std::move(filteredImage);
 
     cv::Size size = grayscaleImage->size();
     cv::Rect imageRect(0, 0, size.width, size.height);

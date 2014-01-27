@@ -37,20 +37,33 @@ Image::Image(const std::string & _filename) : filename(_filename) {
     valid = (image.data != NULL);
 
     if (valid) {
-        VLOG(5) << "Image::Image: width: " << image.cols
+        VLOG(1) << "Image::Image: width: " << image.cols
                 << ", height: " << image.rows
                 << ", depth: " << image.elemSize()
                 << ", step: " << image.step1();
     }
 }
 
-Image::Image(const cv::Mat & that) : filename(""), opencvImage(NULL) {
-    if (that.data == NULL) {
+Image::Image(const Image & that) : filename(""), opencvImage(NULL) {
+    if (that.image.data == NULL) {
         throw std::invalid_argument("parameter is null");
     }
 
-    opencvImage = NULL;
-    image = that;
+    image = that.image;
+    valid = true;
+
+    VLOG(5) << "Image::Image: width: " << image.cols
+            << ", height: " << image.rows
+            << ", depth: " << image.elemSize()
+            << ", step: " << image.step1();
+}
+
+Image::Image(const cv::Mat & mat) : filename(""), opencvImage(NULL) {
+    if (mat.data == NULL) {
+        throw std::invalid_argument("parameter is null");
+    }
+
+    image = mat;
     valid = true;
 
     VLOG(5) << "Image::Image: width: " << image.cols
@@ -110,22 +123,23 @@ Image::Image(HANDLE handle) : filename(""), opencvImage(NULL) {
 }
 
 Image::~Image() {
-    if (opencvImage != NULL) {
+    VLOG(1) << "opencvImage: " << opencvImage;
+    if (opencvImage) {
         cvReleaseImage(&opencvImage);
     }
+    image.release();
 }
 
 std::unique_ptr<const Image> Image::grayscale() const {
-    cv::Mat greyscale(image.size(), image.type());
-    cv::cvtColor(image, greyscale, CV_BGR2GRAY);
-    return std::unique_ptr<const Image>(new Image(greyscale));
+    cv::Mat grayscale;
+    cv::cvtColor(image, grayscale, CV_BGR2GRAY);
+    return std::unique_ptr<const Image>(new Image(grayscale));
 }
 
 // from: http://opencv-help.blogspot.ca/2013/01/how-to-sharpen-image-using-opencv.html
 std::unique_ptr<const Image> Image::applyFilters() const {
     cv::Mat blurredImage;
     cv::Mat enhancedImage;
-
 
     cv::GaussianBlur(image, blurredImage, cv::Size(0, 0), 3);
     cv::addWeighted(image, 1.5, blurredImage, -0.5, 0, enhancedImage);
@@ -168,6 +182,7 @@ void Image::drawLine(const cv::Point & pt1, const cv::Point & pt2, const cv::Sca
 }
 
 int Image::write(const std::string & filename) const {
+    VLOG(1) << "write: " << filename;
     IplImage saveImage = image;
     int result = cvSaveImage(filename.c_str(), &saveImage);
     return result;
