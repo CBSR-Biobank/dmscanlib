@@ -28,6 +28,7 @@ namespace dmscanlib {
 
 class Image {
 public:
+    Image(): valid(false) {}
     Image(const std::string & filename);
     Image(HANDLE handle);
     Image(const Image & that);
@@ -49,9 +50,9 @@ public:
         return image.size();
     }
 
-    std::unique_ptr<const Image> grayscale() const;
+    void grayscale(Image & that) const;
 
-    std::unique_ptr<const Image> applyFilters() const;
+    void applyFilters(Image & that) const;
 
     DmtxImage * dmtxImage() const;
 
@@ -63,13 +64,13 @@ public:
 
     int write(const std::string & filename) const;
 
+
 private:
     Image(const cv::Mat & mat);
 
+    cv::Mat image;
     bool valid;
     const std::string filename;
-    IplImage * opencvImage;
-    cv::Mat image;
 };
 
 } /* namespace */

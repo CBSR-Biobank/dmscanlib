@@ -15,10 +15,6 @@
 namespace dmscanlib {
 
 Image::Image(const std::string & _filename) : filename(_filename) {
-    //opencvImage = cvLoadImage(filename.c_str());
-    //image = cv::Mat(opencvImage);
-
-	opencvImage = NULL;
 	image = cv::imread(filename.c_str());
 
     valid = (image.data != NULL);
@@ -31,7 +27,7 @@ Image::Image(const std::string & _filename) : filename(_filename) {
     }
 }
 
-Image::Image(const Image & that) : filename(""), opencvImage(NULL) {
+Image::Image(const Image & that) : filename("") {
     if (that.image.data == NULL) {
         throw std::invalid_argument("parameter is null");
     }
@@ -45,7 +41,7 @@ Image::Image(const Image & that) : filename(""), opencvImage(NULL) {
             << ", step: " << image.step1();
 }
 
-Image::Image(const cv::Mat & mat) : filename(""), opencvImage(NULL) {
+Image::Image(const cv::Mat & mat) : filename("") {
     if (mat.data == NULL) {
         throw std::invalid_argument("parameter is null");
     }
@@ -59,7 +55,7 @@ Image::Image(const cv::Mat & mat) : filename(""), opencvImage(NULL) {
             << ", step: " << image.step1();
 }
 
-Image::Image(HANDLE handle) : filename(""), opencvImage(NULL) {
+Image::Image(HANDLE handle) : filename("") {
 #ifdef WIN32
     BITMAPINFOHEADER *dibHeaderPtr = (BITMAPINFOHEADER *) GlobalLock(handle);
 
@@ -110,27 +106,20 @@ Image::Image(HANDLE handle) : filename(""), opencvImage(NULL) {
 }
 
 Image::~Image() {
-    VLOG(1) << "opencvImage: " << opencvImage;
-    if (opencvImage) {
-        cvReleaseImage(&opencvImage);
-    }
     image.release();
 }
 
-std::unique_ptr<const Image> Image::grayscale() const {
-    cv::Mat grayscale;
-    cv::cvtColor(image, grayscale, CV_BGR2GRAY);
-    return std::unique_ptr<const Image>(new Image(grayscale));
+void Image::grayscale(Image & that) const {
+    cv::cvtColor(image, that.image, CV_BGR2GRAY);
 }
 
 // from: http://opencv-help.blogspot.ca/2013/01/how-to-sharpen-image-using-opencv.html
-std::unique_ptr<const Image> Image::applyFilters() const {
+void Image::applyFilters(Image & that) const {
     cv::Mat blurredImage;
     cv::Mat enhancedImage;
 
     cv::GaussianBlur(image, blurredImage, cv::Size(0, 0), 3);
-    cv::addWeighted(image, 1.5, blurredImage, -0.5, 0, enhancedImage);
-    return std::unique_ptr<const Image>(new Image(enhancedImage));
+    cv::addWeighted(image, 1.5, blurredImage, -0.5, 0, that.image);
 }
 
 

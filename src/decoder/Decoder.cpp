@@ -54,14 +54,14 @@ Decoder::Decoder(
         wellRects(_wellRects),
         decodeSuccessful(false)
 {
-    grayscaleImage = image.grayscale();
-    std::unique_ptr<const Image> filteredImage = grayscaleImage->applyFilters();
+    Image tmpImage;
+    image.grayscale(tmpImage);
+    tmpImage.applyFilters(grayscaleImage);
     if (VLOG_IS_ON(2)) {
-        filteredImage->write("filtered.png");
+        grayscaleImage.write("filtered.png");
     }
-    grayscaleImage = std::move(filteredImage);
 
-    cv::Size size = grayscaleImage->size();
+    cv::Size size = grayscaleImage.size();
     cv::Rect imageRect(0, 0, size.width, size.height);
     float width = static_cast<float>(size.width);
     float height = static_cast<float>(size.height);

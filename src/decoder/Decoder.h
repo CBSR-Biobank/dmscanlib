@@ -21,6 +21,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "Image.h"
 #include "WellRectangle.h"
 
 #include <dmtx.h>
@@ -36,7 +37,6 @@
 
 namespace dmscanlib {
 
-class Image;
 class DecodeOptions;
 class WellDecoder;
 
@@ -53,7 +53,7 @@ public:
     void decodeWellRect(const Image & wellRectImage, WellDecoder & wellDecoder) const;
 
     const Image & getWorkingImage() const {
-        return *grayscaleImage;
+        return grayscaleImage;
     }
 
     const unsigned getDecodedWellCount();
@@ -82,7 +82,7 @@ private:
     int decodeSingleThreaded();
     int decodeMultiThreaded();
 
-    std::unique_ptr<const Image> grayscaleImage;
+    Image grayscaleImage;
     const DecodeOptions & decodeOptions;
     const std::vector<std::unique_ptr<const WellRectangle> > & wellRects;
     std::vector<std::unique_ptr<WellDecoder> > wellDecoders;
