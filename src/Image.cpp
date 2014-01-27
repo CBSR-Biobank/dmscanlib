@@ -14,25 +14,12 @@
 
 namespace dmscanlib {
 
-// expects blurred image
-const double Image::BLUR_KERNEL_DATA[9] = {
-        0.0, 0.2, 0.0, 0.2, 0.2, 0.2, 0.0, 0.2, 0.0
-};
-
-// expects sharp image
-const double Image::BLANK_KERNEL_DATA[9] = {
-        0.06185567, 0.12371134, 0.06185567,
-        0.12371134, 0.257731959, 0.12371134,
-        0.06185567, 0.12371134, 0.06185567
-};
-
-const cv::Mat Image::BLUR_KERNEL(3, 3, CV_64F, (void *) &Image::BLUR_KERNEL_DATA[0]);
-
-const cv::Mat Image::BLANK_KERNEL(3, 3, CV_64F, (void *) &Image::BLANK_KERNEL_DATA);
-
 Image::Image(const std::string & _filename) : filename(_filename) {
-    opencvImage = cvLoadImage(filename.c_str());
-    image = cv::Mat(opencvImage);
+    //opencvImage = cvLoadImage(filename.c_str());
+    //image = cv::Mat(opencvImage);
+
+	opencvImage = NULL;
+	image = cv::imread(filename.c_str());
 
     valid = (image.data != NULL);
 

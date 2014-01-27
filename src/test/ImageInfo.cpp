@@ -5,6 +5,8 @@
  *      Author: nelson
  */
 
+#define _CRT_SECURE_NO_DEPRECATE
+
 #include "ImageInfo.h"
 
 #include<iostream>

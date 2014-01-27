@@ -124,13 +124,15 @@ void getWellRectsForBoundingBox(
     cv::Point2f verTranslation(0, static_cast<float>(wellHeight));
 
     // round off the cell size so image dimensions are not exceeded
-    cv::Size2f cellSize(0.999 * wellWidth, 0.999 * wellHeight);
+    cv::Size cellSize(
+		static_cast<unsigned>(0.999f * wellWidth), 
+		static_cast<unsigned>(0.999f * wellHeight));
 
     float horOffset;
-    float verOffset = bbox.y;
+    float verOffset = static_cast<float>(bbox.y);
 
     for (unsigned row = 0; row < rows; ++row) {
-        horOffset = bbox.x;
+        horOffset = static_cast<float>(bbox.x);
 
         for (unsigned col = 0; col < cols; ++col) {
             std::ostringstream label;
@@ -139,8 +141,8 @@ void getWellRectsForBoundingBox(
             std::unique_ptr<WellRectangle> wellRect(
                     new WellRectangle(
                             label.str().c_str(),
-                            horOffset,
-                            verOffset,
+                            static_cast<unsigned>(horOffset),
+                            static_cast<unsigned>(verOffset),
                             cellSize.width,
                             cellSize.height));
             const cv::Rect & wRect = wellRect->getRectangle();

@@ -64,13 +64,6 @@ public:
     int write(const std::string & filename) const;
 
 private:
-
-    static const double BLUR_KERNEL_DATA[9];
-    static const double BLANK_KERNEL_DATA[9];
-
-    static const cv::Mat BLUR_KERNEL;
-    static const cv::Mat BLANK_KERNEL;
-
     Image(const cv::Mat & mat);
 
     bool valid;

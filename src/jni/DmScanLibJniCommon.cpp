@@ -153,7 +153,11 @@ int getWellRectangles(JNIEnv *env, jsize numWells, jobjectArray _wellRects,
         double ymax = std::max(y1, std::max(y2, std::max(y3, y4)));
 
         std::unique_ptr<const WellRectangle> wellRect(
-                new WellRectangle(label, xmin, ymin, xmax - xmin, ymax - ymin));
+                new WellRectangle(label, 
+				static_cast<unsigned>(xmin), 
+				static_cast<unsigned>(ymin), 
+				static_cast<unsigned>(xmax - xmin), 
+				static_cast<unsigned>(ymax - ymin)));
 
         VLOG(5) << *wellRect;
 
@@ -179,15 +183,11 @@ std::unique_ptr<const cv::Rect_<float> > getScanRegion(JNIEnv *env, jobject regi
         return NULL;
     }
 
-    cv::Point_<float> pt0(
-            env->CallDoubleMethod(regionJavaObj, getCornerXMethodID, 0),
-            env->CallDoubleMethod(regionJavaObj, getCornerYMethodID, 0));
-
-    cv::Point_<float> pt1(
-            env->CallDoubleMethod(regionJavaObj, getCornerXMethodID, 1),
-            env->CallDoubleMethod(regionJavaObj, getCornerYMethodID, 1));
-
-    return std::unique_ptr<cv::Rect_<float> >(new cv::Rect_<float>(pt0, pt1));
+    return std::unique_ptr<cv::Rect_<float> >(new cv::Rect_<float>(
+            static_cast<float>(env->CallDoubleMethod(regionJavaObj, getCornerXMethodID, 0)),
+            static_cast<float>(env->CallDoubleMethod(regionJavaObj, getCornerYMethodID, 0)),
+            static_cast<float>(env->CallDoubleMethod(regionJavaObj, getCornerXMethodID, 1)),
+            static_cast<float>(env->CallDoubleMethod(regionJavaObj, getCornerYMethodID, 1))));
 }
 
 } /* namespace */

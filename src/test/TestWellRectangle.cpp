@@ -5,6 +5,8 @@
  *      Author: nelson
  */
 
+#define _CRT_SECURE_NO_DEPRECATE
+
 #include "decoder/WellRectangle.h"
 
 #include <gtest/gtest.h>
