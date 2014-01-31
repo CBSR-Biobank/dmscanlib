@@ -180,7 +180,7 @@
 									<listOptionValue builtIn="false" value="glog"/>
 									<listOptionValue builtIn="false" value="OpenThreads"/>
 									<listOptionValue builtIn="false" value="opencv_core"/>
-									<listOptionValue builtIn="false" value="opencv_highhui"/>
+									<listOptionValue builtIn="false" value="opencv_highgui"/>
 									<listOptionValue builtIn="false" value="opencv_imgproc"/>
 								</option>
 								<option id="gnu.cpp.link.option.paths.314000524" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths"/>
