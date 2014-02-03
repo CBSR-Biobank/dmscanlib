@@ -229,6 +229,14 @@ HANDLE ImgScannerImpl::acquireImage(
       return NULL;
    }
 
+   if (!(((scannerCapability & CAP_DPI_300) && dpi == 300)
+         || ((scannerCapability & CAP_DPI_400) && dpi == 400)
+         || ((scannerCapability & CAP_DPI_600) && dpi == 600))) {
+	  scannerSourceDeinit(hwnd, srcID);
+      errorCode = SC_INVALID_DPI;
+      return NULL;
+   }
+
    double physicalWidth = getPhysicalDimensions(srcID, ICAP_PHYSICALWIDTH);
    double physicalHeight = getPhysicalDimensions(srcID, ICAP_PHYSICALHEIGHT);
 

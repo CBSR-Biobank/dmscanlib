@@ -56,7 +56,10 @@ TEST(TestDmScanLibWin32, getScannerCapability) {
 TEST(TestDmScanLibWin32, scanImage) {
 	FLAGS_v = 3;
 
-	const cv::Rect_<float> scanBbox(0.400f, 0.265f, 4.166f, 2.755f); 
+	float x = 0.400f;
+	float y = 0.265f;
+	float width = 4.166f;
+	float height = 2.755f;
 	std::unique_ptr<DecodeOptions> decodeOptions = 
 		test::getDefaultDecodeOptions();
 
@@ -70,30 +73,33 @@ TEST(TestDmScanLibWin32, scanImage) {
 		dpi, 
 		0, 
 		0, 
-		scanBbox.x,
-		scanBbox.y, 
-		scanBbox.x + scanBbox.width,
-		scanBbox.y + scanBbox.height, 
+		x,
+		y, 
+		width - x,   // subtract x for WIA driver
+		height - y,  // subtract y for WIA driver
 		fname.c_str());
 
 	EXPECT_EQ(SC_SUCCESS, result);
 	Image image(fname.c_str());
 	cv::Size size = image.size();
 
-	EXPECT_EQ(static_cast<unsigned>(scanBbox.width * dpi), size.width);
-	EXPECT_EQ(static_cast<unsigned>(scanBbox.height * dpi), size.height);
+	EXPECT_EQ(static_cast<unsigned>(width * dpi), size.width);
+	EXPECT_EQ(static_cast<unsigned>(height * dpi), size.height);
 }
 
 TEST(TestDmScanLibWin32, scanImageBadParams) {
 	FLAGS_v = 3;	
 
 	unsigned dpi = 300;
-	const cv::Rect_<float> scanBbox(0.400f, 0.265f, 4.166f, 2.755f); 
+	float x = 0.400f;
+	float y = 0.265f;
+	float width = 4.166f;
+	float height = 2.755f;
 	const cv::Rect wellsBbox(
 		0,
 		0,
-		static_cast<unsigned>(scanBbox.width * dpi),
-		static_cast<unsigned>(scanBbox.height * dpi)
+		static_cast<unsigned>(width * dpi),
+		static_cast<unsigned>(height * dpi)
 		);
 	std::unique_ptr<DecodeOptions> decodeOptions = 
 		test::getDefaultDecodeOptions();
@@ -107,10 +113,10 @@ TEST(TestDmScanLibWin32, scanImageBadParams) {
 		dpi, 
 		0, 
 		0, 
-		scanBbox.x,
-		scanBbox.y, 
-		scanBbox.x + scanBbox.width,
-		scanBbox.y + scanBbox.height, 
+		x,
+		y, 
+		width - x,   // subtract x for WIA driver
+		height - y,  // subtract y for WIA driver
 		NULL), 
 		std::invalid_argument);
 
@@ -118,10 +124,10 @@ TEST(TestDmScanLibWin32, scanImageBadParams) {
 		0, 
 		0, 
 		0, 
-		scanBbox.x,
-		scanBbox.y, 
-		scanBbox.x + scanBbox.width,
-		scanBbox.y + scanBbox.height, 
+		x,
+		y, 
+		width - x,   // subtract x for WIA driver
+		height - y,  // subtract y for WIA driver
 		fname.c_str());
 	EXPECT_EQ(SC_INVALID_DPI, result);
 }
@@ -129,17 +135,20 @@ TEST(TestDmScanLibWin32, scanImageBadParams) {
 TEST(TestDmScanLibWin32, scanImageInvalidDpi) {
 	FLAGS_v = 3;
 
-	const cv::Rect_<float> scanBbox(0.400f, 0.265f, 4.166f, 2.755f); 
+	float x = 0.400f;
+	float y = 0.265f;
+	float width = 4.166f;
+	float height = 2.755f;
 	DmScanLib dmScanLib(1);
 
 	int result = dmScanLib.scanImage(
 		100, 
 		0, 
 		0, 
-		scanBbox.x,
-		scanBbox.y, 
-		scanBbox.x + scanBbox.width,
-		scanBbox.y + scanBbox.height, 
+		x,
+		y, 
+		width - x,   // subtract x for WIA driver
+		height - y,  // subtract y for WIA driver
 		"tmpscan.png");
 	EXPECT_EQ(SC_INVALID_DPI, result);
 
@@ -147,10 +156,10 @@ TEST(TestDmScanLibWin32, scanImageInvalidDpi) {
 		200, 
 		0, 
 		0, 
-		scanBbox.x,
-		scanBbox.y, 
-		scanBbox.x + scanBbox.width,
-		scanBbox.y + scanBbox.height, 
+		x,
+		y, 
+		width - x,   // subtract x for WIA driver
+		height - y,  // subtract y for WIA driver
 		"tmpscan.png");
 	EXPECT_EQ(SC_INVALID_DPI, result);
 }
@@ -189,14 +198,17 @@ TEST(TestDmScanLibWin32, scanAndDecodeValidDpi) {
 	FLAGS_v = 3;
 
 	const unsigned dpi = 600;
-    const cv::Rect_<float> scanBbox(0.400f, 0.265f, 4.166f, 2.755f); 
+	float x = 0.400f;
+	float y = 0.265f;
+	float width = 4.166f;
+	float height = 2.755f;
 	std::unique_ptr<DecodeOptions> decodeOptions = 
 		test::getDefaultDecodeOptions();	
 	const cv::Rect wellsBbox(
 		0,
 		0,
-		static_cast<unsigned>(scanBbox.width * dpi),
-		static_cast<unsigned>(scanBbox.height * dpi)
+		static_cast<unsigned>(width * dpi),
+		static_cast<unsigned>(height * dpi)
 		);
 
 	std::vector<std::unique_ptr<const WellRectangle> > wellRects;
@@ -207,10 +219,10 @@ TEST(TestDmScanLibWin32, scanAndDecodeValidDpi) {
 		dpi, 
 		0, 
 		0, 
-		scanBbox.x,
-		scanBbox.y, 
-		scanBbox.x + scanBbox.width,
-		scanBbox.y + scanBbox.height, 
+		x,
+		y, 
+		width - x,   // subtract x for WIA driver
+		height - y,  // subtract y for WIA driver
 		*decodeOptions, 
 		wellRects);
 
@@ -235,15 +247,18 @@ TEST(TestDmScanLibWin32, scanAndDecodeMultiple) {
 	FLAGS_v = 1;
 
 	const unsigned dpi = 600;
-    const cv::Rect_<float> scanBbox(0.400f, 0.265f, 4.166f, 2.755f); 
+	float x = 0.400f;
+	float y = 0.265f;
+	float width = 4.166f;
+	float height = 2.755f;
 	std::unique_ptr<DecodeOptions> decodeOptions = 
 		test::getDefaultDecodeOptions();
 
 	const cv::Rect wellsBbox(
 		0,
 		0,
-		static_cast<unsigned>(scanBbox.width * dpi),
-		static_cast<unsigned>(scanBbox.height * dpi)
+		static_cast<unsigned>(width * dpi),
+		static_cast<unsigned>(height * dpi)
 		);
 
 	std::vector<std::unique_ptr<const WellRectangle> > wellRects;
@@ -254,10 +269,10 @@ TEST(TestDmScanLibWin32, scanAndDecodeMultiple) {
 		dpi, 
 		0, 
 		0, 
-		scanBbox.x,
-		scanBbox.y, 
-		scanBbox.x + scanBbox.width,
-		scanBbox.y + scanBbox.height, 
+		x,
+		y, 
+		width - x,   // subtract x for WIA driver
+		height - y,  // subtract y for WIA driver
 		*decodeOptions, 
 		wellRects);
 
@@ -278,10 +293,10 @@ TEST(TestDmScanLibWin32, scanAndDecodeMultiple) {
 		dpi, 
 		0, 
 		0, 
-		scanBbox.x,
-		scanBbox.y, 
-		scanBbox.x + scanBbox.width,
-		scanBbox.y + scanBbox.height, 
+		x,
+		y, 
+		width - x,   // subtract x for WIA driver
+		height - y,  // subtract y for WIA driver
 		*decodeOptions, 
 		wellRects);
 

@@ -67,14 +67,18 @@ public:
 
     int getScannerCapability();
 
+	/**
+	* (x1, y1) is the top left corner
+	* (x2, y2) is the bottom right corner
+	*/
     int scanImage(
             const unsigned dpi,
             const int brightness,
             const int contrast,
-            const float x1,
-            const float y1,
-            const float x2,
-            const float y2,
+            const float x,
+            const float y,
+            const float width,
+            const float height,
             const char * filename);
 
     int scanFlatbed(
@@ -87,10 +91,10 @@ public:
             const unsigned dpi,
             const int brightness,
             const int contrast,
-            const float x1,
-            const float y1,
-            const float x2,
-            const float y2,
+            const float x,
+            const float y,
+            const float width,
+            const float height,
             const DecodeOptions & decodeOptions,
             std::vector<std::unique_ptr<const WellRectangle> > & wellRects);
 
