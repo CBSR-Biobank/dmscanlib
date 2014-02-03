@@ -64,11 +64,11 @@ TEST(TestDmScanLib, invalidImage) {
 TEST(TestDmScanLib, decodeImage) {
     FLAGS_v = 5;
 
-    //std::string fname("testImages/8x12/96tubes.bmp");
-    std::string fname("testImages/12x12/stanford_12x12_1.jpeg");
+    std::string fname("testImages/8x12/96tubes.bmp");
+    //std::string fname("testImages/12x12/stanford_12x12_1.jpeg");
 
 	DmScanLib dmScanLib(1);
-    int result = test::decodeImage(fname, dmScanLib, 12, 12);
+    int result = test::decodeImage(fname, dmScanLib, 8, 12);
 
 	EXPECT_EQ(SC_SUCCESS, result);
 	EXPECT_TRUE(dmScanLib.getDecodedWellCount() > 0);
@@ -161,8 +161,8 @@ std::unique_ptr<DecodeTestResult> decodeFromInfo(
 TEST(TestDmScanLib, decodeFromInfo) {
     FLAGS_v = 3;
 
-    //std::string infoFilename("testImageInfo/8x12/calgary2.nfo");
-    std::string infoFilename("testImageInfo/8x12/new_tubes.nfo");
+    std::string infoFilename("testImageInfo/8x12/calgary2.nfo");
+    //std::string infoFilename("testImageInfo/8x12/new_tubes.nfo");
 
     std::unique_ptr<DecodeOptions> defaultDecodeOptions = test::getDefaultDecodeOptions();
     DecodeOptions decodeOptions(
