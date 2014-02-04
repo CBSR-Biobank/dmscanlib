@@ -94,11 +94,19 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
  * Signature: (JJIIDDDDLjava/lang/String;)Ledu/ualberta/med/scannerconfig/dmscanlib/ScanLibResult;
  */
 JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_scanImage(
-                JNIEnv * env, jobject obj, jlong _verbose, jlong _dpi,
-                jint _brightness, jint _contrast, jobject _region,
+                JNIEnv * env, 
+				jobject obj, 
+				jlong _verbose, 
+				jlong _dpi,
+                jint _brightness, 
+				jint _contrast, 
+				jdouble x, 
+				jdouble y, 
+				jdouble width, 
+				jdouble height, 
                 jstring _filename) {
 
-    if ((_dpi == 0)	|| (_region == 0) || (_filename == 0)) {
+    if ((_dpi == 0)	|| (_filename == 0)) {
 		return dmscanlib::jni::createDecodeResultObject(env, dmscanlib::SC_FAIL);
 	}
 
@@ -107,18 +115,16 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
     unsigned brightness = static_cast<unsigned>(_brightness);
     unsigned contrast = static_cast<unsigned>(_contrast);
     const char *filename = env->GetStringUTFChars(_filename, 0);
-    std::unique_ptr<const cv::Rect_<float> > bbox = 
-		dmscanlib::jni::getScanRegion(env, _region);
 
     dmscanlib::DmScanLib dmScanLib(verbose);
     int result = dmScanLib.scanImage(
 		dpi, 
 		brightness, 
 		contrast, 
-		bbox->x,
-		bbox->y,
-		bbox->x + bbox->width,
-		bbox->y + bbox->height,
+		static_cast<float>(x),
+		static_cast<float>(y),
+		static_cast<float>(width),
+		static_cast<float>(height),
 		filename);
     jobject resultObj = dmscanlib::jni::createScanResultObject(env, result, result);
     env->ReleaseStringUTFChars(_filename, filename);
@@ -131,8 +137,13 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
  * Signature: (JJIILjava/lang/String;)Ledu/ualberta/med/scannerconfig/dmscanlib/ScanLibResult;
  */
 JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_scanFlatbed(
-                JNIEnv * env, jobject obj, jlong _verbose, jlong _dpi,
-                jint _brightness, jint _contrast, jstring _filename) {
+                JNIEnv * env, 
+				jobject obj, 
+				jlong _verbose, 
+				jlong _dpi,
+                jint _brightness, 
+				jint _contrast, 
+				jstring _filename) {
 
     if ((_dpi == 0)	|| (_filename == 0)) {
 		return dmscanlib::jni::createDecodeResultObject(env, dmscanlib::SC_FAIL);
@@ -157,10 +168,20 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
  * Signature: (JJIIJDDDDDJJJDDDJJJJ)Ledu/ualberta/med/scannerconfig/dmscanlib/DecodeResult;
  */
 JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_scanAndDecode
-  (JNIEnv * env, jobject obj, jlong _verbose, jlong _dpi, jint _brightness, jint _contrast, 
-  jobject _region, jobject _decodeOptions, jobjectArray _wellRects) {
+  (JNIEnv * env, 
+  jobject obj, 
+  jlong _verbose, 
+  jlong _dpi,
+  jint _brightness,
+  jint _contrast, 
+  jdouble x, 
+  jdouble y, 
+  jdouble width, 
+  jdouble height, 
+  jobject _decodeOptions,
+  jobjectArray _wellRects) {
 
-    if ((_dpi == 0)	|| (_region == 0) || (_decodeOptions == 0) || (_wellRects == 0)) {
+    if ((_dpi == 0)	|| (_decodeOptions == 0) || (_wellRects == 0)) {
 		return dmscanlib::jni::createDecodeResultObject(env, dmscanlib::SC_FAIL);
 	}
 
@@ -173,8 +194,6 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
 
     std::unique_ptr<dmscanlib::DecodeOptions> decodeOptions = 
 		dmscanlib::DecodeOptions::getDecodeOptionsViaJni(env, _decodeOptions);
-    std::unique_ptr<const cv::Rect_<float> > bbox = 
-		dmscanlib::jni::getScanRegion(env, _region);
 
 	jsize numWells = env->GetArrayLength(_wellRects);
 	int result = dmscanlib::jni::getWellRectangles(env, numWells, _wellRects, wellRects);
@@ -192,10 +211,10 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
 		dpi, 
 		brightness, 
 		contrast, 
-		bbox->x,
-		bbox->y,
-		bbox->x + bbox->width,
-		bbox->y + bbox->height,
+		static_cast<float>(x),
+		static_cast<float>(y),
+		static_cast<float>(width),
+		static_cast<float>(height),
 		*decodeOptions, 
 		wellRects);
 

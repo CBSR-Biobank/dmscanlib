@@ -169,27 +169,6 @@ int getWellRectangles(JNIEnv *env, jsize numWells, jobjectArray _wellRects,
     return 1;
 }
 
-std::unique_ptr<const cv::Rect_<float> > getScanRegion(JNIEnv *env, jobject regionJavaObj) {
-    CHECK_NOTNULL(regionJavaObj);
-    jclass regionJavaClass = env->GetObjectClass(regionJavaObj);
-
-    jmethodID getCornerXMethodID = env->GetMethodID(regionJavaClass, "getCornerX", "(I)D");
-    if (env->ExceptionOccurred()) {
-        return NULL;
-    }
-
-    jmethodID getCornerYMethodID = env->GetMethodID(regionJavaClass, "getCornerY", "(I)D");
-    if (env->ExceptionOccurred()) {
-        return NULL;
-    }
-
-    return std::unique_ptr<cv::Rect_<float> >(new cv::Rect_<float>(
-            static_cast<float>(env->CallDoubleMethod(regionJavaObj, getCornerXMethodID, 0)),
-            static_cast<float>(env->CallDoubleMethod(regionJavaObj, getCornerYMethodID, 0)),
-            static_cast<float>(env->CallDoubleMethod(regionJavaObj, getCornerXMethodID, 1)),
-            static_cast<float>(env->CallDoubleMethod(regionJavaObj, getCornerYMethodID, 1))));
-}
-
 } /* namespace */
 
 } /* namespace */

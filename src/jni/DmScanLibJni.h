@@ -64,10 +64,10 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
 /*
  * Class:     edu_ualberta_med_scannerconfig_dmscanlib_ScanLib
  * Method:    scanImage
- * Signature: (JJIILedu/ualberta/med/scannerconfig/dmscanlib/BoundingBox;Ljava/lang/String;)Ledu/ualberta/med/scannerconfig/dmscanlib/ScanLibResult;
+ * Signature: (JJIIDDDDLjava/lang/String;)Ledu/ualberta/med/scannerconfig/dmscanlib/ScanLibResult;
  */
 JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_scanImage
-  (JNIEnv *, jobject, jlong, jlong, jint, jint, jobject, jstring);
+  (JNIEnv *, jobject, jlong, jlong, jint, jint, jdouble, jdouble, jdouble, jdouble, jstring);
 
 /*
  * Class:     edu_ualberta_med_scannerconfig_dmscanlib_ScanLib
@@ -80,10 +80,10 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
 /*
  * Class:     edu_ualberta_med_scannerconfig_dmscanlib_ScanLib
  * Method:    scanAndDecode
- * Signature: (JJIILedu/ualberta/med/scannerconfig/dmscanlib/BoundingBox;Ledu/ualberta/med/scannerconfig/dmscanlib/DecodeOptions;[Ledu/ualberta/med/scannerconfig/dmscanlib/CellRectangle;)Ledu/ualberta/med/scannerconfig/dmscanlib/DecodeResult;
+ * Signature: (JJIIDDDDLedu/ualberta/med/scannerconfig/dmscanlib/DecodeOptions;[Ledu/ualberta/med/scannerconfig/dmscanlib/CellRectangle;)Ledu/ualberta/med/scannerconfig/dmscanlib/DecodeResult;
  */
 JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_scanAndDecode
-  (JNIEnv *, jobject, jlong, jlong, jint, jint, jobject, jobject, jobjectArray);
+  (JNIEnv *, jobject, jlong, jlong, jint, jint, jdouble, jdouble, jdouble, jdouble, jobject, jobjectArray);
 
 /*
  * Class:     edu_ualberta_med_scannerconfig_dmscanlib_ScanLib

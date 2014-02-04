@@ -35,8 +35,6 @@ jobject createDecodeResultObject(JNIEnv * env, int resultCode,
 
 std::unique_ptr<const cv::Rect> getBoundingBox(JNIEnv *env, jobject bboxJavaObj);
 
-std::unique_ptr<const cv::Rect_<float> > getScanRegion(JNIEnv *env, jobject regionJavaObj);
-
 int getWellRectangles(JNIEnv *env, jsize numWells, jobjectArray _wellRects,
         std::vector<std::unique_ptr<const WellRectangle> > & wellRects);
 
