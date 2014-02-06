@@ -61,8 +61,6 @@ public:
     DmScanLib(unsigned loggingLevel, bool logToFile = true);
     virtual ~DmScanLib();
 
-    int isTwainAvailable();
-
     int selectSourceAsDefault();
 
     int getScannerCapability();

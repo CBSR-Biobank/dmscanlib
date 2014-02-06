@@ -44,8 +44,6 @@ public:
 
     static std::unique_ptr<ImgScanner> create();
 
-    virtual bool twainAvailable() = 0;
-
     virtual bool selectSourceAsDefault() = 0;
 
     virtual int getScannerCapability() = 0;

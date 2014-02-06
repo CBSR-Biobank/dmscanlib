@@ -216,9 +216,10 @@
     <ClCompile Include="src\DmScanLib.cpp" />
     <ClCompile Include="src\Image.cpp" />
     <ClCompile Include="src\imgscanner\ImgScanner.cpp" />
-    <ClCompile Include="src\imgscanner\ImgScannerImpl.cpp" />
+    <ClCompile Include="src\imgscanner\ImgScannerTwain.cpp" />
     <ClCompile Include="src\jni\DmScanLibJniCommon.cpp" />
     <ClCompile Include="src\jni\DmScanLibJniWin32.cpp" />
+    <ClCompile Include="src\DmScanLibWin32.cpp" />
     <ClCompile Include="src\test\ImageInfo.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|Win32'">true</ExcludedFromBuild>
     </ClCompile>
@@ -265,7 +266,7 @@
     <ClInclude Include="src\geometryWindows.h" />
     <ClInclude Include="src\Image.h" />
     <ClInclude Include="src\imgscanner\ImgScanner.h" />
-    <ClInclude Include="src\imgscanner\ImgScannerImpl.h" />
+    <ClInclude Include="src\imgscanner\ImgScannerTwain.h" />
     <ClInclude Include="src\imgscanner\ImgScannerSimulator.h" />
     <ClInclude Include="src\jni\DmScanLibJni.h" />
     <ClInclude Include="src\jni\DmScanLibJniInternal.h" />

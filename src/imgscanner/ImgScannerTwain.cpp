@@ -29,7 +29,7 @@
 
 #define _CRT_SECURE_NO_DEPRECATE
 
-#include "ImgScannerImpl.h"
+#include "ImgScannerTwain.h"
 
 #include <math.h>
 
@@ -44,9 +44,11 @@ namespace dmscanlib {
 
 namespace imgscanner {
 
+DSMENTRYPROC ImgScannerTwain::twainDsmEntry = NULL;
+
 // Initialize g_AppID. This structure is passed to DSM_Entry() in each
 // function call.
-TW_IDENTITY ImgScannerImpl::g_AppID = { 
+TW_IDENTITY ImgScannerTwain::twainAppID = { 
 	0, 
 	{ 1, 0, TWLG_ENGLISH_USA, TWCY_USA, "dmscanlib 1.0" }, 
 	TWON_PROTOCOLMAJOR, TWON_PROTOCOLMINOR, DG_CONTROL | DG_IMAGE, 
@@ -54,38 +56,33 @@ TW_IDENTITY ImgScannerImpl::g_AppID = {
 	"Image acquisition library", "dmscanlib", 
 };
 
-const char * ImgScannerImpl::TWAIN_DLL_FILENAME = "TWAIN_32.DLL";
-
-ImgScannerImpl::ImgScannerImpl() :
-      g_hLib(NULL), g_pDSM_Entry(NULL) {
-   g_hLib = LoadLibraryA(TWAIN_DLL_FILENAME);
-
-   if (g_hLib != NULL) {
-      g_pDSM_Entry = (DSMENTRYPROC) GetProcAddress(g_hLib, "DSM_Entry");
-
-      CHECK_NOTNULL(g_pDSM_Entry); // Unable to fetch DSM_Entry address
-   }
+ImgScannerTwain::ImgScannerTwain() {
 }
 
-ImgScannerImpl::~ImgScannerImpl() {
-   unloadTwain();
+ImgScannerTwain::~ImgScannerTwain() {
 }
 
-bool ImgScannerImpl::twainAvailable() {
-   return (g_hLib != NULL);
+void ImgScannerTwain::setTwainDsmEntry(DSMENTRYPROC twainDsmEntry) {
+	ImgScannerTwain::twainDsmEntry = twainDsmEntry;
+	VLOG(1) << "ImgScannerTwain::setTwainDsmEntry";
 }
 
-unsigned ImgScannerImpl::invokeTwain(TW_IDENTITY * srcId, unsigned long dg,
-                                     unsigned dat, unsigned msg, void * ptr) {
-   CHECK_NOTNULL(g_pDSM_Entry);
-   unsigned r = g_pDSM_Entry(&g_AppID, srcId, dg, dat, msg, ptr);
+unsigned ImgScannerTwain::invokeTwain(
+	TW_IDENTITY * srcId, 
+	unsigned long dg,
+	unsigned dat, 
+	unsigned msg, 
+	void * ptr) {
+
+   CHECK_NOTNULL(twainDsmEntry);
+   unsigned r = twainDsmEntry(&twainAppID, srcId, dg, dat, msg, ptr);
    VLOG(5) << "invokeTwain: srcId/\""
            << ((srcId != NULL) ? srcId->ProductName : "NULL")
            << "\" dg/" << dg << " dat/" << dat << " msg/" << msg
            << " ptr/" << ptr << " returnCode/" << r;
 
    if ((srcId == NULL) && (r != TWRC_SUCCESS) && (r != TWRC_CHECKSTATUS)) {
-      VLOG(3) << "ImgScannerImpl::invokeTwain: unsuccessful call to twain";
+      VLOG(3) << "ImgScannerTwain::invokeTwain: unsuccessful call to twain";
    }
    return r;
 }
@@ -97,8 +94,7 @@ unsigned ImgScannerImpl::invokeTwain(TW_IDENTITY * srcId, unsigned long dg,
  * Select the source to use as default for Twain, so the source does not
  * have to be specified every time.
  */
-bool ImgScannerImpl::selectSourceAsDefault() {
-   CHECK_NOTNULL(g_hLib);
+bool ImgScannerTwain::selectSourceAsDefault() {
 
    // Create a static window whose handle is passed to DSM_Entry() when we
    // open the data source manager.
@@ -139,7 +135,7 @@ bool ImgScannerImpl::selectSourceAsDefault() {
 /*
  * Opens the default data source.
  */
-bool ImgScannerImpl::scannerSourceInit(HWND & hwnd, TW_IDENTITY & srcID) {
+bool ImgScannerTwain::scannerSourceInit(HWND & hwnd, TW_IDENTITY & srcID) {
    TW_UINT16 rc;
 
    hwnd = CreateWindowA("STATIC", "", WS_POPUPWINDOW, CW_USEDEFAULT,
@@ -174,7 +170,7 @@ bool ImgScannerImpl::scannerSourceInit(HWND & hwnd, TW_IDENTITY & srcID) {
    return true;
 }
 
-void ImgScannerImpl::scannerSourceDeinit(HWND & hwnd, TW_IDENTITY & srcID) {
+void ImgScannerTwain::scannerSourceDeinit(HWND & hwnd, TW_IDENTITY & srcID) {
    // Close the data source.
    invokeTwain(&srcID, DG_CONTROL, DAT_IDENTITY, MSG_CLOSEDS, &srcID);
    VLOG(3) << "DG_CONTROL / DAT_IDENTITY / MSG_CLOSEDS";
@@ -187,7 +183,7 @@ void ImgScannerImpl::scannerSourceDeinit(HWND & hwnd, TW_IDENTITY & srcID) {
    DestroyWindow(hwnd);
 }
 
-void ImgScannerImpl::setFloatToIntPair(const double f, short & whole,
+void ImgScannerTwain::setFloatToIntPair(const double f, short & whole,
                                        unsigned short & frac) {
    double round = (f > 0) ? 0.5 : -0.5;
    const unsigned tmp = static_cast<unsigned> (f * 65536.0 + round);
@@ -201,12 +197,11 @@ void ImgScannerImpl::setFloatToIntPair(const double f, short & whole,
  *
  *	Grab an image from the twain source and convert it to the dmtxImage format
  */
-HANDLE ImgScannerImpl::acquireImage(
+HANDLE ImgScannerTwain::acquireImage(
         const unsigned dpi,
         const int brightness,
         const int contrast,
         const cv::Rect_<float> & bbox) {
-   CHECK_NOTNULL(g_hLib);
 
    TW_UINT16 rc;
    TW_UINT32 handle = 0;
@@ -402,7 +397,7 @@ HANDLE ImgScannerImpl::acquireImage(
    return (HANDLE) handle;
 }
 
-HANDLE ImgScannerImpl::acquireFlatbed(unsigned dpi, int brightness, int contrast) {
+HANDLE ImgScannerTwain::acquireFlatbed(unsigned dpi, int brightness, int contrast) {
    TW_IDENTITY srcID;
    HWND hwnd;
 
@@ -422,7 +417,7 @@ HANDLE ImgScannerImpl::acquireFlatbed(unsigned dpi, int brightness, int contrast
    return acquireImage(dpi, brightness, contrast, scanRect);
 }
 
-BOOL ImgScannerImpl::setCapOneValue(TW_IDENTITY * srcId, unsigned Cap,
+BOOL ImgScannerTwain::setCapOneValue(TW_IDENTITY * srcId, unsigned Cap,
                                     unsigned ItemType, unsigned long ItemVal) {
    BOOL ret_value = FALSE;
    TW_CAPABILITY cap;
@@ -444,7 +439,7 @@ BOOL ImgScannerImpl::setCapOneValue(TW_IDENTITY * srcId, unsigned Cap,
    return ret_value;
 }
 
-bool ImgScannerImpl::getCapability(TW_IDENTITY * srcId, TW_CAPABILITY & twCap) {
+bool ImgScannerTwain::getCapability(TW_IDENTITY * srcId, TW_CAPABILITY & twCap) {
    TW_UINT16 rc;
 
    rc = invokeTwain(srcId, DG_CONTROL, DAT_CAPABILITY, MSG_GET, &twCap);
@@ -452,7 +447,7 @@ bool ImgScannerImpl::getCapability(TW_IDENTITY * srcId, TW_CAPABILITY & twCap) {
 }
 
 /* Assuming x-y resolution are the same*/
-int ImgScannerImpl::getScannerCapability() {
+int ImgScannerTwain::getScannerCapability() {
    TW_IDENTITY srcID;
    HWND hwnd;
 
@@ -467,7 +462,7 @@ int ImgScannerImpl::getScannerCapability() {
    return capabilityCode;
 }
 
-int ImgScannerImpl::getScannerCapabilityInternal(TW_IDENTITY & srcID) {
+int ImgScannerTwain::getScannerCapabilityInternal(TW_IDENTITY & srcID) {
    int capabilityCode = 0, xresolution = 0, yresolution = 0,
       physicalwidth = 0, physicalheight = 0;
 
@@ -513,7 +508,7 @@ int ImgScannerImpl::getScannerCapabilityInternal(TW_IDENTITY & srcID) {
    return capabilityCode;
 }
 
-int ImgScannerImpl::getResolutionCapability(TW_IDENTITY & srcID, TW_UINT16 cap) {
+int ImgScannerTwain::getResolutionCapability(TW_IDENTITY & srcID, TW_UINT16 cap) {
    pTW_RANGE pvalRange;
    bool result;
    int capabilityCode = 0;
@@ -636,7 +631,7 @@ int ImgScannerImpl::getResolutionCapability(TW_IDENTITY & srcID, TW_UINT16 cap) 
    return capabilityCode;
 }
 
-double ImgScannerImpl::getPhysicalDimensions(TW_IDENTITY & srcID, TW_UINT16 cap) {
+double ImgScannerTwain::getPhysicalDimensions(TW_IDENTITY & srcID, TW_UINT16 cap) {
    bool result;
    TW_CAPABILITY twCap;
 
@@ -668,7 +663,7 @@ double ImgScannerImpl::getPhysicalDimensions(TW_IDENTITY & srcID, TW_UINT16 cap)
    return dimension;
 }
 
-void ImgScannerImpl::getCustomDsData(TW_IDENTITY * srcId) {
+void ImgScannerTwain::getCustomDsData(TW_IDENTITY * srcId) {
    TW_UINT16 rc;
    TW_CUSTOMDSDATA cdata;
 
@@ -680,12 +675,12 @@ void ImgScannerImpl::getCustomDsData(TW_IDENTITY * srcId) {
    }
 }
 
-inline double ImgScannerImpl::uint32ToFloat(TW_UINT32 uint32) {
+inline double ImgScannerTwain::uint32ToFloat(TW_UINT32 uint32) {
    TW_FIX32 fix32 = *((pTW_FIX32) (void *) (&uint32));
    return twfix32ToFloat(fix32);
 }
 
-inline double ImgScannerImpl::twfix32ToFloat(TW_FIX32 fix32) {
+inline double ImgScannerTwain::twfix32ToFloat(TW_FIX32 fix32) {
    return static_cast<float> (fix32.Whole) + static_cast<float> (fix32.Frac)
       / 65536.0;
 }
@@ -697,24 +692,10 @@ inline double ImgScannerImpl::twfix32ToFloat(TW_FIX32 fix32) {
  *
  *	Unlock the handle to the image from twain, and free the memory.
  */
-void ImgScannerImpl::freeImage(HANDLE handle) {
+void ImgScannerTwain::freeImage(HANDLE handle) {
    CHECK_NOTNULL(handle);
-   CHECK_NOTNULL(g_hLib);
    GlobalUnlock(handle);
    GlobalFree(handle);
-}
-
-/*
- *	unloadTwain()
- *	@params - none
- *	@return - none
- *
- *	If twain_32.dll was loaded, it will be removed from memory
- */
-void ImgScannerImpl::unloadTwain() {
-   CHECK_NOTNULL(g_hLib);
-   FreeLibrary(g_hLib);
-   g_hLib = NULL;
 }
 
 } /* namespace */

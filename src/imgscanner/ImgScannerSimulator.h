@@ -36,8 +36,6 @@ public:
     ImgScannerSimulator();
     virtual ~ImgScannerSimulator();
 
-    bool twainAvailable();
-
     bool selectSourceAsDefault();
 
     int getScannerCapability();

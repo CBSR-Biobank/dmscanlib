@@ -59,8 +59,7 @@ void getResultCodeMsg(int resultCode, std::string & message) {
  */
 JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_isTwainAvailable(
                 JNIEnv * env, jobject obj) {
-    dmscanlib::DmScanLib dmScanLib;
-    int result = dmScanLib.isTwainAvailable();
+    int result = dmscanlib::SC_SUCCESS;
     return dmscanlib::jni::createScanResultObject(env, result, result);
 }
 

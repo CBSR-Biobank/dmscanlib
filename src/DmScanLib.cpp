@@ -38,6 +38,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <twain.h> 
 
 #define GLOG_NO_ABBREVIATED_SEVERITIES
 #include <glog/logging.h>
@@ -64,13 +65,6 @@ DmScanLib::DmScanLib(unsigned loggingLevel, bool logToFile) :
 }
 
 DmScanLib::~DmScanLib() {
-}
-
-int DmScanLib::isTwainAvailable() {
-    if (imgScanner->twainAvailable()) {
-        return SC_SUCCESS;
-    }
-    return SC_TWAIN_UNAVAIL;
 }
 
 int DmScanLib::selectSourceAsDefault() {

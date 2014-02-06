@@ -45,11 +45,6 @@ ImgScannerSimulator::ImgScannerSimulator() {
 ImgScannerSimulator::~ImgScannerSimulator() {
 }
 
-bool ImgScannerSimulator::twainAvailable() {
-    VLOG(2) << "twainAvailable";
-    return false;
-}
-
 bool ImgScannerSimulator::selectSourceAsDefault() {
     VLOG(2) << "selectSourceAsDefault";
     return false;
