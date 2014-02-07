@@ -38,7 +38,6 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <twain.h> 
 
 #define GLOG_NO_ABBREVIATED_SEVERITIES
 #include <glog/logging.h>
