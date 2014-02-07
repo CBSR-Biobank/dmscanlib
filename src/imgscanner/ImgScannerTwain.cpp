@@ -120,13 +120,14 @@ bool ImgScannerTwain::selectSourceAsDefault() {
    rc = invokeTwain(NULL, DG_CONTROL, DAT_IDENTITY, MSG_USERSELECT, &srcID);
 
    CHECK_NE(rc, TWRC_FAILURE) << "Unable to display user interface ";
-   if (rc == TWRC_CANCEL) {
-      return false;
-   }
 
    // Close the data source manager.
    invokeTwain(NULL, DG_CONTROL, DAT_PARENT, MSG_CLOSEDSM, &hwnd);
    DestroyWindow(hwnd);
+
+   if (rc == TWRC_CANCEL) {
+      return false;
+   }
 
    VLOG(3) << "selectSourceAsDefault: " << srcID.ProductName;
    return true;
