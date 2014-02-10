@@ -58,7 +58,8 @@ void getResultCodeMsg(int resultCode, std::string & message) {
  * Signature: ()Ledu/ualberta/med/scannerconfig/dmscanlib/ScanLibResult;
  */
 JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_isTwainAvailable(
-                JNIEnv * env, jobject obj) {
+        JNIEnv * env,
+        jobject obj) {
     int result = dmscanlib::SC_SUCCESS;
     return dmscanlib::jni::createScanResultObject(env, result, result);
 }
@@ -81,7 +82,8 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
  * Signature: ()Ledu/ualberta/med/scannerconfig/dmscanlib/ScanLibResult;
  */
 JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_getScannerCapability(
-                JNIEnv * env, jobject obj) {
+        JNIEnv * env,
+        jobject obj) {
     dmscanlib::DmScanLib dmScanLib;
     int result = dmScanLib.getScannerCapability();
     return dmscanlib::jni::createScanResultObject(env, dmscanlib::SC_SUCCESS, result);
@@ -166,8 +168,8 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
  * Method:    slDecodePlate
  * Signature: (JJIIJDDDDDJJJDDDJJJJ)Ledu/ualberta/med/scannerconfig/dmscanlib/DecodeResult;
  */
-JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_scanAndDecode
-  (JNIEnv * env, 
+JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_scanAndDecode(
+        JNIEnv * env,
   jobject obj, 
   jlong _verbose, 
   jlong _dpi,

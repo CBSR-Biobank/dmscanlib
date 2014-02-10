@@ -50,7 +50,8 @@ void getResultCodeMsg(int resultCode, std::string & message) {
  * Signature: ()Ledu/ualberta/med/scannerconfig/dmscanlib/ScanLibResult;
  */
 JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_isTwainAvailable(
-        JNIEnv * env, jobject obj) {
+        JNIEnv * env,
+        jobject obj) {
     return dmscanlib::jni::createScanResultObject(env, dmscanlib::SC_FAIL, dmscanlib::SC_FAIL);
 }
 
@@ -60,7 +61,8 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
  * Signature: ()Ledu/ualberta/med/scannerconfig/dmscanlib/ScanLibResult;
  */
 JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_selectSourceAsDefault(
-        JNIEnv * env, jobject obj) {
+        JNIEnv * env,
+        jobject obj) {
     return dmscanlib::jni::createScanResultObject(env, dmscanlib::SC_FAIL, dmscanlib::SC_FAIL);
 }
 
@@ -80,8 +82,16 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
  * Signature: (JJIIDDDDLjava/lang/String;)Ledu/ualberta/med/scannerconfig/dmscanlib/ScanLibResult;
  */
 JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_scanImage(
-        JNIEnv * env, jobject obj, jlong _verbose, jlong _dpi,
-        jint _brightness, jint _contrast, jobject _region,
+        JNIEnv * env,
+        jobject obj,
+        jlong _verbose,
+        jlong _dpi,
+        jint _brightness,
+        jint _contrast,
+        jdouble x,
+        jdouble y,
+        jdouble width,
+        jdouble height,
         jstring _filename) {
     return dmscanlib::jni::createScanResultObject(env, dmscanlib::SC_FAIL, dmscanlib::SC_FAIL);
 }
@@ -92,8 +102,13 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
  * Signature: (JJIILjava/lang/String;)Ledu/ualberta/med/scannerconfig/dmscanlib/ScanLibResult;
  */
 JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_scanFlatbed(
-        JNIEnv * env, jobject obj, jlong _verbose, jlong _dpi,
-        jint _brightness, jint _contrast, jstring _filename) {
+        JNIEnv * env,
+        jobject obj,
+        jlong _verbose,
+        jlong _dpi,
+        jint _brightness,
+        jint _contrast,
+        jstring _filename) {
     return dmscanlib::jni::createScanResultObject(env, dmscanlib::SC_FAIL, dmscanlib::SC_FAIL);
 }
 
@@ -102,8 +117,18 @@ JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_
  * Method:    scanAndDecode
  * Signature: (JJIILedu/ualberta/med/scannerconfig/dmscanlib/BoundingBox;Ledu/ualberta/med/scannerconfig/dmscanlib/DecodeOptions;[Ledu/ualberta/med/scannerconfig/dmscanlib/CellRectangle;)Ledu/ualberta/med/scannerconfig/dmscanlib/DecodeResult;
  */
-JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_scanAndDecode
-(JNIEnv * env, jobject obj, jlong _verbose, jlong _dpi, jint _brightness, jint _contrast,
-        jobject _region, jobject _decodeOptions, jobjectArray _wellRects) {
+JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_scanAndDecode(
+        JNIEnv * env,
+        jobject obj,
+        jlong _verbose,
+        jlong _dpi,
+        jint _brightness,
+        jint _contrast,
+        jdouble x,
+        jdouble y,
+        jdouble width,
+        jdouble height,
+        jobject _decodeOptions,
+        jobjectArray _wellRects) {
     return dmscanlib::jni::createScanResultObject(env, dmscanlib::SC_FAIL, dmscanlib::SC_FAIL);
 }
