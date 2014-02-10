@@ -268,4 +268,77 @@ const std::map<std::string, const WellDecoder *> & DmScanLib::getDecodedWells() 
     return decoder->getDecodedWells();
 }
 
+Orientation DmScanLib::getOrientationFromString(std::string & orientationStr) {
+    Orientation orientation = ORIENTATION_MAX;
+
+    if (orientationStr.compare("landscape") == 0) {
+        orientation = LANDSCAPE;
+    } else if (orientationStr.compare("portrait") == 0) {
+        orientation = PORTRAIT;
+    }
+
+    return orientation;
+}
+
+BarcodePosition DmScanLib::getBarcodePositionFromString(std::string & positionStr) {
+    BarcodePosition position = BARCODE_POSITION_MAX;
+
+    if (positionStr.compare("top") == 0) {
+        position = TUBE_TOPS;
+    } else if (positionStr.compare("bottom") == 0) {
+        position = TUBE_BOTTOMS;
+    }
+
+    return position;
+}
+
+void DmScanLib::sbsLabelingFromRowCol(unsigned row, unsigned col, std::string & labelStr) {
+    std::ostringstream label;
+    label << (char) ('A' + row) << (col  + 1);
+    labelStr.assign(label.str());
+}
+
+void DmScanLib::getLabelForPosition(
+    unsigned row,
+    unsigned col,
+    unsigned rowsMax,
+    unsigned colsMax,
+    Orientation orientation,
+    BarcodePosition barcodePosition,
+    std::string & labelStr) {
+
+    switch (barcodePosition) {
+    case TUBE_TOPS:
+        switch (orientation) {
+        case LANDSCAPE:
+            sbsLabelingFromRowCol(row, col, labelStr);
+            break;
+        case PORTRAIT:
+            sbsLabelingFromRowCol(colsMax - 1 - col, row, labelStr);
+            break;
+
+        default:
+            throw std::logic_error("invalid value for orientation: " + orientation);
+        }
+        break;
+
+    case TUBE_BOTTOMS:
+        switch (orientation) {
+        case LANDSCAPE:
+            sbsLabelingFromRowCol(row, colsMax - 1 - col, labelStr);
+            break;
+        case PORTRAIT:
+            sbsLabelingFromRowCol(col, row, labelStr);
+            break;
+
+        default:
+            throw std::logic_error("invalid value for orientation: " + orientation);
+        }
+        break;
+
+    default:
+        throw std::logic_error("invalid value for barcode position: " + barcodePosition);
+    }
+}
+
 } /* namespace */

@@ -55,6 +55,10 @@ class ImgScanner;
 class WellDecoder;
 class DecodeOptions;
 
+enum Orientation { LANDSCAPE, PORTRAIT, ORIENTATION_MAX };
+
+enum BarcodePosition { TUBE_TOPS, TUBE_BOTTOMS, BARCODE_POSITION_MAX };
+
 class DmScanLib {
 public:
     DmScanLib();
@@ -106,6 +110,22 @@ public:
     const unsigned getDecodedWellCount();
 
     const std::map<std::string, const WellDecoder *> & getDecodedWells() const;
+
+
+    static Orientation getOrientationFromString(std::string & orientationStr);
+
+    static BarcodePosition getBarcodePositionFromString(std::string & positionStr);
+
+    static void sbsLabelingFromRowCol(unsigned row, unsigned col, std::string & labelStr);
+
+    static void getLabelForPosition(
+        unsigned row,
+        unsigned col,
+        unsigned rowsMax,
+        unsigned colsMax,
+        Orientation orientation,
+        BarcodePosition barcodePosition,
+        std::string & labelStr);
 
 protected:
     int decodeCommon(

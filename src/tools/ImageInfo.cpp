@@ -42,14 +42,14 @@ class ImageInfo {
 public:
 	ImageInfo(
 	        const std::string & _filename,
-	        test::Orientation _orientation,
-	        test::BarcodePosition _position,
+	        Orientation _orientation,
+	        BarcodePosition _position,
 	        const PalletSize _palletSize,
 			const bool _decode);
 	virtual ~ImageInfo() {}
 
-    static test::Orientation getOrientationFromString(std::string & orientationStr);
-    static test::BarcodePosition BarcodePositionFromString(std::string & positionStr);
+    static Orientation getOrientationFromString(std::string & orientationStr);
+    static BarcodePosition BarcodePositionFromString(std::string & positionStr);
 	static PalletSize getPalletSizeFromString(std::string & palletSizeStr);
 
 private:
@@ -61,8 +61,8 @@ private:
 	static const std::pair<const unsigned, const unsigned> RowColsForPalletSize[PSIZE_MAX];
 
 	const std::string & filename;
-    const test::Orientation orientation;
-    const test::BarcodePosition position;
+    const Orientation orientation;
+    const BarcodePosition position;
 	const PalletSize palletSize;
 	const bool decode;
     std::vector<std::unique_ptr<const WellRectangle> > wells;
@@ -86,8 +86,8 @@ const std::pair<const unsigned, const unsigned> ImageInfo::RowColsForPalletSize 
 
 ImageInfo::ImageInfo(
         const std::string & _filename,
-        test::Orientation _orientation,
-        test::BarcodePosition _position,
+        Orientation _orientation,
+        BarcodePosition _position,
         const PalletSize _palletSize,
 		const bool _decode) :
 		filename(_filename),
@@ -97,30 +97,6 @@ ImageInfo::ImageInfo(
 		decode(_decode)
 {
 	generateWells();
-}
-
-test::Orientation ImageInfo::getOrientationFromString(std::string & orientationStr) {
-    test::Orientation orientation = test::ORIENTATION_MAX;
-
-    if (orientationStr.compare("landscape") == 0) {
-        orientation = test::LANDSCAPE;
-    } else if (orientationStr.compare("portrait") == 0) {
-        orientation = test::PORTRAIT;
-    }
-
-    return orientation;
-}
-
-test::BarcodePosition ImageInfo::BarcodePositionFromString(std::string & positionStr) {
-    test::BarcodePosition position = test::BARCODE_POSITION_MAX;
-
-    if (positionStr.compare("top") == 0) {
-        position = test::TUBE_TOPS;
-    } else if (positionStr.compare("bottom") == 0) {
-        position = test::TUBE_BOTTOMS;
-    }
-
-    return position;
 }
 
 
@@ -152,7 +128,7 @@ void ImageInfo::generateWells() {
 
 	unsigned rows, cols;
 
-	if (orientation == test::LANDSCAPE) {
+	if (orientation == LANDSCAPE) {
 	    rows = RowColsForPalletSize[palletSize].first;
 	    cols = RowColsForPalletSize[palletSize].second;
 	} else {
@@ -223,9 +199,9 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 
-	test::Orientation orientation =
+	Orientation orientation =
             ImageInfo::getOrientationFromString(FLAGS_orientation);
-	test::BarcodePosition position =
+	BarcodePosition position =
             ImageInfo::BarcodePositionFromString(FLAGS_position);
 	PalletSize palletSize = ImageInfo::getPalletSizeFromString(FLAGS_palletSize);
 

@@ -9,6 +9,7 @@
 #define IMAGEINFO_H_
 
 #include "decoder/WellRectangle.h"
+#include "DmScanLib.h"
 
 #include <string>
 #include <map>
@@ -38,6 +39,14 @@ public:
         return *boundingBox;
     }
 
+    const Orientation getOrientation() const {
+        return orientation;
+    }
+
+    const BarcodePosition getBarcodePosition() const {
+        return barcodePosition;
+    }
+
     const unsigned getDecodedWellCount() const {
         return decodedWellCount;
     }
@@ -63,10 +72,14 @@ private:
     bool imageFileValid;
     std::string imageFilename;
     std::unique_ptr<const cv::Rect> boundingBox;
-    std::map<const std::string, const std::string> wells;
+    Orientation orientation;
+    BarcodePosition barcodePosition;
     unsigned palletRows;
     unsigned palletCols;
+    std::map<const std::string, const std::string> wells;
     unsigned decodedWellCount;
+
+    friend std::ostream & operator<<(std::ostream & os, const ImageInfo & m);
 };
 
 } /* namespace test */

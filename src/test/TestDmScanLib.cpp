@@ -137,6 +137,8 @@ std::unique_ptr<DecodeTestResult> decodeFromInfo(
                 imageInfo.getBoundingBox(),
                 imageInfo.getPalletRows(),
                 imageInfo.getPalletCols(),
+                imageInfo.getOrientation(),
+                imageInfo.getBarcodePosition(),
                 wellRects);
 
         util::DmTime start;
@@ -155,6 +157,29 @@ std::unique_ptr<DecodeTestResult> decodeFromInfo(
     }
 
     return testResult;
+
+}
+
+TEST(TestDmScanLib, readInfoFiles) {
+    FLAGS_v = 1;
+
+    std::string dirname("testImageInfo");
+    std::vector<std::string> filenames;
+    bool result = test::getTestImageInfoFilenames(dirname, filenames);
+    EXPECT_EQ(true, result);
+
+    std::stringstream ss;
+    std::vector<std::string> testResults;
+    testResults.push_back("#filename,decoded,total,ratio,time (sec)");
+
+    for (unsigned i = 0, n = filenames.size(); i < n; ++i) {
+        ss.str("");
+        VLOG(1) << "test image info: " << filenames[i];
+
+        dmscanlib::test::ImageInfo imageInfo(filenames[i]);
+        bool result = imageInfo.isValid();
+        EXPECT_EQ(true, result);
+    }
 
 }
 

@@ -10,6 +10,7 @@
 
 #include "decoder/DecodeOptions.h"
 #include "decoder/WellRectangle.h"
+#include "DmScanLib.h"
 
 #include <string>
 #include <vector>
@@ -20,10 +21,6 @@ namespace dmscanlib {
 class DmScanLib;
 
 namespace test {
-
-enum Orientation { LANDSCAPE, PORTRAIT, ORIENTATION_MAX };
-
-enum BarcodePosition { TUBE_TOPS, TUBE_BOTTOMS, BARCODE_POSITION_MAX };
 
 bool getTestImageInfoFilenames(std::string dir, std::vector<std::string> & filenames);
 
