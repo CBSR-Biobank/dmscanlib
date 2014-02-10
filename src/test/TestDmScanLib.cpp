@@ -161,14 +161,15 @@ std::unique_ptr<DecodeTestResult> decodeFromInfo(
 TEST(TestDmScanLib, decodeFromInfo) {
     FLAGS_v = 3;
 
-    std::string infoFilename("testImageInfo/8x12/calgary2.nfo");
+    //std::string infoFilename("testImageInfo/8x12/calgary2.nfo");
     //std::string infoFilename("testImageInfo/8x12/new_tubes.nfo");
+    std::string infoFilename("testImageInfo/8x12/problem_tubes_portrait.nfo");
 
     std::unique_ptr<DecodeOptions> defaultDecodeOptions = test::getDefaultDecodeOptions();
     DecodeOptions decodeOptions(
-            0.1,
-            0.3,
-            0.15,
+            0.2,
+            0.4,
+            0.0,
             defaultDecodeOptions->squareDev,
             defaultDecodeOptions->edgeThresh,
             defaultDecodeOptions->corrections,
@@ -205,8 +206,16 @@ TEST(TestDmScanLib, decodeAllImages) {
     unsigned totalTubes = 0;
     unsigned totalDecoded = 0;
     double totalTime = 0;
-	    std::stringstream ss;
-    std::unique_ptr<DecodeOptions> decodeOptions = test::getDefaultDecodeOptions();
+    std::stringstream ss;
+    std::unique_ptr<DecodeOptions> defaultDecodeOptions = test::getDefaultDecodeOptions();
+    DecodeOptions decodeOptions(
+            0.2,
+            0.4,
+            0.15,
+            defaultDecodeOptions->squareDev,
+            defaultDecodeOptions->edgeThresh,
+            defaultDecodeOptions->corrections,
+            defaultDecodeOptions->shrink);
 
     for (unsigned i = 0, n = filenames.size(); i < n; ++i) {
         ss.str("");
@@ -214,7 +223,7 @@ TEST(TestDmScanLib, decodeAllImages) {
 
         DmScanLib dmScanLib(0);
         std::unique_ptr<DecodeTestResult> testResult =
-                decodeFromInfo(filenames[i], *decodeOptions, dmScanLib);
+                decodeFromInfo(filenames[i], decodeOptions, dmScanLib);
         EXPECT_TRUE(testResult->infoFileValid);
         EXPECT_EQ(SC_SUCCESS, testResult->decodeResult);
 

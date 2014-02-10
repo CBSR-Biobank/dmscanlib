@@ -113,13 +113,17 @@ void Image::grayscale(Image & that) const {
     cv::cvtColor(image, that.image, CV_BGR2GRAY);
 }
 
-// from: http://opencv-help.blogspot.ca/2013/01/how-to-sharpen-image-using-opencv.html
+// from: https://github.com/radeonwu/DMTag/blob/master/dm_localization/src/dm_localize.cpp
 void Image::applyFilters(Image & that) const {
     cv::Mat blurredImage;
     cv::Mat enhancedImage;
 
-    cv::GaussianBlur(image, blurredImage, cv::Size(0, 0), 3);
-    cv::addWeighted(image, 1.5, blurredImage, -0.5, 0, that.image);
+    double sigma = 15, threshold = 5, amount = 1;
+
+    cv::GaussianBlur(image, blurredImage, cv::Size(0, 0), sigma);
+    cv::Mat lowContrastMask = abs(image - blurredImage) < threshold;
+    that.image = image * (1 + amount) + blurredImage * (-amount);
+    image.copyTo(that.image, lowContrastMask);
 }
 
 
@@ -129,8 +133,8 @@ void Image::applyFilters(Image & that) const {
  * NOTE: The caller must detroy the image.
  */
 DmtxImage * Image::dmtxImage() const {
-    if (image.elemSize() != 1) {
-        throw std::logic_error("invalid bytes per pixel in image");
+    if (image.type() != CV_8UC1) {
+        throw std::logic_error("invalid image type: " + image.type());
     }
 
     DmtxImage * dmtxImage = dmtxImageCreate(

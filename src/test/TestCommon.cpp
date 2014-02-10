@@ -111,10 +111,61 @@ bool getTestImageInfoFilenames(std::string dir, std::vector<std::string> & filen
     return true;
 }
 
+void sbsLabelingFromRowCol(unsigned row, unsigned col, std::string & labelStr) {
+    std::ostringstream label;
+    label << (char) ('A' + row) << (col  + 1);
+    labelStr.assign(label.str());
+}
+
+void getLabelForPosition(
+    unsigned row,
+    unsigned col,
+    unsigned rowsMax,
+    unsigned colsMax,
+    Orientation orientation,
+    BarcodePosition barcodePosition,
+    std::string & labelStr) {
+
+    switch (barcodePosition) {
+    case TUBE_TOPS:
+        switch (orientation) {
+        case LANDSCAPE:
+            sbsLabelingFromRowCol(row, col, labelStr);
+            break;
+        case PORTRAIT:
+            sbsLabelingFromRowCol(colsMax - 1 - col, row, labelStr);
+            break;
+
+        default:
+            throw std::logic_error("invalid value for orientation: " + orientation);
+        }
+        break;
+
+    case TUBE_BOTTOMS:
+        switch (orientation) {
+        case LANDSCAPE:
+            sbsLabelingFromRowCol(row, colsMax - 1 - col, labelStr);
+            break;
+        case PORTRAIT:
+            sbsLabelingFromRowCol(col, row, labelStr);
+            break;
+
+        default:
+            throw std::logic_error("invalid value for orientation: " + orientation);
+        }
+        break;
+
+    default:
+        throw std::logic_error("invalid value for barcode position: " + barcodePosition);
+    }
+}
+
 void getWellRectsForBoundingBox(
         const cv::Rect & bbox,
         const unsigned rows,
         const unsigned cols,
+        Orientation orientation,
+        BarcodePosition position,
         std::vector<std::unique_ptr<const WellRectangle> > & wellRects) {
 
     float wellWidth = bbox.width / static_cast<float>(cols);
@@ -131,23 +182,28 @@ void getWellRectsForBoundingBox(
     float horOffset;
     float verOffset = static_cast<float>(bbox.y);
 
+    if ((orientation == test::LANDSCAPE) && (position == test::TUBE_BOTTOMS)) {
+    } else {
+
+    }
+
     for (unsigned row = 0; row < rows; ++row) {
         horOffset = static_cast<float>(bbox.x);
 
         for (unsigned col = 0; col < cols; ++col) {
-            std::ostringstream label;
-            label << (char) ('A' + row) << cols - col;
+            std::string label;
+            getLabelForPosition(row, col, rows, cols, orientation, position, label);
 
             std::unique_ptr<WellRectangle> wellRect(
                     new WellRectangle(
-                            label.str().c_str(),
+                            label.c_str(),
                             static_cast<unsigned>(horOffset),
                             static_cast<unsigned>(verOffset),
                             cellSize.width,
                             cellSize.height));
             const cv::Rect & wRect = wellRect->getRectangle();
             if (!bbox.contains(wRect.tl()) || !bbox.contains(wRect.br())) {
-                throw std::logic_error("well rectangle outside image: " + label.str());
+                throw std::logic_error("well rectangle outside image: " + label);
             }
 
             VLOG(5) << "getWellRectsForBoundingBox: " << *wellRect;
@@ -184,7 +240,7 @@ int decodeImage(std::string fname, DmScanLib & dmScanLib, unsigned rows, unsigne
     cv::Size size = image.size();
     cv::Rect bbox(0, 0, size.width, size.height);
 
-    getWellRectsForBoundingBox(bbox, rows, cols, wellRects);
+    getWellRectsForBoundingBox(bbox, rows, cols, test::LANDSCAPE, test::TUBE_BOTTOMS, wellRects);
 
     std::unique_ptr<DecodeOptions> decodeOptions = getDefaultDecodeOptions();
     return dmScanLib.decodeImageWells(fname.c_str(), *decodeOptions, wellRects);

@@ -10,6 +10,7 @@
 #include "decoder/WellRectangle.h"
 #include "decoder/WellDecoder.h"
 #include "test/TestCommon.h"
+#include "Image.h"
 
 #include <gflags/gflags.h>
 #include <string>
@@ -30,29 +31,41 @@ std::string usage(
 		);
 
 DEFINE_bool(decode, true, "include decoded barcode messages.");
+DEFINE_string(orientation, "landscape", "image orientation: \"landscape\" or \"portrait\"");
+DEFINE_string(position, "bottom", "where the barcodes are on a tube: \"top\", \"bottom\"");
 DEFINE_string(palletSize, "8x12", "comma-seperated list of pallet sizes. "
-		"Valid sizes are \"8x12\", \"10x10\", and \"1x1\"");
+		"Valid sizes are \"8x12\", \"10x10\", \"12x12\", \"9x9\", and \"1x1\"");
 
-enum PalletSize { PSIZE_8x12, PSIZE_10x10, PSIZE_1x1, PSIZE_MAX };
+enum PalletSize { PSIZE_8x12, PSIZE_10x10, PSIZE_1x1, PSIZE_12x12, PSIZE_9x9, PSIZE_MAX };
 
 class ImageInfo {
 public:
-	ImageInfo(const std::string & _filename, const PalletSize _palletSize,
+	ImageInfo(
+	        const std::string & _filename,
+	        test::Orientation _orientation,
+	        test::BarcodePosition _position,
+	        const PalletSize _palletSize,
 			const bool _decode);
 	virtual ~ImageInfo() {}
 
+    static test::Orientation getOrientationFromString(std::string & orientationStr);
+    static test::BarcodePosition BarcodePositionFromString(std::string & positionStr);
 	static PalletSize getPalletSizeFromString(std::string & palletSizeStr);
 
 private:
 	void generateWells();
-	void decodeImage(std::vector<std::unique_ptr<const WellRectangle<float> > > & wells,
+	void decodeImage(
+	        std::vector<std::unique_ptr<const WellRectangle> > & wells,
 			std::map<std::string, std::string> & decodedMessages);
 
 	static const std::pair<const unsigned, const unsigned> RowColsForPalletSize[PSIZE_MAX];
 
 	const std::string & filename;
+    const test::Orientation orientation;
+    const test::BarcodePosition position;
 	const PalletSize palletSize;
 	const bool decode;
+    std::vector<std::unique_ptr<const WellRectangle> > wells;
 };
 
 class IsOutputInvalidChar {
@@ -65,16 +78,51 @@ public:
 const std::pair<const unsigned, const unsigned> ImageInfo::RowColsForPalletSize [PSIZE_MAX] = {
 		{ 8, 12 },
 		{ 10, 10 },
+        { 12, 12 },
+        { 9, 9 },
 		{ 1 , 1 }
 };
 
 
-ImageInfo::ImageInfo(const std::string & _filename, const PalletSize _palletSize,
+ImageInfo::ImageInfo(
+        const std::string & _filename,
+        test::Orientation _orientation,
+        test::BarcodePosition _position,
+        const PalletSize _palletSize,
 		const bool _decode) :
-		filename(_filename), palletSize(_palletSize), decode(_decode)
+		filename(_filename),
+        orientation(_orientation),
+        position(_position),
+		palletSize(_palletSize),
+		decode(_decode)
 {
 	generateWells();
 }
+
+test::Orientation ImageInfo::getOrientationFromString(std::string & orientationStr) {
+    test::Orientation orientation = test::ORIENTATION_MAX;
+
+    if (orientationStr.compare("landscape") == 0) {
+        orientation = test::LANDSCAPE;
+    } else if (orientationStr.compare("portrait") == 0) {
+        orientation = test::PORTRAIT;
+    }
+
+    return orientation;
+}
+
+test::BarcodePosition ImageInfo::BarcodePositionFromString(std::string & positionStr) {
+    test::BarcodePosition position = test::BARCODE_POSITION_MAX;
+
+    if (positionStr.compare("top") == 0) {
+        position = test::TUBE_TOPS;
+    } else if (positionStr.compare("bottom") == 0) {
+        position = test::TUBE_BOTTOMS;
+    }
+
+    return position;
+}
+
 
 PalletSize ImageInfo::getPalletSizeFromString(std::string & palletSizeStr) {
 	PalletSize palletSize = PSIZE_MAX;
@@ -83,6 +131,10 @@ PalletSize ImageInfo::getPalletSizeFromString(std::string & palletSizeStr) {
 		palletSize = PSIZE_8x12;
 	} else if (palletSizeStr.compare("10x10") == 0) {
 		palletSize = PSIZE_10x10;
+    } else if (palletSizeStr.compare("12x12") == 0) {
+        palletSize = PSIZE_12x12;
+    } else if (palletSizeStr.compare("9x9") == 0) {
+        palletSize = PSIZE_9x9;
 	} else if (palletSizeStr.compare("1x1") == 0) {
 		palletSize = PSIZE_1x1;
 	}
@@ -91,29 +143,37 @@ PalletSize ImageInfo::getPalletSizeFromString(std::string & palletSizeStr) {
 }
 
 void ImageInfo::generateWells() {
-    std::vector<std::unique_ptr<const WellRectangle<float> > > wells;
-
-    test::getWellRectsForPalletImage(filename,
-    		RowColsForPalletSize[palletSize].first,
-    		RowColsForPalletSize[palletSize].second,
-    		wells);
-
 	std::map<std::string, std::string> decodedMessages;
-	if (decode) {
-		decodeImage(wells, decodedMessages);
+
+	Image dib(filename);
+	cv::Size size = dib.size();
+
+	cv::Rect boundingBox(0, 0, size.width, size.height);
+
+	unsigned rows, cols;
+
+	if (orientation == test::LANDSCAPE) {
+	    rows = RowColsForPalletSize[palletSize].first;
+	    cols = RowColsForPalletSize[palletSize].second;
+	} else {
+        rows = RowColsForPalletSize[palletSize].second;
+        cols = RowColsForPalletSize[palletSize].first;
 	}
 
-	Dib dib;
-	dib.readFromFile(filename);
+    test::getWellRectsForBoundingBox(boundingBox, rows, cols, orientation, position, wells);
+
+    if (decode) {
+        decodeImage(wells, decodedMessages);
+    }
 
 	std::cout << basename((char *) filename.c_str()) << std::endl;
-	std::cout << "0,0," << dib.getWidth() << "," << dib.getHeight() << std::endl;
+	std::cout << "0,0," << size.width << "," << size.height << std::endl;
 	std::cout << RowColsForPalletSize[palletSize].first
 			<< "," << RowColsForPalletSize[palletSize].second
 			<< std::endl;
 
 	for(unsigned i = 0, n = wells.size(); i < n; ++i) {
-		const WellRectangle<float> & wellRect = *wells[i];
+		const WellRectangle & wellRect = *wells[i];
 
 		std::cout << wellRect.getLabel();
 		if (decodedMessages.find(wellRect.getLabel()) != decodedMessages.end()) {
@@ -124,7 +184,7 @@ void ImageInfo::generateWells() {
 }
 
 void ImageInfo::decodeImage(
-		std::vector<std::unique_ptr<const WellRectangle<float> > > & wellRects,
+		std::vector<std::unique_ptr<const WellRectangle> > & wellRects,
 		std::map<std::string, std::string> & decodedMessages) {
 	DmScanLib dmScanLib(0);
 
@@ -132,7 +192,7 @@ void ImageInfo::decodeImage(
     int result = dmScanLib.decodeImageWells(filename.c_str(), *decodeOptions, wellRects);
 
     if (result != SC_SUCCESS) {
-    	std::cerr << "could not decode image: " << filename << std::endl;
+    	std::cerr << "could not decode image: " << filename << ", result: " << result << std::endl;
     }
 
 	if (dmScanLib.getDecodedWellCount() > 0) {
@@ -163,14 +223,13 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 
+	test::Orientation orientation =
+            ImageInfo::getOrientationFromString(FLAGS_orientation);
+	test::BarcodePosition position =
+            ImageInfo::BarcodePositionFromString(FLAGS_position);
 	PalletSize palletSize = ImageInfo::getPalletSizeFromString(FLAGS_palletSize);
-
-	if (palletSize == PSIZE_MAX) {
-		std::cerr << "invalid pallet size specified: " << FLAGS_palletSize
-				<< std::endl;
-	}
 
 	const std::string filename(argv[1]);
 
-	ImageInfo imageInfo(filename, palletSize, FLAGS_decode);
+	ImageInfo imageInfo(filename, orientation, position, palletSize, FLAGS_decode);
 }

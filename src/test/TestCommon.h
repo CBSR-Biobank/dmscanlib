@@ -21,12 +21,18 @@ class DmScanLib;
 
 namespace test {
 
+enum Orientation { LANDSCAPE, PORTRAIT, ORIENTATION_MAX };
+
+enum BarcodePosition { TUBE_TOPS, TUBE_BOTTOMS, BARCODE_POSITION_MAX };
+
 bool getTestImageInfoFilenames(std::string dir, std::vector<std::string> & filenames);
 
 void getWellRectsForBoundingBox(
         const cv::Rect & bbox,
         const unsigned rows,
         const unsigned cols,
+        Orientation orientation,
+        BarcodePosition position,
         std::vector<std::unique_ptr<const WellRectangle> > & wellRects);
 
 std::unique_ptr<DecodeOptions> getDefaultDecodeOptions();
