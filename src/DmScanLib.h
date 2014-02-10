@@ -59,6 +59,8 @@ enum Orientation { LANDSCAPE, PORTRAIT, ORIENTATION_MAX };
 
 enum BarcodePosition { TUBE_TOPS, TUBE_BOTTOMS, BARCODE_POSITION_MAX };
 
+enum PalletSize { PSIZE_8x12, PSIZE_10x10, PSIZE_1x1, PSIZE_12x12, PSIZE_9x9, PSIZE_MAX };
+
 class DmScanLib {
 public:
     DmScanLib();
@@ -126,6 +128,8 @@ public:
         Orientation orientation,
         BarcodePosition barcodePosition,
         std::string & labelStr);
+
+    static PalletSize getPalletSizeFromString(std::string & palletSizeStr);
 
 protected:
     int decodeCommon(

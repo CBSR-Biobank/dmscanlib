@@ -341,4 +341,23 @@ void DmScanLib::getLabelForPosition(
     }
 }
 
+
+PalletSize DmScanLib::getPalletSizeFromString(std::string & palletSizeStr) {
+    PalletSize palletSize = PSIZE_MAX;
+
+    if (palletSizeStr.compare("8x12") == 0) {
+        palletSize = PSIZE_8x12;
+    } else if (palletSizeStr.compare("10x10") == 0) {
+        palletSize = PSIZE_10x10;
+    } else if (palletSizeStr.compare("12x12") == 0) {
+        palletSize = PSIZE_12x12;
+    } else if (palletSizeStr.compare("9x9") == 0) {
+        palletSize = PSIZE_9x9;
+    } else if (palletSizeStr.compare("1x1") == 0) {
+        palletSize = PSIZE_1x1;
+    }
+
+    return palletSize;
+}
+
 } /* namespace */

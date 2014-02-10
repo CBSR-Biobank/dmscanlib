@@ -22,68 +22,36 @@
 namespace dmscanlib {
 namespace test {
 
+ImageInfo::ImageInfo(
+        const std::string imageFilename,
+        const cv::Rect & _boundingBox,
+        Orientation _orientation,
+        BarcodePosition _barcodePosition,
+        PalletSize _palletSize) :
+        filename(""),
+        fileValid(true),
+        boundingBox(new cv::Rect(_boundingBox)),
+        orientation(_orientation),
+        barcodePosition(_barcodePosition),
+        palletSize(_palletSize),
+        decodedWellCount(0)
+{
+    switch (palletSize) {
+    case PSIZE_8x12: palletRows = 8; palletCols = 12; break;
+    case PSIZE_10x10: palletRows = 10; palletCols = 10; break;
+    case PSIZE_12x12: palletRows = 12; palletCols = 12; break;
+    case PSIZE_9x9: palletRows = 9; palletCols = 9; break;
+    case PSIZE_1x1: palletRows = 1; palletCols = 1; break;
+    default:
+        throw std::logic_error("invalid pallet size");
+    }
+
+}
+
 ImageInfo::ImageInfo(const std::string & fname) :
         filename(fname),
         fileValid(true),
         decodedWellCount(0) {
-//    std::ifstream file;
-//    file.open(filename);
-//
-//    fileValid = file.good();
-//
-//    if (file.is_open()) {
-//        unsigned linecnt = 0;
-//        while (!file.eof()) {
-//            std::string line;
-//            file >> line;
-//
-//            std::vector<std::string> tokens;
-//            split(line, ',', tokens);
-//
-//            if (tokens.size() == 0)
-//                break;
-//
-//            if (linecnt == 0) {
-//                if (tokens.size() != 1) {
-//                    throw std::logic_error("single token expected");
-//                }
-//                setImageFilename(tokens[0]);
-//            } else if (linecnt == 1) {
-//                if (tokens.size() != 4) {
-//                    throw std::logic_error("four tokens expected");
-//                }
-//                unsigned x = stringToUnsigned(tokens[0]);
-//                unsigned y = stringToUnsigned(tokens[1]);
-//                unsigned width = stringToUnsigned(tokens[2]);
-//                unsigned height = stringToUnsigned(tokens[3]);
-//
-//                boundingBox = std::unique_ptr<const cv::Rect>(
-//                        new cv::Rect(x, y, width, height));
-//            } else if (linecnt == 2) {
-//                if (tokens.size() != 2) {
-//                    throw std::logic_error("two tokens expected");
-//                }
-//                palletRows = stringToUnsigned(tokens[0]);
-//                palletCols = stringToUnsigned(tokens[1]);
-//
-//            } else {
-//                if ((tokens.size() < 1) && (tokens.size() > 2)) {
-//                    throw std::logic_error("invalid label line");
-//                }
-//
-//                std::string decodedMsg;
-//                if (tokens.size() == 2) {
-//                    ++decodedWellCount;
-//                    decodedMsg = tokens[1];
-//                }
-//
-//                wells.insert(std::make_pair(tokens[0], decodedMsg));
-//            }
-//
-//            ++linecnt;
-//        }
-//    }
-//    file.close();
 
     libconfig::Config cfg;
     try {
@@ -169,6 +137,7 @@ ImageInfo::ImageInfo(const std::string & fname) :
 
             if (root.lookupValue(label, decodedMessage)) {
                 barcodePosition = DmScanLib::getBarcodePositionFromString(barcodePositionStr);
+                wells.insert(std::make_pair(label, decodedMessage));
             } else {
                 std::cerr << "setting not found in configuration file: " << label << std::endl;
                 fileValid = false;
@@ -183,16 +152,6 @@ void ImageInfo::setImageFilename(std::string & basename) {
     file.open(imageFilename);
     imageFileValid = file.good();
     file.close();
-}
-
-void ImageInfo::toCout() {
-    std::cout << imageFilename << ": ";
-    std::cout << *boundingBox << std::endl;
-    std::map<const std::string, const std::string>::iterator ii = wells.begin();
-
-    for (; ii != wells.end(); ++ii) {
-        std::cout << ii->first << "," << ii->second << std::endl;
-    }
 }
 
 std::vector<std::string> & ImageInfo::split(const std::string &s, char delim,
@@ -221,6 +180,12 @@ const std::string * ImageInfo::getBarcodeMsg(const std::string & label) {
     return &wells[label];
 }
 
+const void ImageInfo::setBarcodeMsg(
+        const std::string & label,
+        std::string & decodedMessage) {
+    wells.insert(std::make_pair(label, decodedMessage));
+}
+
 std::ostream & operator<<(std::ostream &os, const ImageInfo & m) {
     os << "imageFilename=\"" << m.imageFilename << "\"" << std::endl;
 
@@ -238,13 +203,13 @@ std::ostream & operator<<(std::ostream &os, const ImageInfo & m) {
             << "; }"
             << std::endl;
 
-    os << "orientation=landscape" << std::endl;
-    os << "barcodePosition=bottom" << std::endl;
+    os << "orientation=\"" << m.orientation << "\"" << std::endl;
+    os << "barcodePosition=\"" << m.barcodePosition << "\"" << std::endl;
 
     std::map<const std::string, const std::string>::const_iterator ii = m.wells.begin();
 
     for (; ii != m.wells.end(); ++ii) {
-        os << ii->first << "=" << ii->second << std::endl;
+        os << ii->first << "=\"" << ii->second << "\"" << std::endl;
     }
     return os;
 }
