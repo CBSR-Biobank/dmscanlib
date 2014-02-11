@@ -39,14 +39,6 @@ extern "C" {
 #define edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_CAP_IS_SCANNER 16L
 /*
  * Class:     edu_ualberta_med_scannerconfig_dmscanlib_ScanLib
- * Method:    isTwainAvailable
- * Signature: ()Ledu/ualberta/med/scannerconfig/dmscanlib/ScanLibResult;
- */
-JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_isTwainAvailable
-  (JNIEnv *, jobject);
-
-/*
- * Class:     edu_ualberta_med_scannerconfig_dmscanlib_ScanLib
  * Method:    selectSourceAsDefault
  * Signature: ()Ledu/ualberta/med/scannerconfig/dmscanlib/ScanLibResult;
  */

@@ -46,17 +46,6 @@ void getResultCodeMsg(int resultCode, std::string & message) {
 
 /*
  * Class:     edu_ualberta_med_scannerconfig_dmscanlib_ScanLib
- * Method:    slIsTwainAvailable
- * Signature: ()Ledu/ualberta/med/scannerconfig/dmscanlib/ScanLibResult;
- */
-JNIEXPORT jobject JNICALL Java_edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_isTwainAvailable(
-        JNIEnv * env,
-        jobject obj) {
-    return dmscanlib::jni::createScanResultObject(env, dmscanlib::SC_FAIL, dmscanlib::SC_FAIL);
-}
-
-/*
- * Class:     edu_ualberta_med_scannerconfig_dmscanlib_ScanLib
  * Method:    slSelectSourceAsDefault
  * Signature: ()Ledu/ualberta/med/scannerconfig/dmscanlib/ScanLibResult;
  */
