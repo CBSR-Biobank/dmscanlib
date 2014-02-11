@@ -21,12 +21,6 @@ namespace test {
 
 class ImageInfo {
 public:
-    ImageInfo(
-            const std::string imageFilename,
-            const cv::Rect & _boundingBox,
-            Orientation _orientation,
-            BarcodePosition _barcodePosition,
-            PalletSize _palletSize);
     ImageInfo(const std::string & filename);
     virtual ~ImageInfo() {
     }
@@ -40,8 +34,6 @@ public:
     }
 
     const std::string * getBarcodeMsg(const std::string & label);
-
-    const void setBarcodeMsg(const std::string & label, std::string & decodedMessage);
 
     const cv::Rect & getBoundingBox() const {
         return *boundingBox;
@@ -67,7 +59,8 @@ public:
         return palletCols;
     }
 
-private:
+protected:
+    ImageInfo() {}
     std::vector<std::string> & split(
             const std::string &s, char delim,
             std::vector<std::string> &elems);

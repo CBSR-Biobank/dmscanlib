@@ -99,7 +99,7 @@
 					</folderInfo>
 					<sourceEntries>
 						<entry excluding="src|tmp|src/DmScanLibJniWin32.cpp|src/edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_win32.cpp|third_party/glog|src/nvwa|scripts|src/ImgScannerImpl.cpp|src/utils/TimeUtilWin32.cpp|third_party/cvblob|third_party/libdmtx" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
-						<entry excluding="DmScanLibWin32.cpp|imgscanner/ImgScannerTwain.cpp|tools/ImageInfo.cpp|test/TestDmScanLibWin32.cpp|utils/DmTimeWin32.cpp|jni/DmScanLibJniWin32.cpp|utils/TimeUtilWin32.cpp|imgscanner/ImgScannerImpl.cpp|nvwa" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
+						<entry excluding="tools/ImageInfoTool.cpp|DmScanLibWin32.cpp|imgscanner/ImgScannerTwain.cpp|tools/ImageInfo.cpp|test/TestDmScanLibWin32.cpp|utils/DmTimeWin32.cpp|jni/DmScanLibJniWin32.cpp|utils/TimeUtilWin32.cpp|imgscanner/ImgScannerImpl.cpp|nvwa" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -204,7 +204,7 @@
 					</folderInfo>
 					<sourceEntries>
 						<entry excluding="src|tmp|src/DmScanLibJniWin32.cpp|src/edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_win32.cpp|third_party/glog|src/TestApp.cpp|src/nvwa|scripts|src/ImgScannerImpl.cpp|src/utils/TimeUtilWin32.cpp|third_party/cvblob|third_party/libdmtx" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
-						<entry excluding="DmScanLibWin32.cpp|imgscanner/ImgScannerTwain.cpp|test/TestScanRegion.cpp|test/ImageInfo.cpp|tools/ImageInfo.cpp|test/TestWellRectangle.cpp|test/Tests.cpp|test/TestRect.cpp|test/TestDmScanLib.cpp|test/TestCommon.cpp|test/TestBoundingBox.cpp|test/TestDmScanLibWin32.cpp|test/TestPoint.cpp|utils/DmTimeWin32.cpp|TestApp.cpp|jni/DmScanLibJniWin32.cpp|utils/TimeUtilWin32.cpp|imgscanner/ImgScannerImpl.cpp|nvwa" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
+						<entry excluding="tools/ImageInfoTool.cpp|DmScanLibWin32.cpp|imgscanner/ImgScannerTwain.cpp|test/TestScanRegion.cpp|test/ImageInfo.cpp|tools/ImageInfo.cpp|test/TestWellRectangle.cpp|test/Tests.cpp|test/TestRect.cpp|test/TestDmScanLib.cpp|test/TestCommon.cpp|test/TestBoundingBox.cpp|test/TestDmScanLibWin32.cpp|test/TestPoint.cpp|utils/DmTimeWin32.cpp|TestApp.cpp|jni/DmScanLibJniWin32.cpp|utils/TimeUtilWin32.cpp|imgscanner/ImgScannerImpl.cpp|nvwa" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -425,7 +425,7 @@
 					</folderInfo>
 					<sourceEntries>
 						<entry excluding="src|tmp|src/DmScanLibJniWin32.cpp|src/edu_ualberta_med_scannerconfig_dmscanlib_ScanLib_win32.cpp|third_party/glog|src/nvwa|scripts|src/ImgScannerImpl.cpp|src/utils/TimeUtilWin32.cpp|third_party/cvblob|third_party/libdmtx" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
-						<entry excluding="imgscanner/ImgScannerTwain.cpp|tools/ImageInfo.cpp|test/TestDmScanLibWin32.cpp|utils/DmTimeWin32.cpp|jni/DmScanLibJniWin32.cpp|utils/TimeUtilWin32.cpp|imgscanner/ImgScannerImpl.cpp|nvwa" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
+						<entry excluding="tools/ImageInfoTool.cpp|imgscanner/ImgScannerTwain.cpp|tools/ImageInfo.cpp|test/TestDmScanLibWin32.cpp|utils/DmTimeWin32.cpp|jni/DmScanLibJniWin32.cpp|utils/TimeUtilWin32.cpp|imgscanner/ImgScannerImpl.cpp|nvwa" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>

@@ -59,7 +59,7 @@ enum Orientation { LANDSCAPE, PORTRAIT, ORIENTATION_MAX };
 
 enum BarcodePosition { TUBE_TOPS, TUBE_BOTTOMS, BARCODE_POSITION_MAX };
 
-enum PalletSize { PSIZE_8x12, PSIZE_10x10, PSIZE_1x1, PSIZE_12x12, PSIZE_9x9, PSIZE_MAX };
+enum PalletSize { PSIZE_8x12, PSIZE_10x10, PSIZE_12x12, PSIZE_9x9, PSIZE_1x1, PSIZE_MAX };
 
 class DmScanLib {
 public:
@@ -149,6 +149,10 @@ protected:
     static bool loggingInitialized;
 
 };
+
+std::ostream & operator<<(std::ostream &os, Orientation m);
+
+std::ostream & operator<<(std::ostream &os, BarcodePosition m);
 
 } /* namespace */
 

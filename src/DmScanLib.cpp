@@ -360,4 +360,24 @@ PalletSize DmScanLib::getPalletSizeFromString(std::string & palletSizeStr) {
     return palletSize;
 }
 
+std::ostream & operator<<(std::ostream &os, Orientation m) {
+    switch (m) {
+    case LANDSCAPE: os << "landscape"; break;
+    case PORTRAIT: os << "portrait"; break;
+    default:
+        throw std::logic_error("invalid value for orientation");
+    }
+    return os;
+}
+
+std::ostream & operator<<(std::ostream &os, BarcodePosition m) {
+    switch (m) {
+    case TUBE_TOPS: os << "top"; break;
+    case TUBE_BOTTOMS: os << "bottom"; break;
+    default:
+        throw std::logic_error("invalid value for barcode position");
+    }
+    return os;
+}
+
 } /* namespace */

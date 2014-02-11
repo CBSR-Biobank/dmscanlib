@@ -22,32 +22,6 @@
 namespace dmscanlib {
 namespace test {
 
-ImageInfo::ImageInfo(
-        const std::string imageFilename,
-        const cv::Rect & _boundingBox,
-        Orientation _orientation,
-        BarcodePosition _barcodePosition,
-        PalletSize _palletSize) :
-        filename(""),
-        fileValid(true),
-        boundingBox(new cv::Rect(_boundingBox)),
-        orientation(_orientation),
-        barcodePosition(_barcodePosition),
-        palletSize(_palletSize),
-        decodedWellCount(0)
-{
-    switch (palletSize) {
-    case PSIZE_8x12: palletRows = 8; palletCols = 12; break;
-    case PSIZE_10x10: palletRows = 10; palletCols = 10; break;
-    case PSIZE_12x12: palletRows = 12; palletCols = 12; break;
-    case PSIZE_9x9: palletRows = 9; palletCols = 9; break;
-    case PSIZE_1x1: palletRows = 1; palletCols = 1; break;
-    default:
-        throw std::logic_error("invalid pallet size");
-    }
-
-}
-
 ImageInfo::ImageInfo(const std::string & fname) :
         filename(fname),
         fileValid(true),
@@ -178,12 +152,6 @@ const std::string * ImageInfo::getBarcodeMsg(const std::string & label) {
     }
 
     return &wells[label];
-}
-
-const void ImageInfo::setBarcodeMsg(
-        const std::string & label,
-        std::string & decodedMessage) {
-    wells.insert(std::make_pair(label, decodedMessage));
 }
 
 std::ostream & operator<<(std::ostream &os, const ImageInfo & m) {
