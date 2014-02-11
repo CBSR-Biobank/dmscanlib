@@ -33,11 +33,6 @@ using namespace dmscanlib;
 
 namespace {
 
-TEST(TestDmScanLibWin32, isTwainAvailable) {
-	DmScanLib dmScanLib(1);
-	ASSERT_EQ(SC_SUCCESS, dmScanLib.isTwainAvailable());
-}
-
 TEST(TestDmScanLibWin32, selectSourceAsDefault) {
 	DmScanLib dmScanLib(1);
 	ASSERT_EQ(SC_SUCCESS, dmScanLib.selectSourceAsDefault());
@@ -213,7 +208,13 @@ TEST(TestDmScanLibWin32, scanAndDecodeValidDpi) {
 
 	std::vector<std::unique_ptr<const WellRectangle> > wellRects;
 
-    test::getWellRectsForBoundingBox(wellsBbox, 8, 12, wellRects);
+    test::getWellRectsForBoundingBox(
+		wellsBbox, 
+		8, 
+		12, 
+		LANDSCAPE,
+		TUBE_BOTTOMS,
+		wellRects);
 	DmScanLib dmScanLib(1);
 	int result = dmScanLib.scanAndDecode(
 		dpi, 
@@ -263,7 +264,14 @@ TEST(TestDmScanLibWin32, scanAndDecodeMultiple) {
 
 	std::vector<std::unique_ptr<const WellRectangle> > wellRects;
 
-    test::getWellRectsForBoundingBox(wellsBbox, 8, 12, wellRects);
+    test::getWellRectsForBoundingBox(
+		wellsBbox, 
+		8, 
+		12, 
+		LANDSCAPE,
+		TUBE_BOTTOMS,
+		wellRects);
+
 	DmScanLib dmScanLib(1);
 	int result = dmScanLib.scanAndDecode(
 		dpi, 

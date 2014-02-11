@@ -37,6 +37,12 @@
 #include <glog/logging.h>
 
 /**
+ * Some of this code was copied from:
+ *
+ * https://today.java.net/pub/a/today/2004/11/18/twain.html
+ */
+
+/**
  * g_hinstDLL holds this DLL's instance handle. It is initialized in response
  * to the DLL_PROCESS_ATTACH message. This handle is passed to CreateWindow()
  * when a window is created, just before opening the data source manager.
@@ -116,8 +122,7 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
        g_hinstDLL = hinstDLL;
        g_hLib = LoadLibraryA(TWAIN_DLL_FILENAME);
 
-       // Report failure if TWAIN_32.DLL cannot be loaded and terminate the
-       // JTWAIN DLL.
+       // Report failure if TWAIN_32.DLL cannot be loaded and terminate
        if (g_hLib == 0) {
            MessageBoxA(0, "Unable to open TWAIN_32.DLL", "DmScanLib", MB_OK);
            return FALSE;
@@ -128,7 +133,7 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
        dmscanlib::imgscanner::ImgScannerTwain::setTwainDsmEntry(g_pDSM_Entry);
 
        // Report failure if DSM_Entry() function not found in TWAIN_32.DLL
-       // and terminate the JTWAIN DLL.
+       // and terminate 
        if (g_pDSM_Entry == 0) {
            MessageBoxA(0, "Unable to fetch DSM_Entry address", "DmScanLib", MB_OK);
            return FALSE;
