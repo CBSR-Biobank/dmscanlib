@@ -13,7 +13,7 @@ OSTYPE := $(shell uname -s | tr [:upper:] [:lower:])
 MTYPE := $(shell uname -m)
 LANG := en_US                # for gcc error messages
 BUILD_DIR := obj
-JAVA_HOME := /usr/lib/jvm/java-6-oracle
+JAVA_HOME := /usr/lib/jvm/java-8-oracle
 
 SRCS := \
 	src/DmScanLib.cpp \
@@ -28,25 +28,29 @@ SRCS := \
 	src/imgscanner/ImgScanner.cpp \
 	src/imgscanner/ImgScannerSimulator.cpp \
 	src/utils/DmTimeLinux.cpp \
+	src/Image.cpp
+
+TEST_SRCS := \
 	src/test/TestWellRectangle.cpp \
-	src/test/TestPoint.cpp \
 	src/test/ImageInfo.cpp \
 	src/test/Tests.cpp \
 	src/test/TestDmScanLib.cpp \
-	src/test/TestCommon.cpp \
-	src/test/TestRect.cpp \
-	src/test/TestBoundingBox.cpp \
-	src/Image.cpp
+	src/test/TestCommon.cpp
 
+ifeq ($(MAKECMDGOALS),test)
+SRCS += $(TEST_SRCS)
+endif
 
 FILES = $(notdir $(SRCS))
 PATHS = $(sort $(dir $(SRCS) ) )
 OBJS := $(addprefix $(BUILD_DIR)/, $(FILES:.cpp=.o))
-DEPS := $(OBJ:.o=.d)
+DEPS := $(OBJS:.o=.d)
 
 INCLUDE_PATH := $(foreach inc,$(PATHS),$(inc)) third_party/libdmtx third_party/glog/src \
 	$(JAVA_HOME)/include $(JAVA_HOME)/include/linux
-LIBS := -lglog -ldmtx -lOpenThreads -lgtest -lpthread -lopencv_core -lopencv_highgui -lopencv_imgproc
+
+LIBS := -lglog -ldmtx -lOpenThreads -lopencv_core -lopencv_highgui -lopencv_imgproc
+TEST_LIBS := -lgtest -lconfig++ -lpthread
 LIB_PATH :=
 
 CC := g++
@@ -107,7 +111,11 @@ all: $(PROJECT)
 
 $(PROJECT) : $(OBJS)
 	@echo "linking $@"
-	$(SILENT) $(CC) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
+	$(SILENT) $(CC) $(LDFLAGS) -o $@ $(OBJS) $(LIBS) -shared
+
+test : $(OBJS)
+	@echo "linking $@"
+	$(SILENT) $(CC) $(LDFLAGS) -o $@ $(OBJS) $(LIBS) $(TEST_LIBS)
 
 clean:
 	rm -rf  $(BUILD_DIR)/*.[odP] $(PROJECT)
