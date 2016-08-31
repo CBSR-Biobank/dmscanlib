@@ -44,7 +44,7 @@ endif
 FILES = $(notdir $(SRCS))
 PATHS = $(sort $(dir $(SRCS) ) )
 OBJS := $(addprefix $(BUILD_DIR)/, $(FILES:.cpp=.o))
-DEPS := $(OBJS:.o=.d)
+DEPS := $(OBJS:.o=.P)
 
 INCLUDE_PATH := $(foreach inc,$(PATHS),$(inc)) third_party/libdmtx third_party/glog/src \
 	$(JAVA_HOME)/include $(JAVA_HOME)/include/linux
